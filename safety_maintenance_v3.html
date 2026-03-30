@@ -1,0 +1,2002 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نظام إدارة عقود صيانة أنظمة السلامة</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1117;
+  --bg2: #161b27;
+  --bg3: #1e2535;
+  --bg4: #252d3d;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text: #e8eaf0;
+  --text2: #8b93a8;
+  --text3: #5a6380;
+  --accent: #3b82f6;
+  --accent2: #1d4ed8;
+  --green: #10b981;
+  --amber: #f59e0b;
+  --red: #ef4444;
+  --purple: #8b5cf6;
+  --teal: #14b8a6;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6}
+/* Layout */
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:240px;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+/* Sidebar */
+.logo{padding:20px 16px 16px;border-bottom:1px solid var(--border)}
+.logo h1{font-size:13px;font-weight:700;color:var(--text);line-height:1.4}
+.logo span{font-size:11px;color:var(--text3);display:block;margin-top:2px}
+.user-section{padding:12px 16px;border-bottom:1px solid var(--border)}
+.user-select{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);color:var(--text);padding:7px 10px;font-family:'Cairo',sans-serif;font-size:12px;cursor:pointer}
+.nav{flex:1;padding:8px 0;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;color:var(--text2);font-size:13px;border-right:3px solid transparent;transition:all .15s}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:rgba(59,130,246,0.1);color:var(--accent);border-right-color:var(--accent)}
+.nav-item svg{width:16px;height:16px;flex-shrink:0}
+.nav-section{font-size:10px;color:var(--text3);padding:12px 16px 4px;letter-spacing:.06em;font-weight:600}
+.sidebar-footer{padding:12px 16px;border-top:1px solid var(--border)}
+.version{font-size:11px;color:var(--text3)}
+/* Topbar */
+.topbar{padding:16px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg2);flex-shrink:0}
+.topbar h2{font-size:16px;font-weight:600}
+.topbar-actions{display:flex;gap:8px}
+/* Content */
+.content{padding:24px;flex:1}
+/* Pages */
+.page{display:none}
+.page.active{display:block}
+/* Stats */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:24px}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px}
+.stat-label{font-size:11px;color:var(--text3);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.stat-val{font-size:28px;font-weight:700;line-height:1}
+.stat-sub{font-size:11px;color:var(--text2);margin-top:4px}
+.stat-card.c-blue .stat-val{color:var(--accent)}
+.stat-card.c-green .stat-val{color:var(--green)}
+.stat-card.c-amber .stat-val{color:var(--amber)}
+.stat-card.c-red .stat-val{color:var(--red)}
+.stat-card.c-purple .stat-val{color:var(--purple)}
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--radius);font-family:'Cairo',sans-serif;font-size:13px;cursor:pointer;border:1px solid var(--border2);background:var(--bg3);color:var(--text);transition:all .15s;font-weight:500}
+.btn:hover{background:var(--bg4);border-color:var(--border2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:var(--accent2)}
+.btn.success{background:rgba(16,185,129,0.15);border-color:rgba(16,185,129,0.3);color:var(--green)}
+.btn.danger{background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.2);color:var(--red)}
+.btn.sm{padding:5px 10px;font-size:12px}
+/* Table */
+.table-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
+.table-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+table{width:100%;border-collapse:collapse}
+th{padding:10px 14px;text-align:right;font-size:11px;color:var(--text3);font-weight:600;border-bottom:1px solid var(--border);white-space:nowrap;letter-spacing:.03em}
+td{padding:11px 14px;border-bottom:1px solid var(--border);color:var(--text);font-size:13px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,0.02)}
+/* Badges */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.badge::before{content:'';width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.badge.active{background:rgba(16,185,129,0.12);color:#34d399;border:1px solid rgba(16,185,129,0.2)}
+.badge.active::before{background:#10b981}
+.badge.expiring{background:rgba(245,158,11,0.12);color:#fbbf24;border:1px solid rgba(245,158,11,0.2)}
+.badge.expiring::before{background:#f59e0b}
+.badge.expired{background:rgba(239,68,68,0.12);color:#f87171;border:1px solid rgba(239,68,68,0.2)}
+.badge.expired::before{background:#ef4444}
+.badge.pending{background:rgba(139,92,246,0.12);color:#a78bfa;border:1px solid rgba(139,92,246,0.2)}
+.badge.pending::before{background:#8b5cf6}
+.type-badge{padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600}
+.t-fire{background:rgba(239,68,68,0.12);color:#f87171}
+.t-fa{background:rgba(245,158,11,0.12);color:#fbbf24}
+.t-gas{background:rgba(16,185,129,0.12);color:#34d399}
+.t-cctv{background:rgba(139,92,246,0.12);color:#a78bfa}
+.t-hvac{background:rgba(20,184,166,0.12);color:#2dd4bf}
+.t-elec{background:rgba(59,130,246,0.12);color:#60a5fa}
+/* Forms */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-backdrop.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-lg);width:min(640px,100%);max-height:90vh;overflow-y:auto;box-shadow:var(--shadow)}
+.modal-head{padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-head h3{font-size:15px;font-weight:600}
+.modal-close{background:none;border:none;color:var(--text2);cursor:pointer;font-size:20px;line-height:1;padding:2px 6px}
+.modal-close:hover{color:var(--text)}
+.modal-body{padding:20px}
+.modal-foot{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-group.full{grid-column:1/-1}
+.form-group label{font-size:12px;color:var(--text2);font-weight:500}
+.form-group input,.form-group select,.form-group textarea{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);color:var(--text);padding:8px 11px;font-family:'Cairo',sans-serif;font-size:13px;transition:border-color .15s}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--accent)}
+.form-group textarea{resize:vertical;min-height:70px}
+/* Search */
+.search-input{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:7px 12px;font-family:'Cairo',sans-serif;font-size:13px;min-width:200px}
+.search-input:focus{outline:none;border-color:var(--accent)}
+/* Progress */
+.prog{height:5px;background:var(--bg4);border-radius:3px;overflow:hidden;min-width:80px}
+.prog-fill{height:100%;border-radius:3px;transition:width .3s}
+.prog-fill.good{background:var(--green)}
+.prog-fill.warn{background:var(--amber)}
+.prog-fill.bad{background:var(--red)}
+/* Alert cards */
+.alert-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;display:flex;gap:12px;margin-bottom:8px}
+.alert-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px}
+.alert-icon.red{background:rgba(239,68,68,0.15)}
+.alert-icon.amber{background:rgba(245,158,11,0.15)}
+.alert-icon.blue{background:rgba(59,130,246,0.15)}
+/* Calendar */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-header{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px}
+.cal-day-name{text-align:center;font-size:11px;color:var(--text3);padding:4px}
+.cal-cell{min-height:72px;background:var(--bg3);border-radius:8px;padding:6px;border:1px solid var(--border)}
+.cal-cell.today{border-color:var(--accent)}
+.cal-cell.other-month{opacity:.4}
+.cal-date{font-size:11px;color:var(--text3);margin-bottom:4px}
+.cal-event{background:rgba(59,130,246,0.2);border-radius:4px;padding:2px 5px;font-size:10px;color:#60a5fa;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal-event.urgent{background:rgba(239,68,68,0.2);color:#f87171}
+/* Charts */
+.chart-bar{display:flex;align-items:flex-end;gap:6px;height:120px;padding-top:8px}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.bar{width:100%;border-radius:4px 4px 0 0;transition:height .4s}
+.bar-label{font-size:10px;color:var(--text3);white-space:nowrap}
+.bar-val{font-size:10px;color:var(--text2);font-weight:600}
+/* Donut */
+.donut-wrap{position:relative;width:120px;height:120px;flex-shrink:0}
+.donut-wrap svg{transform:rotate(-90deg)}
+.donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.donut-center span{font-size:22px;font-weight:700;color:var(--text)}
+.donut-center small{font-size:10px;color:var(--text3)}
+/* Contractor cards */
+.contractor-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px}
+.contractor-avatar{width:44px;height:44px;border-radius:10px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:var(--accent);flex-shrink:0}
+/* Checklist */
+.checklist-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.checklist-item:last-child{border-bottom:none}
+.chk{width:18px;height:18px;border-radius:4px;border:1.5px solid var(--border2);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;margin-top:2px}
+.chk.checked{background:var(--green);border-color:var(--green)}
+.chk.checked::after{content:'✓';color:#fff;font-size:11px}
+/* Invoice */
+.invoice-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);font-size:13px}
+.invoice-row:last-child{border-bottom:none}
+/* Upload */
+.upload-zone{border:2px dashed var(--border2);border-radius:var(--radius);padding:24px;text-align:center;cursor:pointer;transition:all .15s}
+.upload-zone:hover{border-color:var(--accent);background:rgba(59,130,246,0.04)}
+.file-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg3);border-radius:var(--radius);margin-top:8px}
+/* Tabs */
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:20px}
+.tab{padding:9px 16px;font-size:13px;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;background:none;border-top:none;border-left:none;border-right:none;font-family:'Cairo',sans-serif;transition:all .15s}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab:hover:not(.active){color:var(--text)}
+/* Section header */
+.section-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+.section-h h3{font-size:15px;font-weight:600}
+/* Empty */
+.empty{text-align:center;padding:40px;color:var(--text3)}
+/* Rating stars */
+.stars{color:var(--amber);font-size:13px}
+/* Tooltip */
+.tooltip{position:relative}
+.tooltip:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 4px);right:50%;transform:translateX(50%);background:var(--bg4);color:var(--text);font-size:11px;padding:4px 8px;border-radius:6px;white-space:nowrap;z-index:10;border:1px solid var(--border2)}
+/* Scrollbar */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+/* Print */
+@media print {
+  .sidebar,.topbar-actions,.btn,.modal-backdrop{display:none!important}
+  .main{overflow:visible}
+  body{background:#fff;color:#000}
+}
+/* Responsive */
+@media(max-width:768px){
+  .sidebar{width:56px}
+  .logo h1,.logo span,.nav-item span,.nav-section,.user-section,.sidebar-footer{display:none}
+  .nav-item{justify-content:center;padding:12px}
+  .form-grid{grid-template-columns:1fr}
+  .stats-grid{grid-template-columns:1fr 1fr}
+}
+/* ===== NEW v3 STYLES ===== */
+/* Project Archive */
+.project-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;cursor:pointer;transition:border-color .2s}
+.project-card:hover{border-color:var(--accent)}
+.project-card-header{padding:16px;background:linear-gradient(135deg,rgba(59,130,246,0.15),rgba(139,92,246,0.08));border-bottom:1px solid var(--border)}
+.project-card-body{padding:14px 16px}
+.project-detail{position:fixed;inset:0;background:var(--bg);z-index:50;overflow-y:auto;display:none}
+.project-detail.open{display:block}
+.project-detail-header{background:var(--bg2);border-bottom:1px solid var(--border);padding:16px 24px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10}
+/* Photo Gallery */
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.photo-thumb{aspect-ratio:1;border-radius:var(--radius);overflow:hidden;position:relative;cursor:pointer;background:var(--bg3);border:1px solid var(--border)}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-thumb .photo-overlay{position:absolute;inset:0;background:rgba(0,0,0,0);transition:background .2s;display:flex;align-items:center;justify-content:center}
+.photo-thumb:hover .photo-overlay{background:rgba(0,0,0,0.45)}
+.photo-thumb .photo-overlay span{color:#fff;font-size:20px;opacity:0;transition:opacity .2s}
+.photo-thumb:hover .photo-overlay span{opacity:1}
+.photo-thumb .photo-badge{position:absolute;top:5px;right:5px;font-size:9px;padding:2px 5px;border-radius:4px;font-weight:700}
+.photo-badge.before{background:rgba(245,158,11,0.9);color:#000}
+.photo-badge.after{background:rgba(16,185,129,0.9);color:#000}
+/* Lightbox */
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:200;display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px}
+.lightbox.open{display:flex}
+.lightbox img{max-width:90vw;max-height:80vh;border-radius:var(--radius);object-fit:contain}
+.lightbox-info{color:rgba(255,255,255,0.7);font-size:12px;text-align:center}
+/* AI Assistant */
+.ai-panel{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
+.ai-messages{padding:16px;min-height:200px;max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+.ai-msg{padding:10px 14px;border-radius:var(--radius);font-size:13px;line-height:1.6;max-width:90%}
+.ai-msg.ai{background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.2);color:var(--text);align-self:flex-start}
+.ai-msg.user{background:var(--bg3);border:1px solid var(--border2);color:var(--text);align-self:flex-end}
+.ai-msg.thinking{opacity:.6;font-style:italic}
+.ai-input-row{padding:10px 14px;border-top:1px solid var(--border);display:flex;gap:8px}
+.ai-input{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);color:var(--text);padding:8px 11px;font-family:'Cairo',sans-serif;font-size:13px}
+.ai-input:focus{outline:none;border-color:var(--accent)}
+.ai-suggestions{display:flex;flex-wrap:wrap;gap:6px;padding:8px 14px;border-top:1px solid var(--border)}
+.ai-chip{font-size:11px;padding:4px 10px;border-radius:20px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);color:var(--accent);cursor:pointer;transition:all .15s}
+.ai-chip:hover{background:rgba(59,130,246,0.2)}
+/* Renew badge */
+.renew-pulse{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 8px;border-radius:20px;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);color:var(--amber);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+</style>
+</head>
+<body>
+
+<div class="app">
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="logo">
+    <h1>🛡️ SafetyOps</h1>
+    <span>إدارة عقود السلامة</span>
+  </div>
+  <div class="user-section">
+    <select class="user-select" id="active-user" onchange="switchUser(this.value)">
+      <option value="admin">⚡ مدير النظام</option>
+      <option value="supervisor">👁️ مشرف</option>
+      <option value="viewer">📋 مشاهد</option>
+    </select>
+  </div>
+  <nav class="nav">
+    <div class="nav-section">رئيسي</div>
+    <div class="nav-item active" onclick="showPage('dashboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      <span>لوحة التحكم</span>
+    </div>
+    <div class="nav-item" onclick="showPage('contracts')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <span>العقود</span>
+    </div>
+    <div class="nav-item" onclick="showPage('alerts')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      <span>التنبيهات</span>
+    </div>
+    <div class="nav-section">إدارة</div>
+    <div class="nav-item" onclick="showPage('calendar')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span>جدول الزيارات</span>
+    </div>
+    <div class="nav-item" onclick="showPage('contractors')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      <span>المقاولون</span>
+    </div>
+    <div class="nav-item" onclick="showPage('invoices')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+      <span>الفواتير والتكاليف</span>
+    </div>
+    <div class="nav-item" onclick="showPage('docs')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+      <span>المستندات</span>
+    </div>
+    <div class="nav-item" onclick="showPage('projects')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="4" rx="1"/><rect x="3" y="10" width="8" height="11" rx="1"/><rect x="13" y="10" width="8" height="5" rx="1"/><rect x="13" y="18" width="8" height="3" rx="1"/></svg>
+      <span>أرشيف المشاريع</span>
+    </div>
+    <div class="nav-section">تقارير وذكاء</div>
+    <div class="nav-item" onclick="showPage('analytics')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span>الإحصائيات</span>
+    </div>
+    <div class="nav-item" onclick="showPage('ai')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+      <span>مساعد AI</span>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="version">v3.0 — SafetyOps Pro</div>
+  </div>
+</aside>
+
+<!-- Main -->
+<main class="main">
+  <div class="topbar">
+    <h2 id="page-title">لوحة التحكم</h2>
+    <div class="topbar-actions">
+      <button class="btn sm" onclick="showPage('ai')" style="border-color:rgba(139,92,246,0.4);color:var(--purple)">✨ مساعد AI</button>
+      <button class="btn sm" onclick="exportPDF()">📄 تصدير PDF</button>
+      <label class="btn sm" style="cursor:pointer">
+        📥 استيراد Excel
+        <input type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="importExcel(this)">
+      </label>
+      <button class="btn primary sm" onclick="openModal('contract-modal')">+ عقد جديد</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD PAGE -->
+    <div class="page active" id="page-dashboard">
+      <div class="stats-grid" id="dash-stats"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+        <!-- Donut chart -->
+        <div class="table-wrap" style="padding:20px">
+          <div style="font-size:13px;font-weight:600;margin-bottom:16px">توزيع أنظمة السلامة</div>
+          <div style="display:flex;align-items:center;gap:20px">
+            <div class="donut-wrap">
+              <svg width="120" height="120" viewBox="0 0 120 120" id="donut-svg"></svg>
+              <div class="donut-center"><span id="donut-total">0</span><small>عقد</small></div>
+            </div>
+            <div id="donut-legend" style="flex:1;display:flex;flex-direction:column;gap:6px"></div>
+          </div>
+        </div>
+        <!-- Bar chart monthly costs -->
+        <div class="table-wrap" style="padding:20px">
+          <div style="font-size:13px;font-weight:600;margin-bottom:8px">التكاليف الشهرية (ر.س)</div>
+          <div class="chart-bar" id="cost-chart"></div>
+        </div>
+      </div>
+      <!-- Upcoming visits -->
+      <div class="table-wrap">
+        <div class="table-header">
+          <span style="font-size:13px;font-weight:600">أقرب الزيارات القادمة</span>
+          <button class="btn sm" onclick="showPage('calendar')">عرض التقويم</button>
+        </div>
+        <table><thead><tr>
+          <th>العقد</th><th>المشروع</th><th>النظام</th><th>التاريخ</th><th>الأيام المتبقية</th>
+        </tr></thead><tbody id="upcoming-body"></tbody></table>
+      </div>
+    </div>
+
+    <!-- CONTRACTS PAGE -->
+    <div class="page" id="page-contracts">
+      <div class="table-wrap">
+        <div class="table-header">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <input class="search-input" id="contract-search" placeholder="بحث..." oninput="renderContracts()">
+            <select class="search-input" id="filter-status" style="min-width:0" onchange="renderContracts()">
+              <option value="">كل الحالات</option>
+              <option value="active">فعّال</option>
+              <option value="expiring">ينتهي قريباً</option>
+              <option value="expired">منتهي</option>
+            </select>
+            <select class="search-input" id="filter-type" style="min-width:0" onchange="renderContracts()">
+              <option value="">كل الأنظمة</option>
+              <option value="fire">إنذار الحريق</option>
+              <option value="fa">الإطفاء</option>
+              <option value="gas">كشف الغاز</option>
+              <option value="cctv">كاميرات</option>
+              <option value="hvac">تهوية أمان</option>
+              <option value="elec">كهرباء طارئة</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn sm success" onclick="openModal('contract-modal')">+ إضافة عقد</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr>
+              <th>العقد</th><th>المقاول</th><th>النظام</th><th>المشروع</th><th>تنتهي في</th><th>الزيارات</th><th>القيمة</th><th>الحالة</th><th>إجراءات</th>
+            </tr></thead>
+            <tbody id="contracts-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ALERTS PAGE -->
+    <div class="page" id="page-alerts">
+      <div id="alerts-container"></div>
+    </div>
+
+    <!-- CALENDAR PAGE -->
+    <div class="page" id="page-calendar">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <button class="btn sm" onclick="changeMonth(-1)">‹ السابق</button>
+          <span id="cal-month-label" style="font-size:15px;font-weight:600;min-width:150px;text-align:center"></span>
+          <button class="btn sm" onclick="changeMonth(1)">التالي ›</button>
+        </div>
+        <button class="btn primary sm" onclick="openModal('visit-modal')">+ زيارة جديدة</button>
+      </div>
+      <div class="table-wrap" style="padding:12px">
+        <div class="cal-header">
+          <div class="cal-day-name">الأحد</div><div class="cal-day-name">الإثنين</div>
+          <div class="cal-day-name">الثلاثاء</div><div class="cal-day-name">الأربعاء</div>
+          <div class="cal-day-name">الخميس</div><div class="cal-day-name">الجمعة</div>
+          <div class="cal-day-name">السبت</div>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
+      <div style="margin-top:16px">
+        <div class="table-wrap">
+          <div class="table-header"><span style="font-size:13px;font-weight:600">سجل جميع الزيارات</span></div>
+          <table><thead><tr><th>العقد</th><th>التاريخ</th><th>النوع</th><th>الفني</th><th>النتيجة</th><th>إجراءات</th></tr></thead>
+          <tbody id="visits-body"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTRACTORS PAGE -->
+    <div class="page" id="page-contractors">
+      <div class="section-h">
+        <h3>إدارة المقاولين والموردين</h3>
+        <button class="btn primary sm" onclick="openModal('contractor-modal')">+ إضافة مقاول</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px" id="contractors-grid"></div>
+    </div>
+
+    <!-- INVOICES PAGE -->
+    <div class="page" id="page-invoices">
+      <div class="stats-grid" id="invoice-stats"></div>
+      <div class="table-wrap">
+        <div class="table-header">
+          <span style="font-size:13px;font-weight:600">سجل الفواتير والمدفوعات</span>
+          <button class="btn primary sm" onclick="openModal('invoice-modal')">+ فاتورة جديدة</button>
+        </div>
+        <table><thead><tr>
+          <th>رقم الفاتورة</th><th>العقد</th><th>المقاول</th><th>المبلغ</th><th>تاريخ الاستحقاق</th><th>الحالة</th><th>إجراءات</th>
+        </tr></thead><tbody id="invoices-body"></tbody></table>
+      </div>
+    </div>
+
+    <!-- DOCS PAGE -->
+    <div class="page" id="page-docs">
+      <div class="section-h">
+        <h3>المستندات والملفات</h3>
+        <button class="btn primary sm" onclick="openModal('doc-modal')">+ رفع مستند</button>
+      </div>
+      <div class="table-wrap">
+        <table><thead><tr>
+          <th>اسم الملف</th><th>العقد</th><th>النوع</th><th>الحجم</th><th>تاريخ الرفع</th><th>إجراءات</th>
+        </tr></thead><tbody id="docs-body"></tbody></table>
+      </div>
+    </div>
+
+    <!-- ANALYTICS PAGE -->
+    <div class="page" id="page-analytics">
+      <div class="stats-grid" id="analytics-stats"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:4px">
+        <div class="table-wrap" style="padding:20px">
+          <div style="font-size:13px;font-weight:600;margin-bottom:12px">نسبة إنجاز الزيارات لكل عقد</div>
+          <div id="visit-progress-list"></div>
+        </div>
+        <div class="table-wrap" style="padding:20px">
+          <div style="font-size:13px;font-weight:600;margin-bottom:12px">توزيع التكاليف بالنظام</div>
+          <div id="cost-by-type"></div>
+        </div>
+      </div>
+      <div class="table-wrap" style="margin-top:16px;padding:20px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:12px">مؤشر الأداء العام للصيانة</div>
+        <div id="kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px"></div>
+      </div>
+    </div>
+
+    <!-- PROJECTS ARCHIVE PAGE -->
+    <div class="page" id="page-projects">
+      <div class="section-h">
+        <h3>أرشيف المشاريع</h3>
+        <input class="search-input" id="proj-search" placeholder="بحث في المشاريع..." oninput="renderProjects()" style="min-width:220px">
+      </div>
+      <div id="projects-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px"></div>
+    </div>
+
+    <!-- AI ASSISTANT PAGE -->
+    <div class="page" id="page-ai">
+      <div style="display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start">
+        <div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:12px;color:var(--text2)">المساعد الذكي لعقود السلامة</div>
+          <div class="ai-panel">
+            <div class="ai-messages" id="ai-messages">
+              <div class="ai-msg ai">👋 مرحباً! أنا مساعدك الذكي لإدارة عقود صيانة أنظمة السلامة. يمكنني تحليل عقودك، اقتراح بنود الفحص، وتقديم توصيات الصيانة. كيف أساعدك اليوم؟</div>
+            </div>
+            <div class="ai-suggestions">
+              <span class="ai-chip" onclick="askAI('حلل العقود المنتهية وأعطني توصيات')">🔍 تحليل العقود المنتهية</span>
+              <span class="ai-chip" onclick="askAI('اقترح قائمة فحص لنظام إنذار الحريق')">📋 قائمة فحص الحريق</span>
+              <span class="ai-chip" onclick="askAI('ما هي أفضل ممارسات صيانة كشف الغاز؟')">⚡ ممارسات كشف الغاز</span>
+              <span class="ai-chip" onclick="askAI('كيف أحسّن أداء المقاولين؟')">📈 تحسين أداء المقاولين</span>
+              <span class="ai-chip" onclick="askAI('اعطني ملخص الوضع الحالي لكل العقود')">📊 ملخص الوضع الحالي</span>
+              <span class="ai-chip" onclick="askAI('ما هي متطلبات هيئة الدفاع المدني لصيانة الحريق؟')">🏛️ متطلبات الدفاع المدني</span>
+            </div>
+            <div class="ai-input-row">
+              <input class="ai-input" id="ai-input" placeholder="اكتب سؤالك هنا..." onkeydown="if(event.key==='Enter')sendAI()">
+              <button class="btn primary sm" onclick="sendAI()">إرسال</button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:12px;color:var(--text2)">تحليل سريع للعقود</div>
+          <div id="ai-quick-stats" style="display:flex;flex-direction:column;gap:10px"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+</div><!-- /app -->
+
+<!-- Project Detail Overlay -->
+<div class="project-detail" id="project-detail">
+  <div class="project-detail-header">
+    <button class="btn sm" onclick="closeProjectDetail()">← رجوع</button>
+    <h2 id="pd-title" style="font-size:16px;font-weight:600;flex:1"></h2>
+    <button class="btn sm" id="pd-ai-btn" onclick="analyzeProjectWithAI()">✨ تحليل بالـ AI</button>
+  </div>
+  <div style="padding:24px;max-width:1100px">
+    <div class="stats-grid" id="pd-stats" style="margin-bottom:20px"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+      <div class="table-wrap" style="padding:0;overflow:hidden">
+        <div class="table-header"><span style="font-size:13px;font-weight:600">عقود المشروع</span></div>
+        <table><thead><tr><th>العقد</th><th>النظام</th><th>الحالة</th><th>تجديد</th></tr></thead>
+        <tbody id="pd-contracts"></tbody></table>
+      </div>
+      <div class="table-wrap" style="padding:0;overflow:hidden">
+        <div class="table-header"><span style="font-size:13px;font-weight:600">آخر الزيارات</span></div>
+        <table><thead><tr><th>التاريخ</th><th>العقد</th><th>النتيجة</th></tr></thead>
+        <tbody id="pd-visits"></tbody></table>
+      </div>
+    </div>
+    <div class="table-wrap" style="padding:16px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <span style="font-size:13px;font-weight:600">معرض الصور والتوثيق المرئي</span>
+        <label class="btn sm primary" style="cursor:pointer">
+          📷 رفع صور
+          <input type="file" accept="image/*" multiple style="display:none" onchange="uploadPhotos(this)">
+        </label>
+      </div>
+      <div class="photo-grid" id="pd-photos"></div>
+    </div>
+    <div class="table-wrap" style="padding:16px">
+      <div class="table-header" style="padding:0;margin-bottom:12px;border:none">
+        <span style="font-size:13px;font-weight:600">مستندات المشروع</span>
+      </div>
+      <div id="pd-docs-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <img id="lightbox-img" src="" alt="">
+  <div class="lightbox-info" id="lightbox-info"></div>
+  <div style="color:rgba(255,255,255,0.5);font-size:12px">اضغط في أي مكان للإغلاق</div>
+</div>
+
+<!-- Renew Contract Modal -->
+<div class="modal-backdrop" id="renew-modal">
+<div class="modal" style="max-width:500px">
+  <div class="modal-head">
+    <h3>🔄 تجديد العقد</h3>
+    <button class="modal-close" onclick="closeModal('renew-modal')">×</button>
+  </div>
+  <div class="modal-body">
+    <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:var(--radius);padding:12px;margin-bottom:16px;font-size:13px;color:var(--text2)">
+      سيتم إنشاء نسخة جديدة من العقد مع تحديث التواريخ تلقائياً
+    </div>
+    <div class="form-grid">
+      <div class="form-group full"><label>اسم العقد الجديد</label><input id="rn-name" placeholder=""></div>
+      <div class="form-group"><label>تاريخ البداية الجديد</label><input id="rn-start" type="date"></div>
+      <div class="form-group"><label>تاريخ الانتهاء الجديد</label><input id="rn-end" type="date"></div>
+      <div class="form-group"><label>القيمة الجديدة (ر.س)</label><input id="rn-value" type="number"></div>
+      <div class="form-group"><label>ملاحظات التجديد</label><textarea id="rn-notes" placeholder="أي تعديلات على شروط العقد..."></textarea></div>
+    </div>
+  </div>
+  <div class="modal-foot">
+    <button class="btn" onclick="closeModal('renew-modal')">إلغاء</button>
+    <button class="btn primary" onclick="confirmRenew()">✅ تأكيد التجديد</button>
+  </div>
+</div>
+</div>
+
+<!-- Contract Modal -->
+<div class="modal-backdrop" id="contract-modal">
+<div class="modal">
+  <div class="modal-head">
+    <h3 id="contract-modal-title">إضافة عقد جديد</h3>
+    <button class="modal-close" onclick="closeModal('contract-modal')">×</button>
+  </div>
+  <div class="modal-body">
+    <div class="tabs">
+      <button class="tab active" onclick="switchModalTab(this,'ctab-basic')">بيانات العقد</button>
+      <button class="tab" onclick="switchModalTab(this,'ctab-checklist')">قائمة الفحص</button>
+    </div>
+    <div id="ctab-basic">
+      <div class="form-grid">
+        <div class="form-group full"><label>اسم العقد *</label><input id="f-name" placeholder="مثال: صيانة إنذار الحريق - برج A"></div>
+        <div class="form-group"><label>المقاول *</label>
+          <select id="f-contractor">
+            <option value="">اختر مقاولاً...</option>
+          </select>
+        </div>
+        <div class="form-group"><label>المشروع *</label><input id="f-project" placeholder="اسم المشروع"></div>
+        <div class="form-group"><label>نوع النظام</label>
+          <select id="f-type">
+            <option value="fire">🔴 إنذار الحريق</option>
+            <option value="fa">🟠 الإطفاء الآلي</option>
+            <option value="gas">🟢 كشف الغاز</option>
+            <option value="cctv">🟣 كاميرات المراقبة</option>
+            <option value="hvac">🔵 تهوية أمان</option>
+            <option value="elec">💙 كهرباء طارئة</option>
+          </select>
+        </div>
+        <div class="form-group"><label>قيمة العقد (ر.س)</label><input id="f-value" type="number" placeholder="0"></div>
+        <div class="form-group"><label>تاريخ البداية</label><input id="f-start" type="date"></div>
+        <div class="form-group"><label>تاريخ الانتهاء</label><input id="f-end" type="date"></div>
+        <div class="form-group"><label>الزيارات السنوية</label><input id="f-visits" type="number" value="4" min="1"></div>
+        <div class="form-group"><label>رقم المرجع</label><input id="f-ref" placeholder="اختياري"></div>
+        <div class="form-group full"><label>نطاق الأعمال</label><textarea id="f-scope" placeholder="وصف مختصر..."></textarea></div>
+      </div>
+    </div>
+    <div id="ctab-checklist" style="display:none">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:12px">قائمة الفحص الدورية — سيتم تضمينها في كل زيارة</div>
+      <div id="checklist-editor"></div>
+      <button class="btn sm" style="margin-top:10px" onclick="addChecklistItem()">+ إضافة بند</button>
+    </div>
+  </div>
+  <div class="modal-foot">
+    <button class="btn" onclick="closeModal('contract-modal')">إلغاء</button>
+    <button class="btn primary" onclick="saveContract()">حفظ العقد</button>
+  </div>
+</div>
+</div>
+
+<!-- Visit Modal -->
+<div class="modal-backdrop" id="visit-modal">
+<div class="modal">
+  <div class="modal-head">
+    <h3>تسجيل زيارة صيانة</h3>
+    <button class="modal-close" onclick="closeModal('visit-modal')">×</button>
+  </div>
+  <div class="modal-body">
+    <div class="form-grid">
+      <div class="form-group full"><label>العقد *</label><select id="vf-contract"></select></div>
+      <div class="form-group"><label>التاريخ *</label><input id="vf-date" type="date"></div>
+      <div class="form-group"><label>نوع الزيارة</label>
+        <select id="vf-type">
+          <option value="دورية">دورية</option>
+          <option value="طارئة">طارئة</option>
+          <option value="اختبار سنوي">اختبار سنوي</option>
+          <option value="إصلاح">إصلاح</option>
+        </select>
+      </div>
+      <div class="form-group"><label>اسم الفني</label><input id="vf-tech" placeholder="الاسم الكامل"></div>
+      <div class="form-group"><label>النتيجة</label>
+        <select id="vf-result">
+          <option value="سليم">✅ سليم</option>
+          <option value="ملاحظات">⚠️ يوجد ملاحظات</option>
+          <option value="حرجة">🔴 حالة حرجة</option>
+        </select>
+      </div>
+      <div class="form-group"><label>تاريخ الزيارة القادمة</label><input id="vf-next" type="date"></div>
+      <div class="form-group full"><label>الملاحظات</label><textarea id="vf-notes" placeholder="تفاصيل الزيارة..."></textarea></div>
+    </div>
+    <div id="visit-checklist-wrap" style="margin-top:16px"></div>
+    <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px">
+      <div style="font-size:12px;font-weight:500;color:var(--text2);margin-bottom:8px">📷 صور التوثيق (قبل / بعد)</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap" id="visit-photos-preview"></div>
+      <label class="btn sm" style="cursor:pointer;margin-top:8px">
+        + رفع صور
+        <input type="file" accept="image/*" multiple style="display:none" onchange="handleVisitPhotos(this)">
+      </label>
+    </div>
+  </div>
+  <div class="modal-foot">
+    <button class="btn" onclick="closeModal('visit-modal')">إلغاء</button>
+    <button class="btn primary" onclick="saveVisit()">تسجيل الزيارة</button>
+  </div>
+</div>
+</div>
+
+<!-- Contractor Modal -->
+<div class="modal-backdrop" id="contractor-modal">
+<div class="modal">
+  <div class="modal-head">
+    <h3 id="contractor-modal-title">إضافة مقاول</h3>
+    <button class="modal-close" onclick="closeModal('contractor-modal')">×</button>
+  </div>
+  <div class="modal-body">
+    <div class="form-grid">
+      <div class="form-group full"><label>اسم الشركة *</label><input id="con-name" placeholder="شركة الأمان للسلامة"></div>
+      <div class="form-group"><label>المسؤول</label><input id="con-contact" placeholder="اسم مسؤول التواصل"></div>
+      <div class="form-group"><label>الهاتف</label><input id="con-phone" placeholder="+966 5x xxx xxxx"></div>
+      <div class="form-group"><label>البريد الإلكتروني</label><input id="con-email" type="email" placeholder="info@company.com"></div>
+      <div class="form-group"><label>التخصص</label>
+        <select id="con-spec">
+          <option value="fire">إنذار الحريق</option>
+          <option value="fa">الإطفاء</option>
+          <option value="gas">كشف الغاز</option>
+          <option value="cctv">كاميرات</option>
+          <option value="hvac">تهوية أمان</option>
+          <option value="elec">كهرباء طارئة</option>
+          <option value="all">متعدد التخصصات</option>
+        </select>
+      </div>
+      <div class="form-group"><label>التقييم (1-5)</label><input id="con-rating" type="number" min="1" max="5" value="4"></div>
+      <div class="form-group full"><label>ملاحظات</label><textarea id="con-notes" placeholder="اعتمادات، تقييم الأداء..."></textarea></div>
+    </div>
+  </div>
+  <div class="modal-foot">
+    <button class="btn" onclick="closeModal('contractor-modal')">إلغاء</button>
+    <button class="btn primary" onclick="saveContractor()">حفظ</button>
+  </div>
+</div>
+</div>
+
+<!-- Invoice Modal -->
+<div class="modal-backdrop" id="invoice-modal">
+<div class="modal">
+  <div class="modal-head">
+    <h3>إضافة فاتورة</h3>
+    <button class="modal-close" onclick="closeModal('invoice-modal')">×</button>
+  </div>
+  <div class="modal-body">
+    <div class="form-grid">
+      <div class="form-group"><label>رقم الفاتورة</label><input id="inv-num" placeholder="INV-2026-001"></div>
+      <div class="form-group"><label>العقد</label><select id="inv-contract"></select></div>
+      <div class="form-group"><label>المبلغ (ر.س)</label><input id="inv-amount" type="number" placeholder="0"></div>
+      <div class="form-group"><label>تاريخ الاستحقاق</label><input id="inv-due" type="date"></div>
+      <div class="form-group"><label>الحالة</label>
+        <select id="inv-status">
+          <option value="pending">معلّقة</option>
+          <option value="paid">مدفوعة</option>
+          <option value="overdue">متأخرة</option>
+        </select>
+      </div>
+      <div class="form-group"><label>تاريخ الدفع</label><input id="inv-paid-date" type="date"></div>
+      <div class="form-group full"><label>وصف</label><textarea id="inv-desc" placeholder="وصف الفاتورة..."></textarea></div>
+    </div>
+  </div>
+  <div class="modal-foot">
+    <button class="btn" onclick="closeModal('invoice-modal')">إلغاء</button>
+    <button class="btn primary" onclick="saveInvoice()">حفظ الفاتورة</button>
+  </div>
+</div>
+</div>
+
+<!-- Doc Modal -->
+<div class="modal-backdrop" id="doc-modal">
+<div class="modal" style="max-width:480px">
+  <div class="modal-head">
+    <h3>رفع مستند</h3>
+    <button class="modal-close" onclick="closeModal('doc-modal')">×</button>
+  </div>
+  <div class="modal-body">
+    <div class="form-group" style="margin-bottom:14px"><label>العقد المرتبط</label><select id="doc-contract"></select></div>
+    <div class="form-group" style="margin-bottom:14px"><label>نوع المستند</label>
+      <select id="doc-type">
+        <option>عقد أصلي</option>
+        <option>شهادة اعتماد</option>
+        <option>تقرير فحص</option>
+        <option>رسومات هندسية</option>
+        <option>أخرى</option>
+      </select>
+    </div>
+    <div class="upload-zone" onclick="document.getElementById('doc-file').click()">
+      <div style="font-size:24px;margin-bottom:8px">📎</div>
+      <div style="font-size:13px;color:var(--text2)">اضغط لاختيار ملف أو اسحبه هنا</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:4px">PDF, Word, Excel, الصور</div>
+      <input type="file" id="doc-file" style="display:none" onchange="handleDocFile(this)">
+    </div>
+    <div id="doc-file-preview"></div>
+  </div>
+  <div class="modal-foot">
+    <button class="btn" onclick="closeModal('doc-modal')">إلغاء</button>
+    <button class="btn primary" onclick="saveDoc()">رفع المستند</button>
+  </div>
+</div>
+</div>
+
+<script>
+// ============ DATA ============
+const STORAGE_KEY = 'safetyops_data_v2';
+let db = {
+  contracts: [
+    {id:1,name:'صيانة إنذار الحريق - برج A',contractorId:1,project:'مجمع الواجهة التجارية',type:'fire',value:48000,start:'2024-01-01',end:'2026-03-15',visits:4,ref:'SAF-2024-001',scope:'صيانة شاملة لنظام إنذار الحريق',checklist:['فحص جميع الكواشف','اختبار أجهزة الإنذار الصوتية','فحص لوحة التحكم','اختبار بطاريات الطوارئ']},
+    {id:2,name:'صيانة نظام الإطفاء - مستودعات',contractorId:2,project:'مشروع اللوجستيات',type:'fa',value:72000,start:'2025-01-01',end:'2026-12-31',visits:2,ref:'GS-2025-007',scope:'فحص وصيانة نظام الرش الآلي',checklist:['فحص ضغط الأنابيب','اختبار صمامات التحكم','فحص رؤوس الرش']},
+    {id:3,name:'كشف الغاز - محطة الضخ',contractorId:1,project:'البنية التحتية',type:'gas',value:35000,start:'2023-06-01',end:'2025-12-31',visits:12,ref:'PT-2023-055',scope:'مراقبة أجهزة كشف تسرب الغاز',checklist:['معايرة أجهزة الكشف','اختبار التنبيهات','فحص الكابلات']},
+    {id:4,name:'كاميرات مراقبة - المجمع',contractorId:3,project:'المجمع السكني الشمالي',type:'cctv',value:28000,start:'2025-03-01',end:'2026-02-28',visits:4,ref:'VS-2025-012',scope:'صيانة منظومة الكاميرات',checklist:['فحص جودة الصورة','تنظيف العدسات','فحص التسجيل']},
+    {id:5,name:'تهوية طوارئ - البدروم',contractorId:2,project:'برج الأعمال المركزي',type:'hvac',value:55000,start:'2026-01-01',end:'2027-01-01',visits:4,ref:'TA-2026-001',scope:'صيانة مراوح الطوارئ',checklist:['فحص المراوح والمحركات','اختبار التشغيل التلقائي','فحص مجاري الهواء']},
+  ],
+  visits: [
+    {id:1,contractId:1,date:'2025-12-10',type:'دورية',tech:'أحمد الشمري',result:'سليم',notes:'جميع الكواشف سليمة',nextDate:'2026-03-10',checklist:{}},
+    {id:2,contractId:1,date:'2026-01-20',type:'اختبار سنوي',tech:'خالد المطيري',result:'ملاحظات',notes:'عطل في لوحة القطاع 3',nextDate:'2026-04-20',checklist:{}},
+    {id:3,contractId:2,date:'2026-02-05',type:'دورية',tech:'سعد العتيبي',result:'سليم',notes:'لا ملاحظات',nextDate:'2026-08-05',checklist:{}},
+  ],
+  contractors: [
+    {id:1,name:'شركة الأمان المتكاملة',contact:'عبدالله الزهراني',phone:'+966 50 123 4567',email:'info@aman.sa',spec:'fire',rating:5,notes:'شركة موثوقة - خبرة 15 سنة'},
+    {id:2,name:'جلف سيفتي سيستمز',contact:'محمد الغامدي',phone:'+966 55 987 6543',email:'info@gulfsafety.sa',spec:'all',rating:4,notes:'معتمدة من هيئة الدفاع المدني'},
+    {id:3,name:'فيجن سكيورتي',contact:'فهد العسيري',phone:'+966 56 555 7890',email:'info@vision.sa',spec:'cctv',rating:4,notes:'متخصصون في أنظمة المراقبة'},
+  ],
+  invoices: [
+    {id:1,num:'INV-2025-001',contractId:1,amount:12000,due:'2025-12-31',status:'paid',paidDate:'2025-12-15',desc:'دفعة ربع سنوية Q4 2025'},
+    {id:2,num:'INV-2026-001',contractId:2,amount:18000,due:'2026-02-28',status:'paid',paidDate:'2026-02-20',desc:'دفعة نصف سنوية'},
+    {id:3,num:'INV-2026-002',contractId:1,amount:12000,due:'2026-03-31',status:'pending',paidDate:'',desc:'دفعة ربع سنوية Q1 2026'},
+    {id:4,num:'INV-2026-003',contractId:3,amount:8750,due:'2026-02-01',status:'overdue',paidDate:'',desc:'دفعة شهرية يناير'},
+  ],
+  docs: [
+    {id:1,contractId:1,name:'عقد الصيانة 2024.pdf',type:'عقد أصلي',size:'2.4 MB',date:'2024-01-05'},
+    {id:2,contractId:2,name:'شهادة اعتماد Intertek.pdf',type:'شهادة اعتماد',size:'1.1 MB',date:'2025-01-10'},
+  ],
+  settings: { user: 'admin' }
+};
+
+// ============ PERSISTENCE ============
+function saveDB() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); } catch(e){}
+}
+function loadDB() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) db = JSON.parse(saved);
+  } catch(e){}
+}
+loadDB();
+
+// ============ PERMISSIONS ============
+const ROLES = {
+  admin:      {canEdit:true,  canDelete:true,  canViewFinance:true},
+  supervisor: {canEdit:true,  canDelete:false, canViewFinance:true},
+  viewer:     {canEdit:false, canDelete:false, canViewFinance:false},
+};
+let currentRole = 'admin';
+function switchUser(role) {
+  currentRole = role;
+  db.settings.user = role;
+  saveDB();
+  renderAll();
+  document.querySelectorAll('.btn.primary').forEach(b => {
+    b.style.display = ROLES[role].canEdit ? '' : 'none';
+  });
+}
+
+// ============ HELPERS ============
+const typeLabels = {fire:'إنذار الحريق',fa:'الإطفاء',gas:'كشف الغاز',cctv:'كاميرات',hvac:'تهوية أمان',elec:'كهرباء طارئة'};
+const typeClasses = {fire:'t-fire',fa:'t-fa',gas:'t-gas',cctv:'t-cctv',hvac:'t-hvac',elec:'t-elec'};
+const months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+
+function today() { return new Date().toISOString().slice(0,10); }
+function daysUntil(d) { return Math.floor((new Date(d) - new Date(today())) / 86400000); }
+function getStatus(c) {
+  const d = daysUntil(c.end);
+  if (d < 0) return 'expired';
+  if (d <= 60) return 'expiring';
+  return 'active';
+}
+function statusLabel(s) { return {active:'فعّال',expiring:'ينتهي قريباً',expired:'منتهي',pending:'معلّق'}[s]||s; }
+function contractorName(id) { const c = db.contractors.find(x=>x.id===id); return c?c.name:'—'; }
+function contractName(id) { const c = db.contracts.find(x=>x.id===id); return c?c.name:'—'; }
+function fmtMoney(n) { return Number(n).toLocaleString('ar-SA') + ' ر.س'; }
+function stars(n) { return '★'.repeat(n) + '☆'.repeat(5-n); }
+function nextId(arr) { return arr.length ? Math.max(...arr.map(x=>x.id)) + 1 : 1; }
+
+// ============ NAVIGATION ============
+const pageTitles = {
+  dashboard:'لوحة التحكم', contracts:'العقود', alerts:'التنبيهات',
+  calendar:'جدول الزيارات', contractors:'المقاولون والموردون',
+  invoices:'الفواتير والتكاليف', docs:'المستندات', analytics:'الإحصائيات والتحليل'
+};
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('page-title').textContent = pageTitles[name] || name;
+  const navItems = document.querySelectorAll('.nav-item');
+  navItems.forEach(item => { if(item.getAttribute('onclick') && item.getAttribute('onclick').includes("'"+name+"'")) item.classList.add('active'); });
+  renderPage(name);
+}
+function renderPage(name) {
+  const renders = {
+    dashboard: renderDashboard, contracts: renderContracts,
+    alerts: renderAlerts, calendar: renderCalendar,
+    contractors: renderContractors, invoices: renderInvoices,
+    docs: renderDocs, analytics: renderAnalytics
+  };
+  if (renders[name]) renders[name]();
+}
+function renderAll() {
+  const active = document.querySelector('.page.active');
+  if (active) renderPage(active.id.replace('page-',''));
+}
+
+// ============ DASHBOARD ============
+function renderDashboard() {
+  const total = db.contracts.length;
+  const active = db.contracts.filter(c=>getStatus(c)==='active').length;
+  const expiring = db.contracts.filter(c=>getStatus(c)==='expiring').length;
+  const expired = db.contracts.filter(c=>getStatus(c)==='expired').length;
+  const totalValue = db.contracts.reduce((s,c)=>s+Number(c.value),0);
+  document.getElementById('dash-stats').innerHTML = `
+    <div class="stat-card c-blue"><div class="stat-label">إجمالي العقود</div><div class="stat-val">${total}</div><div class="stat-sub">عقد صيانة</div></div>
+    <div class="stat-card c-green"><div class="stat-label">عقود فعّالة</div><div class="stat-val">${active}</div><div class="stat-sub">تعمل الآن</div></div>
+    <div class="stat-card c-amber"><div class="stat-label">تنتهي قريباً</div><div class="stat-val">${expiring}</div><div class="stat-sub">خلال 60 يوماً</div></div>
+    <div class="stat-card c-red"><div class="stat-label">عقود منتهية</div><div class="stat-val">${expired}</div><div class="stat-sub">تحتاج تجديد</div></div>
+    <div class="stat-card c-purple"><div class="stat-label">إجمالي القيمة</div><div class="stat-val" style="font-size:18px">${totalValue.toLocaleString('ar-SA')}</div><div class="stat-sub">ريال سعودي</div></div>
+  `;
+  renderDonut();
+  renderCostChart();
+  renderUpcoming();
+}
+
+function renderDonut() {
+  const types = ['fire','fa','gas','cctv','hvac','elec'];
+  const colors = ['#ef4444','#f59e0b','#10b981','#8b5cf6','#14b8a6','#3b82f6'];
+  const counts = types.map(t => db.contracts.filter(c=>c.type===t).length);
+  const total = counts.reduce((a,b)=>a+b,0);
+  document.getElementById('donut-total').textContent = total;
+  if (total === 0) { document.getElementById('donut-svg').innerHTML=''; document.getElementById('donut-legend').innerHTML=''; return; }
+  const r=46, cx=60, cy=60, stroke=16;
+  const circ = 2 * Math.PI * r;
+  let offset = 0;
+  let paths = '';
+  let legend = '';
+  types.forEach((t, i) => {
+    const pct = counts[i] / total;
+    const dash = pct * circ;
+    if (counts[i] > 0) {
+      paths += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${colors[i]}" stroke-width="${stroke}" stroke-dasharray="${dash} ${circ-dash}" stroke-dashoffset="${-offset}" stroke-linecap="butt"/>`;
+      offset += dash;
+      legend += `<div style="display:flex;align-items:center;gap:6px;font-size:12px"><span style="width:8px;height:8px;border-radius:50%;background:${colors[i]};flex-shrink:0"></span><span style="color:var(--text2)">${typeLabels[t]}</span><span style="margin-right:auto;color:var(--text);font-weight:600">${counts[i]}</span></div>`;
+    }
+  });
+  document.getElementById('donut-svg').innerHTML = paths;
+  document.getElementById('donut-legend').innerHTML = legend;
+}
+
+function renderCostChart() {
+  const now = new Date();
+  const bars = [];
+  for (let i=5; i>=0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    const label = months[d.getMonth()].slice(0,3);
+    const cost = db.invoices.filter(inv => {
+      const pd = inv.paidDate || inv.due;
+      return pd && pd.slice(0,7) === `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    }).reduce((s,inv) => s+Number(inv.amount), 0);
+    bars.push({label, cost});
+  }
+  const max = Math.max(...bars.map(b=>b.cost), 1);
+  document.getElementById('cost-chart').innerHTML = bars.map(b => {
+    const h = Math.round((b.cost/max)*100);
+    return `<div class="bar-col">
+      <div class="bar-val">${b.cost > 0 ? Math.round(b.cost/1000)+'k' : ''}</div>
+      <div class="bar" style="height:${h}%;background:var(--accent);opacity:0.7"></div>
+      <div class="bar-label">${b.label}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderUpcoming() {
+  const upcoming = db.visits
+    .filter(v => v.nextDate && v.nextDate >= today())
+    .sort((a,b) => a.nextDate.localeCompare(b.nextDate))
+    .slice(0, 5);
+  const body = document.getElementById('upcoming-body');
+  if (!upcoming.length) { body.innerHTML='<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text3)">لا توجد زيارات مجدولة</td></tr>'; return; }
+  body.innerHTML = upcoming.map(v => {
+    const c = db.contracts.find(x=>x.id===v.contractId);
+    if (!c) return '';
+    const d = daysUntil(v.nextDate);
+    const urgency = d <= 7 ? 'color:var(--red)' : d <= 14 ? 'color:var(--amber)' : '';
+    return `<tr>
+      <td style="font-weight:500">${c.name}</td>
+      <td style="color:var(--text2)">${c.project}</td>
+      <td><span class="type-badge ${typeClasses[c.type]}">${typeLabels[c.type]}</span></td>
+      <td>${v.nextDate}</td>
+      <td style="${urgency};font-weight:600">${d} يوم</td>
+    </tr>`;
+  }).join('');
+}
+
+// ============ CONTRACTS ============
+function renderContracts() {
+  const q = (document.getElementById('contract-search')||{value:''}).value.toLowerCase();
+  const fs = (document.getElementById('filter-status')||{value:''}).value;
+  const ft = (document.getElementById('filter-type')||{value:''}).value;
+  const list = db.contracts.filter(c => {
+    const st = getStatus(c);
+    return (!q || c.name.toLowerCase().includes(q) || contractorName(c.contractorId).toLowerCase().includes(q) || c.project.toLowerCase().includes(q))
+      && (!fs || st===fs) && (!ft || c.type===ft);
+  });
+  const canEdit = ROLES[currentRole].canEdit;
+  const body = document.getElementById('contracts-body');
+  if (!list.length) { body.innerHTML='<tr><td colspan="9" class="empty">لا توجد عقود مطابقة</td></tr>'; return; }
+  body.innerHTML = list.map(c => {
+    const st = getStatus(c);
+    const d = daysUntil(c.end);
+    const vDone = db.visits.filter(v=>v.contractId===c.id).length;
+    const pct = Math.min(100, Math.round(vDone/c.visits*100));
+    const cls = pct>=80?'good':pct>=40?'warn':'bad';
+    return `<tr>
+      <td style="font-weight:500;max-width:180px">${c.name}</td>
+      <td style="color:var(--text2);font-size:12px">${contractorName(c.contractorId)}</td>
+      <td><span class="type-badge ${typeClasses[c.type]}">${typeLabels[c.type]}</span></td>
+      <td style="color:var(--text2)">${c.project}</td>
+      <td style="font-size:12px">${c.end}<br><small style="color:${d<0?'var(--red)':d<=60?'var(--amber)':'var(--text3)'}">${d<0?'انتهى منذ '+Math.abs(d)+' يوم':'باقي '+d+' يوم'}</small></td>
+      <td><div style="font-size:12px;margin-bottom:3px">${vDone}/${c.visits}</div><div class="prog" style="min-width:60px"><div class="prog-fill ${cls}" style="width:${pct}%"></div></div></td>
+      <td style="font-size:12px">${canEdit?fmtMoney(c.value):'—'}</td>
+      <td><span class="badge ${st}">${statusLabel(st)}</span></td>
+      <td>
+        <div style="display:flex;gap:4px">
+          ${canEdit?`<button class="btn sm" onclick="editContract(${c.id})">تعديل</button>`:''}
+          <button class="btn sm" onclick="openVisitForContract(${c.id})">+ زيارة</button>
+          ${ROLES[currentRole].canDelete?`<button class="btn sm danger" onclick="deleteContract(${c.id})">حذف</button>`:''}
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ============ ALERTS ============
+function renderAlerts() {
+  let html = '';
+  const expiredList = db.contracts.filter(c=>getStatus(c)==='expired');
+  const expiringList = db.contracts.filter(c=>getStatus(c)==='expiring');
+  const overdueInv = db.invoices.filter(i=>i.status==='overdue');
+  if (expiredList.length) {
+    html += `<div style="font-size:12px;color:var(--text3);margin-bottom:8px;font-weight:600">عقود منتهية — ${expiredList.length}</div>`;
+    expiredList.forEach(c => {
+      html += `<div class="alert-card"><div class="alert-icon red">🚨</div><div style="flex:1"><div style="font-size:13px;font-weight:600">${c.name}</div><div style="font-size:12px;color:var(--text2)">${contractorName(c.contractorId)} — ${c.project}</div><div style="font-size:11px;color:var(--red);margin-top:2px">انتهى منذ ${Math.abs(daysUntil(c.end))} يوماً</div></div><button class="btn sm danger" onclick="editContract(${c.id})">تجديد</button></div>`;
+    });
+    html += '<div style="height:16px"></div>';
+  }
+  if (expiringList.length) {
+    html += `<div style="font-size:12px;color:var(--text3);margin-bottom:8px;font-weight:600">تنتهي قريباً — ${expiringList.length}</div>`;
+    expiringList.forEach(c => {
+      html += `<div class="alert-card"><div class="alert-icon amber">⚠️</div><div style="flex:1"><div style="font-size:13px;font-weight:600">${c.name}</div><div style="font-size:12px;color:var(--text2)">${contractorName(c.contractorId)} — ${c.project}</div><div style="font-size:11px;color:var(--amber);margin-top:2px">متبقي ${daysUntil(c.end)} يوم</div></div><button class="btn sm" onclick="editContract(${c.id})">تجديد</button></div>`;
+    });
+    html += '<div style="height:16px"></div>';
+  }
+  if (overdueInv.length) {
+    html += `<div style="font-size:12px;color:var(--text3);margin-bottom:8px;font-weight:600">فواتير متأخرة — ${overdueInv.length}</div>`;
+    overdueInv.forEach(inv => {
+      html += `<div class="alert-card"><div class="alert-icon red">💸</div><div style="flex:1"><div style="font-size:13px;font-weight:600">${inv.num} — ${fmtMoney(inv.amount)}</div><div style="font-size:12px;color:var(--text2)">${contractName(inv.contractId)}</div><div style="font-size:11px;color:var(--red);margin-top:2px">استحقت ${inv.due}</div></div></div>`;
+    });
+  }
+  if (!html) html = '<div class="empty">✅ لا توجد تنبيهات — كل شيء على ما يرام!</div>';
+  document.getElementById('alerts-container').innerHTML = html;
+}
+
+// ============ CALENDAR ============
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+function changeMonth(dir) { calMonth += dir; if(calMonth>11){calMonth=0;calYear++;}else if(calMonth<0){calMonth=11;calYear--;} renderCalendar(); }
+function renderCalendar() {
+  document.getElementById('cal-month-label').textContent = months[calMonth] + ' ' + calYear;
+  const first = new Date(calYear, calMonth, 1).getDay();
+  const days = new Date(calYear, calMonth+1, 0).getDate();
+  const todayStr = today();
+  let cells = '';
+  for (let i=0; i<first; i++) cells += '<div class="cal-cell other-month"></div>';
+  for (let d=1; d<=days; d++) {
+    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = dateStr === todayStr;
+    const dayVisits = db.visits.filter(v => v.date===dateStr || v.nextDate===dateStr);
+    const events = dayVisits.map(v => {
+      const c = db.contracts.find(x=>x.id===v.contractId);
+      return `<div class="cal-event ${v.result==='حرجة'?'urgent':''}">${c?c.name.slice(0,15):'زيارة'}</div>`;
+    }).join('');
+    cells += `<div class="cal-cell${isToday?' today':''}"><div class="cal-date">${d}</div>${events}</div>`;
+  }
+  document.getElementById('cal-grid').innerHTML = cells;
+  renderVisits();
+}
+function renderVisits() {
+  const body = document.getElementById('visits-body');
+  if (!db.visits.length) { body.innerHTML='<tr><td colspan="6" class="empty">لا توجد زيارات</td></tr>'; return; }
+  body.innerHTML = [...db.visits].reverse().map(v => {
+    const c = db.contracts.find(x=>x.id===v.contractId);
+    const rCol = v.result==='سليم'?'var(--green)':v.result==='حرجة'?'var(--red)':'var(--amber)';
+    return `<tr>
+      <td style="font-weight:500">${c?c.name:'—'}</td>
+      <td>${v.date}</td><td>${v.type}</td><td>${v.tech}</td>
+      <td><span style="color:${rCol};font-weight:600">${v.result}</span></td>
+      <td>${ROLES[currentRole].canDelete?`<button class="btn sm danger" onclick="deleteVisit(${v.id})">حذف</button>`:''}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ============ CONTRACTORS ============
+function renderContractors() {
+  const grid = document.getElementById('contractors-grid');
+  if (!db.contractors.length) { grid.innerHTML='<div class="empty">لا يوجد مقاولون</div>'; return; }
+  grid.innerHTML = db.contractors.map(c => {
+    const contractCount = db.contracts.filter(x=>x.contractorId===c.id).length;
+    const initials = c.name.split(' ').slice(0,2).map(w=>w[0]).join('');
+    return `<div class="contractor-card">
+      <div style="display:flex;gap:12px;margin-bottom:12px">
+        <div class="contractor-avatar">${initials}</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:600">${c.name}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px"><span class="stars">${stars(c.rating)}</span></div>
+        </div>
+        ${ROLES[currentRole].canEdit?`<button class="btn sm" onclick="editContractor(${c.id})">تعديل</button>`:''}
+      </div>
+      <div style="display:grid;gap:6px;font-size:12px">
+        <div style="display:flex;gap:6px"><span style="color:var(--text3)">المسؤول:</span><span>${c.contact}</span></div>
+        <div style="display:flex;gap:6px"><span style="color:var(--text3)">الهاتف:</span><span>${c.phone}</span></div>
+        <div style="display:flex;gap:6px"><span style="color:var(--text3)">البريد:</span><span style="color:var(--accent)">${c.email}</span></div>
+        <div style="display:flex;gap:6px"><span style="color:var(--text3)">التخصص:</span><span class="type-badge ${typeClasses[c.spec]||'t-fire'}">${typeLabels[c.spec]||'متعدد'}</span></div>
+        <div style="display:flex;gap:6px"><span style="color:var(--text3)">العقود:</span><span style="font-weight:600;color:var(--accent)">${contractCount}</span></div>
+        ${c.notes?`<div style="color:var(--text3);font-size:11px;margin-top:4px;border-top:1px solid var(--border);padding-top:6px">${c.notes}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ============ INVOICES ============
+function renderInvoices() {
+  const total = db.invoices.reduce((s,i)=>s+Number(i.amount),0);
+  const paid = db.invoices.filter(i=>i.status==='paid').reduce((s,i)=>s+Number(i.amount),0);
+  const pending = db.invoices.filter(i=>i.status==='pending').reduce((s,i)=>s+Number(i.amount),0);
+  const overdue = db.invoices.filter(i=>i.status==='overdue').reduce((s,i)=>s+Number(i.amount),0);
+  if (!ROLES[currentRole].canViewFinance) {
+    document.getElementById('invoice-stats').innerHTML='<div class="empty">⛔ ليس لديك صلاحية عرض البيانات المالية</div>';
+    document.getElementById('invoices-body').innerHTML='';
+    return;
+  }
+  document.getElementById('invoice-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-label">إجمالي الفواتير</div><div class="stat-val" style="font-size:18px">${fmtMoney(total)}</div></div>
+    <div class="stat-card c-green"><div class="stat-label">مدفوع</div><div class="stat-val" style="font-size:18px">${fmtMoney(paid)}</div></div>
+    <div class="stat-card c-amber"><div class="stat-label">معلّق</div><div class="stat-val" style="font-size:18px">${fmtMoney(pending)}</div></div>
+    <div class="stat-card c-red"><div class="stat-label">متأخر</div><div class="stat-val" style="font-size:18px">${fmtMoney(overdue)}</div></div>
+  `;
+  document.getElementById('invoices-body').innerHTML = db.invoices.map(inv => {
+    const stMap = {paid:'active',pending:'pending',overdue:'expired'};
+    const stLabel = {paid:'مدفوعة',pending:'معلّقة',overdue:'متأخرة'};
+    return `<tr>
+      <td style="font-weight:600;color:var(--accent)">${inv.num}</td>
+      <td style="font-size:12px">${contractName(inv.contractId)}</td>
+      <td style="font-size:12px">${contractorName(db.contracts.find(c=>c.id===inv.contractId)?.contractorId)}</td>
+      <td style="font-weight:600">${fmtMoney(inv.amount)}</td>
+      <td>${inv.due}</td>
+      <td><span class="badge ${stMap[inv.status]}">${stLabel[inv.status]}</span></td>
+      <td>${ROLES[currentRole].canEdit && inv.status!=='paid'?`<button class="btn sm success" onclick="markPaid(${inv.id})">تسجيل دفع</button>`:'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ============ DOCS ============
+function renderDocs() {
+  const body = document.getElementById('docs-body');
+  if (!db.docs.length) { body.innerHTML='<tr><td colspan="6" class="empty">لا توجد مستندات</td></tr>'; return; }
+  body.innerHTML = db.docs.map(d => {
+    const ext = d.name.split('.').pop().toUpperCase();
+    const icons = {PDF:'🔴',DOCX:'🔵',XLSX:'🟢',PNG:'🟡',JPG:'🟡'};
+    return `<tr>
+      <td>${icons[ext]||'📎'} <span style="font-weight:500">${d.name}</span></td>
+      <td style="font-size:12px;color:var(--text2)">${contractName(d.contractId)}</td>
+      <td><span class="type-badge t-fire" style="background:rgba(255,255,255,0.06);color:var(--text2)">${d.type}</span></td>
+      <td style="color:var(--text3)">${d.size}</td>
+      <td style="color:var(--text3)">${d.date}</td>
+      <td>${ROLES[currentRole].canDelete?`<button class="btn sm danger" onclick="deleteDoc(${d.id})">حذف</button>`:'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ============ ANALYTICS ============
+function renderAnalytics() {
+  const total = db.contracts.length;
+  const totalVisits = db.visits.length;
+  const totalValue = db.contracts.reduce((s,c)=>s+Number(c.value),0);
+  const paidAmount = db.invoices.filter(i=>i.status==='paid').reduce((s,i)=>s+Number(i.amount),0);
+  document.getElementById('analytics-stats').innerHTML = `
+    <div class="stat-card c-blue"><div class="stat-label">إجمالي العقود</div><div class="stat-val">${total}</div></div>
+    <div class="stat-card c-green"><div class="stat-label">زيارات منجزة</div><div class="stat-val">${totalVisits}</div></div>
+    <div class="stat-card c-purple"><div class="stat-label">إجمالي قيمة العقود</div><div class="stat-val" style="font-size:18px">${ROLES[currentRole].canViewFinance?fmtMoney(totalValue):'—'}</div></div>
+    <div class="stat-card c-green"><div class="stat-label">مدفوع حتى الآن</div><div class="stat-val" style="font-size:18px">${ROLES[currentRole].canViewFinance?fmtMoney(paidAmount):'—'}</div></div>
+  `;
+  // Visit progress
+  document.getElementById('visit-progress-list').innerHTML = db.contracts.map(c => {
+    const done = db.visits.filter(v=>v.contractId===c.id).length;
+    const pct = Math.min(100, Math.round(done/c.visits*100));
+    const cls = pct>=80?'good':pct>=40?'warn':'bad';
+    return `<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+        <span style="color:var(--text2)">${c.name.slice(0,30)}</span>
+        <span style="font-weight:600">${pct}%</span>
+      </div>
+      <div class="prog" style="height:8px"><div class="prog-fill ${cls}" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('') || '<div class="empty">لا توجد بيانات</div>';
+  // Cost by type
+  const types = ['fire','fa','gas','cctv','hvac','elec'];
+  const colors = ['#ef4444','#f59e0b','#10b981','#8b5cf6','#14b8a6','#3b82f6'];
+  document.getElementById('cost-by-type').innerHTML = types.map((t,i) => {
+    const val = db.contracts.filter(c=>c.type===t).reduce((s,c)=>s+Number(c.value),0);
+    const total = db.contracts.reduce((s,c)=>s+Number(c.value),0) || 1;
+    const pct = Math.round(val/total*100);
+    return val>0?`<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+        <span style="color:var(--text2)">${typeLabels[t]}</span>
+        <span style="font-weight:600;color:${colors[i]}">${pct}%</span>
+      </div>
+      <div class="prog" style="height:8px"><div class="prog-fill" style="width:${pct}%;background:${colors[i]}"></div></div>
+    </div>`:'';
+  }).join('');
+  // KPIs
+  const overdueCount = db.invoices.filter(i=>i.status==='overdue').length;
+  const expiredContracts = db.contracts.filter(c=>getStatus(c)==='expired').length;
+  const avgRating = db.contractors.length ? (db.contractors.reduce((s,c)=>s+c.rating,0)/db.contractors.length).toFixed(1) : '—';
+  document.getElementById('kpi-grid').innerHTML = `
+    <div class="stat-card"><div class="stat-label">متوسط تقييم المقاولين</div><div class="stat-val" style="color:var(--amber)">${avgRating} ★</div></div>
+    <div class="stat-card ${overdueCount?'c-red':'c-green'}"><div class="stat-label">فواتير متأخرة</div><div class="stat-val">${overdueCount}</div></div>
+    <div class="stat-card ${expiredContracts?'c-red':'c-green'}"><div class="stat-label">عقود تحتاج تجديد</div><div class="stat-val">${expiredContracts}</div></div>
+    <div class="stat-card c-blue"><div class="stat-label">مستندات مرفوعة</div><div class="stat-val">${db.docs.length}</div></div>
+  `;
+}
+
+// ============ MODAL HELPERS ============
+function openModal(id) {
+  if (!ROLES[currentRole].canEdit && id!=='contract-modal') return;
+  if (id==='contract-modal') {
+    document.getElementById('contract-modal-title').textContent='إضافة عقد جديد';
+    document.getElementById('f-name').value='';
+    document.getElementById('f-project').value='';
+    document.getElementById('f-value').value='';
+    document.getElementById('f-start').value='';
+    document.getElementById('f-end').value='';
+    document.getElementById('f-ref').value='';
+    document.getElementById('f-scope').value='';
+    document.getElementById('f-visits').value='4';
+    populateContractorSelect('f-contractor');
+    renderChecklistEditor([]);
+    window._editContractId = null;
+  }
+  if (id==='visit-modal') {
+    document.getElementById('vf-date').value=today();
+    document.getElementById('vf-tech').value='';
+    document.getElementById('vf-notes').value='';
+    document.getElementById('vf-next').value='';
+    populateContractSelect('vf-contract');
+    window._editVisitId = null;
+  }
+  if (id==='invoice-modal') { populateContractSelect('inv-contract'); }
+  if (id==='doc-modal') { populateContractSelect('doc-contract'); document.getElementById('doc-file-preview').innerHTML=''; }
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function switchModalTab(btn, tabId) {
+  btn.closest('.modal-body').querySelectorAll('[id^="ctab"]').forEach(t=>t.style.display='none');
+  btn.parentElement.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(tabId).style.display='';
+  btn.classList.add('active');
+}
+function populateContractorSelect(id) {
+  document.getElementById(id).innerHTML = '<option value="">اختر مقاولاً...</option>' +
+    db.contractors.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+}
+function populateContractSelect(id) {
+  document.getElementById(id).innerHTML = db.contracts.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+}
+
+// ============ CHECKLIST ============
+let checklistItems = [];
+function renderChecklistEditor(items) {
+  checklistItems = [...items];
+  const container = document.getElementById('checklist-editor');
+  container.innerHTML = checklistItems.map((item,i)=>`
+    <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
+      <input value="${item}" oninput="checklistItems[${i}]=this.value" style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);color:var(--text);padding:7px 10px;font-family:'Cairo',sans-serif;font-size:13px">
+      <button class="btn sm danger" onclick="removeChecklistItem(${i})">×</button>
+    </div>`).join('');
+}
+function addChecklistItem() { checklistItems.push(''); renderChecklistEditor(checklistItems); }
+function removeChecklistItem(i) { checklistItems.splice(i,1); renderChecklistEditor(checklistItems); }
+
+function renderVisitChecklist(contractId) {
+  const c = db.contracts.find(x=>x.id===contractId);
+  const items = c && c.checklist ? c.checklist : [];
+  const wrap = document.getElementById('visit-checklist-wrap');
+  if (!items.length) { wrap.innerHTML=''; return; }
+  wrap.innerHTML = `<div style="font-size:13px;font-weight:600;margin-bottom:10px;padding-top:12px;border-top:1px solid var(--border)">قائمة الفحص</div>` +
+    items.map((item,i)=>`
+    <div class="checklist-item">
+      <div class="chk" id="chk-${i}" onclick="toggleChk(${i})"></div>
+      <span style="font-size:13px">${item}</span>
+    </div>`).join('');
+}
+
+function toggleChk(i) {
+  const el = document.getElementById('chk-'+i);
+  el.classList.toggle('checked');
+}
+
+// ============ SAVE / EDIT ============
+function saveContract() {
+  const name = document.getElementById('f-name').value.trim();
+  const project = document.getElementById('f-project').value.trim();
+  if (!name || !project) { alert('يرجى تعبئة الحقول المطلوبة'); return; }
+  const data = {
+    name, project,
+    contractorId: parseInt(document.getElementById('f-contractor').value)||null,
+    type: document.getElementById('f-type').value,
+    value: parseFloat(document.getElementById('f-value').value)||0,
+    start: document.getElementById('f-start').value,
+    end: document.getElementById('f-end').value,
+    visits: parseInt(document.getElementById('f-visits').value)||4,
+    ref: document.getElementById('f-ref').value,
+    scope: document.getElementById('f-scope').value,
+    checklist: checklistItems.filter(x=>x.trim())
+  };
+  if (window._editContractId) {
+    Object.assign(db.contracts.find(c=>c.id===window._editContractId), data);
+  } else {
+    data.id = nextId(db.contracts);
+    db.contracts.push(data);
+  }
+  saveDB(); closeModal('contract-modal'); renderAll();
+}
+
+function editContract(id) {
+  const c = db.contracts.find(x=>x.id===id);
+  if (!c) return;
+  window._editContractId = id;
+  document.getElementById('contract-modal-title').textContent = 'تعديل العقد';
+  document.getElementById('f-name').value = c.name;
+  document.getElementById('f-project').value = c.project;
+  document.getElementById('f-value').value = c.value;
+  document.getElementById('f-start').value = c.start;
+  document.getElementById('f-end').value = c.end;
+  document.getElementById('f-visits').value = c.visits;
+  document.getElementById('f-ref').value = c.ref||'';
+  document.getElementById('f-scope').value = c.scope||'';
+  document.getElementById('f-type').value = c.type;
+  populateContractorSelect('f-contractor');
+  document.getElementById('f-contractor').value = c.contractorId||'';
+  renderChecklistEditor(c.checklist||[]);
+  document.getElementById('contract-modal').classList.add('open');
+}
+
+function deleteContract(id) {
+  if (!confirm('هل أنت متأكد من حذف هذا العقد؟')) return;
+  db.contracts = db.contracts.filter(c=>c.id!==id);
+  db.visits = db.visits.filter(v=>v.contractId!==id);
+  saveDB(); renderAll();
+}
+
+function openVisitForContract(cid) {
+  openModal('visit-modal');
+  setTimeout(()=>{ document.getElementById('vf-contract').value=cid; renderVisitChecklist(cid); },50);
+}
+
+function saveVisit() {
+  const contractId = parseInt(document.getElementById('vf-contract').value);
+  const date = document.getElementById('vf-date').value;
+  if (!contractId || !date) { alert('يرجى اختيار العقد والتاريخ'); return; }
+  const chkItems = {};
+  document.querySelectorAll('[id^="chk-"]').forEach(el => {
+    const i = el.id.replace('chk-','');
+    chkItems[i] = el.classList.contains('checked');
+  });
+  const data = {
+    contractId, date,
+    type: document.getElementById('vf-type').value,
+    tech: document.getElementById('vf-tech').value,
+    result: document.getElementById('vf-result').value,
+    notes: document.getElementById('vf-notes').value,
+    nextDate: document.getElementById('vf-next').value,
+    checklist: chkItems
+  };
+  if (window._editVisitId) {
+    Object.assign(db.visits.find(v=>v.id===window._editVisitId), data);
+  } else {
+    data.id = nextId(db.visits);
+    db.visits.push(data);
+  }
+  saveDB(); closeModal('visit-modal'); renderAll();
+}
+function deleteVisit(id) {
+  if (!confirm('حذف هذه الزيارة؟')) return;
+  db.visits = db.visits.filter(v=>v.id!==id);
+  saveDB(); renderAll();
+}
+
+function saveContractor() {
+  const name = document.getElementById('con-name').value.trim();
+  if (!name) { alert('يرجى إدخال اسم الشركة'); return; }
+  const data = {
+    name,
+    contact: document.getElementById('con-contact').value,
+    phone: document.getElementById('con-phone').value,
+    email: document.getElementById('con-email').value,
+    spec: document.getElementById('con-spec').value,
+    rating: parseInt(document.getElementById('con-rating').value)||4,
+    notes: document.getElementById('con-notes').value
+  };
+  if (window._editContractorId) {
+    Object.assign(db.contractors.find(c=>c.id===window._editContractorId), data);
+    window._editContractorId = null;
+  } else {
+    data.id = nextId(db.contractors);
+    db.contractors.push(data);
+  }
+  saveDB(); closeModal('contractor-modal'); renderContractors();
+}
+function editContractor(id) {
+  const c = db.contractors.find(x=>x.id===id);
+  if (!c) return;
+  window._editContractorId = id;
+  document.getElementById('con-name').value=c.name;
+  document.getElementById('con-contact').value=c.contact;
+  document.getElementById('con-phone').value=c.phone;
+  document.getElementById('con-email').value=c.email;
+  document.getElementById('con-spec').value=c.spec;
+  document.getElementById('con-rating').value=c.rating;
+  document.getElementById('con-notes').value=c.notes||'';
+  document.getElementById('contractor-modal-title').textContent='تعديل بيانات المقاول';
+  document.getElementById('contractor-modal').classList.add('open');
+}
+
+function saveInvoice() {
+  const data = {
+    id: nextId(db.invoices),
+    num: document.getElementById('inv-num').value || `INV-${Date.now()}`,
+    contractId: parseInt(document.getElementById('inv-contract').value),
+    amount: parseFloat(document.getElementById('inv-amount').value)||0,
+    due: document.getElementById('inv-due').value,
+    status: document.getElementById('inv-status').value,
+    paidDate: document.getElementById('inv-paid-date').value,
+    desc: document.getElementById('inv-desc').value
+  };
+  db.invoices.push(data);
+  saveDB(); closeModal('invoice-modal'); renderInvoices();
+}
+function markPaid(id) {
+  const inv = db.invoices.find(i=>i.id===id);
+  if (!inv) return;
+  inv.status='paid'; inv.paidDate=today();
+  saveDB(); renderInvoices();
+}
+
+function handleDocFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  window._pendingDoc = { name: file.name, size: (file.size/1024/1024).toFixed(1)+' MB' };
+  document.getElementById('doc-file-preview').innerHTML = `<div class="file-item"><span>📎</span><span style="flex:1;font-size:13px">${file.name}</span><span style="color:var(--text3);font-size:12px">${window._pendingDoc.size}</span></div>`;
+}
+function saveDoc() {
+  if (!window._pendingDoc) { alert('يرجى اختيار ملف'); return; }
+  const data = {
+    id: nextId(db.docs),
+    contractId: parseInt(document.getElementById('doc-contract').value),
+    name: window._pendingDoc.name,
+    type: document.getElementById('doc-type').value,
+    size: window._pendingDoc.size,
+    date: today()
+  };
+  db.docs.push(data);
+  window._pendingDoc = null;
+  saveDB(); closeModal('doc-modal'); renderDocs();
+}
+function deleteDoc(id) {
+  if (!confirm('حذف هذا المستند؟')) return;
+  db.docs = db.docs.filter(d=>d.id!==id);
+  saveDB(); renderDocs();
+}
+
+// ============ VISIT CHECKLIST TRIGGER ============
+document.addEventListener('change', function(e) {
+  if (e.target.id === 'vf-contract') {
+    renderVisitChecklist(parseInt(e.target.value));
+  }
+});
+
+// ============ EXPORT PDF ============
+function exportPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  doc.setFont('helvetica');
+  doc.setFontSize(18);
+  doc.text('Safety Maintenance Contracts Report', 20, 20);
+  doc.setFontSize(11);
+  doc.text('Generated: ' + new Date().toLocaleDateString('en-US'), 20, 28);
+  let y = 40;
+  doc.setFontSize(13);
+  doc.text('Contracts Summary', 20, y); y += 8;
+  doc.setFontSize(10);
+  doc.text(`Total Contracts: ${db.contracts.length}`, 20, y); y+=6;
+  doc.text(`Active: ${db.contracts.filter(c=>getStatus(c)==='active').length}`, 20, y); y+=6;
+  doc.text(`Expiring Soon: ${db.contracts.filter(c=>getStatus(c)==='expiring').length}`, 20, y); y+=6;
+  doc.text(`Expired: ${db.contracts.filter(c=>getStatus(c)==='expired').length}`, 20, y); y+=10;
+  doc.setFontSize(13);
+  doc.text('Contracts List', 20, y); y+=8;
+  doc.setFontSize(9);
+  db.contracts.forEach((c, i) => {
+    if (y > 260) { doc.addPage(); y = 20; }
+    const status = getStatus(c);
+    const d = daysUntil(c.end);
+    doc.text(`${i+1}. ${c.name}`, 20, y); y+=5;
+    doc.text(`   Project: ${c.project} | Type: ${typeLabels[c.type]} | End: ${c.end} (${d>=0?d+' days left':'EXPIRED'})`, 20, y); y+=5;
+    doc.text(`   Contractor: ${contractorName(c.contractorId)} | Value: ${c.value.toLocaleString()} SAR`, 20, y); y+=7;
+  });
+  if (ROLES[currentRole].canViewFinance && db.invoices.length) {
+    if (y > 220) { doc.addPage(); y = 20; }
+    doc.setFontSize(13);
+    doc.text('Financial Summary', 20, y); y+=8;
+    doc.setFontSize(9);
+    const paid = db.invoices.filter(i=>i.status==='paid').reduce((s,i)=>s+Number(i.amount),0);
+    const pending = db.invoices.filter(i=>i.status==='pending').reduce((s,i)=>s+Number(i.amount),0);
+    doc.text(`Paid: ${paid.toLocaleString()} SAR | Pending: ${pending.toLocaleString()} SAR`, 20, y);
+  }
+  doc.save('safety-contracts-report.pdf');
+}
+
+// ============ IMPORT EXCEL ============
+function importExcel(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const wb = XLSX.read(e.target.result, {type:'binary'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws);
+      let added = 0;
+      rows.forEach(row => {
+        if (row['اسم العقد'] || row['Contract Name'] || row['name']) {
+          const name = row['اسم العقد'] || row['Contract Name'] || row['name'] || '';
+          const project = row['المشروع'] || row['Project'] || row['project'] || '';
+          if (name) {
+            db.contracts.push({
+              id: nextId(db.contracts),
+              name, project,
+              type: row['type'] || 'fire',
+              value: parseFloat(row['القيمة'] || row['Value'] || row['value'] || 0),
+              start: row['بداية'] || row['Start'] || row['start'] || today(),
+              end: row['نهاية'] || row['End'] || row['end'] || today(),
+              visits: parseInt(row['زيارات'] || row['Visits'] || row['visits'] || 4),
+              ref: row['ref'] || '',
+              scope: row['scope'] || '',
+              contractorId: null,
+              checklist: []
+            });
+            added++;
+          }
+        }
+      });
+      saveDB();
+      alert(`✅ تم استيراد ${added} عقد بنجاح!`);
+      renderAll();
+    } catch(err) {
+      alert('خطأ في قراءة الملف: ' + err.message);
+    }
+  };
+  reader.readAsBinaryString(file);
+  input.value = '';
+}
+
+// ============ VISIT PHOTO HANDLING ============
+let pendingVisitPhotos = [];
+function handleVisitPhotos(input) {
+  const files = Array.from(input.files);
+  files.forEach(f => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      pendingVisitPhotos.push({dataUrl: e.target.result, name: f.name, type: 'visit', ts: today()});
+      renderVisitPhotosPreview();
+    };
+    reader.readAsDataURL(f);
+  });
+}
+function renderVisitPhotosPreview() {
+  const wrap = document.getElementById('visit-photos-preview');
+  if (!wrap) return;
+  wrap.innerHTML = pendingVisitPhotos.map((p,i) => `
+    <div style="position:relative">
+      <img src="${p.dataUrl}" style="width:64px;height:64px;object-fit:cover;border-radius:6px;border:1px solid var(--border2)">
+      <button onclick="pendingVisitPhotos.splice(${i},1);renderVisitPhotosPreview()" style="position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:var(--red);border:none;color:#fff;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>
+    </div>`).join('');
+}
+
+// ============ PROJECTS ARCHIVE ============
+function getProjects() {
+  const names = [...new Set(db.contracts.map(c => c.project).filter(Boolean))];
+  return names.map(name => {
+    const contracts = db.contracts.filter(c => c.project === name);
+    const visits = db.visits.filter(v => contracts.some(c => c.id === v.contractId));
+    const photos = (db.photos || []).filter(p => p.project === name);
+    const docs = db.docs.filter(d => contracts.some(c => c.id === d.contractId));
+    const totalValue = contracts.reduce((s,c) => s + Number(c.value), 0);
+    const activeCount = contracts.filter(c => getStatus(c) === 'active').length;
+    const expiredCount = contracts.filter(c => getStatus(c) === 'expired').length;
+    const expiringCount = contracts.filter(c => getStatus(c) === 'expiring').length;
+    return {name, contracts, visits, photos, docs, totalValue, activeCount, expiredCount, expiringCount};
+  });
+}
+
+function renderProjects() {
+  const q = (document.getElementById('proj-search') || {value:''}).value.toLowerCase();
+  const projects = getProjects().filter(p => !q || p.name.toLowerCase().includes(q));
+  const grid = document.getElementById('projects-grid');
+  if (!projects.length) { grid.innerHTML = '<div class="empty">لا توجد مشاريع</div>'; return; }
+  grid.innerHTML = projects.map(p => {
+    const health = p.expiredCount > 0 ? {color:'var(--red)', label:'يحتاج انتباه', icon:'⚠️'}
+      : p.expiringCount > 0 ? {color:'var(--amber)', label:'تنبيه', icon:'🔔'}
+      : {color:'var(--green)', label:'ممتاز', icon:'✅'};
+    return `<div class="project-card" onclick="openProjectDetail('${p.name.replace(/'/g,"\\'")}')">
+      <div class="project-card-header">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div style="font-size:15px;font-weight:600">${p.name}</div>
+          <span style="font-size:12px;color:${health.color}">${health.icon} ${health.label}</span>
+        </div>
+        <div style="display:flex;gap:12px;font-size:12px;color:var(--text2)">
+          <span>📋 ${p.contracts.length} عقد</span>
+          <span>🔧 ${p.visits.length} زيارة</span>
+          <span>📷 ${p.photos.length} صورة</span>
+        </div>
+      </div>
+      <div class="project-card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+          <div style="text-align:center"><div style="font-size:18px;font-weight:700;color:var(--green)">${p.activeCount}</div><div style="font-size:10px;color:var(--text3)">فعّال</div></div>
+          <div style="text-align:center"><div style="font-size:18px;font-weight:700;color:var(--amber)">${p.expiringCount}</div><div style="font-size:10px;color:var(--text3)">ينتهي قريباً</div></div>
+          <div style="text-align:center"><div style="font-size:18px;font-weight:700;color:var(--red)">${p.expiredCount}</div><div style="font-size:10px;color:var(--text3)">منتهي</div></div>
+        </div>
+        ${ROLES[currentRole].canViewFinance ? `<div style="font-size:12px;color:var(--text3)">إجمالي القيمة: <span style="color:var(--accent);font-weight:600">${p.totalValue.toLocaleString('ar-SA')} ر.س</span></div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+let currentProject = null;
+function openProjectDetail(name) {
+  currentProject = name;
+  const p = getProjects().find(x => x.name === name);
+  if (!p) return;
+  document.getElementById('pd-title').textContent = name;
+  // Stats
+  document.getElementById('pd-stats').innerHTML = `
+    <div class="stat-card c-blue"><div class="stat-label">عقود المشروع</div><div class="stat-val">${p.contracts.length}</div></div>
+    <div class="stat-card c-green"><div class="stat-label">زيارات منجزة</div><div class="stat-val">${p.visits.length}</div></div>
+    <div class="stat-card c-amber"><div class="stat-label">صور التوثيق</div><div class="stat-val">${p.photos.length}</div></div>
+    <div class="stat-card c-purple"><div class="stat-label">مستندات</div><div class="stat-val">${p.docs.length}</div></div>
+  `;
+  // Contracts table
+  document.getElementById('pd-contracts').innerHTML = p.contracts.map(c => {
+    const st = getStatus(c); const d = daysUntil(c.end);
+    return `<tr>
+      <td style="font-size:12px;font-weight:500">${c.name.slice(0,25)}</td>
+      <td><span class="type-badge ${typeClasses[c.type]}">${typeLabels[c.type]}</span></td>
+      <td><span class="badge ${st}">${statusLabel(st)}</span></td>
+      <td>${(st==='expired'||st==='expiring')?`<button class="btn sm" style="padding:3px 7px;font-size:11px" onclick="openRenew(${c.id})">🔄 جدّد</button>`:'-'}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="4" class="empty">لا توجد عقود</td></tr>';
+  // Visits
+  document.getElementById('pd-visits').innerHTML = p.visits.slice(-5).reverse().map(v => {
+    const c = db.contracts.find(x => x.id === v.contractId);
+    const rCol = v.result==='سليم'?'var(--green)':v.result==='حرجة'?'var(--red)':'var(--amber)';
+    return `<tr><td style="font-size:12px">${v.date}</td><td style="font-size:12px">${c?c.name.slice(0,20):'—'}</td><td style="color:${rCol};font-size:12px;font-weight:600">${v.result}</td></tr>`;
+  }).join('') || '<tr><td colspan="3" class="empty">لا توجد زيارات</td></tr>';
+  // Photos
+  renderProjectPhotos(name);
+  // Docs
+  const docsList = document.getElementById('pd-docs-list');
+  docsList.innerHTML = p.docs.length ? p.docs.map(d => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:18px">📎</span>
+      <div style="flex:1"><div style="font-size:13px;font-weight:500">${d.name}</div><div style="font-size:11px;color:var(--text3)">${d.type} · ${d.date}</div></div>
+      <span style="font-size:11px;color:var(--text3)">${d.size}</span>
+    </div>`).join('') : '<div style="color:var(--text3);font-size:13px">لا توجد مستندات مرفقة</div>';
+  document.getElementById('project-detail').classList.add('open');
+}
+
+function renderProjectPhotos(projectName) {
+  const photos = (db.photos || []).filter(p => p.project === projectName);
+  const grid = document.getElementById('pd-photos');
+  if (!photos.length) {
+    grid.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:20px;text-align:center;grid-column:1/-1">لا توجد صور — ارفع صور التوثيق من الزيارات</div>';
+    return;
+  }
+  grid.innerHTML = photos.map((p, i) => `
+    <div class="photo-thumb" onclick="openLightbox(${i},'${projectName}')">
+      <img src="${p.dataUrl}" alt="${p.caption||''}">
+      <div class="photo-overlay"><span>🔍</span></div>
+      ${p.photoType ? `<span class="photo-badge ${p.photoType}">${p.photoType==='before'?'قبل':'بعد'}</span>` : ''}
+    </div>`).join('');
+}
+
+function uploadPhotos(input) {
+  if (!currentProject) return;
+  if (!db.photos) db.photos = [];
+  const files = Array.from(input.files);
+  let loaded = 0;
+  files.forEach(f => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      db.photos.push({
+        id: nextId(db.photos),
+        project: currentProject,
+        dataUrl: e.target.result,
+        name: f.name,
+        caption: f.name,
+        photoType: f.name.toLowerCase().includes('قبل') || f.name.toLowerCase().includes('before') ? 'before'
+          : f.name.toLowerCase().includes('بعد') || f.name.toLowerCase().includes('after') ? 'after' : null,
+        date: today()
+      });
+      loaded++;
+      if (loaded === files.length) { saveDB(); renderProjectPhotos(currentProject); }
+    };
+    reader.readAsDataURL(f);
+  });
+}
+
+function openLightbox(idx, projectName) {
+  const photos = (db.photos || []).filter(p => p.project === projectName);
+  const photo = photos[idx];
+  if (!photo) return;
+  document.getElementById('lightbox-img').src = photo.dataUrl;
+  document.getElementById('lightbox-info').textContent = `${photo.caption || photo.name} · ${photo.date}`;
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
+function closeProjectDetail() { document.getElementById('project-detail').classList.remove('open'); currentProject = null; }
+
+// ============ RENEW CONTRACT ============
+let renewContractId = null;
+function openRenew(id) {
+  renewContractId = id;
+  const c = db.contracts.find(x => x.id === id);
+  if (!c) return;
+  const newStart = c.end;
+  const endDate = new Date(c.end);
+  endDate.setFullYear(endDate.getFullYear() + 1);
+  const newEnd = endDate.toISOString().slice(0,10);
+  document.getElementById('rn-name').value = c.name + ' (تجديد ' + new Date().getFullYear() + ')';
+  document.getElementById('rn-start').value = newStart;
+  document.getElementById('rn-end').value = newEnd;
+  document.getElementById('rn-value').value = c.value;
+  document.getElementById('rn-notes').value = '';
+  document.getElementById('renew-modal').classList.add('open');
+}
+
+function confirmRenew() {
+  const c = db.contracts.find(x => x.id === renewContractId);
+  if (!c) return;
+  const renewed = {
+    ...c,
+    id: nextId(db.contracts),
+    name: document.getElementById('rn-name').value || c.name,
+    start: document.getElementById('rn-start').value,
+    end: document.getElementById('rn-end').value,
+    value: parseFloat(document.getElementById('rn-value').value) || c.value,
+    scope: (document.getElementById('rn-notes').value ? '[تجديد] ' + document.getElementById('rn-notes').value + '\n' : '') + (c.scope || '')
+  };
+  db.contracts.push(renewed);
+  saveDB();
+  closeModal('renew-modal');
+  renderAll();
+  alert(`✅ تم تجديد العقد "${renewed.name}" بنجاح!`);
+}
+
+// ============ AI ASSISTANT ============
+const AI_KNOWLEDGE = {
+  checklistFire: ['فحص جميع كواشف الدخان والحرارة','اختبار أجهزة الإنذار الصوتية والضوئية','فحص لوحة التحكم الرئيسية','اختبار بطاريات الطوارئ وقياس الجهد','فحص نقاط اليدوية (Break Glass)','اختبار نظام الاتصال بغرفة التحكم','فحص الأسلاك والتوصيلات','تنظيف الكواشف من الغبار','اختبار التكامل مع نظام الإطفاء','توثيق النتائج وتوقيع المهندس المسؤول'],
+  checklistGas: ['معايرة أجهزة كشف الغاز بالغاز المرجعي','اختبار إنذار المستوى الأول (LEL 10%)','اختبار إنذار المستوى الثاني (LEL 25%)','فحص نظام التهوية الطارئة','اختبار قطع التغذية الكهربائية عند الخطر','فحص الكابلات والموصلات','تنظيف خلايا الاستشعار','فحص بطاريات الاحتياط','اختبار التكامل مع نظام الإنذار','توثيق شهادة المعايرة'],
+  bestPractices: 'أفضل ممارسات صيانة أنظمة السلامة:\n\n1. الالتزام بجدول الصيانة الدوري حسب متطلبات الشركة المصنّعة\n2. توثيق كل زيارة بتقرير مكتوب موقّع من الفني المختص\n3. الاحتفاظ بسجل تاريخي لجميع الأعطال والإصلاحات\n4. التأكد من اعتماد المقاولين من هيئة الدفاع المدني السعودية\n5. تدريب الموظفين على الاستجابة لحالات الطوارئ\n6. مراجعة عقود الصيانة قبل انتهائها بـ90 يوم على الأقل',
+  civilDefense: 'متطلبات هيئة الدفاع المدني السعودية:\n\n• فحص أنظمة إنذار الحريق: مرتين سنوياً كحد أدنى\n• فحص طفايات الحريق: سنوياً\n• فحص نظام الرش الآلي: ربع سنوي\n• شهادة سلامة سارية المفعول\n• توثيق جميع الفحوصات في سجل رسمي\n• إخطار الهيئة بأي عطل رئيسي خلال 24 ساعة',
+  contractorImprovement: 'لتحسين أداء المقاولين:\n\n1. حدد مؤشرات أداء واضحة (KPIs) في العقد\n2. ضع غرامات تأخير تلقائية عند تجاوز المواعيد\n3. طلب تقرير مصور بعد كل زيارة\n4. مراجعة التقييم كل ربع سنة\n5. مقارنة الأداء بين المقاولين لنفس نوع الأعمال\n6. بناء علاقة شراكة مع المقاولين المتميزين'
+};
+
+function getAIResponse(q) {
+  const lower = q.toLowerCase();
+  let resp = '';
+
+  // Analyze current data dynamically
+  if (lower.includes('منتهي') || lower.includes('تحليل') || lower.includes('ملخص') || lower.includes('وضع')) {
+    const expired = db.contracts.filter(c => getStatus(c) === 'expired');
+    const expiring = db.contracts.filter(c => getStatus(c) === 'expiring');
+    const overdueInv = db.invoices.filter(i => i.status === 'overdue');
+    const totalValue = db.contracts.reduce((s,c) => s+Number(c.value), 0);
+    resp = `📊 **تحليل الوضع الحالي:**\n\n`;
+    resp += `• إجمالي العقود: ${db.contracts.length} عقد بقيمة ${totalValue.toLocaleString('ar-SA')} ر.س\n`;
+    resp += `• عقود فعّالة: ${db.contracts.filter(c=>getStatus(c)==='active').length}\n`;
+    if (expired.length) resp += `• ⚠️ عقود منتهية تحتاج تجديد فوري: ${expired.length} — (${expired.map(c=>c.name.slice(0,20)).join('، ')})\n`;
+    if (expiring.length) resp += `• 🔔 تنتهي خلال 60 يوم: ${expiring.length} عقد\n`;
+    if (overdueInv.length) resp += `• 💸 فواتير متأخرة: ${overdueInv.length} بإجمالي ${overdueInv.reduce((s,i)=>s+Number(i.amount),0).toLocaleString('ar-SA')} ر.س\n`;
+    resp += `\n💡 **التوصية:** ${expired.length > 0 ? 'انتبه للعقود المنتهية — استخدم زر "تجديد" لتسريع العملية.' : 'الوضع جيد، استمر في المتابعة الدورية.'}`;
+  } else if (lower.includes('حريق') || lower.includes('إنذار')) {
+    resp = `🔴 **قائمة فحص إنذار الحريق:**\n\n${AI_KNOWLEDGE.checklistFire.map((x,i)=>`${i+1}. ${x}`).join('\n')}\n\n⏱️ المدة المقترحة: 3-4 ساعات للمبنى المتوسط`;
+  } else if (lower.includes('غاز') || lower.includes('كشف الغاز')) {
+    resp = `🟢 **قائمة فحص كشف الغاز:**\n\n${AI_KNOWLEDGE.checklistGas.map((x,i)=>`${i+1}. ${x}`).join('\n')}\n\n⚠️ ملاحظة: يجب إجراء الفحص في وجود مهندس معتمد من هيئة السلامة`;
+  } else if (lower.includes('دفاع مدني') || lower.includes('متطلبات') || lower.includes('اشتراطات')) {
+    resp = AI_KNOWLEDGE.civilDefense;
+  } else if (lower.includes('مقاول') || lower.includes('أداء')) {
+    resp = AI_KNOWLEDGE.contractorImprovement;
+    const avgRating = db.contractors.length ? (db.contractors.reduce((s,c)=>s+c.rating,0)/db.contractors.length).toFixed(1) : 'N/A';
+    resp += `\n\n📈 متوسط تقييم مقاوليك الحاليين: ${avgRating}/5`;
+  } else if (lower.includes('ممارسات') || lower.includes('نصائح') || lower.includes('أفضل')) {
+    resp = AI_KNOWLEDGE.bestPractices;
+  } else if (lower.includes('تجديد') || lower.includes('تمديد')) {
+    const expiring = db.contracts.filter(c => getStatus(c) === 'expiring' || getStatus(c) === 'expired');
+    resp = `🔄 **العقود التي تحتاج تجديد:**\n\n`;
+    if (expiring.length) {
+      expiring.forEach(c => { resp += `• ${c.name} — ينتهي ${c.end} (${daysUntil(c.end)} يوم)\n`; });
+      resp += `\n💡 استخدم زر "🔄 جدّد" بجانب كل عقد لإنشاء نسخة جديدة بضغطة واحدة`;
+    } else resp += 'لا توجد عقود تحتاج تجديداً حالياً ✅';
+  } else {
+    resp = `🤔 سؤال جيد! يمكنني مساعدتك في:\n\n• تحليل حالة العقود الحالية\n• اقتراح قوائم فحص لأنظمة السلامة المختلفة\n• متطلبات هيئة الدفاع المدني\n• نصائح تحسين أداء المقاولين\n• تحديد العقود التي تحتاج تجديداً\n\nحاول إعادة صياغة سؤالك بشكل أكثر تحديداً.`;
+  }
+  return resp;
+}
+
+function renderAIStats() {
+  const el = document.getElementById('ai-quick-stats');
+  if (!el) return;
+  const expired = db.contracts.filter(c=>getStatus(c)==='expired').length;
+  const expiring = db.contracts.filter(c=>getStatus(c)==='expiring').length;
+  const overdue = db.invoices.filter(i=>i.status==='overdue').length;
+  const totalVisits = db.visits.length;
+  const health = expired>0 ? {c:'var(--red)',l:'يحتاج تدخل'} : expiring>0 ? {c:'var(--amber)',l:'متابعة مطلوبة'} : {c:'var(--green)',l:'وضع جيد'};
+  el.innerHTML = `
+    <div class="stat-card" style="border-right:3px solid ${health.c}"><div class="stat-label">صحة المنظومة</div><div class="stat-val" style="font-size:16px;color:${health.c}">${health.l}</div></div>
+    <div class="stat-card c-red" style="display:${expired?'block':'none'}"><div class="stat-label">⚠️ عقود منتهية</div><div class="stat-val">${expired}</div><div class="stat-sub">تحتاج تجديد فوري</div></div>
+    <div class="stat-card c-amber" style="display:${expiring?'block':'none'}"><div class="stat-label">🔔 تنتهي قريباً</div><div class="stat-val">${expiring}</div><div class="stat-sub">خلال 60 يوم</div></div>
+    <div class="stat-card c-red" style="display:${overdue?'block':'none'}"><div class="stat-label">💸 فواتير متأخرة</div><div class="stat-val">${overdue}</div></div>
+    <div class="stat-card c-green"><div class="stat-label">✅ زيارات منجزة</div><div class="stat-val">${totalVisits}</div></div>
+    <div style="margin-top:8px">
+      <button class="btn sm primary" style="width:100%" onclick="askAI('اعطني ملخص الوضع الحالي لكل العقود')">✨ تحليل شامل ↗</button>
+    </div>`;
+}
+
+function addAIMessage(text, role) {
+  const msgs = document.getElementById('ai-messages');
+  const div = document.createElement('div');
+  div.className = `ai-msg ${role}`;
+  div.style.whiteSpace = 'pre-wrap';
+  div.textContent = text;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+function askAI(q) {
+  document.getElementById('ai-input').value = q;
+  sendAI();
+}
+
+function sendAI() {
+  const input = document.getElementById('ai-input');
+  const q = input.value.trim();
+  if (!q) return;
+  input.value = '';
+  addAIMessage(q, 'user');
+  const thinking = addAIMessage('جاري التفكير...', 'ai thinking');
+  setTimeout(() => {
+    thinking.textContent = getAIResponse(q);
+    thinking.classList.remove('thinking');
+    document.getElementById('ai-messages').scrollTop = 99999;
+  }, 700);
+}
+
+function analyzeProjectWithAI() {
+  if (!currentProject) return;
+  const p = getProjects().find(x => x.name === currentProject);
+  if (!p) return;
+  showPage('ai');
+  closeProjectDetail();
+  setTimeout(() => {
+    askAI(`حلل مشروع "${currentProject}" — ${p.contracts.length} عقود، ${p.visits.length} زيارات، ${p.expiredCount} منتهية`);
+  }, 300);
+}
+
+// ============ PATCH: save visit photos ============
+const _origSaveVisit = saveVisit;
+// Override saveVisit to also save photos
+const saveVisitOrig = saveVisit;
+function saveVisit() {
+  const contractId = parseInt(document.getElementById('vf-contract').value);
+  const date = document.getElementById('vf-date').value;
+  if (!contractId || !date) { alert('يرجى اختيار العقد والتاريخ'); return; }
+  const c = db.contracts.find(x => x.id === contractId);
+  if (pendingVisitPhotos.length && c) {
+    if (!db.photos) db.photos = [];
+    pendingVisitPhotos.forEach(p => {
+      db.photos.push({id: nextId(db.photos), project: c.project, dataUrl: p.dataUrl, name: p.name, caption: p.name, date, photoType: null});
+    });
+    pendingVisitPhotos = [];
+    renderVisitPhotosPreview();
+  }
+  const chkItems = {};
+  document.querySelectorAll('[id^="chk-"]').forEach(el => {
+    chkItems[el.id.replace('chk-','')] = el.classList.contains('checked');
+  });
+  const data = {
+    contractId, date,
+    type: document.getElementById('vf-type').value,
+    tech: document.getElementById('vf-tech').value,
+    result: document.getElementById('vf-result').value,
+    notes: document.getElementById('vf-notes').value,
+    nextDate: document.getElementById('vf-next').value,
+    checklist: chkItems
+  };
+  if (window._editVisitId) {
+    Object.assign(db.visits.find(v=>v.id===window._editVisitId), data);
+  } else {
+    data.id = nextId(db.visits);
+    db.visits.push(data);
+  }
+  saveDB(); closeModal('visit-modal'); renderAll();
+}
+
+// ============ PATCH renderContracts: add renew button ============
+const _origRenderContracts = renderContracts;
+function renderContracts() {
+  const q = (document.getElementById('contract-search')||{value:''}).value.toLowerCase();
+  const fs = (document.getElementById('filter-status')||{value:''}).value;
+  const ft = (document.getElementById('filter-type')||{value:''}).value;
+  const list = db.contracts.filter(c => {
+    const st = getStatus(c);
+    return (!q||(c.name.toLowerCase().includes(q)||contractorName(c.contractorId).toLowerCase().includes(q)||c.project.toLowerCase().includes(q)))
+      &&(!fs||st===fs)&&(!ft||c.type===ft);
+  });
+  const canEdit = ROLES[currentRole].canEdit;
+  const body = document.getElementById('contracts-body');
+  if (!list.length) { body.innerHTML='<tr><td colspan="9" class="empty">لا توجد عقود مطابقة</td></tr>'; return; }
+  body.innerHTML = list.map(c => {
+    const st = getStatus(c);
+    const d = daysUntil(c.end);
+    const vDone = db.visits.filter(v=>v.contractId===c.id).length;
+    const pct = Math.min(100, Math.round(vDone/c.visits*100));
+    const cls = pct>=80?'good':pct>=40?'warn':'bad';
+    const renewBtn = (st==='expired'||st==='expiring') && canEdit
+      ? `<button class="btn sm" style="background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.3);color:var(--amber);padding:3px 7px;font-size:11px" onclick="openRenew(${c.id})">🔄 جدّد</button>` : '';
+    return `<tr>
+      <td style="font-weight:500;max-width:180px">${c.name}${(st==='expired'||st==='expiring')?'<br><span class="renew-pulse">'+statusLabel(st)+'</span>':''}</td>
+      <td style="color:var(--text2);font-size:12px">${contractorName(c.contractorId)}</td>
+      <td><span class="type-badge ${typeClasses[c.type]}">${typeLabels[c.type]}</span></td>
+      <td style="color:var(--text2)">${c.project}</td>
+      <td style="font-size:12px">${c.end}<br><small style="color:${d<0?'var(--red)':d<=60?'var(--amber)':'var(--text3)'}">${d<0?'انتهى منذ '+Math.abs(d)+' يوم':'باقي '+d+' يوم'}</small></td>
+      <td><div style="font-size:12px;margin-bottom:3px">${vDone}/${c.visits}</div><div class="prog" style="min-width:60px"><div class="prog-fill ${cls}" style="width:${pct}%"></div></div></td>
+      <td style="font-size:12px">${canEdit?fmtMoney(c.value):'—'}</td>
+      <td><span class="badge ${st}">${statusLabel(st)}</span></td>
+      <td>
+        <div style="display:flex;gap:4px;flex-wrap:wrap">
+          ${canEdit?`<button class="btn sm" onclick="editContract(${c.id})">تعديل</button>`:''}
+          ${renewBtn}
+          <button class="btn sm" onclick="openVisitForContract(${c.id})">+ زيارة</button>
+          ${ROLES[currentRole].canDelete?`<button class="btn sm danger" onclick="deleteContract(${c.id})">حذف</button>`:''}
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ============ PATCH pageTitles & renderPage ============
+pageTitles['projects'] = 'أرشيف المشاريع';
+pageTitles['ai'] = 'مساعد الذكاء الاصطناعي';
+const _origRenderPage = renderPage;
+function renderPage(name) {
+  const renders = {
+    dashboard: renderDashboard, contracts: renderContracts,
+    alerts: renderAlerts, calendar: renderCalendar,
+    contractors: renderContractors, invoices: renderInvoices,
+    docs: renderDocs, analytics: renderAnalytics,
+    projects: renderProjects, ai: renderAIStats
+  };
+  if (renders[name]) renders[name]();
+}
+
+// ============ INIT ============
+currentRole = db.settings.user || 'admin';
+document.getElementById('active-user').value = currentRole;
+renderDashboard();
+</script>
+</body>
+</html>
