@@ -98,6 +98,7 @@ model Organization {
   auditLogs      AuditLog[]
   weeklyReports  WeeklyReport[]
   rfqs           Rfq[]
+  parts          Part[]
   vendorBlacklist VendorBlacklistEntry[]
   approvalThresholds ApprovalThreshold[]
 
@@ -592,11 +593,40 @@ model WorkOrderPartUsed {
   id          String    @id @default(cuid())
   workOrderId String
   workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  partId      String?
+  part        Part?     @relation(fields: [partId], references: [id])
   partName    String
   quantity    Float     @default(1)
   unitCostSar Decimal?  @db.Decimal(10, 2)
+  usedAt      DateTime  @default(now())
 
   @@index([workOrderId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// SPARE PARTS INVENTORY (Phase 5)
+// ─────────────────────────────────────────────────────────────────────────
+
+model Part {
+  id               String   @id @default(cuid())
+  orgId            String
+  organization     Organization @relation(fields: [orgId], references: [id])
+  partNumber       String?
+  name             String
+  brand            String?
+  supplierName     String?
+  store            String?
+  unitCostSar      Decimal? @db.Decimal(10, 2)
+  stockQuantity    Float    @default(0)
+  minStockQuantity Float    @default(0)
+  compatibleWith   String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  usages WorkOrderPartUsed[]
+
+  @@unique([orgId, partNumber])
+  @@index([orgId])
 }
 
 // ─────────────────────────────────────────────────────────────────────────

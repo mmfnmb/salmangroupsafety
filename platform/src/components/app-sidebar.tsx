@@ -12,6 +12,7 @@ type NavLabels = {
   technicians: string;
   vendors: string;
   rfq: string;
+  inventory: string;
   contracts: string;
   reports: string;
   settings: string;
@@ -31,6 +32,7 @@ export function AppSidebar({ t, role, orgName }: { t: NavLabels; role: UserRole;
     { href: "/app/technicians", label: t.technicians },
     { href: "/app/vendors", label: t.vendors },
     { href: "/app/rfq", label: t.rfq },
+    { href: "/app/inventory", label: t.inventory },
     { href: "/app/contracts", label: t.contracts },
     { href: "/app/reports", label: t.reports },
   ];

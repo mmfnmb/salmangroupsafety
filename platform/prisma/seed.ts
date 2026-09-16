@@ -634,6 +634,17 @@ async function seedOrg(
     }
   }
 
+  // Spare parts catalog — one item deliberately below minimum stock.
+  const partDefs = [
+    { name: "AC Compressor Relay", partNumber: "REL-100", brand: "Carrier", store: "Main Store", unitCostSar: 180, stockQuantity: 12, minStockQuantity: 4 },
+    { name: "Fire Pump Pressure Switch", partNumber: "PSW-220", brand: "Honeywell", store: "Main Store", unitCostSar: 420, stockQuantity: 2, minStockQuantity: 3 },
+    { name: "HVAC Air Filter (Standard)", partNumber: "FLT-050", brand: "Generic", store: "Main Store", unitCostSar: 35, stockQuantity: 40, minStockQuantity: 10 },
+    { name: "MDB Circuit Breaker 100A", partNumber: "CB-100A", brand: "Schneider Electric", store: "Electrical Store", unitCostSar: 650, stockQuantity: 5, minStockQuantity: 2 },
+  ];
+  await prisma.part.createMany({
+    data: partDefs.map((p) => ({ ...p, orgId: org.id, compatibleWith: null })),
+  });
+
   console.log(`Seeded ${org.id} with ${assets.length} assets, 2 technicians, 4 requests/work orders.`);
 }
 

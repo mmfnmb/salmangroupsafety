@@ -9,6 +9,7 @@ import { evaluateSlaStage, DEFAULT_SLA_MINUTES } from "@/lib/sla";
 import { canViewFinancials } from "@/lib/roles";
 import { assignTechnician, assignVendor, updateWorkOrderStatus, completeWorkOrder, customerSignoff } from "@/server/work-orders";
 import { ChecklistFieldInput, type ChecklistItem } from "@/components/checklist-field";
+import { addPartUsedToWorkOrder } from "@/server/inventory";
 import { format } from "date-fns";
 import Link from "next/link";
 
@@ -42,13 +43,15 @@ export default async function WorkOrderDetailPage({ params }: { params: Promise<
       slaPolicy: true,
       request: true,
       pmSchedule: { include: { pmPlan: { include: { checklist: true } } } },
+      partsUsed: { orderBy: { usedAt: "desc" } },
     },
   });
   if (!wo) notFound();
 
-  const [technicians, blacklistedVendorIds] = await Promise.all([
+  const [technicians, blacklistedVendorIds, availableParts] = await Promise.all([
     prisma.technician.findMany({ where: { orgId: session.orgId, status: "ACTIVE" }, orderBy: { name: "asc" } }),
     prisma.vendorBlacklistEntry.findMany({ where: { orgId: session.orgId }, select: { vendorId: true } }),
+    prisma.part.findMany({ where: { orgId: session.orgId }, orderBy: { name: "asc" } }),
   ]);
   const blacklistedIds = new Set(blacklistedVendorIds.map((b) => b.vendorId));
   const allApprovedVendors = await prisma.vendor.findMany({
@@ -239,6 +242,35 @@ export default async function WorkOrderDetailPage({ params }: { params: Promise<
               </CardBody>
             </Card>
           )}
+
+          <Card>
+            <CardHeader><h2 className="text-sm font-semibold text-slate-900">Parts used</h2></CardHeader>
+            <div className="divide-y divide-slate-100">
+              {wo.partsUsed.map((p) => (
+                <div key={p.id} className="flex items-center justify-between px-5 py-2.5 text-sm">
+                  <span>{p.partName} × {p.quantity}</span>
+                  {showFinancials && p.unitCostSar != null && (
+                    <span className="text-slate-500">SAR {(Number(p.unitCostSar) * p.quantity).toLocaleString()}</span>
+                  )}
+                </div>
+              ))}
+              {wo.partsUsed.length === 0 && <p className="p-5 text-sm text-slate-500">No parts logged yet.</p>}
+            </div>
+            <CardBody>
+              <form action={addPartUsedToWorkOrder.bind(null, wo.id)} className="grid grid-cols-[1fr_auto_auto] gap-2">
+                <Select name="partId" defaultValue="" className="text-sm">
+                  <option value="">Ad-hoc / not in inventory</option>
+                  {availableParts.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name} ({p.stockQuantity} in stock)</option>
+                  ))}
+                </Select>
+                <Input name="quantity" type="number" min="1" defaultValue="1" className="w-20 px-2 py-1.5" />
+                <Button type="submit" variant="secondary" className="px-3 py-1.5 text-xs">Add</Button>
+                <Input name="partName" placeholder="Part name (if ad-hoc)" className="col-span-2 px-2 py-1.5" />
+                <Input name="unitCostSar" type="number" step="0.01" placeholder="Cost (if ad-hoc)" className="px-2 py-1.5" />
+              </form>
+            </CardBody>
+          </Card>
         </div>
 
         <div className="space-y-6">

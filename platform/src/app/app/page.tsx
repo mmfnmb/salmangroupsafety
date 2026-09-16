@@ -30,6 +30,12 @@ export default async function OpsDashboardPage() {
     prisma.technician.count({ where: { orgId: session.orgId, status: "ACTIVE" } }),
   ]);
 
+  const parts = await prisma.part.findMany({
+    where: { orgId: session.orgId },
+    select: { stockQuantity: true, minStockQuantity: true },
+  });
+  const lowStockParts = parts.filter((p) => p.stockQuantity <= p.minStockQuantity).length;
+
   const emergencies = openWorkOrders.filter((wo) => wo.priority === "EMERGENCY" || wo.priority === "CRITICAL");
   const slaBreached = openWorkOrders.filter((wo) => {
     const allotted = wo.slaPolicy?.resolutionMinutes ?? DEFAULT_SLA_MINUTES[wo.priority].resolution;
@@ -56,6 +62,7 @@ export default async function OpsDashboardPage() {
         <StatCard label="PM Due / Overdue" value={duePM} tone={duePM > 0 ? "amber" : "green"} />
         <StatCard label="Active Technicians" value={technicianCount} />
         <StatCard label="Awaiting Approval" value={awaitingApproval.length} />
+        <StatCard label="Low Stock Parts" value={lowStockParts} tone={lowStockParts > 0 ? "amber" : "green"} />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

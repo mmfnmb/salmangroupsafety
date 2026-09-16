@@ -119,6 +119,20 @@ Public entry points (no login required):
   matching the "vendor invoices you directly, platform fee billed
   separately" model in section 35.
 
+## What's implemented (Phase 5, partial — spare parts inventory)
+
+- Org-scoped parts catalog (`/app/inventory`) — part number, brand,
+  supplier, store location, unit cost, stock and minimum-stock levels, with
+  low-stock rows highlighted and a one-field restock action.
+- Parts consumption wired into the work order itself: log a part against a
+  job either from inventory (decrements stock atomically inside a
+  transaction, and is rejected if there isn't enough on hand) or as an
+  ad-hoc line item for something not stocked.
+- A real, computed "Low Stock Parts" count on the operations dashboard —
+  verified end-to-end: added 2 units of a part to a work order, stock
+  dropped from 12 to 10 in the database, and the usage line appeared
+  against that job.
+
 ## What's schema-ready but not yet built (documented, not faked)
 
 Not yet built: AI-assisted triage, scope-of-work drafting and quote
@@ -127,8 +141,8 @@ up, which this environment doesn't have; the UI hooks and prompts are easy
 to add once one is provided, but nothing "AI" ships without a real model
 behind it), file/photo upload to object storage (photo fields exist but
 there's no upload backend wired up — noted inline in the UI where
-relevant), spare parts inventory, ZATCA/e-invoicing, and WhatsApp
-notifications.
+relevant), IoT device integrations, ZATCA/e-invoicing, WhatsApp
+notifications, and a public Open API.
 
 ## Known limitations
 
