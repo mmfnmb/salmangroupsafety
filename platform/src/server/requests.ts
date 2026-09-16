@@ -41,6 +41,7 @@ export async function createPublicRequest(formData: FormData) {
 
   const referenceNumber = await nextRequestReference(orgId);
   const priority = (str(formData, "priority") as RequestPriority) ?? "NORMAL";
+  const photoUrl = str(formData, "photoUrl");
 
   await prisma.maintenanceRequest.create({
     data: {
@@ -55,6 +56,7 @@ export async function createPublicRequest(formData: FormData) {
       description,
       priority,
       source: (str(formData, "source") as RequestSource) ?? "PUBLIC_PORTAL",
+      photoUrls: photoUrl ? [photoUrl] : [],
     },
   });
 
@@ -88,6 +90,7 @@ export async function createInternalRequest(formData: FormData) {
 
   const referenceNumber = await nextRequestReference(session.orgId);
   const priority = (str(formData, "priority") as RequestPriority) ?? "NORMAL";
+  const photoUrl = str(formData, "photoUrl");
 
   const request = await prisma.maintenanceRequest.create({
     data: {
@@ -101,6 +104,7 @@ export async function createInternalRequest(formData: FormData) {
       description,
       priority,
       source: "INTERNAL_PORTAL",
+      photoUrls: photoUrl ? [photoUrl] : [],
     },
   });
 

@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { createPublicRequest } from "@/server/requests";
 import { Field, Input, Select, Textarea } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
+import { PhotoUploadField } from "@/components/photo-upload-field";
 
 export function ReportProblemForm({
   orgId,
@@ -19,6 +21,8 @@ export function ReportProblemForm({
   source: "QR_SCAN" | "PUBLIC_PORTAL";
 }) {
   const [submitting, setSubmitting] = useState(false);
+  const t = useTranslations("requestForm");
+  const tc = useTranslations("common");
 
   return (
     <form
@@ -31,10 +35,10 @@ export function ReportProblemForm({
       {assetId && <input type="hidden" name="assetId" value={assetId} />}
 
       {sites ? (
-        <Field label="Site" htmlFor="siteId" required>
+        <Field label={tc("site")} htmlFor="siteId" required>
           <Select id="siteId" name="siteId" required defaultValue="">
             <option value="" disabled>
-              Select a site
+              {t("selectSite")}
             </option>
             {sites.map((s) => (
               <option key={s.id} value={s.id}>
@@ -47,31 +51,32 @@ export function ReportProblemForm({
         siteId && <input type="hidden" name="siteId" value={siteId} />
       )}
 
-      <Field label="Your name" htmlFor="requesterName" required>
+      <Field label={t("yourName")} htmlFor="requesterName" required>
         <Input id="requesterName" name="requesterName" required />
       </Field>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Mobile number" htmlFor="requesterPhone">
+        <Field label={t("mobileNumber")} htmlFor="requesterPhone">
           <Input id="requesterPhone" name="requesterPhone" type="tel" placeholder="05XXXXXXXX" />
         </Field>
-        <Field label="Email" htmlFor="requesterEmail">
+        <Field label={t("email")} htmlFor="requesterEmail">
           <Input id="requesterEmail" name="requesterEmail" type="email" />
         </Field>
       </div>
-      <Field label="What's wrong?" htmlFor="description" required>
+      <Field label={t("whatsWrong")} htmlFor="description" required>
         <Textarea id="description" name="description" required rows={3} />
       </Field>
-      <Field label="Priority" htmlFor="priority">
+      <Field label={tc("priority")} htmlFor="priority">
         <Select id="priority" name="priority" defaultValue="NORMAL">
-          <option value="LOW">Low</option>
-          <option value="NORMAL">Normal</option>
-          <option value="HIGH">High</option>
-          <option value="EMERGENCY">Emergency</option>
-          <option value="CRITICAL">Critical / safety risk</option>
+          <option value="LOW">{t("priorityLow")}</option>
+          <option value="NORMAL">{t("priorityNormal")}</option>
+          <option value="HIGH">{t("priorityHigh")}</option>
+          <option value="EMERGENCY">{t("priorityEmergency")}</option>
+          <option value="CRITICAL">{t("priorityCritical")}</option>
         </Select>
       </Field>
+      <PhotoUploadField name="photoUrl" orgId={orgId} label={t("photoOptional")} />
       <Button type="submit" disabled={submitting} className="w-full">
-        {submitting ? "Submitting…" : "Submit request"}
+        {submitting ? t("submitting") : t("submit")}
       </Button>
     </form>
   );

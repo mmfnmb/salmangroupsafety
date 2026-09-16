@@ -7,11 +7,13 @@ import { Field, Input, Select, Textarea } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { evaluateSlaStage, DEFAULT_SLA_MINUTES } from "@/lib/sla";
 import { canViewFinancials } from "@/lib/roles";
-import { assignTechnician, assignVendor, updateWorkOrderStatus, completeWorkOrder, customerSignoff } from "@/server/work-orders";
+import { assignTechnician, assignVendor, updateWorkOrderStatus, completeWorkOrder, customerSignoff, addWorkOrderPhoto, deleteWorkOrderPhoto } from "@/server/work-orders";
 import { ChecklistFieldInput, type ChecklistItem } from "@/components/checklist-field";
 import { addPartUsedToWorkOrder } from "@/server/inventory";
+import { PhotoUploadField } from "@/components/photo-upload-field";
 import { format } from "date-fns";
 import Link from "next/link";
+import { X } from "lucide-react";
 
 const STATUS_FLOW = [
   "NEW",
@@ -44,6 +46,7 @@ export default async function WorkOrderDetailPage({ params }: { params: Promise<
       request: true,
       pmSchedule: { include: { pmPlan: { include: { checklist: true } } } },
       partsUsed: { orderBy: { usedAt: "desc" } },
+      photos: { orderBy: { uploadedAt: "desc" } },
     },
   });
   if (!wo) notFound();
@@ -154,7 +157,7 @@ export default async function WorkOrderDetailPage({ params }: { params: Promise<
                       </p>
                       <div className="space-y-3">
                         {(wo.pmSchedule.pmPlan.checklist.items as ChecklistItem[]).map((item) => (
-                          <ChecklistFieldInput key={item.id} item={item} />
+                          <ChecklistFieldInput key={item.id} item={item} orgId={session.orgId} />
                         ))}
                       </div>
                     </div>
@@ -273,6 +276,48 @@ export default async function WorkOrderDetailPage({ params }: { params: Promise<
                 <Button type="submit" variant="secondary" className="px-3 py-1.5 text-xs">Add</Button>
                 <Input name="partName" placeholder="Part name (if ad-hoc)" className="col-span-2 px-2 py-1.5" />
                 <Input name="unitCostSar" type="number" step="0.01" placeholder="Cost (if ad-hoc)" className="px-2 py-1.5" />
+              </form>
+            </CardBody>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <h2 className="text-sm font-semibold text-slate-900">Photos</h2>
+            </CardHeader>
+            {wo.photos.length > 0 && (
+              <div className="grid grid-cols-3 gap-2 p-5 pb-0 sm:grid-cols-4">
+                {wo.photos.map((p) => (
+                  <div key={p.id} className="group relative">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={p.url} alt={p.stage} className="h-24 w-full rounded-lg border border-slate-200 object-cover" />
+                    <span className="absolute start-1 top-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white">
+                      {p.stage}
+                    </span>
+                    <form
+                      action={deleteWorkOrderPhoto.bind(null, p.id)}
+                      className="absolute end-1 top-1 opacity-0 transition-opacity group-hover:opacity-100"
+                    >
+                      <button type="submit" className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-900 text-white hover:bg-slate-700">
+                        <X size={11} />
+                      </button>
+                    </form>
+                  </div>
+                ))}
+              </div>
+            )}
+            <CardBody>
+              <form action={addWorkOrderPhoto.bind(null, wo.id)} className="flex flex-wrap items-end gap-3">
+                <Field label="Stage" htmlFor="stage">
+                  <Select id="stage" name="stage" defaultValue="BEFORE" className="w-32">
+                    <option value="BEFORE">Before</option>
+                    <option value="DURING">During</option>
+                    <option value="AFTER">After</option>
+                  </Select>
+                </Field>
+                <PhotoUploadField name="url" orgId={session.orgId} />
+                <Button type="submit" variant="secondary">
+                  Add photo
+                </Button>
               </form>
             </CardBody>
           </Card>

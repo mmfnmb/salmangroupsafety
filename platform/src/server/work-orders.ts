@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireOrgSession } from "@/lib/tenant";
 import { revalidatePath } from "next/cache";
 import { TIMESTAMP_FOR_STATUS } from "@/lib/work-order-timestamps";
-import type { WorkOrderStatus } from "@/generated/prisma/client";
+import type { PhotoStage, WorkOrderStatus } from "@/generated/prisma/client";
 
 const SUPERVISORY_ROLES = [
   "ACCOUNT_OWNER",
@@ -198,4 +198,32 @@ export async function customerSignoff(workOrderId: string, formData: FormData) {
   });
 
   revalidatePath(`/app/work-orders/${wo.id}`);
+}
+
+const PHOTO_STAGES: PhotoStage[] = ["BEFORE", "DURING", "AFTER"];
+
+export async function addWorkOrderPhoto(workOrderId: string, formData: FormData) {
+  const session = await requireOrgSession();
+  const wo = await getScopedWorkOrder(workOrderId, session.orgId);
+
+  const stage = formData.get("stage");
+  const url = formData.get("url");
+  if (typeof stage !== "string" || !PHOTO_STAGES.includes(stage as PhotoStage)) {
+    throw new Error("Invalid photo stage");
+  }
+  if (typeof url !== "string" || !url) throw new Error("Photo upload did not complete");
+
+  await prisma.workOrderPhoto.create({
+    data: { workOrderId: wo.id, stage: stage as PhotoStage, url },
+  });
+
+  revalidatePath(`/app/work-orders/${wo.id}`);
+}
+
+export async function deleteWorkOrderPhoto(photoId: string) {
+  const session = await requireOrgSession();
+  await prisma.workOrderPhoto.deleteMany({
+    where: { id: photoId, workOrder: { orgId: session.orgId } },
+  });
+  revalidatePath("/app/work-orders");
 }

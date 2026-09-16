@@ -1184,16 +1184,22 @@ model AuditLog {
   @@index([orgId, entityType, entityId])
 }
 
+enum ReportPeriod {
+  WEEKLY
+  MONTHLY
+}
+
 model WeeklyReport {
   id        String   @id @default(cuid())
   orgId     String
   organization Organization @relation(fields: [orgId], references: [id])
+  period    ReportPeriod @default(WEEKLY)
   weekStart DateTime
   weekEnd   DateTime
   data      Json
   generatedAt DateTime @default(now())
 
-  @@unique([orgId, weekStart])
+  @@unique([orgId, period, weekStart])
 }
 
 // ─────────────────────────────────────────────────────────────────────────

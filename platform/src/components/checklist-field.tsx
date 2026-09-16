@@ -1,4 +1,5 @@
 import { Field, Input, Select } from "@/components/ui/form";
+import { PhotoUploadField } from "@/components/photo-upload-field";
 
 export type ChecklistItem = {
   id: string;
@@ -7,7 +8,7 @@ export type ChecklistItem = {
   required: boolean;
 };
 
-export function ChecklistFieldInput({ item }: { item: ChecklistItem }) {
+export function ChecklistFieldInput({ item, orgId }: { item: ChecklistItem; orgId?: string }) {
   const name = `checklist_${item.id}`;
   if (item.type === "PASS_FAIL") {
     return (
@@ -43,11 +44,7 @@ export function ChecklistFieldInput({ item }: { item: ChecklistItem }) {
     );
   }
   if (item.type === "PHOTO_REQUIRED") {
-    return (
-      <Field label={`${item.label} (photo URL — upload service pending)`} htmlFor={name} required={item.required}>
-        <Input id={name} name={name} type="url" placeholder="https://" required={item.required} />
-      </Field>
-    );
+    return <PhotoUploadField name={name} orgId={orgId} label={item.label} required={item.required} />;
   }
   return (
     <Field label={item.label} htmlFor={name} required={item.required}>

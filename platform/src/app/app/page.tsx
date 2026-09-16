@@ -10,9 +10,15 @@ import { StatusBarChart } from "@/components/charts/status-bar-chart";
 import { TrendAreaChart } from "@/components/charts/trend-area-chart";
 import Link from "next/link";
 import { format, subDays, startOfDay } from "date-fns";
+import { getTranslations, getLocale } from "next-intl/server";
 
 export default async function OpsDashboardPage() {
   const session = await requireOrgSession();
+  const [t, tc, locale] = await Promise.all([
+    getTranslations("dashboard"),
+    getTranslations("common"),
+    getLocale(),
+  ]);
 
   const [health, openWorkOrders, newRequests, duePM, technicianCount] = await Promise.all([
     computePortfolioHealth(session.orgId),
@@ -63,10 +69,10 @@ export default async function OpsDashboardPage() {
     .sort((a, b) => b.count - a.count);
 
   const healthChartData = [
-    { label: "Condition", score: health.conditionScore },
-    { label: "PM Compliance", score: health.pmComplianceScore },
-    { label: "Reliability", score: health.breakdownScore },
-    { label: "Open Defects", score: health.openDefectScore },
+    { label: t("healthCondition"), score: health.conditionScore },
+    { label: t("healthPmCompliance"), score: health.pmComplianceScore },
+    { label: t("healthReliability"), score: health.breakdownScore },
+    { label: t("healthOpenDefects"), score: health.openDefectScore },
   ];
 
   const emergencies = openWorkOrders.filter((wo) => wo.priority === "EMERGENCY" || wo.priority === "CRITICAL");
@@ -77,31 +83,32 @@ export default async function OpsDashboardPage() {
   const awaitingApproval = openWorkOrders.filter((wo) => wo.status === "WAITING_APPROVAL");
 
   const band = healthBand(health.overallScore);
+  const bandLabel = locale === "ar" ? band.labelAr : band.label;
   const showFinancials = canViewFinancials(session.role);
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-slate-900">Operations Dashboard</h1>
-        <p className="text-sm text-slate-500">Live snapshot across your portfolio.</p>
+        <h1 className="text-xl font-semibold text-slate-900">{t("title")}</h1>
+        <p className="text-sm text-slate-500">{t("subtitle")}</p>
       </div>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <StatCard label="Portfolio Health" value={`${health.overallScore}/100`} sub={band.label} />
-        <StatCard label="Open Work Orders" value={openWorkOrders.length} />
-        <StatCard label="Emergency / Critical" value={emergencies.length} tone={emergencies.length > 0 ? "red" : "green"} />
-        <StatCard label="SLA Breached" value={slaBreached.length} tone={slaBreached.length > 0 ? "red" : "green"} />
-        <StatCard label="New Requests" value={newRequests.length} tone={newRequests.length > 0 ? "amber" : "green"} />
-        <StatCard label="PM Due / Overdue" value={duePM} tone={duePM > 0 ? "amber" : "green"} />
-        <StatCard label="Active Technicians" value={technicianCount} />
-        <StatCard label="Awaiting Approval" value={awaitingApproval.length} />
-        <StatCard label="Low Stock Parts" value={lowStockParts} tone={lowStockParts > 0 ? "amber" : "green"} />
+        <StatCard label={t("portfolioHealth")} value={`${health.overallScore}/100`} sub={bandLabel} />
+        <StatCard label={t("openWorkOrders")} value={openWorkOrders.length} />
+        <StatCard label={t("emergencyCritical")} value={emergencies.length} tone={emergencies.length > 0 ? "red" : "green"} />
+        <StatCard label={t("slaBreached")} value={slaBreached.length} tone={slaBreached.length > 0 ? "red" : "green"} />
+        <StatCard label={t("newRequests")} value={newRequests.length} tone={newRequests.length > 0 ? "amber" : "green"} />
+        <StatCard label={t("pmDueOverdue")} value={duePM} tone={duePM > 0 ? "amber" : "green"} />
+        <StatCard label={t("activeTechnicians")} value={technicianCount} />
+        <StatCard label={t("awaitingApproval")} value={awaitingApproval.length} />
+        <StatCard label={t("lowStockParts")} value={lowStockParts} tone={lowStockParts > 0 ? "amber" : "green"} />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <h2 className="text-sm font-semibold text-slate-900">Requests, last 14 days</h2>
+            <h2 className="text-sm font-semibold text-slate-900">{t("requestsTrend")}</h2>
           </CardHeader>
           <CardBody>
             <TrendAreaChart data={requestTrend} dataKey="requests" />
@@ -109,7 +116,7 @@ export default async function OpsDashboardPage() {
         </Card>
         <Card>
           <CardHeader>
-            <h2 className="text-sm font-semibold text-slate-900">Portfolio health breakdown</h2>
+            <h2 className="text-sm font-semibold text-slate-900">{t("healthBreakdown")}</h2>
           </CardHeader>
           <CardBody>
             <HealthBreakdownChart data={healthChartData} />
@@ -120,7 +127,7 @@ export default async function OpsDashboardPage() {
       {statusChartData.length > 0 && (
         <Card>
           <CardHeader>
-            <h2 className="text-sm font-semibold text-slate-900">Open work orders by status</h2>
+            <h2 className="text-sm font-semibold text-slate-900">{t("workOrdersByStatus")}</h2>
           </CardHeader>
           <CardBody>
             <StatusBarChart data={statusChartData} />
@@ -131,8 +138,8 @@ export default async function OpsDashboardPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-slate-900">New requests to triage</h2>
-            <Link href="/app/requests" className="text-xs text-blue-700">View all</Link>
+            <h2 className="text-sm font-semibold text-slate-900">{t("newRequestsToTriage")}</h2>
+            <Link href="/app/requests" className="text-xs text-blue-700">{tc("viewAll")}</Link>
           </CardHeader>
           <div className="divide-y divide-slate-100">
             {newRequests.map((r) => (
@@ -141,14 +148,14 @@ export default async function OpsDashboardPage() {
                 <p className="text-xs text-slate-500">{r.site.name} · {r.referenceNumber}</p>
               </div>
             ))}
-            {newRequests.length === 0 && <p className="p-5 text-sm text-slate-500">Nothing waiting — good.</p>}
+            {newRequests.length === 0 && <p className="p-5 text-sm text-slate-500">{t("nothingWaiting")}</p>}
           </div>
         </Card>
 
         <Card>
           <CardHeader className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-slate-900">Emergency & critical work orders</h2>
-            <Link href="/app/work-orders" className="text-xs text-blue-700">View all</Link>
+            <h2 className="text-sm font-semibold text-slate-900">{t("emergencyWorkOrders")}</h2>
+            <Link href="/app/work-orders" className="text-xs text-blue-700">{tc("viewAll")}</Link>
           </CardHeader>
           <div className="divide-y divide-slate-100">
             {emergencies.slice(0, 5).map((wo) => (
@@ -160,7 +167,7 @@ export default async function OpsDashboardPage() {
                 <Badge tone="red">{wo.status.replace(/_/g, " ")}</Badge>
               </Link>
             ))}
-            {emergencies.length === 0 && <p className="p-5 text-sm text-slate-500">No open emergencies.</p>}
+            {emergencies.length === 0 && <p className="p-5 text-sm text-slate-500">{t("noOpenEmergencies")}</p>}
           </div>
         </Card>
       </div>
@@ -168,15 +175,15 @@ export default async function OpsDashboardPage() {
       {showFinancials && (
         <Card>
           <CardBody className="flex items-center justify-between">
-            <p className="text-sm text-slate-600">Generate this week&apos;s executive report for stakeholders.</p>
+            <p className="text-sm text-slate-600">{t("generateReportPrompt")}</p>
             <Link href="/app/reports" className="text-sm font-medium text-blue-700">
-              Go to Reports →
+              {t("goToReports")} →
             </Link>
           </CardBody>
         </Card>
       )}
 
-      <p className="text-xs text-slate-400">As of {format(new Date(), "dd MMM yyyy, HH:mm")}</p>
+      <p className="text-xs text-slate-400">{t("asOf")} {format(new Date(), "dd MMM yyyy, HH:mm")}</p>
     </div>
   );
 }

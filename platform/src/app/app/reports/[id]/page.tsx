@@ -21,7 +21,9 @@ export default async function WeeklyReportDetailPage({ params }: { params: Promi
     <div className="mx-auto max-w-4xl space-y-6 print:max-w-full">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">Executive Weekly Report</h1>
+          <h1 className="text-xl font-semibold text-slate-900">
+            Executive {data.period.type === "MONTHLY" ? "Monthly" : "Weekly"} Report
+          </h1>
           <p className="text-sm text-slate-500">
             {format(new Date(data.period.start), "dd MMM yyyy")} – {format(new Date(data.period.end), "dd MMM yyyy")}
           </p>

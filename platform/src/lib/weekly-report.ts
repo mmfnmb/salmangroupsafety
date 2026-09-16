@@ -6,7 +6,12 @@ import { subDays } from "date-fns";
 
 export type WeeklyReportData = Awaited<ReturnType<typeof generateWeeklyReportData>>;
 
-export async function generateWeeklyReportData(orgId: string, weekStart: Date, weekEnd: Date) {
+export async function generateWeeklyReportData(
+  orgId: string,
+  weekStart: Date,
+  weekEnd: Date,
+  periodType: "WEEKLY" | "MONTHLY" = "WEEKLY"
+) {
   const [portfolio, workOrdersThisWeek, openWorkOrders, technicians] = await Promise.all([
     computePortfolioHealth(orgId),
     prisma.workOrder.findMany({
@@ -77,7 +82,7 @@ export async function generateWeeklyReportData(orgId: string, weekStart: Date, w
   techScores.sort((a, b) => b.score - a.score);
 
   return {
-    period: { start: weekStart.toISOString(), end: weekEnd.toISOString() },
+    period: { start: weekStart.toISOString(), end: weekEnd.toISOString(), type: periodType },
     portfolio,
     workOrders: {
       opened: workOrdersThisWeek.length,

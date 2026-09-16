@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardBody } from "@/components/ui/card";
 import { Field, Input, Select, Textarea } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
+import { PhotoUploadField } from "@/components/photo-upload-field";
 import { createInternalRequest } from "@/server/requests";
 
 export default async function NewInternalRequestPage() {
@@ -58,6 +59,7 @@ export default async function NewInternalRequestPage() {
                 <option value="CRITICAL">Critical / safety risk</option>
               </Select>
             </Field>
+            <PhotoUploadField name="photoUrl" orgId={session.orgId} label="Photo (optional)" />
             <Button type="submit" className="w-full">
               Submit request
             </Button>

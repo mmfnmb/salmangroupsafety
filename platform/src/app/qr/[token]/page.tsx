@@ -4,6 +4,9 @@ import { notFound } from "next/navigation";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ReportProblemForm } from "@/components/report-problem-form";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { getTranslations, getLocale } from "next-intl/server";
+import type { AppLocale } from "@/i18n/request";
 import Link from "next/link";
 
 export default async function AssetQrPage({ params }: { params: Promise<{ token: string }> }) {
@@ -16,12 +19,16 @@ export default async function AssetQrPage({ params }: { params: Promise<{ token:
 
   const session = await auth();
   const isInternal = session?.user?.accountType === "customer" && session.user.orgId === asset.orgId;
+  const [t, locale] = await Promise.all([getTranslations("requestForm"), getLocale()]);
 
   return (
     <div className="mx-auto min-h-screen max-w-md space-y-5 bg-slate-50 p-5">
-      <div className="text-center">
-        <p className="text-lg font-bold text-slate-900">Maintain360</p>
-        <p className="text-xs text-slate-500">Asset Field Passport</p>
+      <div className="flex items-center justify-between">
+        <div className="text-center flex-1">
+          <p className="text-lg font-bold text-slate-900">Maintain360</p>
+          <p className="text-xs text-slate-500">Asset Field Passport</p>
+        </div>
+        <LanguageSwitcher current={locale as AppLocale} />
       </div>
 
       <Card>
@@ -57,7 +64,7 @@ export default async function AssetQrPage({ params }: { params: Promise<{ token:
 
       <Card>
         <CardHeader>
-          <h2 className="text-sm font-semibold text-slate-900">Report a problem</h2>
+          <h2 className="text-sm font-semibold text-slate-900">{t("reportIssue")}</h2>
         </CardHeader>
         <CardBody>
           <ReportProblemForm orgId={asset.orgId} assetId={asset.id} siteId={asset.siteId} source="QR_SCAN" />

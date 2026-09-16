@@ -24,6 +24,10 @@
 .DS_Store
 *.pem
 
+# user-uploaded files (local-disk storage — see src/lib/storage.ts)
+/public/uploads/*
+!/public/uploads/.gitkeep
+
 # debug
 npm-debug.log*
 yarn-debug.log*
