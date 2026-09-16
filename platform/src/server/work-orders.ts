@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { requireOrgSession } from "@/lib/tenant";
 import { revalidatePath } from "next/cache";
+import { TIMESTAMP_FOR_STATUS } from "@/lib/work-order-timestamps";
 import type { WorkOrderStatus } from "@/generated/prisma/client";
 
 const SUPERVISORY_ROLES = [
@@ -58,12 +59,46 @@ export async function assignTechnician(workOrderId: string, formData: FormData) 
   revalidatePath("/app/work-orders");
 }
 
-const TIMESTAMP_FOR_STATUS: Partial<Record<WorkOrderStatus, "arrivedAt" | "startedAt" | "completedAt" | "closedAt">> = {
-  ON_SITE: "arrivedAt",
-  IN_PROGRESS: "startedAt",
-  COMPLETED: "completedAt",
-  CLOSED: "closedAt",
-};
+export async function assignVendor(workOrderId: string, formData: FormData) {
+  const session = await requireOrgSession();
+  if (!(SUPERVISORY_ROLES as readonly string[]).includes(session.role)) {
+    throw new Error("Not authorized to assign vendors");
+  }
+  const wo = await getScopedWorkOrder(workOrderId, session.orgId);
+  const vendorId = String(formData.get("vendorId") ?? "");
+
+  const vendor = await prisma.vendor.findFirst({ where: { id: vendorId, status: "APPROVED" } });
+  if (!vendor) throw new Error("Invalid or unapproved vendor");
+
+  const blacklisted = await prisma.vendorBlacklistEntry.findUnique({
+    where: { orgId_vendorId: { orgId: session.orgId, vendorId } },
+  });
+  if (blacklisted) throw new Error("This vendor is blacklisted for your organization");
+
+  await prisma.workOrder.update({
+    where: { id: wo.id },
+    data: {
+      assignedVendorId: vendor.id,
+      assignedTechnicianId: null,
+      status: wo.status === "NEW" ? "ASSIGNED" : wo.status,
+      respondedAt: wo.respondedAt ?? new Date(),
+    },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      orgId: session.orgId,
+      userId: session.userId,
+      action: "ASSIGN_VENDOR",
+      entityType: "WorkOrder",
+      entityId: wo.id,
+      newValue: { vendorId: vendor.id, vendorName: vendor.name },
+    },
+  });
+
+  revalidatePath(`/app/work-orders/${wo.id}`);
+  revalidatePath("/app/work-orders");
+}
 
 export async function updateWorkOrderStatus(workOrderId: string, status: WorkOrderStatus) {
   const session = await requireOrgSession();

@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardBody } from "@/components/ui/card";
 import { Field, Input, Select, Textarea } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { createCustomerLead, createVendorLead } from "@/server/leads";
+import { createCustomerLead } from "@/server/leads";
 import Link from "next/link";
 
 const MODULES = [
@@ -131,31 +131,19 @@ export default async function LandingPage() {
       </section>
 
       <section id="vendor" className="px-6 py-16">
-        <div className="mx-auto max-w-lg">
-          <h2 className="text-center text-2xl font-bold">Join Our Maintenance Network</h2>
-          <p className="mt-2 text-center text-sm text-slate-500">
-            For HVAC, electrical, fire safety, elevators, pumps and other specialist contractors in the Eastern Province.
+        <div className="mx-auto max-w-lg text-center">
+          <h2 className="text-2xl font-bold">Join Our Maintenance Network</h2>
+          <p className="mt-2 text-sm text-slate-500">
+            For HVAC, electrical, fire safety, elevators, pumps and other specialist contractors in the Eastern
+            Province. Register your company, list your service categories and coverage areas, and get reviewed for
+            access to job opportunities.
           </p>
-          <Card className="mt-8 p-6">
-            <form action={createVendorLead} className="space-y-4">
-              <Field label="Company name" htmlFor="name" required><Input id="name" name="name" required /></Field>
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Mobile" htmlFor="phone" required><Input id="phone" name="phone" type="tel" required /></Field>
-                <Field label="Email" htmlFor="email"><Input id="email" name="email" type="email" /></Field>
-              </div>
-              <Field label="City" htmlFor="city">
-                <Select id="city" name="city" defaultValue="">
-                  <option value="">Select city</option>
-                  <option>Dammam</option><option>Al Khobar</option><option>Dhahran</option>
-                  <option>Jubail</option><option>Qatif</option><option>Ras Tanura</option><option>Abqaiq</option>
-                </Select>
-              </Field>
-              <Field label="Service categories" htmlFor="categories">
-                <Input id="categories" name="categories" placeholder="e.g. HVAC, Electrical, Fire Alarm" />
-              </Field>
-              <Button type="submit" variant="secondary" className="w-full">Apply to join</Button>
-            </form>
-          </Card>
+          <Link
+            href="/join-network"
+            className="mt-6 inline-block rounded-md bg-slate-900 px-5 py-3 font-medium text-white hover:bg-slate-800"
+          >
+            Register your company
+          </Link>
         </div>
       </section>
 

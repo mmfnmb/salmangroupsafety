@@ -180,6 +180,92 @@ export async function computeTechnicianPerformance(
 }
 
 /**
+ * Vendor score weighting per the product spec (section 27). Technical
+ * Compliance and Price Competitiveness genuinely require RFQ/quotation
+ * evaluation data (Phase 3) — until that module is active this function
+ * reports those components as unavailable rather than inventing a number,
+ * and redistributes weight across whatever is actually measurable.
+ */
+export const DEFAULT_VENDOR_WEIGHTS = {
+  technicalCompliance: 0.3,
+  historicalQuality: 0.25,
+  priceCompetitiveness: 0.2,
+  responseCapability: 0.1,
+  warranty: 0.1,
+  safety: 0.05,
+} as const;
+
+interface VendorWorkOrderForScoring {
+  id: string;
+  createdAt: Date;
+  respondedAt: Date | null;
+  completedAt: Date | null;
+  customerSignoffStatus: string | null;
+  customerRating: number | null;
+  safetyIncidentReported: boolean;
+  priority: RequestPriority;
+  slaPolicy: { responseMinutes: number } | null;
+}
+
+export async function computeVendorPerformance(
+  vendorId: string,
+  periodStart: Date,
+  periodEnd: Date,
+  weights = DEFAULT_VENDOR_WEIGHTS
+) {
+  const workOrders: VendorWorkOrderForScoring[] = await prisma.workOrder.findMany({
+    where: { assignedVendorId: vendorId, createdAt: { gte: periodStart, lte: periodEnd } },
+    include: { slaPolicy: true },
+  });
+
+  const completed = workOrders.filter((wo) => wo.completedAt);
+  const jobsCompleted = completed.length;
+
+  let respondedWithinSla = 0;
+  let responseTracked = 0;
+  for (const wo of workOrders) {
+    if (!wo.respondedAt) continue;
+    responseTracked++;
+    const allotted = wo.slaPolicy?.responseMinutes ?? DEFAULT_SLA_MINUTES[wo.priority].response;
+    if (wo.respondedAt <= new Date(wo.createdAt.getTime() + allotted * 60_000)) respondedWithinSla++;
+  }
+  const responseCapabilityScore = responseTracked > 0 ? (respondedWithinSla / responseTracked) * 100 : null;
+
+  const signedOff = completed.filter((wo) => wo.customerSignoffStatus);
+  const historicalQualityScore =
+    signedOff.length > 0
+      ? (signedOff.filter((wo) => wo.customerSignoffStatus !== "REOPENED").length / signedOff.length) * 100
+      : null;
+
+  const safetyScore =
+    jobsCompleted > 0 ? (completed.filter((wo) => !wo.safetyIncidentReported).length / jobsCompleted) * 100 : null;
+
+  const components: Record<string, ScoreComponent> = {
+    technicalCompliance: null, // requires RFQ technical evaluation (Phase 3)
+    priceCompetitiveness: null, // requires RFQ commercial evaluation (Phase 3)
+    warranty: null, // requires quotation warranty terms (Phase 3)
+    historicalQuality:
+      historicalQualityScore !== null ? { value: historicalQualityScore, weight: weights.historicalQuality } : null,
+    responseCapability:
+      responseCapabilityScore !== null ? { value: responseCapabilityScore, weight: weights.responseCapability } : null,
+    safety: safetyScore !== null ? { value: safetyScore, weight: weights.safety } : null,
+  };
+
+  const hasAnyData = Object.values(components).some((c) => c !== null);
+
+  return {
+    technicalComplianceScore: null,
+    historicalQualityScore,
+    priceCompetitivenessScore: null,
+    responseCapabilityScore,
+    warrantyScore: null,
+    safetyScore,
+    overallScore: hasAnyData ? Math.round(weightedAverage(components)) : null,
+    jobsCompleted,
+  };
+}
+
+/**
  * Asset Health Score (section 40): condition, PM compliance, breakdown
  * frequency and open defects, each genuinely derived from stored data.
  */

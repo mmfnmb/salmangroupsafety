@@ -31,23 +31,3 @@ export async function createCustomerLead(formData: FormData) {
 
   redirect("/thank-you");
 }
-
-export async function createVendorLead(formData: FormData) {
-  const name = str(formData, "name");
-  const phone = str(formData, "phone");
-  if (!name || !phone) throw new Error("Name and phone are required");
-
-  await prisma.lead.create({
-    data: {
-      type: "VENDOR",
-      name,
-      phone,
-      company: str(formData, "company"),
-      email: str(formData, "email"),
-      city: str(formData, "city"),
-      mainProblem: str(formData, "categories"),
-    },
-  });
-
-  redirect("/thank-you");
-}

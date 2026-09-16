@@ -36,11 +36,14 @@ Demo accounts (password `demo1234` for all):
 | Facility Manager — Dammam | `fm@dammam-wh.demo` |
 | Owner — Jubail Manufacturing Plant | `owner@jubail-mfg.demo` |
 | Owner — Khobar Medical Center | `owner@khobar-med.demo` |
+| Vendor — Eastern Cool HVAC Services (HVAC/Refrigeration, Dammam/Khobar/Dhahran) | `owner@easterncool-hvac.demo` |
+| Vendor — Gulf Safe Fire & Electrical (Fire/Electrical, Jubail/Dammam/Ras Tanura) | `owner@gulfsafe-fire.demo` |
 
 Public entry points (no login required):
 - `/` — marketing landing page, demo/vendor lead forms
 - `/r/dammam-wh`, `/r/jubail-mfg`, `/r/khobar-med` — each org's public maintenance-request portal
 - `/qr/<token>` — asset field passport + "report a problem" (open any asset from `/app/assets` to get its QR)
+- `/join-network` — vendor registration (creates a PENDING vendor + login, reviewed by the platform admin at `/platform/vendors`)
 
 ## What's implemented (Phase 1 — commercial core)
 
@@ -56,21 +59,46 @@ Public entry points (no login required):
 - Bilingual EN/AR with a working language switcher and full RTL layout (logical Tailwind classes throughout, verified — no hardcoded left/right).
 - Audit log on create/convert/award-type actions.
 
+## What's implemented (Phase 2 — vendor network)
+
+- Public vendor registration (`/join-network`) — company profile, CR/VAT,
+  service categories, coverage cities, emergency availability — creates a
+  `PENDING` `Vendor` + a `VENDOR_OWNER` login in one transaction.
+- Platform admin console (`/platform`, `/platform/vendors`, `/platform/customers`,
+  `/platform/leads`) with real counts (active customers, approved/pending
+  vendors, active jobs, estimated MRR from actual plan pricing, vendor
+  documents expiring within 30 days) and an approve/under-review/suspend/reject
+  workflow for vendor applications.
+- Vendor portal (`/vendor-portal`) — the vendor's own passport (categories,
+  coverage, emergency availability), a document/certification list with
+  expiry tracking, and their assigned jobs across every customer that has
+  hired them, with accept/status actions scoped strictly to jobs assigned
+  to that vendor.
+- "Assign vendor" on a work order, alongside "assign internal technician" —
+  a facility manager can hand a job to an approved, non-blacklisted vendor
+  (filtered by coverage city) when no internal technician fits, without
+  waiting for the RFQ module.
+- Vendor performance scoring (`computeVendorPerformance`) using the
+  section-27 weights — but **Technical Compliance and Price
+  Competitiveness are reported as unavailable, not faked**, because they
+  genuinely require RFQ/quotation evaluation data that doesn't exist until
+  Phase 3. Historical Quality, Response Capability and Safety are computed
+  live from real work-order/sign-off data and shown on the vendor portal
+  and the customer-facing vendor directory (`/app/vendors`), which also
+  gained live scores, city/category filters and a per-organization
+  blacklist toggle.
+
 ## What's schema-ready but not yet built (documented, not faked)
 
-The database schema already models Phase 2/3 concepts — `Vendor`,
-`VendorDocument`, `VendorPerformanceSnapshot`, `Rfq`, `RfqVendor`,
-`Quotation`, `VendorBlacklistEntry`, `ApprovalThreshold` — so those phases
-won't require a schema rewrite. Their UI (vendor onboarding/approval, RFQ
-creation, quote comparison, award workflow) is **not built yet**. The
-`/app/vendors` page is intentionally a read-only directory that says so
-rather than showing fake data.
+The database schema already models Phase 3 concepts — `Rfq`, `RfqVendor`,
+`Quotation`, `ApprovalThreshold` — so that phase won't require a schema
+rewrite. RFQ creation, quote comparison and the award workflow are **not
+built yet**.
 
 Also not yet built: AI-assisted triage/scope-of-work/comparison (Phase 4),
 file/photo upload to object storage (photo fields exist but there's no
 upload backend wired up — noted inline in the UI where relevant), spare
-parts inventory, ZATCA/e-invoicing, WhatsApp notifications, and a platform
-admin console beyond the login account itself.
+parts inventory, ZATCA/e-invoicing, and WhatsApp notifications.
 
 ## Known limitations
 
@@ -86,13 +114,22 @@ admin console beyond the login account itself.
 
 ## Verified end-to-end (real browser test, not a claim)
 
-QR scan → report a problem → reference number issued → appears in the
-facility manager's triage queue → converted to a work order → technician
-assigned → status moved to In Progress → completion form (root cause /
-corrective action) → status Completed, SLA evaluated → customer sign-off
-(Approved, 5★) → status Closed → executive weekly report regenerated and
-reflects the change. Also verified: an owner from one seeded organization
-gets a 404 when requesting another organization's asset ID directly.
+**Customer/technician flow:** QR scan → report a problem → reference number
+issued → appears in the facility manager's triage queue → converted to a
+work order → technician assigned → status moved to In Progress →
+completion form (root cause / corrective action) → status Completed, SLA
+evaluated → customer sign-off (Approved, 5★) → status Closed → executive
+weekly report regenerated and reflects the change. Also verified: an owner
+from one seeded organization gets a 404 when requesting another
+organization's asset ID directly.
+
+**Vendor flow:** public registration at `/join-network` → login shows a
+"pending" banner on the vendor portal → platform admin approves at
+`/platform/vendors` → a facility manager assigns the now-approved vendor
+to a work order from `/app/work-orders/[id]` → the vendor accepts the job
+from their own portal → a previously-seeded, vendor-completed job with a
+5★ sign-off produces a live vendor score of 100/100 on both the vendor's
+own portal and the customer-facing directory.
 
 ## Environment variables
 

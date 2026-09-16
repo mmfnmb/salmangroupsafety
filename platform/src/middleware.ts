@@ -10,6 +10,7 @@ const PUBLIC_PREFIXES = [
   "/qr",
   "/r",
   "/thank-you",
+  "/join-network",
   "/api/auth",
   "/api/public",
   "/api/cron",
@@ -42,6 +43,9 @@ export default auth((req) => {
   }
   if (pathname.startsWith("/app") && accountType === "vendor") {
     return NextResponse.redirect(new URL("/vendor-portal", req.nextUrl.origin));
+  }
+  if (pathname.startsWith("/app") && accountType === "platform") {
+    return NextResponse.redirect(new URL("/platform", req.nextUrl.origin));
   }
 
   return NextResponse.next();

@@ -152,16 +152,63 @@ async function main() {
     create: { email: "admin@maintain360.demo", passwordHash: DEMO_PASSWORD_HASH, name: "Platform Admin", role: "SUPER_ADMIN" },
   });
 
+  const vendors = await seedVendors();
+
   for (const org of [dammam, jubail, khobar]) {
-    await seedOrg(org, sys);
+    await seedOrg(org, sys, vendors);
   }
 
   console.log("Seed complete.");
 }
 
+async function seedVendors() {
+  const vendorDefs = [
+    {
+      email: "owner@easterncool-hvac.demo",
+      name: "Eastern Cool HVAC Services",
+      categories: ["HVAC", "Refrigeration"],
+      coverageCities: ["Dammam", "Al Khobar", "Dhahran"],
+    },
+    {
+      email: "owner@gulfsafe-fire.demo",
+      name: "Gulf Safe Fire & Electrical",
+      categories: ["Fire Alarm", "Fire Fighting", "Electrical"],
+      coverageCities: ["Jubail", "Dammam", "Ras Tanura"],
+    },
+  ];
+
+  const created = [];
+  for (const def of vendorDefs) {
+    const existingUser = await prisma.user.findUnique({ where: { email: def.email } });
+    if (existingUser) {
+      created.push(await prisma.vendor.findUniqueOrThrow({ where: { id: existingUser.vendorId! } }));
+      continue;
+    }
+    const vendor = await prisma.vendor.create({
+      data: {
+        name: def.name,
+        email: def.email,
+        phone: "0138001234",
+        crNumber: "CR-" + Math.floor(1000000 + Math.random() * 9000000),
+        categories: def.categories,
+        coverageCities: def.coverageCities,
+        emergencyAvailable: true,
+        status: "APPROVED",
+      },
+    });
+    await prisma.user.create({
+      data: { email: def.email, passwordHash: DEMO_PASSWORD_HASH, name: `${def.name} — Owner`, role: "VENDOR_OWNER", vendorId: vendor.id },
+    });
+    created.push(vendor);
+  }
+  console.log(`Seeded ${created.length} approved demo vendors.`);
+  return created;
+}
+
 async function seedOrg(
   org: { id: string; slug: string },
-  sys: (code: string) => string
+  sys: (code: string) => string,
+  vendors: { id: string; name: string; categories: string[] }[]
 ) {
   const [owner, fm, supervisor] = await Promise.all([
     prisma.user.upsert({
@@ -466,6 +513,55 @@ async function seedOrg(
       submittedAt: subDays(new Date(), 30),
     },
   });
+
+  // 5) For the manufacturing plant only: no internal technician for this trade,
+  // so the job goes to an external vendor — the platform's core marketplace story.
+  if (org.slug === "jubail-mfg") {
+    const fireVendor = vendors.find((v) => v.categories.includes("Fire Fighting"));
+    if (fireVendor) {
+      const req5 = await prisma.maintenanceRequest.create({
+        data: {
+          orgId: org.id,
+          referenceNumber: nextRef(),
+          siteId: site.id,
+          assetId: assets[4].id,
+          requesterName: "Facility Manager",
+          description: "Fire pump set failed weekly test run, needs specialist diagnosis.",
+          priority: "HIGH",
+          status: "CONVERTED",
+          source: "INTERNAL_PORTAL",
+          createdAt: subDays(new Date(), 10),
+        },
+      });
+      await prisma.workOrder.create({
+        data: {
+          orgId: org.id,
+          number: nextWo(),
+          requestId: req5.id,
+          siteId: site.id,
+          assetId: assets[4].id,
+          type: "CORRECTIVE",
+          category: "Fire Fighting",
+          priority: "HIGH",
+          description: "Fire pump set failed weekly test run, needs specialist diagnosis.",
+          assignedVendorId: fireVendor.id,
+          status: "CLOSED",
+          createdAt: subDays(new Date(), 10),
+          respondedAt: subDays(new Date(), 10),
+          arrivedAt: subDays(new Date(), 9),
+          startedAt: subDays(new Date(), 9),
+          completedAt: subDays(new Date(), 8),
+          closedAt: subDays(new Date(), 7),
+          rootCause: "Jockey pump pressure switch failure.",
+          correctiveAction: "Replaced pressure switch, re-tested full run cycle.",
+          recommendation: "Add switch to next annual PM checklist.",
+          customerSignoffAt: subDays(new Date(), 7),
+          customerSignoffStatus: "APPROVED",
+          customerRating: 5,
+        },
+      });
+    }
+  }
 
   console.log(`Seeded ${org.id} with ${assets.length} assets, 2 technicians, 4 requests/work orders.`);
 }

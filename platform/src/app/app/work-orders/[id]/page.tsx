@@ -7,7 +7,7 @@ import { Field, Input, Select, Textarea } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { evaluateSlaStage, DEFAULT_SLA_MINUTES } from "@/lib/sla";
 import { canViewFinancials } from "@/lib/roles";
-import { assignTechnician, updateWorkOrderStatus, completeWorkOrder, customerSignoff } from "@/server/work-orders";
+import { assignTechnician, assignVendor, updateWorkOrderStatus, completeWorkOrder, customerSignoff } from "@/server/work-orders";
 import { ChecklistFieldInput, type ChecklistItem } from "@/components/checklist-field";
 import { format } from "date-fns";
 import Link from "next/link";
@@ -38,6 +38,7 @@ export default async function WorkOrderDetailPage({ params }: { params: Promise<
       site: true,
       asset: true,
       assignedTechnician: true,
+      assignedVendor: true,
       slaPolicy: true,
       request: true,
       pmSchedule: { include: { pmPlan: { include: { checklist: true } } } },
@@ -45,16 +46,24 @@ export default async function WorkOrderDetailPage({ params }: { params: Promise<
   });
   if (!wo) notFound();
 
-  const technicians = await prisma.technician.findMany({
-    where: { orgId: session.orgId, status: "ACTIVE" },
+  const [technicians, blacklistedVendorIds] = await Promise.all([
+    prisma.technician.findMany({ where: { orgId: session.orgId, status: "ACTIVE" }, orderBy: { name: "asc" } }),
+    prisma.vendorBlacklistEntry.findMany({ where: { orgId: session.orgId }, select: { vendorId: true } }),
+  ]);
+  const blacklistedIds = new Set(blacklistedVendorIds.map((b) => b.vendorId));
+  const allApprovedVendors = await prisma.vendor.findMany({
+    where: { status: "APPROVED", id: { notIn: [...blacklistedIds] } },
     orderBy: { name: "asc" },
   });
+  const matchingVendors = allApprovedVendors.filter((v) => v.coverageCities.includes(wo.site.city));
+  const vendorOptions = matchingVendors.length > 0 ? matchingVendors : allApprovedVendors;
 
   const resolutionMinutes = wo.slaPolicy?.resolutionMinutes ?? DEFAULT_SLA_MINUTES[wo.priority].resolution;
   const slaStage = evaluateSlaStage({ createdAt: wo.createdAt, actualAt: wo.completedAt, allottedMinutes: resolutionMinutes });
   const showFinancials = canViewFinancials(session.role);
 
   const assignAction = assignTechnician.bind(null, wo.id);
+  const assignVendorAction = assignVendor.bind(null, wo.id);
   const completeAction = completeWorkOrder.bind(null, wo.id);
   const signoffAction = customerSignoff.bind(null, wo.id);
 
@@ -235,7 +244,7 @@ export default async function WorkOrderDetailPage({ params }: { params: Promise<
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <h2 className="text-sm font-semibold text-slate-900">Assignment</h2>
+              <h2 className="text-sm font-semibold text-slate-900">Internal technician</h2>
             </CardHeader>
             <CardBody>
               <p className="mb-3 text-sm text-slate-700">
@@ -256,6 +265,38 @@ export default async function WorkOrderDetailPage({ params }: { params: Promise<
                   Assign
                 </Button>
               </form>
+            </CardBody>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <h2 className="text-sm font-semibold text-slate-900">External vendor</h2>
+            </CardHeader>
+            <CardBody>
+              <p className="mb-3 text-sm text-slate-700">
+                {wo.assignedVendor ? wo.assignedVendor.name : "No specialist contractor needed yet"}
+              </p>
+              {vendorOptions.length > 0 ? (
+                <form action={assignVendorAction} className="flex gap-2">
+                  <Select name="vendorId" defaultValue={wo.assignedVendorId ?? ""} className="flex-1">
+                    <option value="" disabled>
+                      Select vendor
+                    </option>
+                    {vendorOptions.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.name} {v.coverageCities.includes(wo.site.city) ? "" : "(no coverage match)"}
+                      </option>
+                    ))}
+                  </Select>
+                  <Button type="submit" variant="secondary">
+                    Assign
+                  </Button>
+                </form>
+              ) : (
+                <p className="text-xs text-slate-500">
+                  No approved vendors yet in the Eastern Province network for this site.
+                </p>
+              )}
             </CardBody>
           </Card>
 
