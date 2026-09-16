@@ -14,6 +14,7 @@ type NavLabels = {
   rfq: string;
   inventory: string;
   procurement: string;
+  aiAssistant: string;
   contracts: string;
   reports: string;
   settings: string;
@@ -35,6 +36,7 @@ export function AppSidebar({ t, role, orgName }: { t: NavLabels; role: UserRole;
     { href: "/app/rfq", label: t.rfq },
     { href: "/app/inventory", label: t.inventory },
     { href: "/app/procurement", label: t.procurement },
+    { href: "/app/ai-assistant", label: t.aiAssistant },
     { href: "/app/contracts", label: t.contracts },
     { href: "/app/reports", label: t.reports },
   ];

@@ -9,6 +9,7 @@ import { canManageOrg, canViewFinancials } from "@/lib/roles";
 import { inviteVendors, evaluateQuotation, awardQuotation } from "@/server/rfq";
 import { computeCommercialScores, computeBestValueScore, TECHNICAL_QUALIFYING_THRESHOLD } from "@/lib/rfq-evaluation";
 import { vendorTrackRecordScore } from "@/lib/scoring";
+import { AiRecommendationNarrative } from "@/components/ai-recommendation-narrative";
 import { computePlatformFee } from "@/lib/platform-fee";
 import { format } from "date-fns";
 import Link from "next/link";
@@ -225,6 +226,7 @@ export default async function RfqDetailPage({ params }: { params: Promise<{ id: 
               </tbody>
             </table>
           </div>
+          {recommendedId && <AiRecommendationNarrative rfqId={rfq.id} />}
         </Card>
       )}
     </div>

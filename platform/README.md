@@ -160,16 +160,40 @@ Public entry points (no login required):
   5-unit request correctly required approval, matched the right category
   vendor by coverage city, and finished at 7 in stock after delivery.
 
+## What's implemented (Phase 4 — AI Assistant, built and wired, pending activation)
+
+The integration is real and complete — `src/lib/ai.ts` calls the actual
+Anthropic Messages API — but this environment has no `ANTHROPIC_API_KEY`,
+so every entry point shows an honest "pending activation" message instead
+of a fabricated answer. Set `ANTHROPIC_API_KEY` (and optionally `AI_MODEL`)
+and all three go live with no further code changes:
+
+- **Request triage** — a "✨ AI suggestion" action on each new maintenance
+  request (`/app/requests`) proposing category, priority, a safety-risk
+  flag, and the trade needed, with reasoning.
+- **Scope-of-work drafting** — "✨ Expand into full scope with AI" on
+  `/app/rfq/new` turns a short problem description into a complete scope
+  (inspection, repair, materials, testing, warranty, safety, exclusions)
+  for a human to review before the RFQ is released.
+- **Quotation recommendation narrative** — "✨ Explain this recommendation
+  with AI" on an RFQ's comparison table explains in plain language why the
+  best-value quote (always computed from real scores, never the model)
+  was recommended.
+- `/app/ai-assistant` is the overview screen — live status, what each
+  capability does, and the AI safety rules that hold regardless of
+  activation (advisory only; never auto-approves spending, awards a
+  vendor, or overrides a human decision).
+
+Verified end to end: all three entry points correctly show the
+"pending activation" state (not a fake result) with `ANTHROPIC_API_KEY`
+unset, which is this environment's real condition today.
+
 ## What's schema-ready but not yet built (documented, not faked)
 
-Not yet built: AI-assisted triage, scope-of-work drafting and quote
-comparison narration (Phase 4 — this genuinely needs an LLM API key wired
-up, which this environment doesn't have; the UI hooks and prompts are easy
-to add once one is provided, but nothing "AI" ships without a real model
-behind it), file/photo upload to object storage (photo fields exist but
-there's no upload backend wired up — noted inline in the UI where
-relevant), IoT device integrations, ZATCA/e-invoicing, WhatsApp
-notifications, and a public Open API.
+File/photo upload to object storage (photo fields exist but there's no
+upload backend wired up — noted inline in the UI where relevant), IoT
+device integrations, ZATCA/e-invoicing, WhatsApp notifications, and a
+public Open API.
 
 ## Known limitations
 

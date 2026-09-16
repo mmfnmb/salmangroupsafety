@@ -4,6 +4,7 @@ import { Card, CardBody } from "@/components/ui/card";
 import { Field, Input, Select, Textarea } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { createRfq } from "@/server/rfq";
+import { AiScopeDraftButton } from "@/components/ai-scope-draft-button";
 
 export default async function NewRfqPage({
   searchParams,
@@ -67,6 +68,14 @@ export default async function NewRfqPage({
                 defaultValue={request?.description ?? ""}
                 placeholder="Describe the problem, required inspection/repair, materials, testing and any exclusions."
               />
+              <div className="mt-2">
+                <AiScopeDraftButton
+                  assetSelectId="assetId"
+                  titleInputId="title"
+                  categoryInputId="category"
+                  targetTextareaId="scopeOfWork"
+                />
+              </div>
             </Field>
             <Field label="Quote deadline (optional)" htmlFor="quoteDeadline">
               <Input id="quoteDeadline" name="quoteDeadline" type="date" />

@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button, LinkButton } from "@/components/ui/button";
 import { convertRequestToWorkOrder, rejectRequest } from "@/server/requests";
+import { AiTriageButton } from "@/components/ai-triage-button";
 import { format } from "date-fns";
 import Link from "next/link";
 
@@ -72,23 +73,26 @@ export default async function RequestsPage() {
                   <td className="px-4 py-2.5 text-xs text-slate-500">{format(r.createdAt, "dd MMM, HH:mm")}</td>
                   <td className="px-4 py-2.5">
                     {r.status === "NEW" && (
-                      <div className="flex gap-2">
-                        <form action={convert}>
-                          <Button type="submit" variant="primary" className="px-2 py-1 text-xs">
-                            Convert to WO
-                          </Button>
-                        </form>
-                        <Link
-                          href={`/app/rfq/new?requestId=${r.id}`}
-                          className="inline-flex items-center rounded-md border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
-                        >
-                          Send to vendors
-                        </Link>
-                        <form action={reject}>
-                          <Button type="submit" variant="ghost" className="px-2 py-1 text-xs">
-                            Reject
-                          </Button>
-                        </form>
+                      <div className="space-y-2">
+                        <div className="flex gap-2">
+                          <form action={convert}>
+                            <Button type="submit" variant="primary" className="px-2 py-1 text-xs">
+                              Convert to WO
+                            </Button>
+                          </form>
+                          <Link
+                            href={`/app/rfq/new?requestId=${r.id}`}
+                            className="inline-flex items-center rounded-md border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                          >
+                            Send to vendors
+                          </Link>
+                          <form action={reject}>
+                            <Button type="submit" variant="ghost" className="px-2 py-1 text-xs">
+                              Reject
+                            </Button>
+                          </form>
+                        </div>
+                        <AiTriageButton requestId={r.id} />
                       </div>
                     )}
                   </td>
