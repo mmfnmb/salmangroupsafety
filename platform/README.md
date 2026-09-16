@@ -188,6 +188,46 @@ Verified end to end: all three entry points correctly show the
 "pending activation" state (not a fake result) with `ANTHROPIC_API_KEY`
 unset, which is this environment's real condition today.
 
+## What's implemented (UI polish + remaining screens pass)
+
+- **Redesigned sidebar** — `lucide-react` icons per item, active-route
+  highlighting, items grouped into Operations / Assets / Workforce /
+  Procurement / Intelligence / Admin, and the previously orphaned
+  Checklists page and never-built Settings page are now reachable.
+- **Redesigned topbar** — a real global search box, a notification bell,
+  and a user menu (avatar, name, role, settings shortcut, log out),
+  replacing the bare language switcher.
+- **Global search** (`/app/search`) — queries assets, requests, work
+  orders, sites and approved vendors by name/number/description, scoped
+  to the signed-in organization.
+- **Real notifications**, not a mocked bell: `Notification` rows are now
+  actually written when an emergency/critical request comes in or a
+  purchase request needs approval (both notify org managers), and the
+  bell additionally shows live-computed alerts (overdue PM schedules,
+  contracts expiring within 30 days) that need no background job because
+  they're derived from current state on every load.
+- **Maintenance request detail page** (`/app/requests/[id]`) — this was a
+  real gap: `createInternalRequest` already redirected here and 404'd.
+  Now shows the full request, requester info, AI triage, convert/reject
+  actions, and links to the resulting work order or RFQ.
+- **Settings screen** (`/app/settings`) — organization profile, per­
+  priority SLA policies, approval thresholds (create/remove), and team
+  management (invite with a generated one-time temporary password shown
+  once, suspend/reactivate). Gated to Account Owner / Facility Manager /
+  Maintenance Manager; other roles see it read-only.
+- **Real charts** (`recharts`) on both dashboards, all from live queries —
+  no placeholder data: a 14-day request trend and open-work-order status
+  distribution on the Ops dashboard, a 6-month maintenance cost trend on
+  the Executive dashboard, and a portfolio health sub-score breakdown
+  (condition / PM compliance / reliability / open defects) on both.
+
+Verified end to end with a real browser session (Playwright) against the
+seeded `dammam-wh` org: login → dashboards render with live chart data →
+notification bell shows a real PM-overdue alert → global search returns
+real matches → a request's reference number opens its detail page →
+settings page shows the actual seeded team and SLA policies → Arabic/RTL
+toggle mirrors the new sidebar, topbar, search box and charts correctly.
+
 ## What's schema-ready but not yet built (documented, not faked)
 
 File/photo upload to object storage (photo fields exist but there's no

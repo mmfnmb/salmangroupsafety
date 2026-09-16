@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { requireOrgSession } from "@/lib/tenant";
 import { nextRequestReference, nextWorkOrderNumber } from "@/lib/numbering";
+import { notifyOrgManagers } from "@/lib/notify";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { RequestPriority, RequestSource } from "@/generated/prisma/client";
@@ -11,6 +12,8 @@ function str(formData: FormData, key: string): string | null {
   const v = formData.get(key);
   return typeof v === "string" && v.trim() !== "" ? v.trim() : null;
 }
+
+const URGENT_PRIORITIES: RequestPriority[] = ["EMERGENCY", "CRITICAL"];
 
 /**
  * Public entry point — reachable from the QR scan page or an org's public
@@ -37,6 +40,7 @@ export async function createPublicRequest(formData: FormData) {
   }
 
   const referenceNumber = await nextRequestReference(orgId);
+  const priority = (str(formData, "priority") as RequestPriority) ?? "NORMAL";
 
   await prisma.maintenanceRequest.create({
     data: {
@@ -49,10 +53,19 @@ export async function createPublicRequest(formData: FormData) {
       requesterEmail: str(formData, "requesterEmail"),
       category: str(formData, "category"),
       description,
-      priority: (str(formData, "priority") as RequestPriority) ?? "NORMAL",
+      priority,
       source: (str(formData, "source") as RequestSource) ?? "PUBLIC_PORTAL",
     },
   });
+
+  if (URGENT_PRIORITIES.includes(priority)) {
+    await notifyOrgManagers(
+      orgId,
+      "URGENT_REQUEST",
+      `${priority === "EMERGENCY" ? "Emergency" : "Critical"} request ${referenceNumber}`,
+      description
+    );
+  }
 
   redirect(`/r/thank-you?ref=${referenceNumber}`);
 }
@@ -74,6 +87,7 @@ export async function createInternalRequest(formData: FormData) {
   }
 
   const referenceNumber = await nextRequestReference(session.orgId);
+  const priority = (str(formData, "priority") as RequestPriority) ?? "NORMAL";
 
   const request = await prisma.maintenanceRequest.create({
     data: {
@@ -85,10 +99,19 @@ export async function createInternalRequest(formData: FormData) {
       requesterUserId: session.userId,
       category: str(formData, "category"),
       description,
-      priority: (str(formData, "priority") as RequestPriority) ?? "NORMAL",
+      priority,
       source: "INTERNAL_PORTAL",
     },
   });
+
+  if (URGENT_PRIORITIES.includes(priority)) {
+    await notifyOrgManagers(
+      session.orgId,
+      "URGENT_REQUEST",
+      `${priority === "EMERGENCY" ? "Emergency" : "Critical"} request ${referenceNumber}`,
+      description
+    );
+  }
 
   revalidatePath("/app/requests");
   redirect(`/app/requests/${request.id}`);

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireOrgSession } from "@/lib/tenant";
 import { canManageOrg } from "@/lib/roles";
 import { nextPurchaseRequestNumber, nextPurchaseOrderNumber } from "@/lib/numbering";
+import { notifyOrgManagers } from "@/lib/notify";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -90,6 +91,15 @@ export async function createPurchaseRequest(formData: FormData) {
 
     return pr;
   });
+
+  if (request.status === "PENDING_APPROVAL") {
+    await notifyOrgManagers(
+      session.orgId,
+      "PURCHASE_APPROVAL_NEEDED",
+      `Purchase request ${request.requestNumber} needs approval`,
+      `${itemName} × ${quantity} is not in stock and is waiting for approval.`
+    );
+  }
 
   revalidatePath("/app/procurement");
   redirect(`/app/procurement/${request.id}`);

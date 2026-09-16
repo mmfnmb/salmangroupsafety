@@ -6,6 +6,7 @@
     "requests": "Requests",
     "workOrders": "Work Orders",
     "pm": "Preventive Maintenance",
+    "checklists": "Checklists",
     "technicians": "Technicians",
     "vendors": "Vendors",
     "rfq": "RFQs",

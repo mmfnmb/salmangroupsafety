@@ -3,8 +3,10 @@ import { prisma } from "@/lib/prisma";
 import { computePortfolioHealth, healthBand, computeTechnicianPerformance } from "@/lib/scoring";
 import { Card, CardBody, CardHeader, StatCard } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { HealthBreakdownChart } from "@/components/charts/health-breakdown-chart";
+import { TrendAreaChart } from "@/components/charts/trend-area-chart";
 import { redirect } from "next/navigation";
-import { subDays, addYears } from "date-fns";
+import { subDays, addYears, subMonths, startOfMonth, format } from "date-fns";
 import Link from "next/link";
 
 export default async function ExecutiveDashboardPage() {
@@ -48,6 +50,26 @@ export default async function ExecutiveDashboardPage() {
   const avgTechScore =
     techScores.length > 0 ? Math.round(techScores.reduce((s, t) => s + t.score, 0) / techScores.length) : null;
 
+  const healthChartData = [
+    { label: "Condition", score: health.conditionScore },
+    { label: "PM Compliance", score: health.pmComplianceScore },
+    { label: "Reliability", score: health.breakdownScore },
+    { label: "Open Defects", score: health.openDefectScore },
+  ];
+
+  const sixMonthsAgo = startOfMonth(subMonths(now, 5));
+  const costWorkOrders = await prisma.workOrder.findMany({
+    where: { orgId: session.orgId, completedAt: { gte: sixMonthsAgo }, totalCostSar: { not: null } },
+    select: { completedAt: true, totalCostSar: true },
+  });
+  const costTrend = Array.from({ length: 6 }, (_, i) => {
+    const monthStart = startOfMonth(subMonths(now, 5 - i));
+    const monthCost = costWorkOrders
+      .filter((wo) => wo.completedAt && startOfMonth(wo.completedAt).getTime() === monthStart.getTime())
+      .reduce((sum, wo) => sum + Number(wo.totalCostSar ?? 0), 0);
+    return { label: format(monthStart, "MMM"), cost: Math.round(monthCost) };
+  });
+
   return (
     <div className="space-y-6">
       <div>
@@ -60,6 +82,25 @@ export default async function ExecutiveDashboardPage() {
         <StatCard label="Open Critical Risks" value={openCritical.length} tone={openCritical.length > 0 ? "red" : "green"} />
         <StatCard label="Cost (Month to Date)" value={`SAR ${(monthCost._sum.totalCostSar ?? 0).toLocaleString()}`} />
         <StatCard label="Avg Technician Score" value={avgTechScore != null ? `${avgTechScore}/100` : "No data"} />
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <h2 className="text-sm font-semibold text-slate-900">Maintenance cost, last 6 months</h2>
+          </CardHeader>
+          <CardBody>
+            <TrendAreaChart data={costTrend} dataKey="cost" color="#059669" valueFormat="sar" />
+          </CardBody>
+        </Card>
+        <Card>
+          <CardHeader>
+            <h2 className="text-sm font-semibold text-slate-900">Portfolio health breakdown</h2>
+          </CardHeader>
+          <CardBody>
+            <HealthBreakdownChart data={healthChartData} />
+          </CardBody>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

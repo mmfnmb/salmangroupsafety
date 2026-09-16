@@ -55,7 +55,11 @@ export default async function RequestsPage() {
               const reject = rejectRequest.bind(null, r.id);
               return (
                 <tr key={r.id} className="hover:bg-slate-50">
-                  <td className="px-4 py-2.5 font-mono text-xs text-slate-500">{r.referenceNumber}</td>
+                  <td className="px-4 py-2.5 font-mono text-xs">
+                    <Link href={`/app/requests/${r.id}`} className="text-blue-700 hover:underline">
+                      {r.referenceNumber}
+                    </Link>
+                  </td>
                   <td className="max-w-xs truncate px-4 py-2.5 text-slate-800">{r.description}</td>
                   <td className="px-4 py-2.5 text-slate-600">
                     {r.site.name}
