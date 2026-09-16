@@ -5,25 +5,31 @@ import { Field, Input, Select, Textarea } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { PhotoUploadField } from "@/components/photo-upload-field";
 import { createInternalRequest } from "@/server/requests";
+import { getTranslations } from "next-intl/server";
 
 export default async function NewInternalRequestPage() {
   const session = await requireOrgSession();
-  const sites = await prisma.site.findMany({
-    where: { orgId: session.orgId },
-    include: { assets: { select: { id: true, name: true, assetCode: true } } },
-    orderBy: { name: "asc" },
-  });
+  const [sites, t, tc, tp] = await Promise.all([
+    prisma.site.findMany({
+      where: { orgId: session.orgId },
+      include: { assets: { select: { id: true, name: true, assetCode: true } } },
+      orderBy: { name: "asc" },
+    }),
+    getTranslations("internalRequestForm"),
+    getTranslations("common"),
+    getTranslations("priority"),
+  ]);
 
   return (
     <div className="mx-auto max-w-lg">
-      <h1 className="mb-6 text-xl font-semibold text-slate-900">Log a maintenance request</h1>
+      <h1 className="mb-6 text-xl font-semibold text-slate-900">{t("title")}</h1>
       <Card>
         <CardBody>
           <form action={createInternalRequest} className="space-y-4">
-            <Field label="Site" htmlFor="siteId" required>
+            <Field label={tc("site")} htmlFor="siteId" required>
               <Select id="siteId" name="siteId" required defaultValue="">
                 <option value="" disabled>
-                  Select site
+                  {t("selectSite")}
                 </option>
                 {sites.map((s) => (
                   <option key={s.id} value={s.id}>
@@ -32,9 +38,9 @@ export default async function NewInternalRequestPage() {
                 ))}
               </Select>
             </Field>
-            <Field label="Asset (optional)" htmlFor="assetId">
+            <Field label={t("assetOptional")} htmlFor="assetId">
               <Select id="assetId" name="assetId" defaultValue="">
-                <option value="">Unknown / not asset-specific</option>
+                <option value="">{t("unknownAsset")}</option>
                 {sites.flatMap((s) =>
                   s.assets.map((a) => (
                     <option key={a.id} value={a.id}>
@@ -44,24 +50,24 @@ export default async function NewInternalRequestPage() {
                 )}
               </Select>
             </Field>
-            <Field label="Category" htmlFor="category">
-              <Input id="category" name="category" placeholder="e.g. HVAC, Electrical, Plumbing" />
+            <Field label={tc("category")} htmlFor="category">
+              <Input id="category" name="category" placeholder={t("categoryPlaceholder")} />
             </Field>
-            <Field label="Description" htmlFor="description" required>
+            <Field label={t("description")} htmlFor="description" required>
               <Textarea id="description" name="description" required rows={4} />
             </Field>
-            <Field label="Priority" htmlFor="priority">
+            <Field label={tc("priority")} htmlFor="priority">
               <Select id="priority" name="priority" defaultValue="NORMAL">
-                <option value="LOW">Low</option>
-                <option value="NORMAL">Normal</option>
-                <option value="HIGH">High</option>
-                <option value="EMERGENCY">Emergency</option>
-                <option value="CRITICAL">Critical / safety risk</option>
+                <option value="LOW">{tp("LOW")}</option>
+                <option value="NORMAL">{tp("NORMAL")}</option>
+                <option value="HIGH">{tp("HIGH")}</option>
+                <option value="EMERGENCY">{tp("EMERGENCY")}</option>
+                <option value="CRITICAL">{tp("CRITICAL")}</option>
               </Select>
             </Field>
-            <PhotoUploadField name="photoUrl" orgId={session.orgId} label="Photo (optional)" />
+            <PhotoUploadField name="photoUrl" orgId={session.orgId} label={t("photoOptional")} />
             <Button type="submit" className="w-full">
-              Submit request
+              {t("submit")}
             </Button>
           </form>
         </CardBody>

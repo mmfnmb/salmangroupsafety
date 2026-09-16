@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { evaluateSlaStage, DEFAULT_SLA_MINUTES } from "@/lib/sla";
 import { format } from "date-fns";
+import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 
 const STATUS_TONE: Record<string, "slate" | "blue" | "green" | "amber" | "red" | "purple"> = {
@@ -24,6 +25,7 @@ const STATUS_TONE: Record<string, "slate" | "blue" | "green" | "amber" | "red" |
   CANCELLED: "slate",
 };
 
+const SLA_KEY = { on_track: "onTrack", at_risk: "atRisk", breached: "breached", met: "met", "n/a": "na" } as const;
 const SLA_TONE = { on_track: "green", at_risk: "amber", breached: "red", met: "green", "n/a": "slate" } as const;
 
 export default async function WorkOrdersPage({
@@ -34,35 +36,41 @@ export default async function WorkOrdersPage({
   const session = await requireOrgSession();
   const params = await searchParams;
 
-  const workOrders = await prisma.workOrder.findMany({
-    where: {
-      orgId: session.orgId,
-      assetId: params.assetId || undefined,
-      status: (params.status as never) || undefined,
-    },
-    include: { site: true, asset: true, assignedTechnician: true, slaPolicy: true },
-    orderBy: { createdAt: "desc" },
-    take: 150,
-  });
+  const [workOrders, t, tc, tws, tsla] = await Promise.all([
+    prisma.workOrder.findMany({
+      where: {
+        orgId: session.orgId,
+        assetId: params.assetId || undefined,
+        status: (params.status as never) || undefined,
+      },
+      include: { site: true, asset: true, assignedTechnician: true, slaPolicy: true },
+      orderBy: { createdAt: "desc" },
+      take: 150,
+    }),
+    getTranslations("workOrdersPage"),
+    getTranslations("common"),
+    getTranslations("workOrderStatus"),
+    getTranslations("slaStage"),
+  ]);
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-slate-900">Work Orders</h1>
-        <p className="text-sm text-slate-500">{workOrders.length} in view</p>
+        <h1 className="text-xl font-semibold text-slate-900">{t("title")}</h1>
+        <p className="text-sm text-slate-500">{t("inView", { count: workOrders.length })}</p>
       </div>
 
       <Card>
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
             <tr>
-              <th className="px-4 py-2 text-start">Number</th>
-              <th className="px-4 py-2 text-start">Description</th>
-              <th className="px-4 py-2 text-start">Site / Asset</th>
-              <th className="px-4 py-2 text-start">Technician</th>
-              <th className="px-4 py-2 text-start">Status</th>
-              <th className="px-4 py-2 text-start">SLA</th>
-              <th className="px-4 py-2 text-start">Created</th>
+              <th className="px-4 py-2 text-start">{t("colNumber")}</th>
+              <th className="px-4 py-2 text-start">{t("colDescription")}</th>
+              <th className="px-4 py-2 text-start">{t("colSiteAsset")}</th>
+              <th className="px-4 py-2 text-start">{t("colTechnician")}</th>
+              <th className="px-4 py-2 text-start">{tc("status")}</th>
+              <th className="px-4 py-2 text-start">{t("colSla")}</th>
+              <th className="px-4 py-2 text-start">{t("colCreated")}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -85,12 +93,12 @@ export default async function WorkOrdersPage({
                     {wo.site.name}
                     {wo.asset ? ` · ${wo.asset.assetCode}` : ""}
                   </td>
-                  <td className="px-4 py-2.5 text-slate-600">{wo.assignedTechnician?.name ?? "Unassigned"}</td>
+                  <td className="px-4 py-2.5 text-slate-600">{wo.assignedTechnician?.name ?? tc("unassigned")}</td>
                   <td className="px-4 py-2.5">
-                    <Badge tone={STATUS_TONE[wo.status]}>{wo.status.replace(/_/g, " ")}</Badge>
+                    <Badge tone={STATUS_TONE[wo.status]}>{tws(wo.status)}</Badge>
                   </td>
                   <td className="px-4 py-2.5">
-                    <Badge tone={SLA_TONE[slaStage]}>{slaStage.replace("_", " ")}</Badge>
+                    <Badge tone={SLA_TONE[slaStage]}>{tsla(SLA_KEY[slaStage])}</Badge>
                   </td>
                   <td className="px-4 py-2.5 text-xs text-slate-500">{format(wo.createdAt, "dd MMM, HH:mm")}</td>
                 </tr>
@@ -99,7 +107,7 @@ export default async function WorkOrdersPage({
             {workOrders.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
-                  No work orders found.
+                  {t("noWorkOrders")}
                 </td>
               </tr>
             )}

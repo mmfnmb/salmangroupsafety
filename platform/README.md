@@ -252,16 +252,20 @@ public Open API.
   column (`WEEKLY` | `MONTHLY`); the same report generator now produces
   either, and `/app/reports` has a "Generate monthly report" action
   alongside the weekly one.
-- **Arabic translation, scoped to the highest-traffic screens**: the app
-  chrome (sidebar/topbar, done in the UI-polish pass), the Ops Dashboard,
-  and the public request-reporting form (shared by the QR-scan page and
-  the org's public portal — the two places a non-English-speaking tenant
-  or technician is most likely to land) are now fully bilingual, including
-  a language switcher on the public pages themselves. The rest of the
-  internal admin/management screens (assets, work orders, RFQ, procurement,
-  technicians, vendors, settings, reports) still use the same
-  `next-intl` pattern established here but haven't been converted string
-  by string yet — that's ~40 remaining pages of a scale beyond this pass,
+- **Arabic translation, expanding outward from the highest-traffic
+  screens**: the app chrome (sidebar/topbar), the Ops Dashboard, the
+  public request-reporting form (shared by the QR-scan page and the org's
+  public portal, with a language switcher on those public pages), and now
+  the full **Operations** sidebar group — Requests (list, detail, and the
+  internal "log a request" form), Work Orders (list and the full detail
+  page: timeline, status flow, completion form, customer sign-off, parts,
+  photos), Preventive Maintenance, and Checklists — are fully bilingual,
+  including shared enum-label namespaces (`priority`, `requestStatus`,
+  `workOrderStatus`, `workOrderType`, `assetCondition`, `slaStage`,
+  `pmFrequency`) that later pages can reuse instead of re-translating the
+  same badges. The remaining sidebar groups (Assets, Workforce,
+  Procurement, Intelligence, Admin — roughly 25 pages) still use the same
+  `next-intl` pattern established here but haven't been converted yet;
   left as follow-up work rather than claimed as done.
 
 ## Known limitations
@@ -271,8 +275,10 @@ public Open API.
   manually from `/app/pm`.
 - Local-disk photo storage (see above) needs to be swapped for real object
   storage before a serverless production deploy.
-- Most internal admin/management screens are still English-only; RTL
-  layout and the chrome around them is bilingual, their content isn't yet.
+- Assets, Workforce, Procurement, Intelligence and Admin screens are still
+  English-only; RTL layout and the chrome around them is bilingual, their
+  content isn't yet (Operations screens — requests, work orders, PM,
+  checklists — are done, see above).
 
 ## Verified end-to-end (real browser test, not a claim)
 

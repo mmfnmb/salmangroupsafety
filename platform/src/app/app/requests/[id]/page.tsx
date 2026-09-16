@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { AiTriageButton } from "@/components/ai-triage-button";
 import { convertRequestToWorkOrder, rejectRequest } from "@/server/requests";
 import { format } from "date-fns";
+import { getTranslations } from "next-intl/server";
 
 const PRIORITY_TONE = {
   LOW: "slate",
@@ -21,10 +22,18 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
   const { id } = await params;
   const session = await requireOrgSession();
 
-  const request = await prisma.maintenanceRequest.findFirst({
-    where: { id, orgId: session.orgId },
-    include: { site: true, asset: true, requesterUser: true, workOrder: true, rfq: true },
-  });
+  const [request, t, tc, tp, ts, tsrc, tw] = await Promise.all([
+    prisma.maintenanceRequest.findFirst({
+      where: { id, orgId: session.orgId },
+      include: { site: true, asset: true, requesterUser: true, workOrder: true, rfq: true },
+    }),
+    getTranslations("requestDetail"),
+    getTranslations("common"),
+    getTranslations("priority"),
+    getTranslations("requestStatus"),
+    getTranslations("requestSource"),
+    getTranslations("workOrderStatus"),
+  ]);
   if (!request) notFound();
 
   const convert = convertRequestToWorkOrder.bind(null, request.id);
@@ -49,9 +58,9 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
           </p>
         </div>
         <div className="flex gap-2">
-          <Badge tone={PRIORITY_TONE[request.priority]}>{request.priority}</Badge>
+          <Badge tone={PRIORITY_TONE[request.priority]}>{tp(request.priority)}</Badge>
           <Badge tone={request.status === "NEW" ? "amber" : request.status === "CONVERTED" ? "green" : "slate"}>
-            {request.status}
+            {ts(request.status)}
           </Badge>
         </div>
       </div>
@@ -60,7 +69,7 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
         <div className="space-y-6 lg:col-span-2">
           <Card>
             <CardHeader>
-              <h2 className="text-sm font-semibold text-slate-900">Description</h2>
+              <h2 className="text-sm font-semibold text-slate-900">{tc("description")}</h2>
             </CardHeader>
             <CardBody className="space-y-3 text-sm text-slate-700">
               <p>{request.description}</p>
@@ -78,25 +87,25 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
           {request.status === "NEW" && (
             <Card>
               <CardHeader>
-                <h2 className="text-sm font-semibold text-slate-900">Triage this request</h2>
+                <h2 className="text-sm font-semibold text-slate-900">{t("triageThisRequest")}</h2>
               </CardHeader>
               <CardBody className="space-y-4">
                 <AiTriageButton requestId={request.id} />
                 <div className="flex flex-wrap gap-2">
                   <form action={convert}>
                     <Button type="submit" variant="primary">
-                      Convert to work order
+                      {t("convertToWorkOrder")}
                     </Button>
                   </form>
                   <Link
                     href={`/app/rfq/new?requestId=${request.id}`}
                     className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
                   >
-                    Send to vendors (RFQ)
+                    {t("sendToVendorsRfq")}
                   </Link>
                   <form action={reject}>
                     <Button type="submit" variant="ghost">
-                      Reject
+                      {t("reject")}
                     </Button>
                   </form>
                 </div>
@@ -107,11 +116,11 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
           {request.workOrder && (
             <Card>
               <CardHeader>
-                <h2 className="text-sm font-semibold text-slate-900">Linked work order</h2>
+                <h2 className="text-sm font-semibold text-slate-900">{t("linkedWorkOrder")}</h2>
               </CardHeader>
               <CardBody>
                 <Link href={`/app/work-orders/${request.workOrder.id}`} className="text-sm font-medium text-blue-700 hover:underline">
-                  {request.workOrder.number} — {request.workOrder.status.replace(/_/g, " ")}
+                  {request.workOrder.number} — {tw(request.workOrder.status)}
                 </Link>
               </CardBody>
             </Card>
@@ -120,7 +129,7 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
           {request.rfq && (
             <Card>
               <CardHeader>
-                <h2 className="text-sm font-semibold text-slate-900">Linked RFQ</h2>
+                <h2 className="text-sm font-semibold text-slate-900">{t("linkedRfq")}</h2>
               </CardHeader>
               <CardBody>
                 <Link href={`/app/rfq/${request.rfq.id}`} className="text-sm font-medium text-blue-700 hover:underline">
@@ -134,24 +143,24 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <h2 className="text-sm font-semibold text-slate-900">Requester</h2>
+              <h2 className="text-sm font-semibold text-slate-900">{t("requester")}</h2>
             </CardHeader>
             <CardBody className="space-y-2 text-sm">
-              <Info label="Name" value={request.requesterName} />
-              {request.requesterPhone && <Info label="Phone" value={request.requesterPhone} />}
-              {request.requesterEmail && <Info label="Email" value={request.requesterEmail} />}
-              <Info label="Channel" value={request.source.replace(/_/g, " ")} />
+              <Info label={t("name")} value={request.requesterName} />
+              {request.requesterPhone && <Info label={t("phone")} value={request.requesterPhone} />}
+              {request.requesterEmail && <Info label={t("email")} value={request.requesterEmail} />}
+              <Info label={t("channel")} value={tsrc(request.source)} />
             </CardBody>
           </Card>
 
           <Card>
             <CardHeader>
-              <h2 className="text-sm font-semibold text-slate-900">Details</h2>
+              <h2 className="text-sm font-semibold text-slate-900">{t("details")}</h2>
             </CardHeader>
             <CardBody className="space-y-2 text-sm">
-              <Info label="Category" value={request.category ?? "—"} />
-              <Info label="Received" value={format(request.createdAt, "dd MMM yyyy, HH:mm")} />
-              <Info label="Last updated" value={format(request.updatedAt, "dd MMM yyyy, HH:mm")} />
+              <Info label={tc("category")} value={request.category ?? "—"} />
+              <Info label={t("received")} value={format(request.createdAt, "dd MMM yyyy, HH:mm")} />
+              <Info label={t("lastUpdated")} value={format(request.updatedAt, "dd MMM yyyy, HH:mm")} />
             </CardBody>
           </Card>
         </div>

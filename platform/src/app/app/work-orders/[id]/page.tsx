@@ -12,6 +12,7 @@ import { ChecklistFieldInput, type ChecklistItem } from "@/components/checklist-
 import { addPartUsedToWorkOrder } from "@/server/inventory";
 import { PhotoUploadField } from "@/components/photo-upload-field";
 import { format } from "date-fns";
+import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { X } from "lucide-react";
 
@@ -31,24 +32,35 @@ const STATUS_FLOW = [
   "CLOSED",
 ] as const;
 
+const SLA_KEY = { on_track: "onTrack", at_risk: "atRisk", breached: "breached", met: "met", "n/a": "na" } as const;
+
 export default async function WorkOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await requireOrgSession();
 
-  const wo = await prisma.workOrder.findFirst({
-    where: { id, orgId: session.orgId },
-    include: {
-      site: true,
-      asset: true,
-      assignedTechnician: true,
-      assignedVendor: true,
-      slaPolicy: true,
-      request: true,
-      pmSchedule: { include: { pmPlan: { include: { checklist: true } } } },
-      partsUsed: { orderBy: { usedAt: "desc" } },
-      photos: { orderBy: { uploadedAt: "desc" } },
-    },
-  });
+  const [wo, t, tc, tws, twt, tp, tac, tsla] = await Promise.all([
+    prisma.workOrder.findFirst({
+      where: { id, orgId: session.orgId },
+      include: {
+        site: true,
+        asset: true,
+        assignedTechnician: true,
+        assignedVendor: true,
+        slaPolicy: true,
+        request: true,
+        pmSchedule: { include: { pmPlan: { include: { checklist: true } } } },
+        partsUsed: { orderBy: { usedAt: "desc" } },
+        photos: { orderBy: { uploadedAt: "desc" } },
+      },
+    }),
+    getTranslations("workOrderDetail"),
+    getTranslations("common"),
+    getTranslations("workOrderStatus"),
+    getTranslations("workOrderType"),
+    getTranslations("priority"),
+    getTranslations("assetCondition"),
+    getTranslations("slaStage"),
+  ]);
   if (!wo) notFound();
 
   const [technicians, blacklistedVendorIds, availableParts] = await Promise.all([
@@ -73,6 +85,12 @@ export default async function WorkOrderDetailPage({ params }: { params: Promise<
   const completeAction = completeWorkOrder.bind(null, wo.id);
   const signoffAction = customerSignoff.bind(null, wo.id);
 
+  const PHOTO_STAGE_LABEL: Record<string, string> = {
+    BEFORE: t("stageBefore"),
+    DURING: t("stageDuring"),
+    AFTER: t("stageAfter"),
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between">
@@ -92,9 +110,9 @@ export default async function WorkOrderDetailPage({ params }: { params: Promise<
           </p>
         </div>
         <div className="flex gap-2">
-          <Badge tone="blue">{wo.status.replace(/_/g, " ")}</Badge>
+          <Badge tone="blue">{tws(wo.status)}</Badge>
           <Badge tone={slaStage === "breached" ? "red" : slaStage === "at_risk" ? "amber" : "green"}>
-            SLA {slaStage.replace("_", " ")}
+            {t("sla")} {tsla(SLA_KEY[slaStage])}
           </Badge>
         </div>
       </div>
@@ -103,40 +121,40 @@ export default async function WorkOrderDetailPage({ params }: { params: Promise<
         <div className="space-y-6 lg:col-span-2">
           <Card>
             <CardHeader>
-              <h2 className="text-sm font-semibold text-slate-900">Timeline</h2>
+              <h2 className="text-sm font-semibold text-slate-900">{t("timeline")}</h2>
             </CardHeader>
             <CardBody className="grid grid-cols-2 gap-3 text-sm">
-              <TimeStamp label="Created" value={wo.createdAt} />
-              <TimeStamp label="Responded" value={wo.respondedAt} />
-              <TimeStamp label="Arrived" value={wo.arrivedAt} />
-              <TimeStamp label="Started" value={wo.startedAt} />
-              <TimeStamp label="Completed" value={wo.completedAt} />
-              <TimeStamp label="Closed" value={wo.closedAt} />
+              <TimeStamp label={t("created")} value={wo.createdAt} />
+              <TimeStamp label={t("responded")} value={wo.respondedAt} />
+              <TimeStamp label={t("arrived")} value={wo.arrivedAt} />
+              <TimeStamp label={t("started")} value={wo.startedAt} />
+              <TimeStamp label={t("completed")} value={wo.completedAt} />
+              <TimeStamp label={t("closed")} value={wo.closedAt} />
             </CardBody>
           </Card>
 
           <Card>
             <CardHeader>
-              <h2 className="text-sm font-semibold text-slate-900">Update status</h2>
+              <h2 className="text-sm font-semibold text-slate-900">{t("updateStatus")}</h2>
             </CardHeader>
             <CardBody>
               <form action={async (formData) => {
                 "use server";
                 await updateWorkOrderStatus(wo.id, formData.get("status") as never);
               }} className="flex items-end gap-3">
-                <Field label="Status" htmlFor="status">
+                <Field label={tc("status")} htmlFor="status">
                   <Select id="status" name="status" defaultValue={wo.status}>
                     {STATUS_FLOW.map((s) => (
                       <option key={s} value={s}>
-                        {s.replace(/_/g, " ")}
+                        {tws(s)}
                       </option>
                     ))}
-                    <option value="REOPENED">REOPENED</option>
-                    <option value="CANCELLED">CANCELLED</option>
+                    <option value="REOPENED">{tws("REOPENED")}</option>
+                    <option value="CANCELLED">{tws("CANCELLED")}</option>
                   </Select>
                 </Field>
                 <Button type="submit" variant="secondary">
-                  Update
+                  {t("update")}
                 </Button>
               </form>
             </CardBody>
@@ -145,7 +163,7 @@ export default async function WorkOrderDetailPage({ params }: { params: Promise<
           {["IN_PROGRESS", "TESTING", "WAITING_PARTS", "DIAGNOSIS"].includes(wo.status) && (
             <Card>
               <CardHeader>
-                <h2 className="text-sm font-semibold text-slate-900">Complete job</h2>
+                <h2 className="text-sm font-semibold text-slate-900">{t("completeJob")}</h2>
               </CardHeader>
               <CardBody>
                 <form action={completeAction} className="space-y-4">
@@ -162,40 +180,40 @@ export default async function WorkOrderDetailPage({ params }: { params: Promise<
                       </div>
                     </div>
                   )}
-                  <Field label="Root cause" htmlFor="rootCause">
+                  <Field label={t("rootCause")} htmlFor="rootCause">
                     <Textarea id="rootCause" name="rootCause" rows={2} />
                   </Field>
-                  <Field label="Corrective action" htmlFor="correctiveAction">
+                  <Field label={t("correctiveAction")} htmlFor="correctiveAction">
                     <Textarea id="correctiveAction" name="correctiveAction" rows={2} />
                   </Field>
-                  <Field label="Recommendation" htmlFor="recommendation">
+                  <Field label={t("recommendation")} htmlFor="recommendation">
                     <Textarea id="recommendation" name="recommendation" rows={2} />
                   </Field>
-                  <Field label="Asset condition after repair" htmlFor="assetConditionAfter">
+                  <Field label={t("assetConditionAfter")} htmlFor="assetConditionAfter">
                     <Select id="assetConditionAfter" name="assetConditionAfter" defaultValue="">
-                      <option value="">No change</option>
-                      <option value="EXCELLENT">Excellent</option>
-                      <option value="GOOD">Good</option>
-                      <option value="FAIR">Fair</option>
-                      <option value="POOR">Poor</option>
-                      <option value="CRITICAL">Critical</option>
+                      <option value="">{t("noChange")}</option>
+                      <option value="EXCELLENT">{tac("EXCELLENT")}</option>
+                      <option value="GOOD">{tac("GOOD")}</option>
+                      <option value="FAIR">{tac("FAIR")}</option>
+                      <option value="POOR">{tac("POOR")}</option>
+                      <option value="CRITICAL">{tac("CRITICAL")}</option>
                     </Select>
                   </Field>
                   {showFinancials && (
                     <div className="grid grid-cols-2 gap-4">
-                      <Field label="Labor cost (SAR)" htmlFor="laborCostSar">
+                      <Field label={t("laborCost")} htmlFor="laborCostSar">
                         <Input id="laborCostSar" name="laborCostSar" type="number" step="0.01" />
                       </Field>
-                      <Field label="Parts cost (SAR)" htmlFor="partsCostSar">
+                      <Field label={t("partsCost")} htmlFor="partsCostSar">
                         <Input id="partsCostSar" name="partsCostSar" type="number" step="0.01" />
                       </Field>
                     </div>
                   )}
                   <label className="flex items-center gap-2 text-sm text-slate-700">
                     <input type="checkbox" name="safetyIncidentReported" />
-                    A safety incident occurred during this job
+                    {t("safetyIncident")}
                   </label>
-                  <Button type="submit">Mark completed</Button>
+                  <Button type="submit">{t("markCompleted")}</Button>
                 </form>
               </CardBody>
             </Card>
@@ -204,27 +222,27 @@ export default async function WorkOrderDetailPage({ params }: { params: Promise<
           {(wo.status === "COMPLETED" || wo.status === "CUSTOMER_VERIFICATION") && (
             <Card>
               <CardHeader>
-                <h2 className="text-sm font-semibold text-slate-900">Customer sign-off</h2>
+                <h2 className="text-sm font-semibold text-slate-900">{t("customerSignoff")}</h2>
               </CardHeader>
               <CardBody>
                 <form action={signoffAction} className="space-y-4">
-                  <Field label="Decision" htmlFor="decision">
+                  <Field label={t("decision")} htmlFor="decision">
                     <Select id="decision" name="decision" defaultValue="APPROVED">
-                      <option value="APPROVED">Approve</option>
-                      <option value="REJECTED">Reject</option>
-                      <option value="REOPENED">Reopen</option>
+                      <option value="APPROVED">{t("decisionApprove")}</option>
+                      <option value="REJECTED">{t("decisionReject")}</option>
+                      <option value="REOPENED">{t("decisionReopen")}</option>
                     </Select>
                   </Field>
-                  <Field label="Rating (1-5)" htmlFor="rating">
+                  <Field label={t("rating")} htmlFor="rating">
                     <Select id="rating" name="rating" defaultValue="5">
                       {[5, 4, 3, 2, 1].map((n) => (
                         <option key={n} value={n}>
-                          {n} star{n > 1 ? "s" : ""}
+                          {n} {n > 1 ? t("stars") : t("star")}
                         </option>
                       ))}
                     </Select>
                   </Field>
-                  <Button type="submit">Submit sign-off</Button>
+                  <Button type="submit">{t("submitSignoff")}</Button>
                 </form>
               </CardBody>
             </Card>
@@ -233,14 +251,14 @@ export default async function WorkOrderDetailPage({ params }: { params: Promise<
           {(wo.rootCause || wo.correctiveAction) && (
             <Card>
               <CardHeader>
-                <h2 className="text-sm font-semibold text-slate-900">Completion notes</h2>
+                <h2 className="text-sm font-semibold text-slate-900">{t("completionNotes")}</h2>
               </CardHeader>
               <CardBody className="space-y-2 text-sm text-slate-700">
-                {wo.rootCause && <p><strong>Root cause:</strong> {wo.rootCause}</p>}
-                {wo.correctiveAction && <p><strong>Corrective action:</strong> {wo.correctiveAction}</p>}
-                {wo.recommendation && <p><strong>Recommendation:</strong> {wo.recommendation}</p>}
+                {wo.rootCause && <p><strong>{t("rootCause")}:</strong> {wo.rootCause}</p>}
+                {wo.correctiveAction && <p><strong>{t("correctiveAction")}:</strong> {wo.correctiveAction}</p>}
+                {wo.recommendation && <p><strong>{t("recommendation")}:</strong> {wo.recommendation}</p>}
                 {showFinancials && wo.totalCostSar != null && (
-                  <p><strong>Total cost:</strong> SAR {Number(wo.totalCostSar).toLocaleString()}</p>
+                  <p><strong>{t("totalCost")}:</strong> SAR {Number(wo.totalCostSar).toLocaleString()}</p>
                 )}
               </CardBody>
             </Card>
@@ -248,9 +266,9 @@ export default async function WorkOrderDetailPage({ params }: { params: Promise<
 
           <Card>
             <CardHeader className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-slate-900">Parts used</h2>
+              <h2 className="text-sm font-semibold text-slate-900">{t("partsUsed")}</h2>
               <Link href={`/app/procurement/new?workOrderId=${wo.id}`} className="text-xs text-blue-700">
-                + Request materials
+                {t("requestMaterials")}
               </Link>
             </CardHeader>
             <div className="divide-y divide-slate-100">
@@ -262,27 +280,27 @@ export default async function WorkOrderDetailPage({ params }: { params: Promise<
                   )}
                 </div>
               ))}
-              {wo.partsUsed.length === 0 && <p className="p-5 text-sm text-slate-500">No parts logged yet.</p>}
+              {wo.partsUsed.length === 0 && <p className="p-5 text-sm text-slate-500">{t("noPartsLogged")}</p>}
             </div>
             <CardBody>
               <form action={addPartUsedToWorkOrder.bind(null, wo.id)} className="grid grid-cols-[1fr_auto_auto] gap-2">
                 <Select name="partId" defaultValue="" className="text-sm">
-                  <option value="">Ad-hoc / not in inventory</option>
+                  <option value="">{t("adHoc")}</option>
                   {availableParts.map((p) => (
-                    <option key={p.id} value={p.id}>{p.name} ({p.stockQuantity} in stock)</option>
+                    <option key={p.id} value={p.id}>{p.name} ({p.stockQuantity} {t("inStock")})</option>
                   ))}
                 </Select>
                 <Input name="quantity" type="number" min="1" defaultValue="1" className="w-20 px-2 py-1.5" />
-                <Button type="submit" variant="secondary" className="px-3 py-1.5 text-xs">Add</Button>
-                <Input name="partName" placeholder="Part name (if ad-hoc)" className="col-span-2 px-2 py-1.5" />
-                <Input name="unitCostSar" type="number" step="0.01" placeholder="Cost (if ad-hoc)" className="px-2 py-1.5" />
+                <Button type="submit" variant="secondary" className="px-3 py-1.5 text-xs">{tc("add")}</Button>
+                <Input name="partName" placeholder={t("partNamePlaceholder")} className="col-span-2 px-2 py-1.5" />
+                <Input name="unitCostSar" type="number" step="0.01" placeholder={t("costPlaceholder")} className="px-2 py-1.5" />
               </form>
             </CardBody>
           </Card>
 
           <Card>
             <CardHeader>
-              <h2 className="text-sm font-semibold text-slate-900">Photos</h2>
+              <h2 className="text-sm font-semibold text-slate-900">{t("photos")}</h2>
             </CardHeader>
             {wo.photos.length > 0 && (
               <div className="grid grid-cols-3 gap-2 p-5 pb-0 sm:grid-cols-4">
@@ -291,7 +309,7 @@ export default async function WorkOrderDetailPage({ params }: { params: Promise<
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={p.url} alt={p.stage} className="h-24 w-full rounded-lg border border-slate-200 object-cover" />
                     <span className="absolute start-1 top-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white">
-                      {p.stage}
+                      {PHOTO_STAGE_LABEL[p.stage] ?? p.stage}
                     </span>
                     <form
                       action={deleteWorkOrderPhoto.bind(null, p.id)}
@@ -307,16 +325,16 @@ export default async function WorkOrderDetailPage({ params }: { params: Promise<
             )}
             <CardBody>
               <form action={addWorkOrderPhoto.bind(null, wo.id)} className="flex flex-wrap items-end gap-3">
-                <Field label="Stage" htmlFor="stage">
+                <Field label={t("stage")} htmlFor="stage">
                   <Select id="stage" name="stage" defaultValue="BEFORE" className="w-32">
-                    <option value="BEFORE">Before</option>
-                    <option value="DURING">During</option>
-                    <option value="AFTER">After</option>
+                    <option value="BEFORE">{t("stageBefore")}</option>
+                    <option value="DURING">{t("stageDuring")}</option>
+                    <option value="AFTER">{t("stageAfter")}</option>
                   </Select>
                 </Field>
                 <PhotoUploadField name="url" orgId={session.orgId} />
                 <Button type="submit" variant="secondary">
-                  Add photo
+                  {t("addPhoto")}
                 </Button>
               </form>
             </CardBody>
@@ -326,25 +344,25 @@ export default async function WorkOrderDetailPage({ params }: { params: Promise<
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <h2 className="text-sm font-semibold text-slate-900">Internal technician</h2>
+              <h2 className="text-sm font-semibold text-slate-900">{t("internalTechnician")}</h2>
             </CardHeader>
             <CardBody>
               <p className="mb-3 text-sm text-slate-700">
-                {wo.assignedTechnician ? wo.assignedTechnician.name : "Unassigned"}
+                {wo.assignedTechnician ? wo.assignedTechnician.name : tc("unassigned")}
               </p>
               <form action={assignAction} className="flex gap-2">
                 <Select name="technicianId" defaultValue={wo.assignedTechnicianId ?? ""} className="flex-1">
                   <option value="" disabled>
-                    Select technician
+                    {t("selectTechnician")}
                   </option>
-                  {technicians.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name} — {t.trade}
+                  {technicians.map((tech) => (
+                    <option key={tech.id} value={tech.id}>
+                      {tech.name} — {tech.trade}
                     </option>
                   ))}
                 </Select>
                 <Button type="submit" variant="secondary">
-                  Assign
+                  {t("assign")}
                 </Button>
               </form>
             </CardBody>
@@ -352,31 +370,31 @@ export default async function WorkOrderDetailPage({ params }: { params: Promise<
 
           <Card>
             <CardHeader>
-              <h2 className="text-sm font-semibold text-slate-900">External vendor</h2>
+              <h2 className="text-sm font-semibold text-slate-900">{t("externalVendor")}</h2>
             </CardHeader>
             <CardBody>
               <p className="mb-3 text-sm text-slate-700">
-                {wo.assignedVendor ? wo.assignedVendor.name : "No specialist contractor needed yet"}
+                {wo.assignedVendor ? wo.assignedVendor.name : t("noVendorNeeded")}
               </p>
               {vendorOptions.length > 0 ? (
                 <form action={assignVendorAction} className="flex gap-2">
                   <Select name="vendorId" defaultValue={wo.assignedVendorId ?? ""} className="flex-1">
                     <option value="" disabled>
-                      Select vendor
+                      {t("selectVendor")}
                     </option>
                     {vendorOptions.map((v) => (
                       <option key={v.id} value={v.id}>
-                        {v.name} {v.coverageCities.includes(wo.site.city) ? "" : "(no coverage match)"}
+                        {v.name} {v.coverageCities.includes(wo.site.city) ? "" : t("noCoverageMatch")}
                       </option>
                     ))}
                   </Select>
                   <Button type="submit" variant="secondary">
-                    Assign
+                    {t("assign")}
                   </Button>
                 </form>
               ) : (
                 <p className="text-xs text-slate-500">
-                  No approved vendors yet in the Eastern Province network for this site.
+                  {t("noApprovedVendors")}
                 </p>
               )}
             </CardBody>
@@ -384,14 +402,14 @@ export default async function WorkOrderDetailPage({ params }: { params: Promise<
 
           <Card>
             <CardHeader>
-              <h2 className="text-sm font-semibold text-slate-900">Details</h2>
+              <h2 className="text-sm font-semibold text-slate-900">{t("details")}</h2>
             </CardHeader>
             <CardBody className="space-y-2 text-sm">
-              <Info label="Type" value={wo.type} />
-              <Info label="Priority" value={wo.priority} />
-              <Info label="Category" value={wo.category ?? "—"} />
+              <Info label={tc("type")} value={twt(wo.type)} />
+              <Info label={tc("priority")} value={tp(wo.priority)} />
+              <Info label={tc("category")} value={wo.category ?? "—"} />
               {wo.request && (
-                <Info label="Source request" value={wo.request.referenceNumber} />
+                <Info label={t("sourceRequest")} value={wo.request.referenceNumber} />
               )}
             </CardBody>
           </Card>
