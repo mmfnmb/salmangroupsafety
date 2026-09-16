@@ -133,6 +133,33 @@ Public entry points (no login required):
   dropped from 12 to 10 in the database, and the usage line appeared
   against that job.
 
+## What's implemented (Phase 5 — procurement)
+
+- Purchase requests (`/app/procurement/new`) — any org member, technicians
+  included, can request materials or a service. Requesting an item that
+  matches an inventory `Part` triggers an automatic stock check: if there's
+  enough on hand, the request is **fulfilled immediately** (stock
+  decremented, no approval needed, logged straight onto the linked work
+  order's parts list if there is one). Only when stock is insufficient does
+  it wait for a supervisor.
+- Supervisor approval converts a pending request into its own **Purchase
+  Order** page (`/app/procurement/orders/[id]`) — a genuinely separate
+  record and URL, not just a status flag.
+- The purchase order suggests **specialized, nearby suppliers** by
+  matching approved vendors on category and the site's coverage city (the
+  same matching logic as the RFQ/work-order vendor assignment), showing
+  their phone and email — the engineer picks one or enters a supplier
+  manually.
+- Marking an order **Supplied** closes the originating request, and — if it
+  was for a tracked part — restocks inventory by the ordered quantity,
+  closing the loop back into `/app/inventory`.
+- Every step (create, approve/reject, order, supplied) writes an
+  `AuditLog` entry; `/app/procurement` is the running archive of every
+  request and order, fully documented.
+- Verified end to end against the database: a part with 2 in stock and a
+  5-unit request correctly required approval, matched the right category
+  vendor by coverage city, and finished at 7 in stock after delivery.
+
 ## What's schema-ready but not yet built (documented, not faked)
 
 Not yet built: AI-assisted triage, scope-of-work drafting and quote

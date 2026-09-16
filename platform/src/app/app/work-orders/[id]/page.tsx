@@ -244,7 +244,12 @@ export default async function WorkOrderDetailPage({ params }: { params: Promise<
           )}
 
           <Card>
-            <CardHeader><h2 className="text-sm font-semibold text-slate-900">Parts used</h2></CardHeader>
+            <CardHeader className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-slate-900">Parts used</h2>
+              <Link href={`/app/procurement/new?workOrderId=${wo.id}`} className="text-xs text-blue-700">
+                + Request materials
+              </Link>
+            </CardHeader>
             <div className="divide-y divide-slate-100">
               {wo.partsUsed.map((p) => (
                 <div key={p.id} className="flex items-center justify-between px-5 py-2.5 text-sm">

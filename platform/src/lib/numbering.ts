@@ -27,6 +27,24 @@ export async function nextRfqNumber(orgId: string): Promise<string> {
   return `RFQ-${year}-${String(count + 1).padStart(6, "0")}`;
 }
 
+/** PR-YYYY-XXXXXX, sequential per organization per year. */
+export async function nextPurchaseRequestNumber(orgId: string): Promise<string> {
+  const year = new Date().getFullYear();
+  const count = await prisma.purchaseRequest.count({
+    where: { orgId, requestNumber: { startsWith: `PR-${year}-` } },
+  });
+  return `PR-${year}-${String(count + 1).padStart(6, "0")}`;
+}
+
+/** PO-YYYY-XXXXXX, sequential per organization per year. */
+export async function nextPurchaseOrderNumber(orgId: string): Promise<string> {
+  const year = new Date().getFullYear();
+  const count = await prisma.purchaseOrder.count({
+    where: { orgId, orderNumber: { startsWith: `PO-${year}-` } },
+  });
+  return `PO-${year}-${String(count + 1).padStart(6, "0")}`;
+}
+
 /**
  * Suggests a permanent asset code: PROJECT-BUILDING-SYSTEM-TYPE-SEQUENCE.
  * The code is only a suggestion — once saved, it must never be auto-changed.

@@ -641,9 +641,57 @@ async function seedOrg(
     { name: "HVAC Air Filter (Standard)", partNumber: "FLT-050", brand: "Generic", store: "Main Store", unitCostSar: 35, stockQuantity: 40, minStockQuantity: 10 },
     { name: "MDB Circuit Breaker 100A", partNumber: "CB-100A", brand: "Schneider Electric", store: "Electrical Store", unitCostSar: 650, stockQuantity: 5, minStockQuantity: 2 },
   ];
-  await prisma.part.createMany({
-    data: partDefs.map((p) => ({ ...p, orgId: org.id, compatibleWith: null })),
-  });
+  const createdParts = await Promise.all(
+    partDefs.map((p) => prisma.part.create({ data: { ...p, orgId: org.id, compatibleWith: null } }))
+  );
+
+  // 7) Procurement demo (Dammam only): one request auto-fulfilled from
+  // stock, one that needs supervisor approval and a supplier — the
+  // technician-to-delivery loop the procurement module is built around.
+  if (org.slug === "dammam-wh") {
+    const airFilter = createdParts.find((p) => p.name === "HVAC Air Filter (Standard)");
+    const pressureSwitch = createdParts.find((p) => p.name === "Fire Pump Pressure Switch");
+    const techUser = technicianUsers[0];
+    if (airFilter && pressureSwitch && techUser) {
+      await prisma.purchaseRequest.create({
+        data: {
+          orgId: org.id,
+          requestNumber: `PR-${year}-000001`,
+          siteId: site.id,
+          partId: airFilter.id,
+          itemName: airFilter.name,
+          category: "HVAC",
+          quantity: 5,
+          unit: "pcs",
+          requestedByUserId: techUser.id,
+          stockAvailableAtRequest: true,
+          status: "FULFILLED_FROM_STOCK",
+          decidedAt: subDays(new Date(), 1),
+          createdAt: subDays(new Date(), 1),
+        },
+      });
+      await prisma.part.update({ where: { id: airFilter.id }, data: { stockQuantity: { decrement: 5 } } });
+
+      await prisma.purchaseRequest.create({
+        data: {
+          orgId: org.id,
+          requestNumber: `PR-${year}-000002`,
+          siteId: site.id,
+          partId: pressureSwitch.id,
+          itemName: pressureSwitch.name,
+          category: "Fire Fighting",
+          quantity: 5,
+          unit: "pcs",
+          notes: "Needed for quarterly fire pump PM — only 2 in stock.",
+          requestedByUserId: techUser.id,
+          stockAvailableAtRequest: false,
+          status: "PENDING_APPROVAL",
+          createdAt: subDays(new Date(), 1),
+        },
+      });
+      console.log(`Seeded procurement demo on ${org.id}: 1 auto-fulfilled, 1 pending approval.`);
+    }
+  }
 
   console.log(`Seeded ${org.id} with ${assets.length} assets, 2 technicians, 4 requests/work orders.`);
 }

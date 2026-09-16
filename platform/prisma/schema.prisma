@@ -99,6 +99,8 @@ model Organization {
   weeklyReports  WeeklyReport[]
   rfqs           Rfq[]
   parts          Part[]
+  purchaseRequests PurchaseRequest[]
+  purchaseOrders   PurchaseOrder[]
   vendorBlacklist VendorBlacklistEntry[]
   approvalThresholds ApprovalThreshold[]
 
@@ -161,6 +163,8 @@ model User {
 
   technicianProfile Technician?
   requestsMade      MaintenanceRequest[] @relation("RequestedBy")
+  purchaseRequestsMade PurchaseRequest[] @relation("PurchaseRequestedBy")
+  purchaseRequestsDecided PurchaseRequest[] @relation("PurchaseDecidedBy")
   auditLogs         AuditLog[]
   notifications     Notification[]
 
@@ -198,6 +202,7 @@ model Site {
   workOrders WorkOrder[]
   technicians TechnicianSite[]
   rfqs       Rfq[]
+  purchaseRequests PurchaseRequest[]
 
   @@unique([orgId, code])
   @@index([orgId])
@@ -553,6 +558,7 @@ model WorkOrder {
   laborLogs    WorkOrderLaborLog[]
   partsUsed    WorkOrderPartUsed[]
   checklistResponses ChecklistResponse[]
+  purchaseRequests PurchaseRequest[]
 
   @@unique([orgId, number])
   @@index([orgId, status])
@@ -624,9 +630,99 @@ model Part {
   updatedAt        DateTime @updatedAt
 
   usages WorkOrderPartUsed[]
+  purchaseRequests PurchaseRequest[]
 
   @@unique([orgId, partNumber])
   @@index([orgId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// PROCUREMENT — PURCHASE REQUESTS & ORDERS (Phase 5)
+// A technician requests materials/works; the system checks stock
+// automatically; if insufficient, a supervisor approves it into a
+// Purchase Order with supplier suggestions; closing it on delivery
+// re-stocks inventory. Fully documented with an audit trail.
+// ─────────────────────────────────────────────────────────────────────────
+
+enum PurchaseRequestStatus {
+  FULFILLED_FROM_STOCK
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  SUPPLIED
+  CANCELLED
+}
+
+model PurchaseRequest {
+  id            String   @id @default(cuid())
+  orgId         String
+  organization  Organization @relation(fields: [orgId], references: [id])
+  requestNumber String   // PR-YYYY-NNNNNN, unique per organization
+
+  siteId String
+  site   Site   @relation(fields: [siteId], references: [id])
+
+  workOrderId String?
+  workOrder   WorkOrder? @relation(fields: [workOrderId], references: [id])
+
+  partId String?
+  part   Part?  @relation(fields: [partId], references: [id])
+
+  itemName String
+  category String?
+  quantity Float
+  unit     String?
+  notes    String?
+
+  requestedByUserId String
+  requestedByUser   User   @relation("PurchaseRequestedBy", fields: [requestedByUserId], references: [id])
+
+  stockAvailableAtRequest Boolean @default(false)
+  status PurchaseRequestStatus @default(PENDING_APPROVAL)
+
+  decidedByUserId String?
+  decidedByUser   User?   @relation("PurchaseDecidedBy", fields: [decidedByUserId], references: [id])
+  decidedAt       DateTime?
+
+  createdAt DateTime @default(now())
+
+  purchaseOrder PurchaseOrder?
+
+  @@unique([orgId, requestNumber])
+  @@index([orgId, status])
+}
+
+enum PurchaseOrderStatus {
+  DRAFT
+  ORDERED
+  SUPPLIED
+  CANCELLED
+}
+
+model PurchaseOrder {
+  id          String   @id @default(cuid())
+  orgId       String
+  organization Organization @relation(fields: [orgId], references: [id])
+  orderNumber String   // PO-YYYY-NNNNNN, unique per organization
+
+  purchaseRequestId String   @unique
+  purchaseRequest   PurchaseRequest @relation(fields: [purchaseRequestId], references: [id])
+
+  supplierVendorId     String?
+  supplierVendor       Vendor? @relation(fields: [supplierVendorId], references: [id])
+  supplierNameFreeText String?
+  supplierContact      String?
+
+  unitCostSar  Decimal? @db.Decimal(10, 2)
+  totalCostSar Decimal? @db.Decimal(10, 2)
+
+  status     PurchaseOrderStatus @default(DRAFT)
+  orderedAt  DateTime?
+  suppliedAt DateTime?
+  createdAt  DateTime @default(now())
+
+  @@unique([orgId, orderNumber])
+  @@index([orgId, status])
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -866,6 +962,7 @@ model Vendor {
   performance  VendorPerformanceSnapshot[]
   rfqInvites   RfqVendor[]
   quotations   Quotation[]
+  purchaseOrders PurchaseOrder[]
   blacklistedBy VendorBlacklistEntry[]
 }
 

@@ -20,7 +20,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <AppSidebar t={{
         dashboard: t("dashboard"), assets: t("assets"), sites: t("sites"), requests: t("requests"),
         workOrders: t("workOrders"), pm: t("pm"), technicians: t("technicians"), vendors: t("vendors"),
-        rfq: t("rfq"), inventory: t("inventory"), contracts: t("contracts"), reports: t("reports"), settings: t("settings"), logout: t("logout"),
+        rfq: t("rfq"), inventory: t("inventory"), procurement: t("procurement"), contracts: t("contracts"), reports: t("reports"), settings: t("settings"), logout: t("logout"),
       }} role={session.role} orgName={orgName ?? ""} />
       <div className="flex flex-1 flex-col">
         <header className="flex items-center justify-end gap-3 border-b border-slate-200 bg-white px-6 py-3">
