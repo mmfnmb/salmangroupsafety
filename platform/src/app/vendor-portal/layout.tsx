@@ -20,6 +20,9 @@ export default async function VendorPortalLayout({ children }: { children: React
           <Link href="/vendor-portal" className="block px-5 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white">
             Passport & Jobs
           </Link>
+          <Link href="/vendor-portal/rfq" className="block px-5 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white">
+            RFQ Invitations
+          </Link>
         </nav>
         <form
           action={async () => {

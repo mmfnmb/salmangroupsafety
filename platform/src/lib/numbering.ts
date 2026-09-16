@@ -18,6 +18,15 @@ export async function nextWorkOrderNumber(orgId: string): Promise<string> {
   return `WO-${year}-${String(count + 1).padStart(6, "0")}`;
 }
 
+/** RFQ-YYYY-XXXXXX, sequential per organization per year. */
+export async function nextRfqNumber(orgId: string): Promise<string> {
+  const year = new Date().getFullYear();
+  const count = await prisma.rfq.count({
+    where: { orgId, number: { startsWith: `RFQ-${year}-` } },
+  });
+  return `RFQ-${year}-${String(count + 1).padStart(6, "0")}`;
+}
+
 /**
  * Suggests a permanent asset code: PROJECT-BUILDING-SYSTEM-TYPE-SEQUENCE.
  * The code is only a suggestion — once saved, it must never be auto-changed.

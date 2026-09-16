@@ -399,6 +399,12 @@ export async function computePortfolioHealth(orgId: string) {
   };
 }
 
+/** Vendor's own track record, folded into RFQ best-value ranking. */
+export async function vendorTrackRecordScore(vendorId: string): Promise<number | null> {
+  const score = await computeVendorPerformance(vendorId, addDays(new Date(), -365), new Date());
+  return score.overallScore;
+}
+
 export function healthBand(score: number): { label: string; labelAr: string; color: string } {
   if (score >= 90) return { label: "Excellent", labelAr: "ممتاز", color: "text-emerald-600" };
   if (score >= 80) return { label: "Good", labelAr: "جيد", color: "text-green-600" };

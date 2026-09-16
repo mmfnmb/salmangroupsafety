@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button, LinkButton } from "@/components/ui/button";
 import { convertRequestToWorkOrder, rejectRequest } from "@/server/requests";
 import { format } from "date-fns";
+import Link from "next/link";
 
 const PRIORITY_TONE = {
   LOW: "slate",
@@ -77,6 +78,12 @@ export default async function RequestsPage() {
                             Convert to WO
                           </Button>
                         </form>
+                        <Link
+                          href={`/app/rfq/new?requestId=${r.id}`}
+                          className="inline-flex items-center rounded-md border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                        >
+                          Send to vendors
+                        </Link>
                         <form action={reject}>
                           <Button type="submit" variant="ghost" className="px-2 py-1 text-xs">
                             Reject

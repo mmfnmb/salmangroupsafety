@@ -175,6 +175,12 @@ async function seedVendors() {
       categories: ["Fire Alarm", "Fire Fighting", "Electrical"],
       coverageCities: ["Jubail", "Dammam", "Ras Tanura"],
     },
+    {
+      email: "owner@precision-cooling.demo",
+      name: "Precision Cooling Solutions",
+      categories: ["HVAC", "Refrigeration"],
+      coverageCities: ["Al Khobar", "Dhahran"],
+    },
   ];
 
   const created = [];
@@ -560,6 +566,71 @@ async function seedOrg(
           customerRating: 5,
         },
       });
+    }
+  }
+
+  // 6) For the medical center only: a managed-procurement story — two HVAC
+  // vendors compete on an RFQ, and the platform recommends best value, not
+  // the cheapest quote, matching the core commercial positioning.
+  if (org.slug === "khobar-med") {
+    const eco = vendors.find((v) => v.name === "Eastern Cool HVAC Services");
+    const precision = vendors.find((v) => v.name === "Precision Cooling Solutions");
+    if (eco && precision) {
+      const rfqNumber = `RFQ-${year}-000001`;
+      const rfq = await prisma.rfq.create({
+        data: {
+          orgId: org.id,
+          number: rfqNumber,
+          siteId: site.id,
+          assetId: assets[0].id,
+          title: "Split AC compressor overhaul — Ward 3",
+          category: "HVAC",
+          scopeOfWork:
+            "Compressor running hot, tripping on high-pressure cutout twice daily. Required: full diagnostic, compressor and refrigerant circuit repair or replacement, leak test, commissioning report, minimum 6-month workmanship warranty.",
+          status: "EVALUATING",
+          quoteDeadline: addDays(new Date(), 3),
+          createdAt: subDays(new Date(), 6),
+        },
+      });
+      await prisma.rfqVendor.createMany({
+        data: [
+          { rfqId: rfq.id, vendorId: eco.id, invitedAt: subDays(new Date(), 6) },
+          { rfqId: rfq.id, vendorId: precision.id, invitedAt: subDays(new Date(), 6) },
+        ],
+      });
+      await prisma.quotation.create({
+        data: {
+          rfqId: rfq.id,
+          vendorId: eco.id,
+          laborCostSar: 3000,
+          materialsCostSar: 5000,
+          totalCostSar: 8000,
+          leadTimeDays: 3,
+          warrantyMonths: 3,
+          paymentTerms: "100% on completion",
+          technicalScore: 72,
+          evaluationNotes: "Meets minimum spec; warranty shorter than requested, no commissioning report offered.",
+          status: "UNDER_EVALUATION",
+          submittedAt: subDays(new Date(), 4),
+        },
+      });
+      await prisma.quotation.create({
+        data: {
+          rfqId: rfq.id,
+          vendorId: precision.id,
+          laborCostSar: 4500,
+          materialsCostSar: 6500,
+          totalCostSar: 11000,
+          leadTimeDays: 2,
+          warrantyMonths: 12,
+          paymentTerms: "50% advance, 50% on completion",
+          technicalScore: 92,
+          evaluationNotes: "OEM-certified compressor, full commissioning report, 12-month warranty as requested.",
+          status: "UNDER_EVALUATION",
+          submittedAt: subDays(new Date(), 3),
+        },
+      });
+      console.log(`Seeded RFQ ${rfqNumber} on ${org.id} with 2 competing quotations, ready to award.`);
     }
   }
 

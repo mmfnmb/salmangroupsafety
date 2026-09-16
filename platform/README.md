@@ -38,6 +38,7 @@ Demo accounts (password `demo1234` for all):
 | Owner — Khobar Medical Center | `owner@khobar-med.demo` |
 | Vendor — Eastern Cool HVAC Services (HVAC/Refrigeration, Dammam/Khobar/Dhahran) | `owner@easterncool-hvac.demo` |
 | Vendor — Gulf Safe Fire & Electrical (Fire/Electrical, Jubail/Dammam/Ras Tanura) | `owner@gulfsafe-fire.demo` |
+| Vendor — Precision Cooling Solutions (HVAC/Refrigeration, Al Khobar/Dhahran) | `owner@precision-cooling.demo` |
 
 Public entry points (no login required):
 - `/` — marketing landing page, demo/vendor lead forms
@@ -88,17 +89,46 @@ Public entry points (no login required):
   gained live scores, city/category filters and a per-organization
   blacklist toggle.
 
+## What's implemented (Phase 3 — managed procurement / RFQ)
+
+- RFQ creation (`/app/rfq/new`) — from a maintenance request (pre-filled) or
+  standalone, with site/asset, category, scope of work and a quote deadline.
+  A facility manager can send any `NEW` request straight to vendors ("Send
+  to vendors" on `/app/requests`) as the alternative to assigning an
+  internal technician.
+- Vendor invitation, filtered to approved, non-blacklisted vendors.
+- Vendor-side quotation submission (`/vendor-portal/rfq`) — labor/materials/
+  total price, lead time, warranty, payment terms, exclusions, validity.
+- Quotation comparison (`/app/rfq/[id]`) with a real evaluation model, not a
+  sort-by-price table: a quote must clear a minimum technical score
+  (70/100, section 27) before it qualifies commercially; the cheapest
+  *qualifying* quote scores 100 on price, others scale down proportionally;
+  the recommended "best value" pick blends technical score, price
+  competitiveness and the vendor's own track record — verified end-to-end
+  with two competing demo quotes where the **more expensive, higher-quality
+  quote was correctly recommended and awarded over the cheaper one**.
+- Award workflow gated by value-based approval thresholds (reads
+  `ApprovalThreshold` if the org has configured one, otherwise a sane
+  default — owner approval above SAR 10,000) — **verified that a facility
+  manager is blocked from awarding an SAR 11,000 contract** and only the
+  account owner could complete it. Awarding creates the work order, closes
+  out the RFQ, and automatically rejects the other quotations.
+- Transparent platform fee (section 34's tiers, e.g. 8% on a SAR 5,000–25,000
+  job) computed and displayed next to the contractor's own price at award
+  time — informational only, nothing is charged or invoiced automatically,
+  matching the "vendor invoices you directly, platform fee billed
+  separately" model in section 35.
+
 ## What's schema-ready but not yet built (documented, not faked)
 
-The database schema already models Phase 3 concepts — `Rfq`, `RfqVendor`,
-`Quotation`, `ApprovalThreshold` — so that phase won't require a schema
-rewrite. RFQ creation, quote comparison and the award workflow are **not
-built yet**.
-
-Also not yet built: AI-assisted triage/scope-of-work/comparison (Phase 4),
-file/photo upload to object storage (photo fields exist but there's no
-upload backend wired up — noted inline in the UI where relevant), spare
-parts inventory, ZATCA/e-invoicing, and WhatsApp notifications.
+Not yet built: AI-assisted triage, scope-of-work drafting and quote
+comparison narration (Phase 4 — this genuinely needs an LLM API key wired
+up, which this environment doesn't have; the UI hooks and prompts are easy
+to add once one is provided, but nothing "AI" ships without a real model
+behind it), file/photo upload to object storage (photo fields exist but
+there's no upload backend wired up — noted inline in the UI where
+relevant), spare parts inventory, ZATCA/e-invoicing, and WhatsApp
+notifications.
 
 ## Known limitations
 
@@ -130,6 +160,17 @@ to a work order from `/app/work-orders/[id]` → the vendor accepts the job
 from their own portal → a previously-seeded, vendor-completed job with a
 5★ sign-off produces a live vendor score of 100/100 on both the vendor's
 own portal and the customer-facing directory.
+
+**RFQ / procurement flow:** two vendors invited to quote on the same job →
+both submit competing prices → the facility manager scores each
+technically → the system recommends the pricier, higher-quality quote over
+the cheaper one (confirmed by the actual computed scores, 85 vs 83) → the
+facility manager is correctly refused when trying to award it (over the
+SAR 10,000 threshold) → the account owner awards it → a work order is
+created and linked, the losing quotation is auto-rejected, an 8%/SAR 880
+platform fee is computed and shown transparently, and the winning vendor
+sees "AWARDED" on their own portal — all confirmed directly against the
+database, not just the UI.
 
 ## Environment variables
 
