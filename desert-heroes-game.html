@@ -653,8 +653,18 @@ const HEROES = [
 
 { id:'h11', name:'Sapper Badr', nameAr:'زارع الألغام بدر', role:'فخاخ ومتفجرات أرضية', weapon:'mine', price:5500,
   palette:{primary:'#4a4a3a', secondary:'#2c2c20', accent:'#ff6a3d', skin:'#c98f5e'},
-  stats:{hp:110, speed:176, dmg:34, cooldown:1.4, bulletSpeed:0, pellets:1, spread:0, mineAoe:70},
+  stats:{hp:110, speed:176, dmg:34, cooldown:1.4, bulletSpeed:0, pellets:1, spread:0, mineAoe:70, maxMines:3},
   ult:{name:'حقل الألغام', desc:'زرع 4 ألغام فورية حول اللاعب', key:'minefield'} },
+
+{ id:'h12', name:'Amateur Boxer Saif', nameAr:'الملاكم الهاوي سيف', role:'قتال قريب - نسخة مجانية أضعف', weapon:'fists', price:0,
+  palette:{primary:'#7a6a52', secondary:'#4a3f2e', accent:'#8a8a8a', skin:'#c98f5e'},
+  stats:{hp:100, speed:195, dmg:15, cooldown:0.55, bulletSpeed:0, pellets:1, spread:0, meleeRange:50},
+  ult:{name:'لكمة سريعة', desc:'سرعة هجوم مضاعفة 50% لمدة 5 ثوانٍ', key:'quickJab'} },
+
+{ id:'h13', name:'Novice Sapper Murad', nameAr:'خبير الألغام المبتدئ مراد', role:'فخاخ أرضية - نسخة مجانية أضعف', weapon:'mine', price:0,
+  palette:{primary:'#6b6b52', secondary:'#3f3f2c', accent:'#c9a96a', skin:'#c98f5e'},
+  stats:{hp:95, speed:170, dmg:20, cooldown:1.8, bulletSpeed:0, pellets:1, spread:0, mineAoe:55, maxMines:2},
+  ult:{name:'ألغام صغيرة', desc:'زرع لغمين فوريين حول اللاعب', key:'miniMines'} },
 ];
 const heroById = id => HEROES.find(h=>h.id===id);
 
@@ -1446,6 +1456,13 @@ function tryUltimate(){
       placeMine(p.x+Math.cos(a2)*40, p.y+Math.sin(a2)*40);
     }
   }
+  else if(key==='miniMines'){
+    for(let i=0;i<2;i++){
+      const a2 = i*Math.PI;
+      placeMine(p.x+Math.cos(a2)*35, p.y+Math.sin(a2)*35);
+    }
+  }
+  else if(key==='quickJab'){ p.buffUntil = now+5; p.buffFire = 1.5; }
 }
 
 function spawnGrenade(owner, angle){
@@ -1505,7 +1522,7 @@ function meleeAttack(angle){
   sfx.hit();
 }
 function trySpawnMine(){
-  if(G.mines.length >= 3) return;
+  if(G.mines.length >= (G.hero.stats.maxMines||3)) return;
   placeMine(G.player.x, G.player.y);
   spawnDust(G.player.x, G.player.y);
   sfx.shoot();
