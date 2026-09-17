@@ -372,6 +372,8 @@ body{
       <div class="screen-title">اختر بطلك للمباراة</div>
       <div class="scroll-area">
         <div class="card-grid" id="heroSelGrid"></div>
+        <div class="picker-label">🎮 الوضع</div>
+        <div class="tabs" id="modeTabs"></div>
         <div class="picker-label">🗺️ الخريطة</div>
         <div class="tabs" id="mapTabs"></div>
         <div class="picker-label">🎚️ مستوى الصعوبة</div>
@@ -655,6 +657,18 @@ const ENEMY_PALETTES = {
 const ENEMY_KIND_LABEL = {wolf:'🐺 ذئب', fox:'🦊 ثعلب', tank:'🛞 دبابة', plane:'✈️ طائرة عدو'};
 
 /* =====================================================================
+   DATA: GAME MODES
+===================================================================== */
+const MODES = [
+ { id:'classic', nameAr:'كلاسيك' },
+ { id:'boss', nameAr:'مواجهة الزعيم' },
+ { id:'survival', nameAr:'البقاء' },
+ { id:'timeattack', nameAr:'سباق الوقت' },
+ { id:'team', nameAr:'فريقين' },
+];
+const SURVIVAL_LIVES = {easy:5, medium:3, hard:2};
+
+/* =====================================================================
    DATA: SKINS  (2 per hero: rare + legendary)
 ===================================================================== */
 const RARITY_PRICE = {common:200, rare:800, epic:2000, legendary:3500};
@@ -685,7 +699,7 @@ const skinsForHero = hid => SKINS.filter(s=>s.heroId===hid);
 const SAVE_KEY = 'desertHeroesSave_v1';
 function defaultSave(){
   return { coins:300, ownedHeroes:['h1'], ownedSkins:[], equipped:{}, selectedHero:'h1',
-    stats:{wins:0, losses:0, kills:0, deaths:0}, lastDaily:0, muted:false };
+    stats:{wins:0, losses:0, kills:0, deaths:0, bestTimeAttack:0}, lastDaily:0, muted:false };
 }
 let save = loadSave();
 function loadSave(){
@@ -1054,6 +1068,7 @@ function renderInventory(){
 let pendingHero = save.selectedHero;
 let pendingMap = 'dunes';
 let pendingDiff = 'medium';
+let pendingMode = 'classic';
 function renderHeroSelGrid(){
   const grid = document.getElementById('heroSelGrid');
   grid.innerHTML = '';
@@ -1066,6 +1081,16 @@ function renderHeroSelGrid(){
     renderHeroToCanvas(card.querySelector('canvas'), h, equippedSkinFor(hid));
     card.addEventListener('click', ()=>{ pendingHero = hid; renderHeroSelGrid(); });
     grid.appendChild(card);
+  });
+
+  const modeTabs = document.getElementById('modeTabs');
+  modeTabs.innerHTML = '';
+  MODES.forEach(m=>{
+    const t = document.createElement('div');
+    t.className = 'tab' + (pendingMode===m.id?' active':'');
+    t.textContent = m.nameAr;
+    t.addEventListener('click', ()=>{ pendingMode = m.id; renderHeroSelGrid(); });
+    modeTabs.appendChild(t);
   });
 
   const mapTabs = document.getElementById('mapTabs');
@@ -1090,7 +1115,7 @@ function renderHeroSelGrid(){
 }
 document.getElementById('btnStartMatch').addEventListener('click', ()=>{
   save.selectedHero = pendingHero; persist();
-  startMatch(pendingHero, pendingMap, pendingDiff);
+  startMatch(pendingHero, pendingMap, pendingDiff, pendingMode);
 });
 
 /* =====================================================================
@@ -1172,35 +1197,44 @@ function drawObstacle(ctx,o){
 /* ---------- game state container ---------- */
 let G = null;
 const BOT_SPAWN_FRACS = [[0.0625,0.111],[0.9375,0.111],[0.0625,0.889],[0.9375,0.889],[0.5,0.111],[0.5,0.889]];
-function startMatch(heroId, mapId, diffId){
+function startMatch(heroId, mapId, diffId, modeId){
   const hero = heroById(heroId);
   const skin = equippedSkinFor(heroId);
   const pal = skin ? Object.assign({}, hero.palette, skin.colors) : hero.palette;
   const map = mapById(mapId);
-  const botStats = difficultyById(diffId);
+  const botStats = Object.assign({}, difficultyById(diffId)); // clone: modes may mutate stats (survival waves)
+  const mode = modeId || 'classic';
   const enemyKind = map.id==='sky' ? 'plane' : ENEMY_KIND_POOL[randInt(0,ENEMY_KIND_POOL.length-1)];
   const playerKind = map.id==='sky' ? 'plane' : 'soldier';
   showScreen('screen-game');
   computeArenaSize();
   buildBackground(map);
   G = {
-    hero, pal, map, botStats, enemyKind, playerKind,
+    hero, pal, map, botStats, enemyKind, playerKind, mode,
+    lives: SURVIVAL_LIVES[diffId] || 3, wave: 1, waveTimer: 15,
     obstacles: makeObstacles(map),
     player: {
       x: ARENA_W/2, y: ARENA_H-70, hp: hero.stats.hp, maxHp: hero.stats.hp,
       facing: -Math.PI/2, cooldown:0, kills:0, deaths:0, ult:0,
       buffUntil:0, buffSpeed:1, buffFire:1, evasiveUntil:0, shield:0, critUntil:0, regenUntil:0, regenRate:0
     },
-    bots: [],
+    bots: [], allies: [],
     bullets: [], particles: [],
-    timeLeft: 180, running: true, ended:false,
+    timeLeft: mode==='survival' ? 0 : (mode==='timeattack' ? 90 : 180),
+    timeDir: mode==='survival' ? 1 : -1,
+    running: true, ended:false,
     move: {x:0,y:0}, aimAngle: -Math.PI/2, firing:false,
     shake: {time:0, mag:0}, flashAlpha:0, dustTimer:0,
     lastTs: 0
   };
-  spawnBots(botStats.bots);
+  if(mode==='boss'){ spawnBoss(); }
+  else {
+    spawnBots(botStats.bots);
+    if(mode==='team') spawnAllies(2);
+  }
   document.getElementById('ultLabel').textContent = '✨ ' + hero.ult.name;
-  showToast('العدو هذه المباراة: ' + ENEMY_KIND_LABEL[enemyKind]);
+  const modeLabel = MODES.find(m=>m.id===mode).nameAr;
+  showToast(modeLabel + ' | العدو: ' + ENEMY_KIND_LABEL[enemyKind]);
   resizeCanvasToWrap();
   MusicEngine.start('battle');
   requestAnimationFrame(gameLoop);
@@ -1216,9 +1250,25 @@ function spawnBots(n){
     });
   }
 }
+function spawnBoss(){
+  const hp = Math.round(G.botStats.hp*6);
+  G.bots.push({
+    id:'boss', x:ARENA_W/2, y:ARENA_H*0.25,
+    hp, maxHp:hp, facing:Math.PI/2, cooldown:0.6, alive:true, dustTimer:0, scale:1.9, isBoss:true
+  });
+}
+function spawnAllies(n){
+  for(let i=0;i<n;i++){
+    G.allies.push({
+      x: ARENA_W/2 + (i-(n-1)/2)*50, y: ARENA_H-40,
+      hp: Math.round(G.botStats.hp*1.1), maxHp: Math.round(G.botStats.hp*1.1),
+      facing:-Math.PI/2, cooldown:rand(0,0.4), alive:true, dustTimer:rand(0,0.1)
+    });
+  }
+}
 function respawnBot(bot){
   const p = BOT_SPAWN_FRACS[randInt(0,BOT_SPAWN_FRACS.length-1)];
-  bot.x = p[0]*ARENA_W; bot.y = p[1]*ARENA_H; bot.hp = bot.maxHp; bot.alive = true; bot.cooldown = 0.6;
+  bot.x = p[0]*ARENA_W; bot.y = p[1]*ARENA_H; bot.maxHp = G.botStats.hp; bot.hp = bot.maxHp; bot.alive = true; bot.cooldown = 0.6;
 }
 
 /* ---------- input: keyboard ---------- */
@@ -1328,11 +1378,11 @@ function tryUltimate(){
 
 function spawnGrenade(owner, angle){
   G.bullets.push({x:owner.x, y:owner.y, vx:Math.cos(angle)*360, vy:Math.sin(angle)*360,
-    dmg:20, owner:'player', radius:5, life:0.45, grenade:true, aoe:60});
+    dmg:20, owner:'player', side:'blue', radius:5, life:0.45, grenade:true, aoe:60});
 }
 function fireBullet(owner, angle, dmg, speed, pierce){
   G.bullets.push({x:owner.x+Math.cos(angle)*16, y:owner.y+Math.sin(angle)*16,
-    vx:Math.cos(angle)*speed, vy:Math.sin(angle)*speed, dmg, owner:'player', radius:4, life:1.2, pierce});
+    vx:Math.cos(angle)*speed, vy:Math.sin(angle)*speed, dmg, owner:'player', side:'blue', radius:4, life:1.2, pierce});
 }
 
 /* ---------- player shooting ---------- */
@@ -1350,7 +1400,7 @@ function playerShoot(){
       spawnGrenade(p, a);
     } else {
       G.bullets.push({x:p.x+Math.cos(a)*16, y:p.y+Math.sin(a)*16, vx:Math.cos(a)*st.bulletSpeed, vy:Math.sin(a)*st.bulletSpeed,
-        dmg, owner:'player', radius:3.4, life:1.3, pierce: !!st.pierce});
+        dmg, owner:'player', side:'blue', radius:3.4, life:1.3, pierce: !!st.pierce});
     }
   }
   G.particles.push({type:'flash', x:p.x+Math.cos(G.aimAngle)*20, y:p.y+Math.sin(G.aimAngle)*20, life:0.06, maxLife:0.06});
@@ -1358,10 +1408,19 @@ function playerShoot(){
 }
 function botShoot(bot, targetAngle){
   const bs = G.botStats;
-  bot.cooldown = bs.cooldown;
+  const dmgMult = bot.isBoss ? 1.6 : 1;
+  const cdMult = bot.isBoss ? 0.8 : 1;
+  bot.cooldown = bs.cooldown*cdMult;
   const a = targetAngle + rand(-bs.spread, bs.spread);
   G.bullets.push({x:bot.x+Math.cos(a)*14, y:bot.y+Math.sin(a)*14, vx:Math.cos(a)*bs.bulletSpeed, vy:Math.sin(a)*bs.bulletSpeed,
-    dmg:bs.dmg, owner:bot.id, radius:3.2, life:1.2});
+    dmg:bs.dmg*dmgMult, owner:bot.id, side:'red', radius: bot.isBoss?4.5:3.2, life:1.2});
+}
+function allyShoot(ally, targetAngle){
+  const bs = G.botStats;
+  ally.cooldown = bs.cooldown;
+  const a = targetAngle + rand(-bs.spread, bs.spread);
+  G.bullets.push({x:ally.x+Math.cos(a)*14, y:ally.y+Math.sin(a)*14, vx:Math.cos(a)*bs.bulletSpeed, vy:Math.sin(a)*bs.bulletSpeed,
+    dmg:bs.dmg, owner:'ally', side:'blue', radius:3.2, life:1.2});
 }
 
 /* ---------- damage handling ---------- */
@@ -1387,12 +1446,24 @@ function damageBot(bot, dmg){
   G.player.ult = Math.min(100, G.player.ult + 12);
   if(bot.hp<=0){ botDied(bot); }
 }
+function damageAlly(ally, dmg){
+  if(!ally.alive) return;
+  ally.hp -= dmg;
+  spawnHitParticles(ally.x,ally.y);
+  spawnDmgText(ally.x,ally.y,dmg,'#9be0ff');
+  sfx.hit();
+  if(ally.hp<=0){ ally.alive=false; spawnHitParticles(ally.x,ally.y,true); sfx.death(); }
+}
 function playerDied(){
   G.player.deaths++; sfx.death();
   spawnHitParticles(G.player.x,G.player.y,true);
   screenShake(12, 0.45);
   G.flashAlpha = 0.55;
   G.player.hp = 0;
+  if(G.mode==='survival' && G.player.deaths>=G.lives){
+    setTimeout(()=>{ if(G && !G.ended) endMatch(false); }, 900);
+    return;
+  }
   setTimeout(()=>{
     if(!G || G.ended) return;
     G.player.x = ARENA_W/2; G.player.y = ARENA_H-70;
@@ -1404,7 +1475,12 @@ function botDied(bot){
   spawnHitParticles(bot.x,bot.y,true);
   G.particles.push({type:'koText', x:bot.x, y:bot.y-20, life:0.9, maxLife:0.9});
   sfx.death();
-  setTimeout(()=>{ if(G && !G.ended) respawnBot(bot); }, 2200);
+  if(G.mode==='boss'){
+    setTimeout(()=>{ if(G && !G.ended) endMatch(true); }, 600);
+    return;
+  }
+  const delay = G.mode==='timeattack' ? 900 : 2200;
+  setTimeout(()=>{ if(G && !G.ended) respawnBot(bot); }, delay);
 }
 function spawnHitParticles(x,y,big){
   const n = big?14:6;
@@ -1497,6 +1573,45 @@ function update(dt){
     if(d < bs.detect && b.cooldown<=0 && p.hp>0){ botShoot(b, angleToPlayer); }
   });
 
+  // allies AI (team mode)
+  if(G.allies && G.allies.length){
+    G.allies.forEach(a=>{
+      if(!a.alive) return;
+      let target=null, bestD=Infinity;
+      G.bots.forEach(b=>{ if(b.alive){ const dd=dist(a.x,a.y,b.x,b.y); if(dd<bestD){ bestD=dd; target=b; } } });
+      a.dustTimer -= dt;
+      if(a.dustTimer<=0){ spawnDust(a.x,a.y); a.dustTimer = 0.11; }
+      if(target){
+        const ang = Math.atan2(target.y-a.y, target.x-a.x);
+        a.facing = ang;
+        if(bestD > bs.shootRange*0.7){ a.x += Math.cos(ang)*bs.speed*dt; a.y += Math.sin(ang)*bs.speed*dt; }
+        else if(bestD < bs.shootRange*0.4){ a.x -= Math.cos(ang)*bs.speed*0.6*dt; a.y -= Math.sin(ang)*bs.speed*0.6*dt; }
+        resolveObstacles(a, 13);
+        if(a.cooldown>0) a.cooldown -= dt;
+        if(bestD < bs.detect && a.cooldown<=0){ allyShoot(a, ang); }
+      } else {
+        const dd = dist(a.x,a.y,p.x,p.y);
+        if(dd > 90){
+          const ang = Math.atan2(p.y-a.y, p.x-a.x);
+          a.facing = ang;
+          a.x += Math.cos(ang)*bs.speed*0.7*dt; a.y += Math.sin(ang)*bs.speed*0.7*dt;
+          resolveObstacles(a, 13);
+        }
+      }
+    });
+  }
+
+  // survival wave scaling
+  if(G.mode==='survival'){
+    G.waveTimer -= dt;
+    if(G.waveTimer<=0){
+      G.waveTimer = 15; G.wave++;
+      G.botStats.hp = Math.round(G.botStats.hp*1.12);
+      G.botStats.dmg = Math.round(G.botStats.dmg*1.08);
+      showToast('🌊 الموجة ' + G.wave + '!');
+    }
+  }
+
   // bullets
   for(let i=G.bullets.length-1;i>=0;i--){
     const bl = G.bullets[i];
@@ -1511,7 +1626,7 @@ function update(dt){
       }
     }
     if(!remove){
-      if(bl.owner==='player'){
+      if(bl.side==='blue'){
         for(const b of G.bots){
           if(!b.alive) continue;
           if(dist(bl.x,bl.y,b.x,b.y) < 14){
@@ -1524,6 +1639,14 @@ function update(dt){
       } else {
         if(dist(bl.x,bl.y,p.x,p.y) < 14 && p.hp>0){
           damagePlayer(bl.dmg); remove = true;
+        }
+        if(!remove && G.allies){
+          for(const a of G.allies){
+            if(!a.alive) continue;
+            if(dist(bl.x,bl.y,a.x,a.y) < 14){
+              damageAlly(a, bl.dmg); remove = true; break;
+            }
+          }
         }
       }
     }
@@ -1550,16 +1673,33 @@ function update(dt){
   const hpPct = clamp(p.hp/p.maxHp*100,0,100);
   document.getElementById('hpFill').style.width = hpPct+'%';
   document.getElementById('ultFill').style.width = clamp(p.ult,0,100)+'%';
-  document.getElementById('hudScore').textContent = `أنت ${p.kills} - ${p.deaths} بوتات`;
+  if(G.mode==='survival'){
+    document.getElementById('hudScore').textContent = `❤️ ${Math.max(0,G.lives-p.deaths)}  🎯 ${p.kills}`;
+  } else if(G.mode==='timeattack'){
+    document.getElementById('hudScore').textContent = `🎯 ${p.kills}`;
+  } else if(G.mode==='boss'){
+    const boss = G.bots[0];
+    document.getElementById('hudScore').textContent = boss && boss.alive ? `👹 ${Math.max(0,Math.round(boss.hp/boss.maxHp*100))}%` : '👹 —';
+  } else {
+    document.getElementById('hudScore').textContent = `أنت ${p.kills} - ${p.deaths} بوتات`;
+  }
   const vignette = document.getElementById('lowHpVignette');
   if(vignette) vignette.style.opacity = hpPct<30 ? (0.55*(1-hpPct/30)) : 0;
-  G.timeLeft -= dt;
+  G.timeLeft += G.timeDir*dt;
   const mm = Math.max(0,Math.floor(G.timeLeft/60)), ss = Math.max(0,Math.floor(G.timeLeft%60));
   document.getElementById('hudTimer').textContent = `${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
 
-  if(p.kills>=10){ endMatch(true); }
-  else if(p.deaths>=10){ endMatch(false); }
-  else if(G.timeLeft<=0){ endMatch(p.kills>p.deaths); }
+  if(G.mode==='survival'){
+    // ends via playerDied() when lives run out
+  } else if(G.mode==='timeattack'){
+    if(G.timeLeft<=0) endMatch(true);
+  } else if(G.mode==='boss'){
+    if(G.timeLeft<=0) endMatch(false); // boss survived
+  } else {
+    if(p.kills>=10){ endMatch(true); }
+    else if(p.deaths>=10){ endMatch(false); }
+    else if(G.timeLeft<=0){ endMatch(p.kills>p.deaths); }
+  }
 }
 function explodeGrenade(bl){
   sfx.explode();
@@ -1587,22 +1727,30 @@ function render(){
     const len = bl.grenade ? 0 : 14;
     if(len){
       const bs = Math.hypot(bl.vx,bl.vy)||1;
-      gctx.strokeStyle = bl.owner==='player' ? 'rgba(255,227,107,.55)' : 'rgba(255,90,74,.55)';
+      gctx.strokeStyle = bl.side==='blue' ? 'rgba(255,227,107,.55)' : 'rgba(255,90,74,.55)';
       gctx.lineWidth = 2.4;
       gctx.beginPath();
       gctx.moveTo(bl.x, bl.y);
       gctx.lineTo(bl.x - bl.vx/bs*len, bl.y - bl.vy/bs*len);
       gctx.stroke();
     }
-    gctx.fillStyle = bl.grenade ? '#3a2414' : (bl.owner==='player' ? '#ffe36b' : '#ff5a4a');
+    gctx.fillStyle = bl.grenade ? '#3a2414' : (bl.side==='blue' ? '#ffe36b' : '#ff5a4a');
     gctx.beginPath(); gctx.arc(bl.x,bl.y, bl.grenade?5:3, 0, TAU); gctx.fill();
   });
 
   // bots
   G.bots.forEach(b=>{
     if(!b.alive) return;
-    drawPixelChar(gctx, b.x, b.y, b.facing, 1.6, ENEMY_PALETTES[G.enemyKind], 'rifle', {kind:G.enemyKind});
-    drawMiniHpBar(b.x, b.y-24, b.hp/b.maxHp, 26);
+    const sc = b.scale||1;
+    drawPixelChar(gctx, b.x, b.y, b.facing, 1.6*sc, ENEMY_PALETTES[G.enemyKind], 'rifle', {kind:G.enemyKind});
+    drawMiniHpBar(b.x, b.y-24*sc, b.hp/b.maxHp, 26*sc);
+  });
+
+  // allies
+  if(G.allies) G.allies.forEach(a=>{
+    if(!a.alive) return;
+    drawPixelChar(gctx, a.x, a.y, a.facing, 1.6, {primary:'#3a8fd9', secondary:'#1e5c99', accent:'#bfe0ff', skin:'#c98f5e'}, 'rifle', {kind:G.playerKind});
+    drawMiniHpBar(a.x, a.y-24, a.hp/a.maxHp, 26);
   });
 
   // player
@@ -1682,20 +1830,50 @@ function endMatch(won, quit){
   G.ended = true; G.running = false;
   const p = G.player;
   const mult = G.botStats.rewardMult;
-  let coinsEarned;
-  if(quit){ coinsEarned = Math.max(20, p.kills*8); }
-  else if(won){ coinsEarned = Math.round((100 + p.kills*15)*mult); save.stats.wins++; }
-  else { coinsEarned = Math.round((40 + p.kills*10)*mult); save.stats.losses++; }
+  let coinsEarned, title, titleClass, statsHtml;
+
+  if(quit){
+    coinsEarned = Math.max(20, p.kills*8);
+    title = '🚪 خروج'; titleClass = 'lose';
+    statsHtml = `عدد القتلات: <b>${p.kills}</b>`;
+  } else if(G.mode==='boss'){
+    coinsEarned = Math.round((won?300:60)*mult);
+    if(won) save.stats.wins++; else save.stats.losses++;
+    title = won ? '🏆 هزمت الزعيم!' : '💀 نجا الزعيم منك';
+    titleClass = won?'win':'lose';
+    statsHtml = `مرات الموت: <b>${p.deaths}</b>`;
+  } else if(G.mode==='survival'){
+    coinsEarned = Math.round((30*G.wave + p.kills*8)*mult);
+    save.stats.losses++;
+    title = '💀 انتهت أرواحك';
+    titleClass = 'lose';
+    statsHtml = `الموجة التي وصلت لها: <b>${G.wave}</b><br>عدد القتلات: <b>${p.kills}</b>`;
+  } else if(G.mode==='timeattack'){
+    coinsEarned = Math.round((50 + p.kills*18)*mult);
+    save.stats.wins++;
+    const best = save.stats.bestTimeAttack||0;
+    const isRecord = p.kills > best;
+    if(isRecord) save.stats.bestTimeAttack = p.kills;
+    title = isRecord ? '🏆 رقم قياسي جديد!' : '⏱️ انتهى الوقت';
+    titleClass = 'win';
+    statsHtml = `عدد القتلات: <b>${p.kills}</b><br>أفضل رقم: <b>${Math.max(p.kills,best)}</b>`;
+  } else {
+    coinsEarned = Math.round((won ? 100+p.kills*15 : 40+p.kills*10)*mult);
+    if(won) save.stats.wins++; else save.stats.losses++;
+    title = won? '🏆 فوز!' : '💀 خسارة';
+    titleClass = won?'win':'lose';
+    statsHtml = `عدد القتلات: <b>${p.kills}</b><br>مرات الموت: <b>${p.deaths}</b>`;
+  }
   save.stats.kills += p.kills; save.stats.deaths += p.deaths;
   addCoins(coinsEarned); persist();
 
-  document.getElementById('resultTitle').textContent = won? '🏆 فوز!' : '💀 خسارة';
-  document.getElementById('resultTitle').className = 'result-title ' + (won?'win':'lose');
-  document.getElementById('resultStats').innerHTML = `عدد القتلات: <b>${p.kills}</b><br>مرات الموت: <b>${p.deaths}</b>`;
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultTitle').className = 'result-title ' + titleClass;
+  document.getElementById('resultStats').innerHTML = statsHtml;
   document.getElementById('resultCoins').textContent = '+' + coinsEarned;
   const confettiLayer = document.getElementById('confettiLayer');
   confettiLayer.innerHTML = '';
-  if(won) spawnConfetti(confettiLayer);
+  if(titleClass==='win') spawnConfetti(confettiLayer);
   openOverlay('resultOverlay');
 }
 function spawnConfetti(layer){
