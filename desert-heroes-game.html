@@ -640,6 +640,21 @@ const HEROES = [
   palette:{primary:'#c9962e', secondary:'#8a5f16', accent:'#fff2c0', skin:'#c98f5e'},
   stats:{hp:124, speed:182, dmg:42, cooldown:1.0, bulletSpeed:1100, pellets:1, spread:0, pierce:true},
   ult:{name:'غضب الصقر', desc:'شعاع ليزر يجتاح الشاشة بضرر هائل', key:'falconWrath'} },
+
+{ id:'h9', name:'Soldier Hussam', nameAr:'الجندي حسام', role:'مقاتل عادي متين', weapon:'rifle', price:800,
+  palette:{primary:'#6b7a8a', secondary:'#3f4a56', accent:'#d9e0e6', skin:'#c98f5e'},
+  stats:{hp:108, speed:196, dmg:10, cooldown:0.16, bulletSpeed:480, pellets:1, spread:0.04},
+  ult:{name:'تركيز النيران', desc:'ضرر مضاعف 40% لكل الطلقات لمدة 5 ثوانٍ', key:'focusFire'} },
+
+{ id:'h10', name:'Boxer Fares', nameAr:'الملاكم فارس', role:'قتال قريب بالقفازات', weapon:'fists', price:2500,
+  palette:{primary:'#8a5a3a', secondary:'#5c3a20', accent:'#c23b3b', skin:'#c98f5e'},
+  stats:{hp:135, speed:220, dmg:24, cooldown:0.42, bulletSpeed:0, pellets:1, spread:0, meleeRange:62},
+  ult:{name:'لكمة الإعصار', desc:'اندفاع للأمام بضربة ساحقة تصيب كل من حولك', key:'hurricanePunch'} },
+
+{ id:'h11', name:'Sapper Badr', nameAr:'زارع الألغام بدر', role:'فخاخ ومتفجرات أرضية', weapon:'mine', price:5500,
+  palette:{primary:'#4a4a3a', secondary:'#2c2c20', accent:'#ff6a3d', skin:'#c98f5e'},
+  stats:{hp:110, speed:176, dmg:34, cooldown:1.4, bulletSpeed:0, pellets:1, spread:0, mineAoe:70},
+  ult:{name:'حقل الألغام', desc:'زرع 4 ألغام فورية حول اللاعب', key:'minefield'} },
 ];
 const heroById = id => HEROES.find(h=>h.id===id);
 
@@ -889,6 +904,12 @@ function drawWeapon(ctx, type, scale, palette){
     case 'railgun':
       blockRect3D(ctx, 6*s,-2*s, 20*s, 4*s, 2*s, metal);
       blockRect3D(ctx, 24*s,-2.6*s, 3*s, 5.2*s, 2*s, palette.accent); break;
+    case 'fists':
+      blockRect3D(ctx, 5*s,-6.5*s, 6.5*s, 5.5*s, 2*s, '#c23b3b');
+      blockRect3D(ctx, 5*s, 1*s, 6.5*s, 5.5*s, 2*s, '#c23b3b'); break;
+    case 'mine':
+      blockRect3D(ctx, 4*s,-3.5*s, 8*s, 7*s, 2*s, '#3a3a2a');
+      ctx.fillStyle = palette.accent; ctx.beginPath(); ctx.arc(8*s,0,1.6*s,0,TAU); ctx.fill(); break;
   }
 }
 function renderHeroToCanvas(canvasEl, hero, skin, opts){
@@ -1252,9 +1273,10 @@ function startMatch(heroId, mapId, diffId, modeId){
     player: {
       x: ARENA_W/2, y: ARENA_H-70, hp: hero.stats.hp, maxHp: hero.stats.hp,
       facing: -Math.PI/2, cooldown:0, kills:0, deaths:0, ult:0,
-      buffUntil:0, buffSpeed:1, buffFire:1, evasiveUntil:0, shield:0, critUntil:0, regenUntil:0, regenRate:0
+      buffUntil:0, buffSpeed:1, buffFire:1, evasiveUntil:0, shield:0, critUntil:0, regenUntil:0, regenRate:0,
+      dmgBuffUntil:0, dmgBuffMult:1
     },
-    bots: [], allies: [],
+    bots: [], allies: [], mines: [],
     bullets: [], particles: [],
     timeLeft: mode==='survival' ? 0 : (mode==='timeattack' ? 90 : 180),
     timeDir: mode==='survival' ? 1 : -1,
@@ -1410,6 +1432,20 @@ function tryUltimate(){
     });
     G.particles.push({type:'beam', x:p.x, y:p.y, angle:G.aimAngle, life:0.35, maxLife:0.35});
   }
+  else if(key==='focusFire'){ p.dmgBuffUntil = now+5; p.dmgBuffMult = 1.4; }
+  else if(key==='hurricanePunch'){
+    p.x = clamp(p.x + Math.cos(G.aimAngle)*130, 20, ARENA_W-20);
+    p.y = clamp(p.y + Math.sin(G.aimAngle)*130, 20, ARENA_H-20);
+    resolveObstacles(p, 13);
+    G.bots.forEach(b=>{ if(b.alive && dist(p.x,p.y,b.x,b.y) < 90) damageBot(b, 55); });
+    G.particles.push({type:'punch', x:p.x, y:p.y, angle:G.aimAngle, life:0.25, maxLife:0.25});
+  }
+  else if(key==='minefield'){
+    for(let i=0;i<4;i++){
+      const a2 = i*(TAU/4);
+      placeMine(p.x+Math.cos(a2)*40, p.y+Math.sin(a2)*40);
+    }
+  }
 }
 
 function spawnGrenade(owner, angle){
@@ -1426,12 +1462,16 @@ function playerShoot(){
   const p = G.player, st = G.hero.stats;
   if(p.cooldown>0) return;
   p.cooldown = st.cooldown / (p.buffFire||1);
+  if(G.hero.weapon==='fists'){ meleeAttack(G.aimAngle); return; }
+  if(G.hero.weapon==='mine'){ trySpawnMine(); return; }
   const pellets = st.pellets||1;
   for(let i=0;i<pellets;i++){
     const spread = (st.spread||0) * (pellets>1 ? rand(-1,1) : rand(-1,1));
     const a = G.aimAngle + spread;
     let dmg = st.dmg;
-    if(G.player.critUntil > performance.now()/1000){ dmg *= 2; }
+    const now = performance.now()/1000;
+    if(G.player.critUntil > now){ dmg *= 2; }
+    if(G.player.dmgBuffUntil > now){ dmg *= G.player.dmgBuffMult; }
     if(G.hero.weapon==='launcher'){
       spawnGrenade(p, a);
     } else {
@@ -1441,6 +1481,37 @@ function playerShoot(){
   }
   G.particles.push({type:'flash', x:p.x+Math.cos(G.aimAngle)*20, y:p.y+Math.sin(G.aimAngle)*20, life:0.06, maxLife:0.06});
   sfx.shoot();
+}
+function meleeAttack(angle){
+  const p = G.player, st = G.hero.stats;
+  const range = st.meleeRange || 60;
+  const cone = 0.65;
+  const now = performance.now()/1000;
+  let dmg = st.dmg;
+  if(p.critUntil > now) dmg *= 2;
+  if(p.dmgBuffUntil > now) dmg *= p.dmgBuffMult;
+  G.bots.forEach(b=>{
+    if(!b.alive) return;
+    const d = dist(p.x,p.y,b.x,b.y);
+    if(d > range) return;
+    const ang = Math.atan2(b.y-p.y, b.x-p.x);
+    let diff = Math.abs(ang-angle); if(diff>Math.PI) diff = TAU-diff;
+    if(diff <= cone) damageBot(b, dmg);
+  });
+  p.x = clamp(p.x + Math.cos(angle)*10, 20, ARENA_W-20);
+  p.y = clamp(p.y + Math.sin(angle)*10, 20, ARENA_H-20);
+  resolveObstacles(p, 13);
+  G.particles.push({type:'punch', x:p.x+Math.cos(angle)*24, y:p.y+Math.sin(angle)*24, angle, life:0.18, maxLife:0.18});
+  sfx.hit();
+}
+function trySpawnMine(){
+  if(G.mines.length >= 3) return;
+  placeMine(G.player.x, G.player.y);
+  spawnDust(G.player.x, G.player.y);
+  sfx.shoot();
+}
+function placeMine(x,y){
+  G.mines.push({x, y, armIn:0.6, life:8, armed:false, blink:0});
 }
 function botShoot(bot, targetAngle){
   const bs = G.botStats;
@@ -1689,6 +1760,23 @@ function update(dt){
     if(remove) G.bullets.splice(i,1);
   }
 
+  // mines
+  for(let i=G.mines.length-1;i>=0;i--){
+    const m = G.mines[i];
+    if(!m.armed){ m.armIn -= dt; if(m.armIn<=0) m.armed = true; }
+    m.life -= dt; m.blink += dt;
+    let remove = m.life<=0;
+    if(!remove && m.armed){
+      for(const b of G.bots){
+        if(b.alive && dist(m.x,m.y,b.x,b.y) < 22){
+          explodeGrenade({x:m.x, y:m.y, dmg:G.hero.stats.dmg, aoe:G.hero.stats.mineAoe||70, owner:'player'});
+          remove = true; break;
+        }
+      }
+    }
+    if(remove) G.mines.splice(i,1);
+  }
+
   // particles
   for(let i=G.particles.length-1;i>=0;i--){
     const pt = G.particles[i];
@@ -1737,6 +1825,15 @@ function update(dt){
     else if(G.timeLeft<=0){ endMatch(p.kills>p.deaths); }
   }
 }
+function drawMine(ctx,m){
+  ctx.save(); ctx.translate(m.x,m.y);
+  ctx.fillStyle='rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(0,4,8,3,0,0,TAU); ctx.fill();
+  blockRect3D(ctx,-7,-5,14,10,2,'#3a3a2a');
+  const on = Math.floor(m.blink*4)%2===0;
+  ctx.fillStyle = m.armed ? (on?'#ff3b3b':'#7a1a1a') : (on?'#ffcf5c':'#8a6a1e');
+  ctx.beginPath(); ctx.arc(0,-1,2.4,0,TAU); ctx.fill();
+  ctx.restore();
+}
 function explodeGrenade(bl){
   sfx.explode();
   screenShake(7, 0.3);
@@ -1757,6 +1854,7 @@ function render(){
 
   if(bgCanvas) gctx.drawImage(bgCanvas,0,0);
   G.obstacles.forEach(o=> drawObstacle(gctx,o));
+  G.mines.forEach(m=> drawMine(gctx,m));
 
   // bullets (with short trail)
   G.bullets.forEach(bl=>{
@@ -1816,6 +1914,12 @@ function render(){
       gctx.save(); gctx.translate(pt.x,pt.y); gctx.rotate(pt.angle);
       gctx.fillStyle = 'rgba(155,224,255,'+(0.8*t)+')';
       gctx.fillRect(0,-6,ARENA_W*1.2,12);
+      gctx.restore();
+    }
+    else if(pt.type==='punch'){
+      gctx.save(); gctx.translate(pt.x,pt.y); gctx.rotate(pt.angle);
+      gctx.strokeStyle = 'rgba(255,240,200,'+t+')'; gctx.lineWidth = 4;
+      gctx.beginPath(); gctx.arc(0,0,16,-0.8,0.8); gctx.stroke();
       gctx.restore();
     }
     else if(pt.type==='ultRing'){
