@@ -31,9 +31,16 @@ body{
   overflow:hidden;
 }
 .screen.active{display:flex;}
-.dunes{position:absolute; left:-5%; right:-5%; bottom:0; height:45%; pointer-events:none; animation:duneDrift 22s ease-in-out infinite;}
+.dunes{position:absolute; left:-5%; right:-5%; bottom:0; height:45%; pointer-events:none; animation:duneDrift 22s ease-in-out infinite; filter:url(#heatWave);}
 .dunes svg{width:100%; height:100%; display:block;}
+.dunes-far{position:absolute; left:-5%; right:-5%; bottom:0; height:38%; pointer-events:none; animation:duneDrift 34s ease-in-out infinite reverse; opacity:.7; z-index:1;}
+.dunes-far svg{width:100%; height:100%; display:block;}
 @keyframes duneDrift{ 0%,100%{transform:translateX(0);} 50%{transform:translateX(-2.5%);} }
+.menu-vignette{position:absolute; inset:0; pointer-events:none; z-index:4; background:radial-gradient(ellipse at 50% 45%, rgba(0,0,0,0) 45%, rgba(20,10,4,.45) 100%);}
+.sky-bird{position:absolute; top:14%; animation:birdFly linear infinite; pointer-events:none; z-index:2;}
+@keyframes birdFly{ 0%{transform:translate(-10vw,0);} 100%{transform:translate(110vw,-14px);} }
+.hero-portrait-wrap{position:relative; z-index:5; margin-bottom:-8px;}
+.hero-portrait-wrap canvas{width:120px; height:120px; image-rendering:pixelated; filter:drop-shadow(0 8px 6px rgba(0,0,0,.4));}
 .sun-glow{
   position:absolute; top:6%; left:50%; width:160px; height:160px; margin-left:-80px;
   border-radius:50%; background:radial-gradient(circle, rgba(255,240,190,.85) 0%, rgba(255,207,92,.35) 45%, rgba(255,207,92,0) 72%);
@@ -292,15 +299,35 @@ body{
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <filter id="heatWave" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.01 0.09" numOctaves="2" seed="7" result="noise">
+        <animate attributeName="baseFrequency" values="0.01 0.09;0.014 0.11;0.01 0.09" dur="6s" repeatCount="indefinite"/>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="6" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+</svg>
 <div id="app">
 
   <!-- ============ MAIN MENU ============ -->
   <div class="screen active" id="screen-menu">
     <div class="sun-glow"></div>
+    <div class="sky-bird" style="animation-duration:26s; animation-delay:0s;">
+      <svg viewBox="0 0 20 10" width="18" height="9"><path d="M0,6 Q5,0 10,6 Q15,0 20,6" fill="none" stroke="rgba(60,35,15,.55)" stroke-width="1.6"/></svg>
+    </div>
+    <div class="sky-bird" style="animation-duration:32s; animation-delay:6s; top:20%;">
+      <svg viewBox="0 0 20 10" width="13" height="7"><path d="M0,6 Q5,0 10,6 Q15,0 20,6" fill="none" stroke="rgba(60,35,15,.45)" stroke-width="1.6"/></svg>
+    </div>
     <div class="sand-particles" id="sandParticles"></div>
+    <div class="dunes-far">
+      <svg viewBox="0 0 400 200" preserveAspectRatio="none"><path d="M0,100 Q120,60 220,90 T400,80 V200 H0 Z" fill="rgba(80,50,25,.3)"/></svg>
+    </div>
     <div class="dunes">
       <svg viewBox="0 0 400 200" preserveAspectRatio="none"><path d="M0,80 Q100,40 200,70 T400,60 V200 H0 Z" fill="rgba(110,69,34,.35)"/></svg>
     </div>
+    <div class="menu-vignette"></div>
     <div class="topbar">
       <div class="coin-pill"><span class="ic">🪙</span><span id="coinDisplay">0</span></div>
       <div class="topbar-right">
@@ -308,6 +335,7 @@ body{
       </div>
     </div>
     <div class="center-wrap">
+      <div class="hero-portrait-wrap"><canvas id="menuHeroCanvas" width="160" height="160"></canvas></div>
       <div class="logo pixel-font">🛡️ أبطال<br>الصحراء<small>DESERT HEROES</small></div>
       <div class="menu-buttons">
         <button class="btn btn-play" id="btnPlay">▶ ابدأ اللعب</button>
@@ -886,7 +914,15 @@ function showScreen(id){
   if(id==='screen-shop') renderShopGrid('all');
   if(id==='screen-inv') renderInventory();
   if(id==='screen-herosel') renderHeroSelGrid();
+  if(id==='screen-menu') renderMenuHero();
   if(id!=='screen-game') MusicEngine.start('menu');
+}
+function renderMenuHero(){
+  const canvas = document.getElementById('menuHeroCanvas');
+  if(!canvas) return;
+  const hero = heroById(save.selectedHero) || HEROES[0];
+  const skin = equippedSkinFor(hero.id);
+  renderHeroToCanvas(canvas, hero, skin);
 }
 document.querySelectorAll('[data-back]').forEach(b=>{
   b.addEventListener('click', ()=> showScreen(b.dataset.back));
@@ -960,7 +996,7 @@ function openHeroDetail(heroId){
     const useBtn = document.createElement('button');
     useBtn.className = 'btn btn-play';
     useBtn.textContent = save.selectedHero===h.id ? 'مُحدد حالياً' : 'اختيار كبطل افتراضي';
-    useBtn.addEventListener('click', ()=>{ save.selectedHero = h.id; persist(); closeOverlay('heroDetailOverlay'); showToast('تم اختيار ' + h.nameAr); });
+    useBtn.addEventListener('click', ()=>{ save.selectedHero = h.id; persist(); closeOverlay('heroDetailOverlay'); showToast('تم اختيار ' + h.nameAr); renderMenuHero(); });
     actions.appendChild(useBtn);
   } else {
     const buyBtn = document.createElement('button');
@@ -1918,6 +1954,7 @@ function initSandParticles(){
 }
 initSandParticles();
 refreshCoinDisplays();
+renderMenuHero();
 </script>
 </body>
 </html>
