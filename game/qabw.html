@@ -102,6 +102,8 @@ body{font:16px/1.55 var(--body);-webkit-user-select:none;user-select:none;-webki
 #boss{position:absolute;top:calc(44px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:min(60%,360px);text-align:center;font:18px/1 var(--display);color:var(--blood);text-shadow:0 2px 0 #000}
 .bb{height:9px;margin-top:4px;background:rgba(0,0,0,.7);border:1px solid #5a1a1a;border-radius:3px}.bb i{display:block;height:100%;width:100%;background:var(--blood);transition:width .2s}
 .btn.fire{background:rgba(220,120,30,.92);border-color:#ffb060}
+#hideov.veins{background:radial-gradient(ellipse at center,transparent 30%,rgba(70,0,0,.8) 85%),repeating-linear-gradient(115deg,transparent 0 22px,rgba(20,0,0,.4) 22px 25px),repeating-linear-gradient(35deg,transparent 0 30px,rgba(20,0,0,.35) 30px 33px)}
+#hideov.vil{background:radial-gradient(ellipse at center,transparent 45%,rgba(60,0,20,.55) 95%)}
 #hideov.fog{background:radial-gradient(ellipse at 50% 55%,rgba(225,235,245,.38),rgba(225,235,245,.08) 45%,transparent 70%)}
 .card button[disabled]{cursor:default}
 #fade{position:fixed;inset:0;z-index:25;background:#000;opacity:0;pointer-events:none;transition:opacity .6s}
@@ -248,6 +250,7 @@ function buildArt(){
   SPR.mon=cv(40,80,(R,g)=>monster2D(R,g,'n'));
   SPR.catR=cv(24,18,R=>cat2D(R,'#ff3226'));SPR.cat=cv(24,18,R=>cat2D(R,'#7cff9a'));
   SPR.kidR=cv(20,36,R=>kid2D(R,'#ff3226'));SPR.kid=cv(20,36,R=>kid2D(R,'#f4f4f4'));
+  SPR.princess=cv(40,80,R=>{R(8,30,24,50,'#3a0a4a');R(4,60,32,20,'#3a0a4a');R(12,30,16,4,'#5a1a6a');R(14,8,12,16,'#e4dcec');R(12,6,16,4,'#0a0a0a');R(11,8,3,26,'#0a0a0a');R(26,8,3,26,'#0a0a0a');R(16,13,2,2,'#c040ff');R(22,13,2,2,'#c040ff');R(18,19,4,1,'#5a0a2a');R(13,2,14,4,'#e8c040');R(13,0,2,3,'#e8c040');R(19,0,2,3,'#e8c040');R(25,0,2,3,'#e8c040');R(19,3,2,2,'#c03030');R(6,32,4,22,'#3a0a4a');R(30,32,4,22,'#3a0a4a');R(6,54,4,3,'#e4dcec');R(30,54,4,3,'#e4dcec')});
   SPR.robotR=cv(20,30,R=>robot2D(R,'#ff3226'));SPR.robot=cv(20,30,R=>robot2D(R,'#6ef0ff'));
 }
 function makeWriting(sym,digit){return cv(TW,THh,R=>{stoneBase(R,[72,76,70]);const c='#9a0f11';drawSym(R,2,18,sym,c);R(13,21,5,1,c);R(13,24,5,1,c);drawDigit(R,21,15,digit,c,3);for(let i=0;i<6;i++){const x=pick([3,6,10,22,25,28]);R(x,ri(26,31),1,ri(3,10),'#6e0a0c')}})}
@@ -448,7 +451,7 @@ let ttsVoice=null;
 function pickVoice(){try{const vs=speechSynthesis.getVoices();ttsVoice=vs.find(v=>/ar[-_]EG/i.test(v.lang))||vs.find(v=>/^ar/i.test(v.lang))||null}catch(e){}}
 try{pickVoice();speechSynthesis.onvoiceschanged=pickVoice}catch(e){}
 function say(text,o={}){try{if(!ttsVoice)pickVoice();if(!ttsVoice)return false;const u=new SpeechSynthesisUtterance(text);u.voice=ttsVoice;u.lang=ttsVoice.lang;u.rate=o.rate||.85;u.pitch=o.pitch||.8;u.volume=1;speechSynthesis.cancel();speechSynthesis.speak(u);return true}catch(e){return false}}
-function voice(text,kind){if(kind==='granny'&&say(text,{pitch:1.35,rate:.95}))return;const base={granny:540,cat:930,kid:660,robot:250}[kind];if(!base)return;const type=kind==='robot'?'sawtooth':'square';const n=Math.min(24,Math.ceil(text.length/2.4));for(let i=0;i<n;i++)tone(base*(.82+Math.random()*.42),.055,{type,v:.04,at:i*.075,lp:2400,wet:.1})}
+function voice(text,kind){if(kind==='princess'){say(text,{pitch:1.6,rate:.8});tone(220,1.4,{type:'sine',v:.07,wet:.9});tone(331,1.4,{type:'sine',v:.05,wet:.9,at:.2});return}if(kind==='granny'&&say(text,{pitch:1.35,rate:.95}))return;const base={granny:540,cat:930,kid:660,robot:250}[kind];if(!base)return;const type=kind==='robot'?'sawtooth':'square';const n=Math.min(24,Math.ceil(text.length/2.4));for(let i=0;i<n;i++)tone(base*(.82+Math.random()*.42),.055,{type,v:.04,at:i*.075,lp:2400,wet:.1})}
 function setMon(v,pan){if(!A.mon)return;const t=A.c.currentTime;A.mon.g.gain.setTargetAtTime(v,t,.12);if(A.mon.p)A.mon.p.pan.setTargetAtTime(clamp(pan,-1,1),t,.12)}
 function setAmb(v){if(A.amb)A.amb.gain.setTargetAtTime(v,A.c.currentTime,.6)}
 function stopHum(){if(A.hum){A.hum.gain.setTargetAtTime(0,A.c.currentTime,.2);A.hum=null}}
@@ -478,8 +481,9 @@ function fade(v,ms=600){ui.fade.style.transition=`opacity ${ms}ms`;ui.fade.style
 function hudSync(){
   const base=G.stage==='base',lv=G.stage==='lvl';
   ui.keys.hidden=!(base||lv);ui.bat.hidden=!(base||lv);ui.chg.hidden=lv;
-  $('#bBat').hidden=!(base||(lv&&G.lvl&&G.lvl.combat&&!G.lvl.cane&&!G.lvl.villain));
-  if(lv&&G.lvl&&G.lvl.villain){ui.keys.textContent=`❤️ ${Math.round(G.hp)}`;ui.bat.textContent=`🧟 ${G.lf.inf||0}/${G.lvl.goalN}`;ui.ammo.hidden=ui.ser.hidden=ui.cash.hidden=true;ui.bat.style.color='var(--blood)'}
+  $('#bBat').hidden=!(base||(lv&&G.lvl&&G.lvl.combat&&!G.lvl.cane&&!G.lvl.villain&&!G.vil));
+  if(lv&&G.vil){ui.keys.textContent=`❤️ ${Math.round(G.hp)}`;ui.bat.textContent=`👑 ${G.vil.done}/${G.vil.list.length} · 🧟 ${G.vil.bites}`;ui.ammo.hidden=ui.ser.hidden=ui.cash.hidden=true;ui.bat.style.color='#c060ff'}
+  else if(lv&&G.lvl&&G.lvl.villain){ui.keys.textContent=`❤️ ${Math.round(G.hp)}`;ui.bat.textContent=`🧟 ${G.lf.inf||0}/${G.lvl.goalN}`;ui.ammo.hidden=ui.ser.hidden=ui.cash.hidden=true;ui.bat.style.color='var(--blood)'}
   else if(lv){ui.keys.textContent=`❤️ ${Math.round(G.hp)}`;ui.bat.textContent=`🦠 ${Math.round(G.inf)}٪`;const cb=G.lvl&&G.lvl.combat&&!G.lvl.cane;ui.ammo.hidden=!cb;ui.ammo.textContent=wpnLabel();ui.ser.hidden=false;ui.ser.textContent=`💉 ${G.serum}`;ui.cash.hidden=false;ui.cash.textContent=`💰 ${G.money}`;$('#bBat').textContent='مصل';ui.bat.style.color=G.inf>70?'var(--blood)':''}
   else{ui.ammo.hidden=ui.ser.hidden=ui.cash.hidden=true;$('#bBat').textContent='بطارية';ui.keys.textContent=`🔑 ${G.keys}/3`;ui.bat.textContent=`🔋 ${G.bats}`;ui.bat.style.color=''}
   ui.charge.style.width=G.charge+'%';ui.charge.style.background=G.charge<20?'var(--blood)':'var(--amber)';
@@ -511,7 +515,7 @@ function clearSave(){try{localStorage.removeItem('qabw1')}catch(e){}}
 
 /* ===================== level building ===================== */
 const WALLC={B:'paper','#':'paper2',W:'window',K:'doorK',F:'doorF',S:'stone',P:'pillar',U:'doorU',O:'doorO',C:'safe',V:'levers',X:'wires',G:'gen0',L:'bigLever'};
-function clearWorld(){while(world.children.length)world.remove(world.children[0]);G.objs=[];G.special={};G.waterMesh=null;G.lvl=null;G.wallAct=null;G.wallLbl=null;G.ens=[];G.boss=null;G.roll=0;G.lockMove=false;scene.background.setHex(0);scene.fog.color.setHex(0);pMat.uniforms.sepia.value=0;if(typeof gunVM!=='undefined'){gunVM.visible=false;caneVM.visible=false;hand.visible=false}$('#bWpn').hidden=true;ui.boss.hidden=true;$('#bFire').hidden=true}
+function clearWorld(){G.vil=null;if(typeof ui!=='undefined'&&ui.hideov)ui.hideov.className='';while(world.children.length)world.remove(world.children[0]);G.objs=[];G.special={};G.waterMesh=null;G.lvl=null;G.wallAct=null;G.wallLbl=null;G.ens=[];G.boss=null;G.roll=0;G.lockMove=false;scene.background.setHex(0);scene.fog.color.setHex(0);pMat.uniforms.sepia.value=0;if(typeof gunVM!=='undefined'){gunVM.visible=false;caneVM.visible=false;hand.visible=false}$('#bWpn').hidden=true;ui.boss.hidden=true;$('#bFire').hidden=true}
 function buildMap(rows,floorC,ceilC,pal,specKeys){
   const ch1=!pal;pal=pal||WALLC;
   const m=parseMap(rows);G.map=m;G.explored=new Uint8Array(m.w*m.h);
@@ -541,6 +545,7 @@ function syncDir(){G.dirX=Math.cos(G.pa);G.dirY=Math.sin(G.pa)}
 function makeComp(x,y){
   if(!G.comp)return;const id=G.comp.id;const v=id==='cat'?buildCat():id==='robot'?buildRobot():id==='zinger2'?{}:buildKid();
   const vv=id==='zinger2'?buildPerson({shirt:0x3a4a3a,coat:0x2a2a22,skin:0xc48d62,hair:0x1a1410}):v;
+  if(id==='zinger2')box(vv.armR,.05,.07,.3,col(0x1a1a1a),0,-.62,.12);
   G.cObj=addObj({x,y,mesh:vv.g,vis:vv,isComp:true,act:'talk',walk:0,face:0,rig:id==='zinger2'});if(G.comp.gone){G.cObj.gone=true;v.g.visible=false}
 }
 function lights(o){amb.color.setHex(o.ac);amb.intensity=o.ai;hemi.intensity=o.hi||0;scene.fog.density=o.fog;genLight.intensity=0}
@@ -582,7 +587,7 @@ function syncScene(dt,t){
   cam.position.set(G.px+sx,eye+bob+sy,G.py);
   cam.rotation.set(G.pitch,-G.pa-Math.PI/2,G.roll||0);
   if(G.recoil>0)G.recoil=Math.max(0,G.recoil-dt*5);gunVM.position.z=-.42+(G.recoil||0)*.07;gunVM.rotation.x=(G.recoil||0)*.25;gunVM.position.y=-.2+Math.sin(G.bob)*.008;caneVM.rotation.x=-(G.recoil||0)*1.3;muzzle.intensity*=.7;
-  if(G.stage==='lvl'&&G.lvl&&G.lvl.villain){gunVM.visible=rodVM.visible=false;fistVM.visible=true;fistVM.position.z=-.36-(G.recoil||0)*.25}
+  if(G.stage==='lvl'&&G.lvl&&(G.lvl.villain||G.vil)){gunVM.visible=rodVM.visible=false;fistVM.visible=true;fistVM.position.z=-.36-(G.recoil||0)*.25}
   else if(G.stage==='lvl'&&G.lvl&&G.lvl.combat&&!G.lvl.cane&&G.w){const g=G.lvl.mg||curGun();gunVM.visible=!!g;rodVM.visible=!g&&G.w.rod>0;fistVM.visible=!g&&G.w.rod<=0;rodVM.rotation.x=-(G.recoil||0)*1.2;fistVM.position.z=-.36-(G.recoil||0)*.15}else if(typeof rodVM!=='undefined'){rodVM.visible=fistVM.visible=false}
   const on=G.flash&&G.mode!=='title';
   spot.intensity=on?(G.stage==='base'&&G.charge<15&&Math.random()<.15?.3:3.2):0;near.intensity=on?.4:.14;
@@ -613,6 +618,7 @@ function animRig(o,dt,t){
     if(o.collapse!=null){o.mesh.scale.y=Math.max(.05,1-o.collapse);o.mesh.rotation.z=o.collapse*.4}
   }
   if(o.anim)o.anim(o,dt,t);
+  if(o.aimT>0&&v.armR){o.aimT-=dt;v.armR.rotation.x=-1.5}
   if(o.isComp&&v.eyes&&G.comp&&v.base!==undefined){const red=G.comp.redT>0;for(const e of v.eyes)e.material.color.setHex(red?0xff2a1a:v.base)}
   if(v.skin&&v.skin.emissive){if(o.flashT>0||o.hitFx>0){v.skin.emissive.setHex(0x880000);if(o.hitFx>0)o.hitFx-=dt}else if(!o.isMon)v.skin.emissive.setHex(0)}
 }
@@ -862,6 +868,7 @@ function respawn(){
 
 /* ===================== actions ===================== */
 async function act(){
+  if(G.vil){vilAct();return}
   if(G.qte){qteTap();return}
   if(G.hidden){unhide();return}
   const t=G.target;if(!t)return;
@@ -1253,7 +1260,7 @@ function buildBoss(kind){
   else if(kind==='bones'){set(0xb8ae94,0xe8dcc0);for(let i=0;i<5;i++)box(v.torso,.4,.025,.2,col(0xf0e8d0),0,.1+i*.1,.02);s=1.55}
   else if(kind==='whisper'){set(0x000000,0x141018);s=1.35}
   else if(kind==='zero'){set(0x7a9ab0,0x6a7060);s=1.4}
-  else if(kind==='final'){set(0x3a0606,0x8a2a2a);v.body.emissive=new THREE.Color(0);for(let i=0;i<4;i++)box(v.torso,.06,.25,.06,col(0x2a0404),-.15+i*.1,.75,-.05);s=1.75}
+  else if(kind==='final'){set(0x2a0838,0xe0d8e8);const sk=new THREE.Mesh(new THREE.ConeGeometry(.5,1.1,10),v.body);sk.position.y=.5;v.g.add(sk);const gold=new THREE.MeshPhongMaterial({color:0xe8c040,emissive:0x5a4000,shininess:60});for(let i=0;i<5;i++)box(v.head,.035,.09,.035,gold,-.1+i*.05,.38,0);box(v.head,.26,.03,.24,gold,0,.33,0);box(v.head,.27,.5,.06,col(0x0a0a0a),0,.05,-.13);v.eye.color.setHex(0xb040ff);s=1.55}
   else if(kind==='old'){set(0x201810,0x9a9080);s=.85}
   v.g.scale.setScalar(s);v.s=s;return v;
 }
@@ -1376,6 +1383,7 @@ function killEnemy(o){
   hudSync();G.lvl.onKill&&G.lvl.onKill(o);
 }
 function fire(){
+  if(G.vil&&G.mode==='play')return vilBite();
   if(G.mode!=='play'||!G.lvl||!G.lvl.combat||G.fireCD>0)return;
   aInit();
   if(G.lvl.villain)return villainBite();
@@ -1404,7 +1412,7 @@ function useSerum(){
   G.serum--;G.inf=Math.max(0,G.inf-55);SFX.key();toast('💉 المصل نزّل العدوى',1800);hudSync();
 }
 /* bosses */
-const BOSSN={doctor:'الطبيب الأسود',bones:'ملك العظام',whisper:'الهامس',zero:'المريض صفر',final:'صاحب الفيروس'};
+const BOSSN={doctor:'الطبيب الأسود',bones:'ملك العظام',whisper:'الهامس',zero:'المريض صفر',final:'أميرة الطاعون'};
 function spawnBoss(kind,x,y,hp,dormant=true){
   const v=buildBoss(kind);const o=addObj({x,y,mesh:v.g,vis:v,isMon:true,isBoss:true,kind,name:BOSSN[kind],hp,maxHp:hp,st:'idle',face:0,hitT:0,spT:8,dormant,scareYo:-(v.s*1.0)+.05,invis:dormant});
   G.boss=o;return o;
@@ -1484,6 +1492,7 @@ async function goLevel(id){
   if(G.w&&G.w.cargo&&!['street','bus','air','plane'].includes(id)){const c=G.w.cargo;G.w.shotgun=c.shotgun;G.w.sAmmo=c.sAmmo;G.w.rod=c.rod;G.w.cargo=null;if(c.shotgun)G.w.cur='shotgun';setTimeout(()=>toast('استلمت الشوتجن والسيخ من المخزن 🔫🔩',2800),900)}
   await fade(0,600);G.mode='play';
   if(def.start2)def.start2();
+  if(def.combat&&!def.cane&&!def.villain&&!def.final&&G.c2&&!G.c2['pm_'+id]&&Math.random()<.6){G.c2['pm_'+id]=1;setTimeout(()=>{if(G.mode==='play'&&G.lvlId===id)princessMsg(pick(TAUNTS))},7000)}
 }
 function restartLevel(){const s=JSON.parse(G.snap);Object.assign(G,{hp:Math.max(60,s.hp),inf:Math.min(40,s.inf),serum:Math.max(1,s.serum),money:s.money,c2:s.c2,w:s.w||G.w});G.w.pAmmo=Math.max(10,G.w.pAmmo);buildLevel(LV[G.lvlId]);G.mode='play';if(LV[G.lvlId].start2)LV[G.lvlId].start2()}
 function save2(){try{localStorage.setItem('qabw2',JSON.stringify({lvl:G.lvlId,snap:G.snap}))}catch(e){}}
@@ -1491,6 +1500,8 @@ function load2(){try{return JSON.parse(localStorage.getItem('qabw2')||'null')}ca
 function lvlTick(dt){
   const L=G.lvl;G.lt+=dt;
   if(G.fireCD>0)G.fireCD-=dt;if(G.meleeCD>0)G.meleeCD-=dt;if(G.shotT>0)G.shotT-=dt;
+  zingerFight(dt);
+  if(G.vil){vilTick(dt);return}
   sickTick(dt);if(L.veh)vehicleTick(dt);
   for(const o of G.objs){if(o.pick&&!o.gone&&Math.hypot(o.x-G.px,o.y-G.py)<.6)pickup(o)}
   for(const o of G.ens)enemyTick(o,dt);
@@ -1537,14 +1548,14 @@ function drawCairo(g,t,k){
 }
 function drawLab(g){P(g,0,0,W,H,'#14181e');for(let x=0;x<W;x+=40){P(g,x+6,20,24,70,'#1a4a3a');P(g,x+8,22,20,66,'#2a7a5a')}P(g,0,110,W,50,'#2a2e34');P(g,0,108,W,2,'#4a4e54');P(g,0,0,W,14,'#0a0c10');P(g,90,0,60,14,'#000');for(let i=0;i<8;i++)P(g,100+i*6,4,2,2,'#ccd');P(g,150,2,8,8,'#f2e6b0')}
 function finalGrannyScene(){
-  const mon=SPR.mon;
+  const mon=SPR.princess;
   return slides([
     {d:2.2,sub:'(طق… طق… طق…)',ev:[[.2,SFX.tap],[.8,SFX.tap],[1.4,SFX.tap]],draw:(g,t)=>{drawLab(g);g.drawImage(mon,140,40,40,80);P(g,40,104,28,8,'#4a5a3a');P(g,64,100,8,8,'#c48d62');P(g,200,104,8,4,'#3b2a20');P(g,206,96,2,12,'#6b3f1e');P(g,0,0,W,H,'rgba(80,0,0,.25)')}},
     {d:2.4,sub:'<b>جدتك:</b> أنا لسه مامتش يا واد!',ev:[[.1,()=>voice('أنا لسه مامتش يا واد','granny')]],draw:(g,t)=>{drawLab(g);g.drawImage(mon,140,40,40,80);drawGranny(g,lerp(240,214,seg(t,0,1)),112,{angry:true})}},
     {d:1.6,sub:'<b>أنت:</b> جدتي؟!',draw:(g,t)=>{drawLab(g);P(g,40,104,28,8,'#4a5a3a');P(g,64,96,10,10,'#c48d62');P(g,66,99,2,2,'#fff');P(g,70,99,2,2,'#fff');drawGranny(g,214,112,{cane:'up',angry:true})}},
     {d:2.4,ev:[[.1,SFX.sting],[.9,()=>{big('هبش دربكش!','gold');voice('هبش دربكش','granny');SFX.whoosh()}]],draw:(g,t)=>{drawLab(g);g.drawImage(mon,140,40,40,80);const e=ease(seg(t,.3,2.2));drawGranny(g,lerp(214,160,e),lerp(112,46,e)-Math.sin(Math.PI*e)*40,{cane:'up',angry:true,rot:e*Math.PI*4})}},
     {d:.8,ev:[[0,SFX.bonk]],draw:(g,t)=>{drawLab(g);g.drawImage(mon,140,40+t*10,40,80-t*10);drawGranny(g,160,44,{cane:'swing',ca:1.2,angry:true});if(t<.15){P(g,0,0,W,H,'rgba(255,255,255,.85)')}}},
-    {d:2.6,sub:'<b>الوحش وصل القمر 🌕</b>',ev:[[1.6,SFX.twinkle]],draw:(g,t)=>{P(g,0,0,W,H,'#060818');for(let i=0;i<40;i++)P(g,(i*53)%W,(i*31)%H,1,1,'#ccd');P(g,170,20,40,40,'#e8e0c0');P(g,180,30,6,6,'#c8c0a0');const k=ease(seg(t,0,1.5));g.save();g.translate(lerp(60,190,k),lerp(150,40,k));g.rotate(t*10);g.drawImage(mon,-10*(1-k*.7),-20*(1-k*.7),20*(1-k*.7),40*(1-k*.7));g.restore();if(t>1.6){P(g,186,36,4,4,'#fff')}}},
+    {d:2.6,sub:'<b>أميرة الطاعون وصلت القمر 🌕</b>',ev:[[1.6,SFX.twinkle]],draw:(g,t)=>{P(g,0,0,W,H,'#060818');for(let i=0;i<40;i++)P(g,(i*53)%W,(i*31)%H,1,1,'#ccd');P(g,170,20,40,40,'#e8e0c0');P(g,180,30,6,6,'#c8c0a0');const k=ease(seg(t,0,1.5));g.save();g.translate(lerp(60,190,k),lerp(150,40,k));g.rotate(t*10);g.drawImage(mon,-10*(1-k*.7),-20*(1-k*.7),20*(1-k*.7),40*(1-k*.7));g.restore();if(t>1.6){P(g,186,36,4,4,'#fff')}}},
     {d:2.6,sub:'<b>جدتك:</b> قوم يا حبيبي، الأكل هيبرد.',ev:[[.1,()=>voice('قوم يا حبيبي الأكل هيبرد','granny')]],draw:(g,t)=>{drawLab(g);drawGranny(g,150,112,{fix:Math.floor(t*2)%2===0});P(g,90,98,10,10,'#c48d62');P(g,88,108,14,6,'#4a5a3a')}}
   ]);
 }
@@ -1676,7 +1687,7 @@ const LV={
   swiss:{name:'سويسرا',intro:'<p class="muted">سويسرا – دير في الجبال</p><p>الرهبان كانوا بيدرسوا الطاعون الأسود من ٧٠٠ سنة. المتحولين هنا <b>عُمي</b>… بس بيسمعوا كويس جدًا.</p><p>متجريش. متضربش نار إلا لو مضطر.</p>',go:'ادخل بهدوء',
     wh:3,eye:1.6,floor:'wood2',ceil:'wood2',pal:{S:'monk'},map:()=>genMaze(27,21,'S'),light:{ac:0x8a7050,ai:.16,hi:.05,fog:.15},combat:true,flash:true,start:[1.5,1.5,0],
     obj:'امشي بهدوء ولاقي الكتاب القديم (العمود الدهبي).',next:'flash',
-    setup(){const f=bfsFar(1,1);reachGoal(f.far[0],f.far[1],0xffd060,'اقرا الكتاب القديم',async()=>{G.mode='busy';await talk('كتاب قديم','«سنة ١٣٤٧ ظهر وحش في قبو بيت في مصر… كل اللي لمسه اتحوّل.\nالوحش اتقتل بالكهربا بعد ٦٠٠ سنة على إيد طفل…\nواللي سرق جثته عمل منها الطاعون الجديد.»',null);await talk('زنجر','ده… ده وحش القبو بتاعنا! حد سرق جثته من بيت ستّي!',null,'kid');G.c2.book=1;levelDone()});spawnWave(['blind'],12,5);scatter({ammo:2,serum:1,med:2,letter:1})}},
+    setup(){const f=bfsFar(1,1);reachGoal(f.far[0],f.far[1],0xffd060,'اقرا الكتاب القديم',async()=>{G.mode='busy';await talk('كتاب قديم','«سنة ١٣٤٧ ظهر وحش في قبو بيت في مصر… كل اللي لمسه اتحوّل.\nالوحش اتقتل بالكهربا بعد ٦٠٠ سنة على إيد طفل…\nواللي سرقت جثته… «أميرة الطاعون». عملت منها الطاعون الجديد، وكل اللي يتعدي بيسمع كلامها.»',null);await talk('زنجر','ده… ده وحش القبو بتاعنا! حد سرق جثته من بيت ستّي!',null,'kid');G.c2.book=1;levelDone()});spawnWave(['blind'],12,5);scatter({ammo:2,serum:1,med:2,letter:1})}},
   flash:{name:'فلاش باك',intro:'<p class="muted">جواب قديم من جدتك…</p><p>«سنة ١٩٥٦، في قريتنا في الصعيد… كان عندي ٢٠ سنة لما شفت أول وحش.»</p><p><b>دلوقتي انت جدتك.</b></p>',go:'العب بالجدة 👵',
     wh:7,eye:1.5,floor:'sand',ceil:null,sky:0x14101e,fogc:0x14101e,pal:{J:'mud',j:'mud2'},map:()=>genCity(28,26,['J','j'],{open:.25,big:true}),light:{ac:0xa08a70,ai:.45,hi:.3,fog:.06},combat:true,cane:true,sepia:true,flash:false,zinger:false,noInf:true,easy:true,start:[1.5,1.5,.7],
     obj:'اقتلي ٨ وحوش بالعكاز (دوسي «هبش!» وهي قريبة).',next:'trip:home',doneText:'«ومن ساعتها… أي وحش يسمع صوت العكاز بيجري.» – جدتك',
@@ -1689,7 +1700,7 @@ const LV={
   home2:{name:'القبو',wh:2.6,eye:1.6,floor:'fstone',ceil:'beams',pal:null,map:BASE,light:{ac:0x405068,ai:.08,hi:0,fog:.2},flash:true,start:[3.5,1.5,Math.PI/2],
     obj:'دوّر على أي أثر للي سرق جثة الوحش (عند المولّد).',next:'heli',doneText:'«المعمل في الصحرا… ورا الأهرامات.» عرفتوا مكانه.',
     wallAct:{U:()=>toast('مش وقته…')},
-    setup(){addObj({x:15,y:14.5,mesh:buildProp('ash'),label:'مكان الجثة',onAct:()=>talk('','مكان الجثة فاضي… فيه آثار عجل ونقالة.',null)});const n=addObj({x:21.5,y:14.5,mesh:buildProp('note'),label:'ورقة',onAct:async()=>{await talk('ورقة مقطوعة','«تم نقل العينة للمعمل الرئيسي — ورا الأهرامات.\nالتوقيع: د. ر.»',null);await talk('زنجر','المعمل في مصر؟! يعني كل ده بدأ من عندنا…',null,'kid');levelDone()}})}},
+    setup(){addObj({x:15,y:14.5,mesh:buildProp('ash'),label:'مكان الجثة',onAct:()=>talk('','مكان الجثة فاضي… فيه آثار عجل ونقالة.',null)});const n=addObj({x:21.5,y:14.5,mesh:buildProp('note'),label:'ورقة',onAct:async()=>{await talk('ورقة مقطوعة','«تم نقل العينة للمعمل الرئيسي — ورا الأهرامات.\nالتوقيع: 👑 أ.ط»',null);await talk('زنجر','المعمل في مصر؟! يعني كل ده بدأ من عندنا…',null,'kid');levelDone()}})}},
   heli:{name:'الهليكوبتر',intro:'<p class="muted">في الطريق للمعمل</p><p>الشارع اللي بيودّي للمعمل مليان <b>مئات المتحولين</b>… جايين موجات ورا بعض.</p><p>انت على رشاش الهليكوبتر. لو وصلوا تحتك هيطلعوا عليك.</p>',go:'افتح النار',
     wh:30,eye:7,floor:'asphalt',ceil:null,sky:0x0e1020,fogc:0x0e1020,pal:{K:'city1',k:'city2'},map:HELI,
     light:{ac:0x8088a8,ai:.5,hi:.4,fog:.035},combat:true,mg:true,flash:false,lock:true,zinger:false,noInf:true,aggro:true,reach:1.5,start:[1,3.5,0],start2(){G.pitch=-.6},
@@ -1700,10 +1711,10 @@ const LV={
       G.lf.wt-=dt;if(G.lf.wt<=0&&G.lf.wave<6){G.lf.wave++;G.lf.wt=G.lf.wave<6?11:999;const n=8+G.lf.wave*2;big(`الموجة ${G.lf.wave}`);SFX.growl(.9,0);
         for(let i=0;i<n;i++){const x=Math.min(60,G.lf.x+rand(9,16)),y=pick([1.5,2.5,3.5,4.5,5.5]);if(!solidAt(Math.floor(x),Math.floor(y))){const e=spawnEnemy(pick(['walker','walker','crawler','crawler','screamer']),x,y);e.st='chase'}}}
       if(G.lf.wave>=6&&alive===0&&!G.lf.done){G.lf.done=1;ui.timer.hidden=true;big('الشارع نضف!','gold');setTimeout(levelDone,1500)}}},
-  final:{name:'المعركة الأخيرة',intro:'<p class="muted">المعمل – ورا الأهرامات</p><p>هنا اتعمل الفيروس… وهنا هيخلص.</p>',go:'ادخل المعمل',final:true,
+  final:{name:'المعركة الأخيرة',intro:'<p class="muted">المعمل – ورا الأهرامات</p><p>هنا بتعيش <b>أميرة الطاعون</b>… اللي سرقت جثة وحش القبو وعملت منها الطاعون، وبقت بتأمر كل اللي يتعدي.</p><p>هنا هيخلص كل ده.</p>',go:'ادخل المعمل',final:true,
     wh:3.4,eye:1.6,floor:'lfloor',ceil:'hceil',pal:{L:'lab',l:'lab2'},map:['lllllllllllllllllllllll','l.....................l','l..L....L.....L....L..l','l.....................l','l.....................l','l.....................l','l..L....L.....L....L..l','l.....................l','l.....................l','l.....................l','l..L....L.....L....L..l','l.....................l','lllllllllllllllllllllll'],
     light:{ac:0x608070,ai:.3,hi:.1,fog:.08},combat:true,flash:true,start:[2,6.5,0],obj:'اقتل صاحب الفيروس.',
-    setup(){scatter({ammo:5,serum:2,med:3});const b=spawnBoss('final',19,6.5,70,false);ui.boss.hidden=false;ui.bossN.textContent=b.name;bossBar();setTimeout(()=>{big('صاحب الفيروس');SFX.growl(1,0)},600)},
+    setup(){scatter({ammo:5,serum:2,med:3});const b=spawnBoss('final',19,6.5,70,false);ui.boss.hidden=false;ui.bossN.textContent=b.name;bossBar();setTimeout(()=>{big('أميرة الطاعون');princessMsg('«وصلت لحد عندي يا صياد؟ تعالى… خليني أشوف جدتك هتنقذك إزاي المرة دي.»')},600)},
     onBossDie:finalFake}
 };
 function placePlayer2(x,y){G.px=x;G.py=y}
@@ -1914,7 +1925,7 @@ async function continue2(sv){const s=JSON.parse(sv.snap);ui.overlay.hidden=true;
 
 /* ===================== VILLAIN PATH ===================== */
 function buildSoldier(){const v=buildPerson({shirt:0x3a4a2a,pants:0x2a3420,skin:pick(SKINS)});box(v.head,.3,.12,.31,col(0x2e3a24),0,.33,0);box(v.armR,.05,.05,.4,col(0x1a1a1a),0,-.55,.2);return v}
-function startVillain(){G.villainFrom=G.lvlId;G.hp=100;G.inf=0;goLevel('villain')}
+function startVillain(){G.villainFrom=G.lvlId;turnIntoMonster()}
 function villainHumans(){return G.objs.filter(o=>(o.civ||o.sold)&&o.ps==='ok')}
 function villainBite(){
   if(G.fireCD>0)return;G.fireCD=.6;G.recoil=1;SFX.growl(.35,0);
@@ -1953,7 +1964,7 @@ function villainTick(dt){
 async function villainDie(){
   G.mode='busy';SFX.scream();G.red=1;G.shake=1.2;await sleep(900);
   const c=await panel(`<h2>الجنود وقّعوك</h2><p>الصياد اللي اتحوّل… وقع في شارع فاضي. حاول تاني؟</p><div class="stack"><button class="primary" id="a">حاول تاني</button><button id="b">القائمة الرئيسية</button></div>`,(r,close)=>{r.querySelector('#a').onclick=()=>close(0);r.querySelector('#b').onclick=()=>close(1)});
-  if(c===1)return location.reload();G.hp=100;G.lvlId='villain';buildLevel(LV.villain);G.mode='play';
+  if(c===1)return location.reload();if(G.lvlId==='villain'){G.hp=100;buildLevel(LV.villain);G.mode='play';return}vilRestart();
 }
 async function villainWin(){
   G.mode='busy';setMon(0,0);await fade(1,700);ui.controls.hidden=true;ui.obj.hidden=true;ui.inv.hidden=true;ui.cross.hidden=true;
@@ -1981,6 +1992,137 @@ async function sacrifice(){
   panel(`<h1>القبو</h1><p class="tag">نهاية حزينة</p><p style="text-align:center">ضحّيت بنفسك قبل ما تتحوّل… وزنجر كمّل الطريق لوحده، وشايل عكاز جدتك.</p>
   <div class="stack"><button class="primary" id="a">ارجع وحاول تاني</button><button id="b">القائمة الرئيسية</button></div>`,(r,close)=>{r.querySelector('#b').onclick=()=>location.reload();r.querySelector('#a').onclick=()=>{close();ui.controls.hidden=false;ui.obj.hidden=false;ui.inv.hidden=false;ui.cross.hidden=false;fade(0,500);restartLevel()}});
   G.mode='end';
+}
+
+
+/* ===================== PLAGUE PRINCESS & IN-PLACE VILLAIN ===================== */
+const TAUNTS=['«يا صياد… كل اللي بتقتلهم كانوا ولادي.»','«ارجع بلدك. لسه فيه وقت.»','«أنا شايفاك من عيون كل متحول حواليك.»','«أخوك ريحته حلوة… هيبقى من ولادي قريب.»','«جدتك مش هتقدر تنقذك المرة دي.»','«كل عضّة… صلاة ليا.»'];
+function princessMsg(text,choices){return talk('👑 أميرة الطاعون',text,choices||null,'princess')}
+function zingerFight(dt){
+  const o=G.cObj;if(!o||o.gone||!G.comp||G.comp.id!=='zinger2'||!G.lvl||!G.lvl.combat||G.lvl.cane||G.vil||G.c2.zingerTurned)return;
+  o.shT=(o.shT??1)-dt;if(o.shT>0)return;
+  let best=null,bd=9;for(const e of G.ens){if(e.st==='dead'||e.gone)continue;const d=Math.hypot(e.x-o.x,e.y-o.y);if(d<bd&&los(o.x,o.y,e.x,e.y)){bd=d;best=e}}
+  if(!best&&G.boss&&!G.boss.dormant&&G.boss.st!=='dead'&&!G.boss.invis&&Math.hypot(G.boss.x-o.x,G.boss.y-o.y)<10&&los(o.x,o.y,G.boss.x,G.boss.y))best=G.boss;
+  if(!best){o.shT=.5;return}
+  o.shT=rand(1,1.7);o.face=Math.atan2(best.x-o.x,best.y-o.y);o.aimT=.45;noise(.15,{v:.35,f:2400,to:300,pan:panOf(o),wet:.3});
+  if(Math.random()<.6)damageEnemy(best,1);
+  if(Math.random()<.1)toast(pick(['زنجر: خد دي!','زنجر: ورايا!','زنجر: واحد كمان!','زنجر: غطّيني!']),900);
+}
+function vilHumans(){const a=G.objs.filter(o=>!o.gone&&(o.civ||o.sold||o.pax)&&(o.ps==='ok'||o.ps==='sick'));if(G.cObj&&!G.cObj.gone&&G.comp&&G.comp.id==='zinger2'&&!G.c2.zingerTurned)a.push(G.cObj);return a}
+function vilTarget(){let best=null,bd=1.8;for(const o of vilHumans()){const dx=o.x-G.px,dy=o.y-G.py,d=Math.hypot(dx,dy);if(d<bd&&Math.abs(angDiff(Math.atan2(dy,dx),G.pa))<.85){bd=d;best=o}}return best}
+async function turnIntoMonster(){
+  G.mode='busy';ui.prompt.hidden=true;G.flash=false;ui.hideov.className='veins';SFX.scream();
+  const lines=['جسمك بيتشنّج…','عروقك بتسود…','مش قادر تسيطر على نفسك…','فيه صوت ست في دماغك…'];let li=-1;
+  await tween(4.2,k=>{const a=1-k*.4;G.shake=1.1*a;G.roll=Math.sin(k*42)*.32*a;G.pitch=Math.sin(k*27)*.45*a;G.red=.55+.45*Math.sin(k*31);const i=Math.floor(k*4);if(i!==li&&i<4){li=i;sub(lines[i]);SFX.heart(.4);if(i===2)SFX.growl(.8,0)}});
+  G.roll=0;G.pitch=0;sub('');big('اتحوّلت');SFX.growl(1,0);ui.hideov.className='vil';
+  G.hp=100;G.inf=0;G.qte=null;
+  const zAvail=G.comp&&G.comp.id==='zinger2'&&G.cObj&&!G.cObj.gone&&!G.c2.zingerTurned;
+  const list=[{k:'bite',n:3,t:45,txt:'عضّ ٣ من البشر. عايزة ولاد جداد.'}];
+  if(zAvail)list.push({k:'zinger',n:1,t:40,txt:'عضّ أخوك. هو كمان لازم يبقى من ولادي.'});
+  list.push({k:'kill',n:2,t:50,txt:'الجنود بيقتلوا ولادي. اقتل اتنين منهم.'},{k:'spare',n:4,t:45,txt:'متقتلش حد! حوّل ٤… كل روح ليا أنا.'});
+  G.vil={list,i:0,done:0,fails:0,bites:0,kills:0,sk:0,t:0,cur:null,spT:20};
+  for(let i=0;i<7;i++){const p=farFloor(5);const o=makeNPC(p[0],p[1],{},rand(0,6));o.civ=true;o.ps='ok';o.solid=.25}
+  for(let i=0;i<3;i++)spawnSoldier();
+  for(const e of G.ens)if(e.st!=='dead'){e.st='idle';e.speed=0}
+  if(G.comp&&G.cObj){G.comp.stay=true}
+  $('#bFire').hidden=false;$('#bFire').textContent='عضّ';$('#bWpn').hidden=true;$('#bBat').hidden=true;$('#bLight').hidden=true;
+  hudSync();await sleep(1200);G.mode='play';
+  if(zAvail)await talk('زنجر','لا… لا يا أخويا! قاوم! بصلي!',null,'kid');
+  await princessMsg('«أهلًا بيك يا ابني… دلوقتي انت بتاعي. اسمع كلامي… وإلا.»');
+  nextOrder();
+}
+function spawnSoldier(){const p=farFloor(8);const v=buildSoldier();return addObj({x:p[0],y:p[1],mesh:v.g,vis:v,rig:true,face:0,sold:true,ps:'ok',solid:.25})}
+async function nextOrder(){
+  const V=G.vil;if(!V)return;if(V.i>=V.list.length)return vilWin();
+  const o=V.list[V.i];V.cur={...o,got:0,t:o.t,b0:V.bites,k0:V.sk,h0:V.kills};
+  if(o.k==='zinger'&&G.c2.zingerTurned){V.i++;return nextOrder()}
+  const c=await princessMsg(`«${o.txt}»\n(عندك ${o.t} ثانية)`,['حاضر يا أميرتي 👑','لأ… مش هعمل كده']);
+  if(!G.vil)return;
+  if(c===1){V.cur=null;await punish('«بتقولي لأ؟! أنا اللي عاملاك!»');if(G.vil){V.cur={...o,got:0,t:o.t,b0:V.bites,k0:V.sk,h0:V.kills}}}
+}
+async function punish(msg){
+  const V=G.vil;V.fails++;G.hp-=35;G.red=1;G.shake=1.2;SFX.scream();big('👑');hudSync();
+  if(V.fails>=3||G.hp<=0){return princessKill()}
+  await princessMsg(msg+`\n(عصيتني ${V.fails} من ٣ مرات)`);
+}
+async function princessKill(){
+  G.mode='busy';const V=G.vil;G.vil=null;ui.hideov.className='veins';SFX.scream();G.red=1;
+  await tween(1.5,k=>{G.shake=1.5;G.roll=k*.9;G.pitch=k*.5});
+  sub('<b>👑 أميرة الطاعون:</b> انت ما تستاهلش تبقى من ولادي.');voice('انت ما تستاهلش تبقى من ولادي','princess');await sleep(3000);sub('');await fade(1,800);
+  const c=await panel(`<h2>الأميرة أنهتك</h2><p>عصيت أميرة الطاعون… ومحدش بيعصاها مرتين.</p><div class="stack"><button class="primary" id="a">ارجع للمرحلة كبني آدم</button><button id="b">القائمة الرئيسية</button></div>`,(r,close)=>{r.querySelector('#a').onclick=()=>close(0);r.querySelector('#b').onclick=()=>close(1)});
+  if(c===1)return location.reload();vilRestart();
+}
+function vilRestart(){G.roll=0;G.pitch=0;ui.hideov.className='';$('#bLight').hidden=false;ui.controls.hidden=false;ui.obj.hidden=false;ui.inv.hidden=false;ui.cross.hidden=false;fade(0,500);restartLevel()}
+function vilBite(){
+  if(G.fireCD>0)return;G.fireCD=.6;G.recoil=1;SFX.growl(.35,0);
+  const o=vilTarget();if(!o)return;
+  if(o===G.cObj)return zingerTurn();
+  o.ps='bitten';o.lie=true;o.seated=false;o.yo=0;o.speed=0;o.solid=0;o.anim=null;SFX.hit();SFX.scream();G.vil.bites++;G.hp=Math.min(100,G.hp+10);G.shake=.3;hudSync();
+  setTimeout(()=>{if(G.vil&&o.ps==='bitten'){o.lie=false;setLook(o.vis,'z');o.zarms=true;o.isMon=true;o.rig=true;o.ps='ally';o.biteT=3}},2600);
+}
+function vilAct(){
+  const o=vilTarget();if(!o){if(G.cObj&&Math.hypot(G.cObj.x-G.px,G.cObj.y-G.py)<1.8&&!G.c2.zingerTurned)talk('زنجر','أخويا… لو لسه جواك حتة منك… متعملش كده.',null,'kid');return}
+  if(o===G.cObj)return talk('زنجر','(بيرجع لورا وبيعيط) …انت مش هتأذيني. أنا عارف.',null,'kid');
+  if(G.meleeCD>0)return;G.meleeCD=.5;G.recoil=1;SFX.whoosh();SFX.hit();
+  o.ps='dead';o.lie=true;o.seated=false;o.yo=0;o.anim=null;o.solid=0;G.shake=.3;
+  if(o.sold)G.vil.sk++;else G.vil.kills++;
+  if(G.vil.cur&&G.vil.cur.k==='spare'){G.vil.cur=null;punish('«قلتلك متقتلش! كل روح ليا!»').then(()=>{if(G.vil){const o2=G.vil.list[G.vil.i];G.vil.cur={...o2,got:0,t:o2.t,b0:G.vil.bites,k0:G.vil.sk,h0:G.vil.kills}}})}
+}
+async function zingerTurn(){
+  G.mode='busy';const z=G.cObj;SFX.hit();await talk('زنجر','آه!… …ليه؟ …أنا… أخوك…',null,'kid');
+  setLook(z.vis,'z');z.vis.eyes.forEach(e=>e.visible=true);G.c2.zingerTurned=true;G.comp.stay=false;z.isMon=true;z.zarms=true;SFX.scream();G.shake=.5;G.vil.bites++;
+  if(G.vil.cur&&G.vil.cur.k==='zinger')G.vil.cur.got=1;
+  toast('زنجر اتحوّل… وبقى ماشي وراك',2600);hudSync();G.mode='play';
+}
+function vilTick(dt){
+  const V=G.vil;G.red=Math.max(G.red,.25);if(G.hp<100)G.hp=Math.min(100,G.hp+dt*1.2);
+  const tg=vilTarget();ui.prompt.hidden=!tg;if(tg)ui.prompt.textContent=tg===G.cObj?'زنجر… (عضّ = حوّله)':'عضّ = حوّله · تفاعل = اقتله';
+  for(const o of G.objs){
+    if(!(o.civ||o.sold||o.pax)||o.gone)continue;
+    if(o.ps==='ok'||o.ps==='sick'){
+      if(o.seated)continue;
+      const dx=o.x-G.px,dy=o.y-G.py,d=Math.hypot(dx,dy)||.01;
+      if(o.sold){
+        if(d<13&&los(o.x,o.y,G.px,G.py)){o.face=lerpAng(o.face,Math.atan2(-dx,-dy),.2);o.speed=0;
+          if(d<4){const t=randFloorNear(o.x+dx/d*3,o.y+dy/d*3,1.2);moveMon(o,t[0],t[1],1.6*dt)}
+          o.shootT=(o.shootT??rand(.8,1.6))-dt;if(o.shootT<=0){o.shootT=rand(1.2,2);SFX.bang(false);
+            if(Math.random()<.42){G.hp-=8;G.red=.8;G.shake=.4;SFX.hit();if(G.hp<=0&&!G.lf.vdead){G.lf.vdead=1;villainDie()}}}}
+        else{o.wt=(o.wt||0)-dt;if(o.wt<=0||!o.wp){o.wp=randFloorNear(o.x,o.y,5);o.wt=rand(3,6)}moveMon(o,o.wp[0],o.wp[1],.8*dt)}
+      }else if(!o.pax||true){
+        if(d<6){const t=randFloorNear(o.x+dx/d*4,o.y+dy/d*4,1.5);moveMon(o,t[0],t[1],2.1*dt)}
+        else{o.wt=(o.wt||0)-dt;if(o.wt<=0||!o.wp){o.wp=randFloorNear(o.x,o.y,4);o.wt=rand(3,6)}moveMon(o,o.wp[0],o.wp[1],.5*dt)}
+      }
+    }else if(o.ps==='ally'){
+      let n=null,bd=10;for(const h of vilHumans()){if(h===G.cObj)continue;const d=Math.hypot(h.x-o.x,h.y-o.y);if(d<bd){bd=d;n=h}}
+      if(n){moveMon(o,n.x,n.y,1.25*dt);o.biteT-=dt;if(bd<.8&&o.biteT<=0){o.biteT=4;n.ps='bitten';n.lie=true;n.seated=false;n.yo=0;n.solid=0;n.anim=null;SFX.scream();setTimeout(()=>{if(G.vil&&n.ps==='bitten'){n.lie=false;setLook(n.vis,'z');n.zarms=true;n.isMon=true;n.rig=true;n.ps='ally';n.biteT=3}},2600)}}else o.speed=0;
+    }
+  }
+  V.spT-=dt;if(V.spT<=0){V.spT=22;if(G.objs.filter(o=>o.sold&&o.ps==='ok').length<3){spawnSoldier();toast('جنود جداد جايين!',1400)}}
+  const c=V.cur;
+  if(c&&G.mode==='play'){c.t-=dt;
+    const prog=c.k==='bite'?V.bites-c.b0:c.k==='kill'?V.sk-c.k0:c.k==='spare'?V.bites-c.b0:c.got;
+    ui.timer.hidden=false;ui.timer.textContent=`👑 ${c.txt.split('.')[0]} (${Math.min(prog,c.n)}/${c.n}) · ${Math.max(0,Math.ceil(c.t))} ث`;
+    if(prog>=c.n){V.cur=null;V.done++;V.i++;ui.timer.hidden=true;SFX.win();hudSync();princessMsg(pick(['«أحسنت يا ابني.»','«كده… كده بالظبط.»','«انت أحسن ولادي.»'])).then(()=>nextOrder())}
+    else if(c.t<=0){V.cur=null;ui.timer.hidden=true;punish('«اتأخرت! أنا مبحبش الانتظار.»').then(()=>{if(G.vil){const o2=V.list[V.i];V.cur={...o2,got:0,t:o2.t,b0:V.bites,k0:V.sk,h0:V.kills}}})}
+  }
+  if(Math.floor(G.lt*4)!==Math.floor((G.lt-dt)*4))hudSync();
+}
+async function vilWin(){
+  G.mode='busy';const zt=G.c2.zingerTurned;G.vil=null;setMon(0,0);await fade(1,700);ui.controls.hidden=true;ui.obj.hidden=true;ui.inv.hidden=true;ui.cross.hidden=true;ui.timer.hidden=true;
+  const pr=SPR.princess;
+  await playCut(slides([
+    {d:3,sub:'<b>👑 أميرة الطاعون:</b> انت بقيت فارسي المخلص.',ev:[[.1,()=>voice('انت بقيت فارسي المخلص','princess')]],draw:(g,t)=>{drawLab(g);g.drawImage(pr,150,30,48,96);P(g,80,80,12,32,'#3a3a3a');P(g,81,70,10,10,'#5e665a');P(g,83,73,2,2,'#ff2a1a');P(g,87,73,2,2,'#ff2a1a')}},
+    {d:2.8,sub:zt?'زنجر واقف جنبك… متحول هو كمان.':'زنجر بيبص لك من بعيد… وبيعيط.',draw:(g,t)=>{drawLab(g);g.drawImage(pr,150,30,48,96);P(g,80,80,12,32,'#3a3a3a');P(g,81,70,10,10,'#5e665a');P(g,zt?60:20,82,12,32,'#3a4a3a');P(g,zt?62:22,74,8,8,zt?'#5e665a':'#c48d62')}},
+    {d:2.2,sub:'(طق… طق… طق…)',ev:[[.2,SFX.tap],[.8,SFX.tap],[1.4,SFX.tap]],draw:(g,t)=>{drawLab(g);g.drawImage(pr,150,30,48,96);drawGranny(g,lerp(250,226,seg(t,0,2)),112,{angry:true})}},
+    {d:2.6,sub:'<b>جدتك:</b> إنتي مين يا بت انتي؟! ده حفيدي!',ev:[[.1,()=>voice('إنتي مين يا بت انتي ده حفيدي','granny')]],draw:(g,t)=>{drawLab(g);g.drawImage(pr,150,30,48,96);drawGranny(g,226,112,{cane:'up',angry:true})}},
+    {d:2,ev:[[.3,()=>{big('هبش دربكش!','gold');voice('هبش دربكش','granny');SFX.whoosh()}],[1.6,SFX.bonk]],draw:(g,t)=>{drawLab(g);g.drawImage(pr,150,30,48,96);const e=ease(seg(t,.2,1.6));drawGranny(g,lerp(226,176,e),lerp(112,40,e)-Math.sin(Math.PI*e)*30,{cane:'up',angry:true,rot:e*Math.PI*4})}},
+    {d:2.8,sub:'<b>الأميرة… وحفيدها… وصلوا القمر 🌕</b>',ev:[[1.8,SFX.twinkle]],draw:(g,t)=>{P(g,0,0,W,H,'#060818');for(let i=0;i<40;i++)P(g,(i*53)%W,(i*31)%H,1,1,'#ccd');P(g,170,20,40,40,'#e8e0c0');const k=ease(seg(t,0,1.6));g.save();g.translate(lerp(50,190,k),lerp(150,40,k));g.rotate(t*9);g.drawImage(pr,-8*(1-k*.7),-16*(1-k*.7),16*(1-k*.7),32*(1-k*.7));g.restore();g.save();g.translate(lerp(80,200,k),lerp(150,46,k));g.rotate(-t*11);P(g,-3,-6,6,12,'#5e665a');g.restore()}},
+    {d:2.6,sub:'<b>جدتك:</b> وانت يا زنجر… قوم اغسل إيدك.',draw:(g,t)=>{drawLab(g);drawGranny(g,150,112,{fix:Math.floor(t*2)%2===0});P(g,90,82,12,32,'#3a4a3a');P(g,92,74,8,8,zt?'#5e665a':'#c48d62')}}
+  ]));
+  ui.cut.hidden=true;ui.cutbg.hidden=true;sub('');
+  const pnl=await panel(`<h1>القبو</h1><p class="tag">نهاية الشرير 😈</p><p style="text-align:center">نفّذت كل أوامر أميرة الطاعون${zt?'، وحوّلت أخوك زنجر':''}… لحد ما جدتك وصلت.</p>
+  <div class="stack"><button class="primary" id="a">ارجع للمرحلة كبني آدم</button><button id="b">القائمة الرئيسية</button></div>`,(r,close)=>{r.querySelector('#b').onclick=()=>location.reload();r.querySelector('#a').onclick=()=>close(0)});
+  vilRestart();
 }
 
 /* ===================== menus / flow ===================== */
