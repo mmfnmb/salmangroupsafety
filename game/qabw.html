@@ -482,7 +482,8 @@ function hudSync(){
   const base=G.stage==='base',lv=G.stage==='lvl';
   ui.keys.hidden=!(base||lv);ui.bat.hidden=!(base||lv);ui.chg.hidden=lv;
   $('#bBat').hidden=!(base||(lv&&G.lvl&&G.lvl.combat&&!G.lvl.cane&&!G.lvl.villain&&!G.vil));
-  if(lv&&G.vil){ui.keys.textContent=`❤️ ${Math.round(G.hp)}`;ui.bat.textContent=`👑 ${G.vil.done}/${G.vil.list.length} · 🧟 ${G.vil.bites}`;ui.ammo.hidden=ui.ser.hidden=ui.cash.hidden=true;ui.bat.style.color='#c060ff'}
+  if(lv&&G.vil){ui.keys.textContent=`❤️ ${Math.round(G.hp)}`;ui.bat.textContent=`🧟 ${G.vil.bites}/${G.vil.goal} · 👑 ${G.vil.done}/${G.vil.list.length}`;ui.ammo.hidden=ui.ser.hidden=ui.cash.hidden=true;ui.bat.style.color='#c060ff'}
+  else if(lv&&G.c2&&G.c2.zombie){ui.keys.textContent=`❤️ ${Math.round(G.hp)}`;ui.bat.textContent=`🧟 ${G.c2.zbites||0}`;ui.ammo.hidden=ui.ser.hidden=ui.cash.hidden=true;ui.bat.style.color='#c060ff'}
   else if(lv&&G.lvl&&G.lvl.villain){ui.keys.textContent=`❤️ ${Math.round(G.hp)}`;ui.bat.textContent=`🧟 ${G.lf.inf||0}/${G.lvl.goalN}`;ui.ammo.hidden=ui.ser.hidden=ui.cash.hidden=true;ui.bat.style.color='var(--blood)'}
   else if(lv){ui.keys.textContent=`❤️ ${Math.round(G.hp)}`;ui.bat.textContent=`🦠 ${Math.round(G.inf)}٪`;const cb=G.lvl&&G.lvl.combat&&!G.lvl.cane;ui.ammo.hidden=!cb;ui.ammo.textContent=wpnLabel();ui.ser.hidden=false;ui.ser.textContent=`💉 ${G.serum}`;ui.cash.hidden=false;ui.cash.textContent=`💰 ${G.money}`;$('#bBat').textContent='مصل';ui.bat.style.color=G.inf>70?'var(--blood)':''}
   else{ui.ammo.hidden=ui.ser.hidden=ui.cash.hidden=true;$('#bBat').textContent='بطارية';ui.keys.textContent=`🔑 ${G.keys}/3`;ui.bat.textContent=`🔋 ${G.bats}`;ui.bat.style.color=''}
@@ -1484,17 +1485,18 @@ function levelDone(){
   });
 }
 async function goLevel(id){
-  const def=LV[id];G.mode='busy';const intro=typeof def.intro==='function'?def.intro():def.intro;
-  if(intro){await panel(`<div class="story">${intro}</div><div class="stack"><button class="primary" id="bGo">${def.go||'يلا'}</button></div>`,(r,close)=>{r.querySelector('#bGo').onclick=()=>{SFX.click();close()}})}
+  const def=LV[id];G.mode='busy';const Z=G.c2&&G.c2.zombie;const intro=Z?zIntro(id,def):typeof def.intro==='function'?def.intro():def.intro;
+  if(intro){await panel(`<div class="story">${intro}</div><div class="stack"><button class="primary" id="bGo">${Z?'🧟 يلا':def.go||'يلا'}</button></div>`,(r,close)=>{r.querySelector('#bGo').onclick=()=>{SFX.click();close()}})}
   G.mode='busy';await fade(1,400);
   G.lvlId=id;G.snap=JSON.stringify({hp:G.hp,inf:G.inf,serum:G.serum,money:G.money,c2:G.c2,w:G.w});
   buildLevel(def);
-  if(G.w&&G.w.cargo&&!['street','bus','air','plane'].includes(id)){const c=G.w.cargo;G.w.shotgun=c.shotgun;G.w.sAmmo=c.sAmmo;G.w.rod=c.rod;G.w.cargo=null;if(c.shotgun)G.w.cur='shotgun';setTimeout(()=>toast('استلمت الشوتجن والسيخ من المخزن 🔫🔩',2800),900)}
+  if(!Z&&G.w&&G.w.cargo&&!['street','bus','air','plane'].includes(id)){const c=G.w.cargo;G.w.shotgun=c.shotgun;G.w.sAmmo=c.sAmmo;G.w.rod=c.rod;G.w.cargo=null;if(c.shotgun)G.w.cur='shotgun';setTimeout(()=>toast('استلمت الشوتجن والسيخ من المخزن 🔫🔩',2800),900)}
   await fade(0,600);G.mode='play';
+  if(Z)return vilBegin();
   if(def.start2)def.start2();
   if(def.combat&&!def.cane&&!def.villain&&!def.final&&G.c2&&!G.c2['pm_'+id]&&Math.random()<.6){G.c2['pm_'+id]=1;setTimeout(()=>{if(G.mode==='play'&&G.lvlId===id)princessMsg(pick(TAUNTS))},7000)}
 }
-function restartLevel(){const s=JSON.parse(G.snap);Object.assign(G,{hp:Math.max(60,s.hp),inf:Math.min(40,s.inf),serum:Math.max(1,s.serum),money:s.money,c2:s.c2,w:s.w||G.w});G.w.pAmmo=Math.max(10,G.w.pAmmo);buildLevel(LV[G.lvlId]);G.mode='play';if(LV[G.lvlId].start2)LV[G.lvlId].start2()}
+function restartLevel(){const s=JSON.parse(G.snap);Object.assign(G,{hp:Math.max(60,s.hp),inf:Math.min(40,s.inf),serum:Math.max(1,s.serum),money:s.money,c2:s.c2,w:s.w||G.w});G.w.pAmmo=Math.max(10,G.w.pAmmo);buildLevel(LV[G.lvlId]);G.mode='play';if(G.c2.zombie)return vilBegin();if(LV[G.lvlId].start2)LV[G.lvlId].start2()}
 function save2(){try{localStorage.setItem('qabw2',JSON.stringify({lvl:G.lvlId,snap:G.snap}))}catch(e){}}
 function load2(){try{return JSON.parse(localStorage.getItem('qabw2')||'null')}catch(e){return null}}
 function lvlTick(dt){
@@ -1714,7 +1716,7 @@ const LV={
   final:{name:'المعركة الأخيرة',intro:'<p class="muted">المعمل – ورا الأهرامات</p><p>هنا بتعيش <b>أميرة الطاعون</b>… اللي سرقت جثة وحش القبو وعملت منها الطاعون، وبقت بتأمر كل اللي يتعدي.</p><p>هنا هيخلص كل ده.</p>',go:'ادخل المعمل',final:true,
     wh:3.4,eye:1.6,floor:'lfloor',ceil:'hceil',pal:{L:'lab',l:'lab2'},map:['lllllllllllllllllllllll','l.....................l','l..L....L.....L....L..l','l.....................l','l.....................l','l.....................l','l..L....L.....L....L..l','l.....................l','l.....................l','l.....................l','l..L....L.....L....L..l','l.....................l','lllllllllllllllllllllll'],
     light:{ac:0x608070,ai:.3,hi:.1,fog:.08},combat:true,flash:true,start:[2,6.5,0],obj:'اقتل أميرة الطاعون.',
-    setup(){scatter({ammo:5,serum:2,med:3});const b=spawnBoss('final',19,6.5,70,false);ui.boss.hidden=false;ui.bossN.textContent=b.name;bossBar();setTimeout(()=>{big('أميرة الطاعون');princessMsg('«وصلت لحد عندي يا صياد؟ تعالى… خليني أشوف جدتك هتنقذك إزاي المرة دي.»')},600)},
+    setup(){if(G.c2.zombie)return;scatter({ammo:5,serum:2,med:3});const b=spawnBoss('final',19,6.5,70,false);ui.boss.hidden=false;ui.bossN.textContent=b.name;bossBar();setTimeout(()=>{big('أميرة الطاعون');princessMsg('«وصلت لحد عندي يا صياد؟ تعالى… خليني أشوف جدتك هتنقذك إزاي المرة دي.»')},600)},
     onBossDie:finalFake}
 };
 function placePlayer2(x,y){G.px=x;G.py=y}
@@ -1922,7 +1924,7 @@ async function finalFake(o){
 
 async function continue2(sv){const s=JSON.parse(sv.snap);ui.overlay.hidden=true;Object.assign(G,{hp:s.hp,inf:s.inf,serum:s.serum,money:s.money,c2:s.c2,w:s.w||{pistol:true,shotgun:true,pAmmo:24,sAmmo:12,rod:30,cur:'shotgun'},kills:0,caught:0});
   if(sv.lvl==='base2'||!LV[sv.lvl])return startCh2();
-  ui.controls.hidden=false;ui.obj.hidden=false;ui.inv.hidden=false;ui.cross.hidden=false;G.tStart=performance.now();G.lvlId=sv.lvl;G.snap=sv.snap;await fade(1,10);buildLevel(LV[sv.lvl]);await fade(0,600);G.mode='play';if(LV[sv.lvl].start2)LV[sv.lvl].start2()}
+  ui.controls.hidden=false;ui.obj.hidden=false;ui.inv.hidden=false;ui.cross.hidden=false;G.tStart=performance.now();G.lvlId=sv.lvl;G.snap=sv.snap;await fade(1,10);buildLevel(LV[sv.lvl]);await fade(0,600);G.mode='play';if(G.c2.zombie)return vilBegin();if(LV[sv.lvl].start2)LV[sv.lvl].start2()}
 
 
 /* ===================== VILLAIN PATH ===================== */
@@ -2018,20 +2020,106 @@ async function turnIntoMonster(){
   await tween(4.2,k=>{const a=1-k*.4;G.shake=1.1*a;G.roll=Math.sin(k*42)*.32*a;G.pitch=Math.sin(k*27)*.45*a;G.red=.55+.45*Math.sin(k*31);const i=Math.floor(k*4);if(i!==li&&i<4){li=i;sub(lines[i]);SFX.heart(.4);if(i===2)SFX.growl(.8,0)}});
   G.roll=0;G.pitch=0;sub('');big('اتحوّلت');SFX.growl(1,0);ui.hideov.className='vil';
   G.hp=100;G.inf=0;G.qte=null;
+  G.c2.zombie=true;try{const sn=JSON.parse(G.snap);sn.c2.zombie=true;sn.hp=100;sn.inf=0;G.snap=JSON.stringify(sn);save2()}catch(e){}
   const zAvail=G.comp&&G.comp.id==='zinger2'&&G.cObj&&!G.cObj.gone&&!G.c2.zingerTurned;
   const list=[{k:'bite',n:3,t:60,txt:'عضّ ٣ من البشر. عايزة ولاد جداد.'}];
   if(zAvail)list.push({k:'zinger',n:1,t:45,txt:'عضّ أخوك. هو كمان لازم يبقى من ولادي.'});
-  list.push({k:'kill',n:2,t:60,txt:'الجنود بيقتلوا ولادي. اقتل اتنين منهم.'},{k:'spare',n:4,t:60,txt:'متقتلش حد! حوّل ٤… كل روح ليا أنا.'});
-  G.vil={list,i:0,done:0,fails:0,bites:0,kills:0,sk:0,t:0,cur:null,spT:20};
-  for(let i=0;i<7;i++){const p=farFloor(5);const o=makeNPC(p[0],p[1],{},rand(0,6));o.civ=true;o.ps='ok';o.solid=.25}
-  for(let i=0;i<3;i++)spawnSoldier();
-  for(const e of G.ens)if(e.st!=='dead'){e.st='idle';e.speed=0}
-  if(G.comp&&G.cObj){G.comp.stay=true}
-  $('#bFire').hidden=false;$('#bFire').textContent='عضّ';$('#bWpn').hidden=true;$('#bBat').hidden=true;$('#bLight').hidden=true;
+  list.push({k:'kill',n:2,t:60,txt:'الجنود بيقتلوا ولادي. اقتل اتنين منهم.'});
+  vilSetup(list);
   hudSync();await sleep(1200);G.mode='play';
   if(zAvail)await talk('زنجر','لا… لا يا أخويا! قاوم! بصلي!',null,'kid');
-  await princessMsg('«أهلًا بيك يا ابني… دلوقتي انت بتاعي. اسمع كلامي… وإلا.»');
+  await princessMsg('«أهلًا بيك يا ابني… دلوقتي انت بتاعي. مش هترجع بني آدم تاني. كل بلد هتروحها… هتحوّل كل اللي فيها. اسمع كلامي… وإلا.»');
   nextOrder();
+}
+/* ---- permanent zombie campaign ---- */
+const ZNEXT={base2:'trip:italy',villain:'trip:italy',street:'bus',bus:()=>T().via==='plane'?'air':T().dest,air:'plane',plane:()=>T().dest,italy:'trip:france',france:'trip:ferry',ferry:'metro',metro:'uk',uk:'trip:train',train:'germany',germany:'trip:swiss',bitten:'trip:swiss',swiss:'trip:home',flash:'trip:home',home:'home2',home2:'final',heli:'final'};
+function zIntro(id,def){
+  const t=T();const tx={street:`انت لسه متحول 🧟… ولاد الأميرة شايلينك لحد ${t.via==='plane'?'المطار':t.busTo||t.name}.<br>الشارع مليان ناس.`,bus:'ركبت الأتوبيس وسط الركاب… ومحدش واخد باله إن عينيك حمرا.',air:'المطار زحمة. أمن وجنود… وناس كتير مسافرة.',plane:`الطيارة رايحة ${t.name}. كل الركاب نايمين… لحد دلوقتي.`,
+    home:'رجعت بيت جدتك… بس المرة دي متحول. الحارة كلها نايمة.',home2:'القبو… هنا اتولد الوحش الأول. والأميرة مستنياك قريب.',final:'المعمل ورا الأهرامات… مفيش جنود ولا ناس. بس هي.<br><b>أميرة الطاعون</b> مستنياك… وعايزاك تختار.'}[id]||`وصلت ${def.name}… ولاد الأميرة مستنيينك هنا.`;
+  return `<p class="muted">🧟 ${def.name} — لسه متحول</p><p>${tx}</p>${id==='final'?'':'<p><b>مهمتك:</b> حوّل كل الناس اللي هنا، ونفّذ أوامر أميرة الطاعون.</p>'}`;
+}
+function vilSetup(list){
+  const L=G.lvl,small=!!(L&&L.veh);
+  G.vil={list,i:0,done:0,fails:0,bites:0,kills:0,sk:0,t:0,cur:null,spT:20,goal:0,ensT:3};
+  G.flash=false;ui.hideov.className='vil';ui.timer.hidden=true;ui.prompt.hidden=true;
+  if(G.boss){if(G.boss.mesh)G.boss.mesh.visible=false;G.boss.gone=true;G.boss=null;ui.boss.hidden=true}
+  for(const e of G.ens)if(e.st!=='dead'){e.st='idle';e.speed=0}
+  setMon(0,0);
+  for(const o of G.objs){if(o.gone||o.isMon||o.isBoss||o===G.cObj||o.civ||o.sold||o.lie||!o.vis||!(o.npc||o.pax))continue;if(o.ps==='dead'||o.ps==='ally'||o.ps==='bitten')continue;o.civ=true;if(o.ps!=='sick')o.ps='ok';o.onAct=null}
+  const nc=small?4:7,ns=small?1:3;for(let i=0;i<nc;i++)spawnCiv();for(let i=0;i<ns;i++)spawnSoldier();
+  const n=vilHumCount();G.vil.goal=Math.max(5,Math.min(14,Math.round(n*.8)));
+  if(G.comp&&G.cObj&&!G.cObj.gone){if(G.c2.zingerTurned){const z=G.cObj;setLook(z.vis,'z');z.vis.eyes&&z.vis.eyes.forEach(e=>e.visible=true);z.isMon=true;z.zarms=true;G.comp.stay=false}else G.comp.stay=true}
+  $('#bFire').hidden=false;$('#bFire').textContent='عضّ';$('#bWpn').hidden=true;$('#bBat').hidden=true;$('#bLight').hidden=true;gunVM.visible=false;caneVM.visible=false;
+  ui.controls.hidden=false;ui.obj.hidden=false;ui.inv.hidden=false;ui.cross.hidden=false;
+  setObj(`🧟 حوّل الناس (${G.vil.goal}) · 👑 نفّذ أوامر الأميرة`);hudSync();
+}
+async function vilBegin(){
+  if(G.lvlId==='final')return zombieFinal();
+  const zAvail=G.comp&&G.comp.id==='zinger2'&&G.cObj&&!G.cObj.gone&&!G.c2.zingerTurned;
+  const pool=[{k:'bite',n:3,t:60,txt:'عضّ ٣ من البشر. عايزة ولاد جداد.'},{k:'kill',n:2,t:60,txt:'الجنود بيقتلوا ولادي. اقتل اتنين منهم.'},{k:'spare',n:4,t:70,txt:'متقتلش حد! حوّل ٤… كل روح ليا أنا.'}];
+  const list=[];const a=pool.slice();while(list.length<2){list.push(a.splice(ri(0,a.length-1),1)[0])}
+  if(zAvail&&Math.random()<.5)list.splice(1,0,{k:'zinger',n:1,t:45,txt:'لسه أخوك بني آدم؟! عضّه. هو كمان لازم يبقى من ولادي.'});
+  if(G.lvl&&G.lvl.veh)for(const o of list)if(o.k==='kill')o.n=1,o.txt='فيه جندي هنا بيقتل ولادي. اقتله.';
+  G.mode='busy';vilSetup(list);ui.hideov.className='veins';G.red=.8;SFX.growl(.8,0);await sleep(700);ui.hideov.className='vil';G.mode='play';
+  await princessMsg(pick(['«يلا يا ابني… البلد دي كمان لازم تبقى بتاعتي.»','«شم ريحتهم… كلهم مستنيين عضّتك.»','«ولادي هنا هيساعدوك. متخذلنيش.»']));
+  nextOrder();
+}
+function vilRetry(){G.c2.zombie=true;try{const sn=JSON.parse(G.snap);sn.c2.zombie=true;G.snap=JSON.stringify(sn)}catch(e){}vilRestart()}
+async function vilLevelDone(){
+  const V=G.vil;if(!V||V.fin)return;V.fin=1;G.mode='busy';ui.timer.hidden=true;SFX.win();big('المكان بقى بتاع الأميرة 👑','gold');
+  G.c2.zbites=(G.c2.zbites||0)+V.bites;await sleep(1800);
+  await princessMsg(pick(['«شاطر يا ابني. يلا على اللي بعده.»','«البلد دي بقت بتاعتي. كمّل.»','«ولادي بيزيدوا… بفضلك.»']));
+  let n=ZNEXT[G.lvlId]||'final';if(typeof n==='function')n=n();
+  await fade(1,600);
+  if(n.startsWith('trip:'))startTrip(n.slice(5));else goLevel(n);
+}
+async function zombieFinal(){
+  G.mode='busy';const zt=G.c2.zingerTurned;
+  const v=buildBoss('final');placePlayer(2,4.6,0);addObj({x:7,y:4.6,mesh:v.g,vis:v,isMon:true,face:-Math.PI/2,solid:.6});const pl=new THREE.PointLight(0xb050ff,2.2,9);pl.position.set(5.6,2.2,4.6);world.add(pl);
+  if(G.comp&&G.cObj&&!G.cObj.gone&&zt){const z=G.cObj;setLook(z.vis,'z');z.isMon=true;z.zarms=true}
+  ui.hideov.className='vil';G.flash=false;ui.boss.hidden=true;ui.timer.hidden=true;$('#bFire').hidden=true;$('#bWpn').hidden=true;$('#bBat').hidden=true;gunVM.visible=false;
+  setObj('👑 أميرة الطاعون مستنياك');hudSync();await sleep(1200);G.mode='play';
+  big('أميرة الطاعون');SFX.growl(.6,0);await sleep(900);
+  await princessMsg(`«أهلًا يا ابني… وصلت لحد عندي. حوّلت ${(G.c2.zbites||0)} روح عشاني${zt?'، وجبتلي أخوك كمان':''}.»`);
+  await princessMsg('«جدتك مش جاية المرة دي. محدش جاي. فاضل حاجة واحدة…»');
+  const c=await princessMsg('«اختار: تفضل من ولادي للأبد… ولا تخلّص على نفسك؟»',['😈 أفضل زومبي طاعون… من ولاد الأميرة','💀 أموّت نفسي']);
+  if(c===0)return zombieEndingChild();return zombieEndingDeath();
+}
+function zEndPanel(tag,txt){
+  try{localStorage.removeItem('qabw2')}catch(e){}
+  const sec=Math.round((performance.now()-G.tStart)/1000);
+  panel(`<h1>القبو</h1><p class="tag">${tag}</p><p style="text-align:center">${txt}</p>
+  <div class="stats"><span>الوقت</span><span>${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}</span><span>الناس اللي حوّلتهم</span><span>${G.c2.zbites||0}</span><span>زنجر</span><span>${G.c2.zingerTurned?'اتحوّل 🧟':'فضل بني آدم'}</span></div>
+  <div class="next"><b>انتظر الجزء التاني</b><span class="muted">القبو ٢: لعنة الرمال</span></div>
+  <div class="stack"><button class="primary" id="pA">القائمة الرئيسية</button></div>`,(r,close)=>{r.querySelector('#pA').onclick=()=>{close();location.reload()}});
+  G.mode='end';
+}
+async function zombieEndingChild(){
+  G.mode='busy';const zt=G.c2.zingerTurned;SFX.growl(1,0);G.red=1;G.shake=.6;big('👑');await sleep(1400);
+  await fade(1,800);ui.controls.hidden=true;ui.obj.hidden=true;ui.inv.hidden=true;ui.cross.hidden=true;
+  const pr=SPR.princess;const zb=(g,x)=>{P(g,x,80,12,32,'#3a3a3a');P(g,x+1,70,10,10,'#5e665a');P(g,x+3,73,2,2,'#ff2a1a');P(g,x+7,73,2,2,'#ff2a1a')};
+  await playCut(slides([
+    {d:3,sub:'<b>👑 أميرة الطاعون:</b> اركع يا ابني.',ev:[[.1,()=>voice('اركع يا ابني','princess')]],draw:(g,t)=>{drawLab(g);g.drawImage(pr,150,30,48,96);zb(g,90)}},
+    {d:3,sub:'حطّت على راسك تاج أسود… وعينيك نوّرت بنفسجي.',ev:[[.5,SFX.twinkle]],draw:(g,t)=>{drawLab(g);g.drawImage(pr,150,30,48,96);zb(g,90);P(g,90,64,12,4,'#2a0a3a');P(g,93,60,2,4,'#2a0a3a');P(g,99,60,2,4,'#2a0a3a');if(Math.floor(t*4)%2)P(g,94,73,6,2,'#c060ff')}},
+    {d:2.8,sub:zt?'وزنجر واقف جنبك… أخوك للأبد، وابن الأميرة زيك.':'وزنجر… فضل يجري. لوحده. ومعاه عكاز جدتك.',draw:(g,t)=>{drawLab(g);g.drawImage(pr,150,30,48,96);zb(g,90);if(zt)zb(g,60);else{P(g,lerp(60,-20,t/2.8),82,12,32,'#3a4a3a');P(g,lerp(62,-18,t/2.8),74,8,8,'#c48d62')}}},
+    {d:3.2,sub:'الطاعون الأسود غطّى أوروبا كلها…',draw:(g,t)=>drawEurope(g,t+3,'spread')},
+    {d:3.2,sub:'…ومصر. ومن مصر… لإفريقيا والخليج.',draw:(g,t)=>drawCairo(g,t,'pyramids')},
+    {d:3,sub:'<b>👑 الأميرة:</b> انت دلوقتي ابني… وأمير الطاعون.',ev:[[.1,()=>voice('انت دلوقتي ابني وأمير الطاعون','princess')]],draw:(g,t)=>{P(g,0,0,W,H,'#12001a');g.drawImage(pr,150,30,48,96);zb(g,100);P(g,100,64,12,4,'#2a0a3a')}}
+  ]));
+  ui.cut.hidden=true;ui.cutbg.hidden=true;sub('');big('انتظر الجزء التاني');await sleep(2000);
+  zEndPanel('نهاية: ابن الأميرة 👑🧟',`فضلت زومبي طاعون… وبقيت من ولاد الأميرة${zt?'، انت وأخوك زنجر':''}.`);
+}
+async function zombieEndingDeath(){
+  G.mode='busy';const zt=G.c2.zingerTurned;
+  await princessMsg('«…انت بتعمل إيه؟! لأ! انت بتاعي!»');
+  sub('<b>أنت:</b> …سامحيني يا جدتي. خيّبت أملك.');await sleep(3200);sub('');
+  G.red=1;G.shake=.8;await tween(1.2,k=>{G.roll=k*.6;G.pitch=k*.6});SFX.boom();SFX.scream();await fade(1,400);
+  ui.controls.hidden=true;ui.obj.hidden=true;ui.inv.hidden=true;ui.cross.hidden=true;G.roll=0;G.pitch=0;
+  await sleep(1500);sub('الصياد اختار يموت… بدل ما يفضل عبد للأميرة.');await sleep(3400);
+  sub(zt?'وزنجر… رجع متحول تايه في الصحرا.':'زنجر لقى جثتك… وشال عكاز جدتك. وكمّل لوحده.');await sleep(3400);
+  sub('<b>👑 الأميرة (من بعيد):</b> مش مهم… عندي ولاد كتير.');voice('مش مهم عندي ولاد كتير','princess');await sleep(3400);sub('');
+  big('انتظر الجزء التاني');await sleep(2000);
+  zEndPanel('نهاية: الصياد الأخير 🕯️','اخترت تموت نفسك… عشان الطاعون ما ياخدكش للأبد.');
 }
 function spawnCiv(){const p=farFloor(6);const o=makeNPC(p[0],p[1],{},rand(0,6));o.civ=true;o.ps='ok';o.solid=.25;return o}
 function vilHumCount(){return vilHumans().filter(h=>h!==G.cObj).length}
@@ -2039,7 +2127,7 @@ function vilSolCount(){return G.objs.filter(o=>o.sold&&o.ps==='ok').length}
 function vilEnsure(o,left){if((o.k==='bite'||o.k==='spare')&&vilHumCount()<left+1){const n=left+2-vilHumCount();for(let i=0;i<n;i++)spawnCiv();toast('ناس جديدة جاية…',1500)}if(o.k==='kill'&&vilSolCount()<left){const n=left-vilSolCount();for(let i=0;i<n;i++)spawnSoldier();toast('جنود جايين…',1500)}}
 function spawnSoldier(){const p=farFloor(8);const v=buildSoldier();return addObj({x:p[0],y:p[1],mesh:v.g,vis:v,rig:true,face:0,sold:true,ps:'ok',solid:.25})}
 async function nextOrder(){
-  const V=G.vil;if(!V)return;if(V.i>=V.list.length)return vilWin();
+  const V=G.vil;if(!V)return;if(V.i>=V.list.length){if(V.bites<V.goal)toast(`👑 كمّل… حوّل الباقيين (${V.bites}/${V.goal})`,2600);return}
   const o=V.list[V.i];V.cur={...o,got:0,t:o.t,b0:V.bites,k0:V.sk,h0:V.kills};
   if(o.k==='zinger'&&(G.c2.zingerTurned||!G.cObj||G.cObj.gone)){V.i++;return nextOrder()}
   vilEnsure(o,o.n);
@@ -2056,10 +2144,10 @@ async function princessKill(){
   G.mode='busy';const V=G.vil;G.vil=null;ui.hideov.className='veins';SFX.scream();G.red=1;
   await tween(1.5,k=>{G.shake=1.5;G.roll=k*.9;G.pitch=k*.5});
   sub('<b>👑 أميرة الطاعون:</b> انت ما تستاهلش تبقى من ولادي.');voice('انت ما تستاهلش تبقى من ولادي','princess');await sleep(3000);sub('');await fade(1,800);
-  const c=await panel(`<h2>الأميرة أنهتك</h2><p>عصيت أميرة الطاعون… ومحدش بيعصاها مرتين.</p><div class="stack"><button class="primary" id="a">ارجع للمرحلة كبني آدم</button><button id="b">القائمة الرئيسية</button></div>`,(r,close)=>{r.querySelector('#a').onclick=()=>close(0);r.querySelector('#b').onclick=()=>close(1)});
+  const c=await panel(`<h2>الأميرة أنهتك</h2><p>عصيت أميرة الطاعون… ومحدش بيعصاها مرتين.</p><div class="stack"><button class="primary" id="a">ارجع للمرحلة 🧟</button><button id="b">القائمة الرئيسية</button></div>`,(r,close)=>{r.querySelector('#a').onclick=()=>close(0);r.querySelector('#b').onclick=()=>close(1)});
   if(c===1)return location.reload();vilRestart();
 }
-function vilRestart(){G.roll=0;G.pitch=0;ui.hideov.className='';$('#bLight').hidden=false;ui.controls.hidden=false;ui.obj.hidden=false;ui.inv.hidden=false;ui.cross.hidden=false;fade(0,500);restartLevel()}
+function vilRestart(){G.roll=0;G.pitch=0;ui.hideov.className='';ui.timer.hidden=true;$('#bLight').hidden=false;ui.controls.hidden=false;ui.obj.hidden=false;ui.inv.hidden=false;ui.cross.hidden=false;fade(0,500);restartLevel()}
 function vilBite(){
   if(G.fireCD>0)return;G.fireCD=.6;G.recoil=1;SFX.growl(.35,0);
   const o=vilTarget();if(!o)return;
@@ -2112,6 +2200,8 @@ function vilTick(dt){
     if(prog>=c.n){V.cur=null;V.done++;V.i++;ui.timer.hidden=true;SFX.win();hudSync();princessMsg(pick(['«أحسنت يا ابني.»','«كده… كده بالظبط.»','«انت أحسن ولادي.»'])).then(()=>nextOrder())}
     else if(c.t<=0){V.cur=null;ui.timer.hidden=true;punish('«اتأخرت! أنا مبحبش الانتظار.»').then(()=>{if(G.vil){const o2=V.list[V.i];V.cur={...o2,got:0,t:o2.t,b0:V.bites,k0:V.sk,h0:V.kills}}})}
   }
+  if(!c&&G.mode==='play'){V.ensT=(V.ensT||0)-dt;if(V.ensT<=0){V.ensT=3;const need=V.goal-V.bites;if(need>0&&vilHumCount()<Math.min(need,3)){for(let i=0;i<Math.min(need,3);i++)spawnCiv();toast('ناس جديدة جاية…',1400)}}}
+  if(!V.fin&&!c&&V.i>=V.list.length&&V.bites>=V.goal&&G.mode==='play')vilLevelDone();
   if(Math.floor(G.lt*4)!==Math.floor((G.lt-dt)*4))hudSync();
 }
 async function vilWin(){
@@ -2147,7 +2237,7 @@ function title(){
   const portrait=innerHeight>innerWidth;
   ui.card.innerHTML=`<h1>القبو</h1><p class="tag">الفصل الأول: ليلة القبو</p>
   <div class="stack"><button class="primary" id="pNew">الفصل الأول: ليلة القبو</button>${sv?`<button id="pCont">كمّل الفصل الأول من ${sv.stage==='base'?'القبو':'البيت'}</button>`:''}
-  <button class="primary" id="pC2">الفصل التاني: الطاعون الأسود</button>${sv2&&LV[sv2.lvl]?`<button id="pC2c">كمّل الفصل التاني من: ${LV[sv2.lvl].name}</button>`:''}</div>
+  <button class="primary" id="pC2">الفصل التاني: الطاعون الأسود</button>${sv2&&LV[sv2.lvl]?`<button id="pC2c">كمّل الفصل التاني من: ${LV[sv2.lvl].name}${(()=>{try{return JSON.parse(sv2.snap).c2.zombie?' 🧟':''}catch(e){return ''}})()}</button>`:''}</div>
   ${portrait?'<div class="tip">📱 لف الموبايل بالعرض، اللعب بيبقى أحسن بكتير.</div>':''}
   <p class="muted" style="margin-top:12px">🎧 السماعات بتفرق جدًا.<br>العصا اللي على الشمال: امشي لقدام وورا ويمين وشمال.<br>اسحب بصباعك في أي حتة تانية في الشاشة: تبص حواليك.<br>كمبيوتر: WASD للمشي، اسحب بالماوس للبص، E للتفاعل، Shift للجري، F للكشاف.</p>`;
   $('#pNew').onclick=()=>{aInit();SFX.click();clearSave();intro()};
@@ -2171,6 +2261,6 @@ function frame(now){
   requestAnimationFrame(frame);
 }
 buildArt();buildArt2();resize();loadHouse('house1');placePlayer(3.3,2.4,Math.PI/2);title();requestAnimationFrame(frame);
-window.__qabw={makeSick,startTurn,vehicleArrive,startVillain,LV,goLevel,startCh2,buildLevel,spawnEnemy,fire,glassMoment,finalFake,levelDone,G,act,loadBase,loadHouse,startHouse2,startBasement,grannyTime,killMonster,setupComp,placePlayer,makeComp,spawnMon,caught,inp};
+window.__qabw={vilBegin,vilLevelDone,zombieFinal,turnIntoMonster,makeSick,startTurn,vehicleArrive,startVillain,LV,goLevel,startCh2,buildLevel,spawnEnemy,fire,glassMoment,finalFake,levelDone,G,act,loadBase,loadHouse,startHouse2,startBasement,grannyTime,killMonster,setupComp,placePlayer,makeComp,spawnMon,caught,inp};
 })();
 </script>
