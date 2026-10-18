@@ -1436,7 +1436,7 @@ function buildLevel(def){
   clearWorld();G.lvl=def;G.stage='lvl';G.lt=0;G.lf={};G.ens=[];G.boss=null;G.lvlKills=0;G.protect=null;ui.boss.hidden=true;ui.timer.hidden=true;
   setScale(def.wh||2.6,def.eye||1.6);
   const map=typeof def.map==='function'?def.map():def.map;
-  G.water=null;buildMap(map,C[def.floor],def.ceil?C[def.ceil]:null,def.pal,def.wallAct?Object.keys(def.wallAct):[]);
+  G.water=null;buildMap(map,C[def.floor],def.ceil?C[def.ceil]:null,typeof def.pal==='function'?def.pal():def.pal,def.wallAct?Object.keys(def.wallAct):[]);
   scene.background.setHex(def.sky||0);scene.fog.color.setHex(def.fogc??def.sky??0);lights(def.light);
   if(def.sky&&!def.ceil){if(!starMesh)starMesh=buildStars();world.add(starMesh)}
   G.floors=floorTiles();
@@ -1448,7 +1448,7 @@ function buildLevel(def){
   G.comp=null;G.cObj=null;
   if(def.zinger!==false&&!G.c2.zingerGone){G.comp={id:'zinger2',name:'زنجر',voice:'kid',bad:false,stay:def.zinger==='stay',redT:0};makeComp(G.px-G.dirX*.9,G.py-G.dirY*.9);if(def.zingerAt){G.cObj.x=def.zingerAt[0];G.cObj.y=def.zingerAt[1];G.comp.stay=true}}
   def.setup&&def.setup();
-  setObj(def.obj||'');hudSync();
+  setObj((typeof def.obj==='function'?def.obj():def.obj)||'');hudSync();
   save2();
 }
 function levelDone(){
@@ -1462,15 +1462,17 @@ function levelDone(){
     <div class="stack"><button class="primary" id="bN">كمّل</button></div>`,(r,close)=>{
     const buy=(c,f)=>{if(G.money<c){toast('الفلوس مش كفاية');return}G.money-=c;f();SFX.pick();r.querySelector('.stats span:nth-child(4)').textContent=G.money+' €';r.querySelector('.stats span:nth-child(6)').textContent=Math.round(G.hp)};
     r.querySelector('#bS').onclick=()=>buy(40,()=>G.serum++);r.querySelector('#bA').onclick=()=>buy(30,()=>{G.w.pAmmo+=8;if(G.w.shotgun)G.w.sAmmo+=3});r.querySelector('#bH').onclick=()=>buy(50,()=>G.hp=Math.min(100,G.hp+50));
-    r.querySelector('#bN').onclick=()=>{close();goLevel(next)};
+    r.querySelector('#bN').onclick=()=>{close();if(next&&next.startsWith('trip:'))startTrip(next.slice(5));else goLevel(next)};
   });
 }
 async function goLevel(id){
-  const def=LV[id];G.mode='busy';
-  if(def.intro){await panel(`<div class="story">${def.intro}</div><div class="stack"><button class="primary" id="bGo">${def.go||'يلا'}</button></div>`,(r,close)=>{r.querySelector('#bGo').onclick=()=>{SFX.click();close()}})}
+  const def=LV[id];G.mode='busy';const intro=typeof def.intro==='function'?def.intro():def.intro;
+  if(intro){await panel(`<div class="story">${intro}</div><div class="stack"><button class="primary" id="bGo">${def.go||'يلا'}</button></div>`,(r,close)=>{r.querySelector('#bGo').onclick=()=>{SFX.click();close()}})}
   G.mode='busy';await fade(1,400);
   G.lvlId=id;G.snap=JSON.stringify({hp:G.hp,inf:G.inf,serum:G.serum,money:G.money,c2:G.c2,w:G.w});
-  buildLevel(def);await fade(0,600);G.mode='play';
+  buildLevel(def);
+  if(G.w&&G.w.cargo&&!['street','bus','air','plane'].includes(id)){const c=G.w.cargo;G.w.shotgun=c.shotgun;G.w.sAmmo=c.sAmmo;G.w.rod=c.rod;G.w.cargo=null;if(c.shotgun)G.w.cur='shotgun';setTimeout(()=>toast('استلمت الشوتجن والسيخ من المخزن 🔫🔩',2800),900)}
+  await fade(0,600);G.mode='play';
   if(def.start2)def.start2();
 }
 function restartLevel(){const s=JSON.parse(G.snap);Object.assign(G,{hp:Math.max(60,s.hp),inf:Math.min(40,s.inf),serum:Math.max(1,s.serum),money:s.money,c2:s.c2,w:s.w||G.w});G.w.pAmmo=Math.max(10,G.w.pAmmo);buildLevel(LV[G.lvlId]);G.mode='play';if(LV[G.lvlId].start2)LV[G.lvlId].start2()}
@@ -1568,6 +1570,16 @@ const AIR=["AAAAAAAAANNNNNNNNNAA","A..................A","A..................A",
 const PLANE=["QQQQQQQQQQQQQQQQQQQQ","Q..................Q","Y..................T","Q..................Q","QQQQQQQQQQQQQQQQQQQQ"];
 const HELI=['K'.repeat(62),'k'+'.'.repeat(60)+'k','.'.repeat(62),'.'.repeat(62),'.'.repeat(62),'.'.repeat(62),'k'+'.'.repeat(60)+'k','K'.repeat(62)];
 const TRAIN=["RRRRRRRRRRRRRRRRRRRRRRRR","R......................R","Z......................Z","R......................R","RRRRRRRRRRRRRRRRRRRRRRRR"];
+const TRIPS={
+  italy:{dest:'italy',name:'إيطاليا',city:'روما',from:'القاهرة – مصر',via:'plane',pal:{K:'city2',k:'city1',q:'city3'}},
+  france:{dest:'france',name:'فرنسا',city:'باريس',from:'فينيسيا – إيطاليا',via:'plane',pal:{K:'ven1',k:'ven2',q:'ven3'}},
+  ferry:{dest:'ferry',name:'ميناء كاليه',from:'باريس – فرنسا',via:'bus',busTo:'ميناء كاليه',pal:{K:'city1',k:'city3',q:'city2'}},
+  train:{dest:'train',name:'محطة القطر',from:'لندن – بريطانيا',via:'bus',busTo:'محطة القطر',pal:{K:'city1',k:'city2',q:'city3'}},
+  swiss:{dest:'swiss',name:'سويسرا',city:'زيورخ',from:'برلين – ألمانيا',via:'plane',pal:{K:'city1',k:'city2',q:'city3'}},
+  home:{dest:'home',name:'مصر',city:'القاهرة',from:'سويسرا',via:'plane',pal:{K:'city2',k:'mud',q:'city3'}}
+};
+const T=()=>TRIPS[G.c2&&G.c2.trip]||TRIPS.italy;
+function startTrip(id){G.c2.trip=id;goLevel('street')}
 const LV={
   base2:{name:'القاعدة',wh:2.6,eye:1.6,floor:'concrete',ceil:'hceil',pal:{H:'hwall',J:'hposter',D:'hdoor'},map:BASE2,light:{ac:0x8a90a0,ai:.45,hi:.2,fog:.05},start:[7.5,3.5,Math.PI],zinger:false,
     wallAct:{D:()=>leaveBase()},wallLbl:{D:'اطلع للشارع'},obj:'شوف الخريطة على الترابيزة وجهّز سلاحك.',
@@ -1578,9 +1590,9 @@ const LV={
       const z=makeNPC(8.8,2.3,{shirt:0x3a4a3a,coat:0x2a2a22,skin:0xc48d62,hair:0x1a1410},-Math.PI/2);z.label='كلّم زنجر';z.onAct=()=>talk('زنجر',G.lf.dest?'يلا بينا على المطار. الباب اللي على اليمين.':'شفت الخريطة؟ إيطاليا الأسوأ… لازم نبدأ بيها.',null,'kid');
     }},
   air:{name:'المطار',wh:3,eye:1.6,floor:'afloor',ceil:'aceil',pal:{A:'awall',N:'awin',E:'agate'},map:AIR,light:{ac:0xe8ecf4,ai:.85,hi:.5,fog:.02},start:[1.6,4.5,0],
-    wallAct:{E:()=>gate()},wallLbl:{E:'بوابة ١٢ – روما'},obj:'الكاونتر ← الجوازات ← التفتيش ← البوابة ١٢',
+    wallAct:{E:()=>gate()},wallLbl:{E:'بوابة ١٢'},obj:'الكاونتر ← الجوازات ← التفتيش ← البوابة ١٢',
     setup(){
-      addObj({x:4.5,y:1.9,mesh:buildDesk(),solid:.7,label:'كاونتر السفر',onAct:checkin});makeNPC(4.5,1.2,{shirt:0x2a4a8a,long:true,hair:0x3a2818},0);
+      G.wallLbl={E:'بوابة ١٢ – '+T().city};addObj({x:4.5,y:1.9,mesh:buildDesk(),solid:.7,label:'كاونتر السفر',onAct:checkin});makeNPC(4.5,1.2,{shirt:0x2a4a8a,long:true,hair:0x3a2818},0);
       addObj({x:9.5,y:7.3,mesh:buildDesk(1.2),rot:Math.PI,solid:.6,label:'الجوازات',onAct:passport});makeNPC(9.5,8.1,{shirt:0x2a3a5a,coat:0x1a2a3a},Math.PI);
       addObj({x:14.5,y:2.2,mesh:buildXray(),solid:.9,label:'تفتيش الشنط',onAct:security});makeNPC(13,1.3,{shirt:0x4a4a52},0);
       for(let i=0;i<4;i++)addObj({x:6+i*3,y:5.8,mesh:buildBench(),solid:.5});
@@ -1590,17 +1602,17 @@ const LV={
     wallAct:{Y:()=>toast('كابينة الطيار مقفولة.'),T:()=>toast('الحمام مشغول… 😶')},noInf:true,combat:true,aggro:true,bites:true,veh:{kind:'plane',dur:150,inf:[12,70],turb:[55,100],label:'الوصول بعد'},next:'italy',
     obj:'اكشف على الركاب. لو حد عيان: حاول تعالجه أو اقتله قبل ما يتحوّل. ولو اتحوّل… اضرب.',
     setup(){vehicleSetup()}},
-  street:{name:'الشارع',intro:'<p class="muted">برا القاعدة</p><p>زنجر حدد موقف الأتوبيس اللي بيودّي <b>المطار</b>. لازم نوصله قبل ما يمشي.</p>',go:'يلا',
-    wh:4,eye:1.6,floor:'asphalt',ceil:null,sky:0x1c1428,fogc:0x1c1428,pal:{K:'city2',k:'city1',q:'city3'},map:()=>genCity(26,22,['K','k','q'],{open:.25}),light:{ac:0xb8a088,ai:.55,hi:.45,fog:.05},flash:false,start:[1.5,1.5,.7],
+  street:{name:'الشارع',intro:()=>{const t=T();return `<p class="muted">${t.from}</p><p>زنجر حدد موقف الأتوبيس اللي بيودّي <b>${t.via==='plane'?'المطار':t.busTo}</b>. لازم نوصله قبل ما يمشي.</p>${t.via==='plane'?`<p>الوجهة الجاية: <b>${t.name}</b> ✈️</p>`:''}`},go:'يلا',
+    wh:4,eye:1.6,floor:'asphalt',ceil:null,sky:0x1c1428,fogc:0x1c1428,pal:()=>T().pal,map:()=>genCity(26,22,['K','k','q'],{open:.25}),light:{ac:0xb8a088,ai:.55,hi:.45,fog:.05},flash:false,start:[1.5,1.5,.7],
     obj:'روح موقف الأتوبيس (العمود الأصفر).',
     setup(){const f=bfsFar(1,1);reachGoal(f.far[0],f.far[1],0xffd040,'اركب الأتوبيس',()=>goLevel('bus'));for(let i=0;i<6;i++){const p=farFloor(2);addObj({x:p[0],y:p[1],mesh:buildPalm(),solid:.2})}for(let i=0;i<6;i++){const p=farFloor(3);makeNPC(p[0],p[1],{},rand(0,6))}},
-    start2(){talk('زنجر','الموقف في آخر الشارع. الأتوبيس ده رايح المطار على طول.',null,'kid')}},
+    start2(){const t=T();talk('زنجر',`الموقف في آخر الشارع. الأتوبيس ده رايح ${t.via==='plane'?'المطار':t.busTo} على طول.`,null,'kid')}},
   bus:{name:'الأتوبيس',wh:2.3,eye:1.2,floor:'carpet',ceil:'mceil',pal:{Y:'busW'},map:["YYYYYYYYYYYYYY","Y............Y","Y............Y","YYYYYYYYYYYYYY"],light:{ac:0xd0c0a0,ai:.6,hi:.3,fog:.04},lock:true,zinger:'stay',zingerAt:[6.5,1.5],start:[5.6,1.5,Math.PI],
-    obj:'الأتوبيس رايح المطار…',
+    obj:()=>`الأتوبيس رايح ${T().via==='plane'?'المطار':T().busTo}…`,
     setup(){for(let x=2;x<=11;x++){if(x===5||x===6)continue;addObj({x:x+.5,y:1.5,mesh:buildSeat(),solid:.3});if(Math.random()<.6){const v=buildPerson({});addObj({x:x+.5,y:1.5,mesh:v.g,vis:v,rig:true,seated:true,yo:-.42,face:-Math.PI/2})}}
       genLight.color.setHex(0xffc070);genLight.distance=5;G.lf.ride=0},
     tick(dt){G.lf.ride+=dt;genLight.position.set(14-((G.lf.ride*5)%16),1.6,3.3);genLight.intensity=1.2;if(Math.random()<dt*2)G.shake=Math.max(G.shake,.1);rotorT-=dt;if(rotorT<=0){rotorT=.25;noise(.25,{v:.05,f:160,wet:0})}},
-    async start2(){await sleep(1500);await talk('زنجر','إيطاليا… الطاعون الأسود بقى في كل حتة هناك. خليك جاهز.',null,'kid');await sleep(2500);await talk('زنجر','وصلنا المطار. يلا.',null,'kid');await fade(1,800);goLevel('air')}},
+    async start2(){const t=T();await sleep(1500);await talk('زنجر',t.via==='plane'?`${t.name}… الطاعون الأسود بقى في كل حتة هناك. خليك جاهز.`:`رايحين ${t.busTo}. من هناك نكمّل.`,null,'kid');await sleep(2500);await talk('زنجر',t.via==='plane'?'وصلنا المطار. يلا.':'وصلنا. يلا.',null,'kid');await fade(1,800);goLevel(t.via==='plane'?'air':t.dest)}},
   metro:{name:'مترو لندن',intro:'<p class="muted">بريطانيا – مترو لندن</p><p>المترو زحمة… وفيه ناس شكلهم تعبانين. زنجر: «ركز في أي حد بيكح.»</p>',go:'اركب المترو',
     wh:2.3,eye:1.55,floor:'mfloor',ceil:'pceil',pal:{M:'metroW'},map:["MMMMMMMMMMMMMMMMMMMMMMMMMMMM","M..........................M","M..........................M","M..........................M","MMMMMMMMMMMMMMMMMMMMMMMMMMMM"],light:{ac:0xc8d0d8,ai:.55,hi:.3,fog:.05},start:[1.6,2.5,0],zinger:'stay',zingerAt:[1.4,1.5],
     combat:true,aggro:true,bites:true,noInf:true,veh:{kind:'metro',dur:100,inf:[8,45],turb:[60],label:'المحطة الجاية بعد'},next:'uk',
@@ -1608,11 +1620,11 @@ const LV={
     setup(){vehicleSetup()}},
   italy:{name:'إيطاليا',intro:'<p class="muted">إيطاليا – فينيسيا</p><p>المدينة اللي كانت بتغني… بقت ساكتة. القنوات مليانة جثث، والناس بيقولوا إن فيه «طبيب» لابس قناع بيلف بالليل.</p>',go:'انزل فينيسيا',
     wh:4,eye:1.6,floor:'pav',ceil:null,sky:0x0a1028,fogc:0x0a1028,pal:{V:'ven1',v:'ven2',u:'ven3'},map:()=>genCity(30,26,['V','v','u'],{canal:14,open:.2}),light:{ac:0x6a78b0,ai:.4,hi:.35,fog:.07},combat:true,flash:true,killReq:8,
-    obj:'نضّف الشوارع (اقتل ٨ متحولين) وبعدين لاقي الطبيب الأسود.',next:'france',doneText:'فينيسيا اتنضفت. لقيتوا في شنطة الطبيب ورقة: «العينة الأصلية جت من مصر».',
+    obj:'نضّف الشوارع (اقتل ٨ متحولين) وبعدين لاقي الطبيب الأسود.',next:'trip:france',doneText:'فينيسيا اتنضفت. لقيتوا في شنطة الطبيب ورقة: «العينة الأصلية جت من مصر».',
     bites:true,setup(){if(G.w.cargo){const c=G.w.cargo;G.w.shotgun=c.shotgun;G.w.sAmmo=c.sAmmo;G.w.rod=c.rod;G.w.cargo=null;if(c.shotgun)G.w.cur='shotgun';setTimeout(()=>toast('استلمت الشوتجن والسيخ من المخزن 🔫🔩',2800),800)}spawnCivs(3,2);G.water=(x,y)=>G.map.g[y]&&G.map.g[y][x]==='w';const f=bfsFar(Math.floor(G.px),Math.floor(G.py));placePlayer(1.5,1.5,.6);spawnWave(['walker','walker','crawler'],12);scatter({ammo:4,serum:2,cash:4,med:2,letter:1});spawnBoss('doctor',f.far[0],f.far[1],32)}},
   france:{name:'فرنسا',intro:'<p class="muted">فرنسا – سراديب باريس</p><p>تحت باريس فيه ملايين الهياكل العظمية… وفيه حاجة بتجمّعهم مع بعض.</p>',go:'انزل السراديب',
     wh:2.4,eye:1.5,floor:'dirt',ceil:'dirt',pal:{O:'bone'},map:()=>genMaze(27,21,'O'),light:{ac:0x403830,ai:.12,hi:0,fog:.2},combat:true,flash:true,killReq:7,start:[1.5,1.5,0],
-    obj:'اقتل ٧ متحولين وواجه ملك العظام. خلي بالك من المنتفخين.',next:'ferry',doneText:'ملك العظام وقع. السراديب ساكتة أخيرًا.',
+    obj:'اقتل ٧ متحولين وواجه ملك العظام. خلي بالك من المنتفخين.',next:'trip:ferry',doneText:'ملك العظام وقع. السراديب ساكتة أخيرًا.',
     setup(){const f=bfsFar(1,1);scatter({rod:1});spawnWave(['crawler','crawler','bloater','walker'],12);scatter({ammo:4,serum:2,cash:3,med:2,letter:1});spawnBoss('bones',f.far[0],f.far[1],38)}},
   ferry:{name:'العبّارة',intro:'<p class="muted">العبّارة – من فرنسا لبريطانيا</p><p>عاصفة بالليل… والعبّارة بتتمايل. فيه حاجة منتفخة متخبية في الجراج تحت.</p>',go:'اركب العبّارة',
     wh:2.5,eye:1.6,floor:'deck',ceil:'mceil',pal:{M:'metal',b:'boat'},map:()=>genRooms(25,19,'M'),light:{ac:0x8090a0,ai:.35,hi:.25,fog:.08},combat:true,flash:true,roll:.07,start:[1.5,1.5,0],
@@ -1622,7 +1634,7 @@ const LV={
     tick(dt){if(Math.random()<dt*.08){G.shake=.6;toast('موجة!',900)}}},
   uk:{name:'أنفاق لندن',intro:'<p class="muted">بريطانيا – أنفاق المترو</p><p>نزلتوا من المترو للأنفاق. الضباب نازل. الناجيين بيقولوا إن فيه حاجة بتهمس… ومحدش بيشوفها وهو منوّر.</p>',go:'انزل المترو',
     wh:2.8,eye:1.6,floor:'platform',ceil:'hceil',pal:{U:'utile'},map:()=>genMaze(29,19,'U'),light:{ac:0x8a8a9a,ai:.18,hi:.05,fog:.16},fogc:0x1a1a20,combat:true,flash:true,killReq:6,start:[1.5,1.5,0],
-    obj:'اقتل ٦ متحولين. الهامس مبيظهرش غير في الضلمة: طفّي الكشاف عشان تشوفه وتضربه.',next:'train',doneText:'الهامس سكت للأبد.',
+    obj:'اقتل ٦ متحولين. الهامس مبيظهرش غير في الضلمة: طفّي الكشاف عشان تشوفه وتضربه.',next:'trip:train',doneText:'الهامس سكت للأبد.',
     bites:true,setup(){const f=bfsFar(1,1);spawnCivs(2,2);scatter({rod:1});spawnWave(['walker','screamer','crawler'],11);scatter({ammo:4,serum:2,cash:3,med:2,letter:1});spawnBoss('whisper',f.far[0],f.far[1],30)}},
   train:{name:'القطر',intro:'<p class="muted">القطر – نفق تحت البحر</p><p>القطر وقف فجأة في نص النفق والنور قطع. زنجر لازم يصلّح الكهربا… وانت تحميه.</p>',go:'احمي زنجر',
     wh:2.4,eye:1.55,floor:'carpet',ceil:'mceil',pal:{R:'train',Z:'tdoor2'},map:TRAIN,light:{ac:0x506070,ai:.15,hi:0,fog:.12},combat:true,flash:true,zinger:false,start:[8.5,2.5,0],
@@ -1642,7 +1654,7 @@ const LV={
       if(G.lf.t<=0){G.lf.boss=1;ui.timer.hidden=true;if(!G.c2.hildaDead)toast('العلاج خلص! هيلدا: «العينة في أمان!»',3000);const f=farFloor(8);spawnBoss('zero',f[0],f[1],40,false);ui.boss.hidden=false;ui.bossN.textContent='المريض صفر';big('المريض صفر');bossBar()}}},
   bitten:{name:'زنجر اتعضّ',intro:'<p class="muted">برلين – بالليل</p><p>في الطريق… متحول نط على زنجر من الضلمة. <b>زنجر اتعضّ.</b></p><p>عندك دقيقة ونص تلاقي مصل في الصيدلية اللي في آخر المدينة.</p>',go:'اجري!',
     wh:4,eye:1.6,floor:'asphalt',ceil:null,sky:0x0a0c14,fogc:0x0a0c14,pal:{K:'city1',k:'city2',q:'city3'},map:()=>genCity(30,30,['K','k','q'],{open:.1}),light:{ac:0x6a7088,ai:.35,hi:.3,fog:.08},combat:true,flash:true,zinger:false,start:[1.5,1.5,.7],
-    obj:'لاقي الصيدلية (العمود الأخضر) قبل ما الوقت يخلص!',next:'swiss',
+    obj:'لاقي الصيدلية (العمود الأخضر) قبل ما الوقت يخلص!',next:'trip:swiss',
     bites:true,setup(){const f=bfsFar(1,1);spawnCivs(2,2);reachGoal(f.far[0],f.far[1],0x40ff80,'ادخل الصيدلية',pharmacy);spawnWave(['walker','walker','crawler','screamer'],12,5);scatter({ammo:3,med:2,cash:3,letter:1});G.lf.t=95;ui.timer.hidden=false},
     tick(dt){if(G.lf.found)return;G.lf.t-=dt;ui.timer.textContent=`زنجر: ${Math.max(0,Math.ceil(G.lf.t))} ث`;if(G.lf.t<=0){G.lf.found=1;G.mon=G.ens.find(e=>e.st!=='dead');G.deathWhy='time';if(G.mon)caught()}}},
   swiss:{name:'سويسرا',intro:'<p class="muted">سويسرا – دير في الجبال</p><p>الرهبان كانوا بيدرسوا الطاعون الأسود من ٧٠٠ سنة. المتحولين هنا <b>عُمي</b>… بس بيسمعوا كويس جدًا.</p><p>متجريش. متضربش نار إلا لو مضطر.</p>',go:'ادخل بهدوء',
@@ -1651,10 +1663,10 @@ const LV={
     setup(){const f=bfsFar(1,1);reachGoal(f.far[0],f.far[1],0xffd060,'اقرا الكتاب القديم',async()=>{G.mode='busy';await talk('كتاب قديم','«سنة ١٣٤٧ ظهر وحش في قبو بيت في مصر… كل اللي لمسه اتحوّل.\nالوحش اتقتل بالكهربا بعد ٦٠٠ سنة على إيد طفل…\nواللي سرق جثته عمل منها الطاعون الجديد.»',null);await talk('زنجر','ده… ده وحش القبو بتاعنا! حد سرق جثته من بيت ستّي!',null,'kid');G.c2.book=1;levelDone()});spawnWave(['blind'],12,5);scatter({ammo:2,serum:1,med:2,letter:1})}},
   flash:{name:'فلاش باك',intro:'<p class="muted">جواب قديم من جدتك…</p><p>«سنة ١٩٥٦، في قريتنا في الصعيد… كان عندي ٢٠ سنة لما شفت أول وحش.»</p><p><b>دلوقتي انت جدتك.</b></p>',go:'العب بالجدة 👵',
     wh:3.2,eye:1.5,floor:'sand',ceil:null,sky:0x14101e,fogc:0x14101e,pal:{J:'mud',j:'mud2'},map:()=>genCity(24,22,['J','j'],{open:.3}),light:{ac:0xa08a70,ai:.45,hi:.3,fog:.06},combat:true,cane:true,sepia:true,flash:false,zinger:false,noInf:true,easy:true,start:[1.5,1.5,.7],
-    obj:'اقتلي ٨ وحوش بالعكاز (دوسي «هبش!» وهي قريبة).',next:'home',doneText:'«ومن ساعتها… أي وحش يسمع صوت العكاز بيجري.» – جدتك',
+    obj:'اقتلي ٨ وحوش بالعكاز (دوسي «هبش!» وهي قريبة).',next:'trip:home',doneText:'«ومن ساعتها… أي وحش يسمع صوت العكاز بيجري.» – جدتك',
     setup(){spawnWave(['old'],8,5);for(let i=0;i<10;i++){const p=farFloor(2);addObj({x:p[0],y:p[1],mesh:buildPalm(),solid:.2})}G.lf.k=0},
     onKill(){G.lf.k++;setObj(`اقتلي ٨ وحوش بالعكاز (${G.lf.k}/8)`);if(G.lf.k>=8)setTimeout(levelDone,1200)}},
-  home:{name:'بيت جدتك',intro:'<p class="muted">مصر – بيت جدتك القديم</p><p>بعد ١٥ سنة… رجعت البيت. كله تراب. والقبو… لسه هنا.</p>',go:'ادخل البيت',
+  home:{name:'بيت جدتك',intro:'<p class="muted">مصر – بيت جدتك القديم</p><p>نزلتوا القاهرة وروحتوا على بيت جدتك. بعد ١٥ سنة… رجعت البيت. كله تراب. والقبو… لسه هنا.</p>',go:'ادخل البيت',
     wh:2.6,eye:1.6,floor:'wood',ceil:'ceilH',pal:{B:'paper','#':'paper2',W:'window',K:'doorK',F:'doorF'},map:HOUSE,light:{ac:0x8a8070,ai:.2,hi:.05,fog:.14},flash:true,start:[16,6.5,Math.PI],
     wallAct:{K:()=>goLevel('home2'),F:()=>toast('ده باب البيت… القبو ناحية الشمال.'),W:()=>toast('الشباك مكسور.')},wallLbl:{K:'انزل القبو',F:'باب البيت',W:'الشباك'},obj:'انزل القبو تاني.',
     setup(){addObj({x:1.6,y:1.5,mesh:buildProp('bed'),rot:Math.PI/2,solid:.45});addObj({x:8.6,y:10.35,mesh:buildProp('sofa'),rot:Math.PI,solid:.45})}},
@@ -1724,7 +1736,7 @@ function gearPanel(){
 }
 async function leaveBase(){
   if(!G.lf.dest||!G.lf.gear)return toast(!G.lf.dest?'شوف الخريطة الأول.':'جهّز سلاحك الأول.');
-  goLevel('street');
+  startTrip('italy');
 }
 async function checkin(){
   if(G.lf.chk)return toast('خلصت الكاونتر.');
@@ -1735,7 +1747,7 @@ async function checkin(){
 }
 async function passport(){
   if(!G.lf.chk)return toast('روح الكاونتر الأول.');if(G.lf.pass)return toast('الجواز اتختم.');
-  const i=await talk('ظابط الجوازات','رايح إيطاليا ليه؟',['شغل','صيد وحوش','سياحة']);
+  const i=await talk('ظابط الجوازات',`رايح ${T().name} ليه؟`,['شغل','صيد وحوش','سياحة']);
   await talk('ظابط الجوازات',['شغل إيه؟… ماشي، اتفضل.','(بيبصلك كتير)… طيب… بالتوفيق يا… صياد.','سياحة؟ دلوقتي؟ في الطاعون؟ 🤨 … اتفضل.'][i],null);
   G.lf.pass=1;SFX.pick();airObj();
 }
@@ -1820,9 +1832,9 @@ function vehicleTick(dt){
 async function vehicleArrive(){
   const c=G.lvl.veh;G.mode='busy';SFX.rumble(3,.4);G.shake=1;ui.timer.hidden=true;
   for(const e of G.ens)if(e.st!=='dead')killEnemy(e);
-  const saved=G.pax.filter(p=>p.ps==='ok'||p.ps==='cured').length,tot=G.pax.length;G.money+=saved*5;if(c.kind==='plane')G.c2.pax=saved;
+  const saved=G.pax.filter(p=>p.ps==='ok'||p.ps==='cured').length,tot=G.pax.length;G.money+=saved*5;if(c.kind==='plane'){G.c2.pax=saved;G.c2.paxS=(G.c2.paxS||0)+saved;G.c2.paxT=(G.c2.paxT||0)+tot;G.lvl.next=T().dest}
   await sleep(1200);
-  G.lvl.doneTitle=c.kind==='plane'?'الطيارة نزلت في روما':'المترو وصل المحطة';
+  G.lvl.doneTitle=c.kind==='plane'?'الطيارة نزلت في '+T().city:'المترو وصل المحطة';
   G.lvl.doneText=`أنقذت ${saved} من ${tot} راكب. ${saved>=tot*.8?'الناس بتصقفلك! 👏':saved>=tot*.5?'مش وحش… بس كان ممكن أحسن.':'كانت كابوس.'}`;
   levelDone();
 }
@@ -1865,7 +1877,7 @@ async function finalFake(o){
   sub('الصحة ١٪…');await sleep(1600);sub('');
   await fade(1,600);ui.controls.hidden=true;ui.obj.hidden=true;ui.inv.hidden=true;ui.cross.hidden=true;gunVM.visible=false;
   await playCut(finalGrannyScene());
-  const good=!G.c2.hildaDead&&(G.c2.pax>=12||G.c2.rescued>=3);
+  const good=!G.c2.hildaDead&&((G.c2.paxS||0)>=(G.c2.paxT||1)*.5||G.c2.rescued>=3);
   await playCut(endingScene(good));
   await playCut(egyptScene());
   ui.cut.hidden=true;ui.cutbg.hidden=true;sub('');
@@ -1873,7 +1885,7 @@ async function finalFake(o){
   try{localStorage.removeItem('qabw2')}catch(e){}
   const sec=Math.round((performance.now()-G.tStart)/1000);
   panel(`<h1>القبو</h1><p class="tag">نهاية الفصل التاني — ${good?'النهاية الحلوة 😊':'النهاية السيئة 😔'}</p>
-  <div class="stats"><span>الوقت</span><span>${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}</span><span>المتحولين</span><span>${G.kills}</span><span>ركاب الطيارة</span><span>${G.c2.pax}/24</span><span>د. هيلدا</span><span>${G.c2.hildaDead?'ماتت':'عاشت'}</span><span>اللي عالجتهم</span><span>${G.c2.rescued}</span><span>جوابات الجدة</span><span>${G.c2.letters}</span></div>
+  <div class="stats"><span>الوقت</span><span>${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}</span><span>المتحولين</span><span>${G.kills}</span><span>ركاب الطيارات</span><span>${G.c2.paxS||0}/${G.c2.paxT||0}</span><span>د. هيلدا</span><span>${G.c2.hildaDead?'ماتت':'عاشت'}</span><span>اللي عالجتهم</span><span>${G.c2.rescued}</span><span>جوابات الجدة</span><span>${G.c2.letters}</span></div>
   <div class="next"><b>انتظر الجزء التاني</b><span class="muted">القبو ٢: لعنة الرمال</span></div>
   <div class="stack"><button class="primary" id="pA">القائمة الرئيسية</button></div>`,(r,close)=>{r.querySelector('#pA').onclick=()=>{close();location.reload()}});
   G.mode='end';
