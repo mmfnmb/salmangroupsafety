@@ -1306,7 +1306,9 @@ function genRooms(W,H,wall,alt){
 }
 function genCity(W,H,walls,o={}){
   const g=Array.from({length:H},(_,y)=>Array.from({length:W},(_,x)=>(x===0||y===0||x===W-1||y===H-1)?walls[0]:'.'));
-  for(let by=2;by<H-4;by+=6)for(let bx=2;bx<W-4;bx+=6){if(Math.random()<(o.open||.15))continue;const ch=pick(walls);const w=ri(2,4),h=ri(2,4);for(let y=by;y<by+h;y++)for(let x=bx;x<bx+w;x++)g[y][x]=ch}
+  const st=o.big?9:6,mn=o.big?5:2,mx=o.big?7:4;
+  const b0=o.big?4:2;
+  for(let by=b0;by<H-mn-1;by+=st)for(let bx=b0;bx<W-mn-1;bx+=st){if(Math.random()<(o.open||.15))continue;const ch=pick(walls);const w=Math.min(ri(mn,mx),W-2-bx),h=Math.min(ri(mn,mx),H-2-by);for(let y=by;y<by+h;y++)for(let x=bx;x<bx+w;x++)g[y][x]=ch}
   if(o.canal){const c=o.canal;for(let y=1;y<H-1;y++){g[y][c]='w';g[y][c+1]='w'}for(let y=3;y<H-1;y+=6){g[y][c]='.';g[y][c+1]='.'}}
   return g.map(r=>r.join(''));
 }
@@ -1604,7 +1606,7 @@ const LV={
     obj:'اكشف على الركاب. لو حد عيان: حاول تعالجه أو اقتله قبل ما يتحوّل. ولو اتحوّل… اضرب.',
     setup(){vehicleSetup()}},
   street:{name:'الشارع',intro:()=>{const t=T();return `<p class="muted">${t.from}</p><p>زنجر حدد موقف الأتوبيس اللي بيودّي <b>${t.via==='plane'?'المطار':t.busTo}</b>. لازم نوصله قبل ما يمشي.</p>${t.via==='plane'?`<p>الوجهة الجاية: <b>${t.name}</b> ✈️</p>`:''}`},go:'يلا',
-    wh:24,eye:1.6,floor:'asphalt',ceil:null,sky:0x1c1428,fogc:0x1c1428,pal:()=>T().pal,map:()=>genCity(26,22,['K','k','q'],{open:.25}),light:{ac:0xb8a088,ai:.55,hi:.45,fog:.05},flash:false,start:[1.5,1.5,.7],
+    wh:24,eye:1.6,floor:'asphalt',ceil:null,sky:0x1c1428,fogc:0x1c1428,pal:()=>T().pal,map:()=>genCity(32,28,['K','k','q'],{open:.15,big:true}),light:{ac:0xb8a088,ai:.55,hi:.45,fog:.05},flash:false,start:[1.5,1.5,.7],
     obj:'روح موقف الأتوبيس (العمود الأصفر).',
     setup(){const f=bfsFar(1,1);reachGoal(f.far[0],f.far[1],0xffd040,'اركب الأتوبيس',()=>goLevel('bus'));for(let i=0;i<6;i++){const p=farFloor(2);addObj({x:p[0],y:p[1],mesh:buildPalm(),solid:.2})}for(let i=0;i<6;i++){const p=farFloor(3);makeNPC(p[0],p[1],{},rand(0,6))}},
     start2(){const t=T();talk('زنجر',`الموقف في آخر الشارع. الأتوبيس ده رايح ${t.via==='plane'?'المطار':t.busTo} على طول.`,null,'kid')}},
@@ -1620,7 +1622,7 @@ const LV={
     obj:'اكشف على الركاب. لو حد عيان: حاول تعالجه أو اقتله قبل ما يتحوّل.',
     setup(){vehicleSetup()}},
   italy:{name:'إيطاليا',intro:'<p class="muted">إيطاليا – فينيسيا</p><p>المدينة اللي كانت بتغني… بقت ساكتة. القنوات مليانة جثث، والناس بيقولوا إن فيه «طبيب» لابس قناع بيلف بالليل.</p>',go:'انزل فينيسيا',
-    wh:22,eye:1.6,floor:'pav',ceil:null,sky:0x0a1028,fogc:0x0a1028,pal:{V:'ven1',v:'ven2',u:'ven3'},map:()=>genCity(30,26,['V','v','u'],{canal:14,open:.2}),light:{ac:0x6a78b0,ai:.4,hi:.35,fog:.07},combat:true,flash:true,killReq:8,
+    wh:22,eye:1.6,floor:'pav',ceil:null,sky:0x0a1028,fogc:0x0a1028,pal:{V:'ven1',v:'ven2',u:'ven3'},map:()=>genCity(34,30,['V','v','u'],{canal:16,open:.15,big:true}),light:{ac:0x6a78b0,ai:.4,hi:.35,fog:.07},combat:true,flash:true,killReq:8,
     obj:'نضّف الشوارع (اقتل ٨ متحولين) وبعدين لاقي الطبيب الأسود.',next:'trip:france',doneText:'فينيسيا اتنضفت. لقيتوا في شنطة الطبيب ورقة: «العينة الأصلية جت من مصر».',
     bites:true,setup(){if(G.w.cargo){const c=G.w.cargo;G.w.shotgun=c.shotgun;G.w.sAmmo=c.sAmmo;G.w.rod=c.rod;G.w.cargo=null;if(c.shotgun)G.w.cur='shotgun';setTimeout(()=>toast('استلمت الشوتجن والسيخ من المخزن 🔫🔩',2800),800)}spawnCivs(3,2);G.water=(x,y)=>G.map.g[y]&&G.map.g[y][x]==='w';const f=bfsFar(Math.floor(G.px),Math.floor(G.py));placePlayer(1.5,1.5,.6);spawnWave(['walker','walker','crawler'],12);scatter({ammo:4,serum:2,cash:4,med:2,letter:1});spawnBoss('doctor',f.far[0],f.far[1],32)}},
   france:{name:'فرنسا',intro:'<p class="muted">فرنسا – سراديب باريس</p><p>تحت باريس فيه ملايين الهياكل العظمية… وفيه حاجة بتجمّعهم مع بعض.</p>',go:'انزل السراديب',
@@ -1654,7 +1656,7 @@ const LV={
       G.lf.sp=(G.lf.sp||2)-dt;if(G.lf.sp<=0&&G.lf.t>2){G.lf.sp=rand(3,4.5);spawnWave(['walker','crawler','screamer'],1,7)}
       if(G.lf.t<=0){G.lf.boss=1;ui.timer.hidden=true;if(!G.c2.hildaDead)toast('العلاج خلص! هيلدا: «العينة في أمان!»',3000);const f=farFloor(8);spawnBoss('zero',f[0],f[1],40,false);ui.boss.hidden=false;ui.bossN.textContent='المريض صفر';big('المريض صفر');bossBar()}}},
   bitten:{name:'زنجر اتعضّ',intro:'<p class="muted">برلين – بالليل</p><p>في الطريق… متحول نط على زنجر من الضلمة. <b>زنجر اتعضّ.</b></p><p>عندك دقيقة ونص تلاقي مصل في الصيدلية اللي في آخر المدينة.</p>',go:'اجري!',
-    wh:26,eye:1.6,floor:'asphalt',ceil:null,sky:0x0a0c14,fogc:0x0a0c14,pal:{K:'city1',k:'city2',q:'city3'},map:()=>genCity(30,30,['K','k','q'],{open:.1}),light:{ac:0x6a7088,ai:.35,hi:.3,fog:.08},combat:true,flash:true,zinger:false,start:[1.5,1.5,.7],
+    wh:26,eye:1.6,floor:'asphalt',ceil:null,sky:0x0a0c14,fogc:0x0a0c14,pal:{K:'city1',k:'city2',q:'city3'},map:()=>genCity(36,36,['K','k','q'],{open:.1,big:true}),light:{ac:0x6a7088,ai:.35,hi:.3,fog:.08},combat:true,flash:true,zinger:false,start:[1.5,1.5,.7],
     obj:'لاقي الصيدلية (العمود الأخضر) قبل ما الوقت يخلص!',next:'trip:swiss',
     bites:true,setup(){const f=bfsFar(1,1);spawnCivs(2,2);reachGoal(f.far[0],f.far[1],0x40ff80,'ادخل الصيدلية',pharmacy);spawnWave(['walker','walker','crawler','screamer'],12,5);scatter({ammo:3,med:2,cash:3,letter:1});G.lf.t=95;ui.timer.hidden=false},
     tick(dt){if(G.lf.found)return;G.lf.t-=dt;ui.timer.textContent=`زنجر: ${Math.max(0,Math.ceil(G.lf.t))} ث`;if(G.lf.t<=0){G.lf.found=1;G.mon=G.ens.find(e=>e.st!=='dead');G.deathWhy='time';if(G.mon)caught()}}},
@@ -1663,7 +1665,7 @@ const LV={
     obj:'امشي بهدوء ولاقي الكتاب القديم (العمود الدهبي).',next:'flash',
     setup(){const f=bfsFar(1,1);reachGoal(f.far[0],f.far[1],0xffd060,'اقرا الكتاب القديم',async()=>{G.mode='busy';await talk('كتاب قديم','«سنة ١٣٤٧ ظهر وحش في قبو بيت في مصر… كل اللي لمسه اتحوّل.\nالوحش اتقتل بالكهربا بعد ٦٠٠ سنة على إيد طفل…\nواللي سرق جثته عمل منها الطاعون الجديد.»',null);await talk('زنجر','ده… ده وحش القبو بتاعنا! حد سرق جثته من بيت ستّي!',null,'kid');G.c2.book=1;levelDone()});spawnWave(['blind'],12,5);scatter({ammo:2,serum:1,med:2,letter:1})}},
   flash:{name:'فلاش باك',intro:'<p class="muted">جواب قديم من جدتك…</p><p>«سنة ١٩٥٦، في قريتنا في الصعيد… كان عندي ٢٠ سنة لما شفت أول وحش.»</p><p><b>دلوقتي انت جدتك.</b></p>',go:'العب بالجدة 👵',
-    wh:3.2,eye:1.5,floor:'sand',ceil:null,sky:0x14101e,fogc:0x14101e,pal:{J:'mud',j:'mud2'},map:()=>genCity(24,22,['J','j'],{open:.3}),light:{ac:0xa08a70,ai:.45,hi:.3,fog:.06},combat:true,cane:true,sepia:true,flash:false,zinger:false,noInf:true,easy:true,start:[1.5,1.5,.7],
+    wh:7,eye:1.5,floor:'sand',ceil:null,sky:0x14101e,fogc:0x14101e,pal:{J:'mud',j:'mud2'},map:()=>genCity(28,26,['J','j'],{open:.25,big:true}),light:{ac:0xa08a70,ai:.45,hi:.3,fog:.06},combat:true,cane:true,sepia:true,flash:false,zinger:false,noInf:true,easy:true,start:[1.5,1.5,.7],
     obj:'اقتلي ٨ وحوش بالعكاز (دوسي «هبش!» وهي قريبة).',next:'trip:home',doneText:'«ومن ساعتها… أي وحش يسمع صوت العكاز بيجري.» – جدتك',
     setup(){spawnWave(['old'],8,5);for(let i=0;i<10;i++){const p=farFloor(2);addObj({x:p[0],y:p[1],mesh:buildPalm(),solid:.2})}G.lf.k=0},
     onKill(){G.lf.k++;setObj(`اقتلي ٨ وحوش بالعكاز (${G.lf.k}/8)`);if(G.lf.k>=8)setTimeout(levelDone,1200)}},
