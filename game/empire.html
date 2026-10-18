@@ -1,0 +1,624 @@
+<title>كوّن إمبراطوريتك</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@500;700&family=Tajawal:wght@400;700;800&display=swap">
+<style>
+/* Layout: full-screen pixel city canvas; thin HUD on the edges; sheets & panels slide over it. Single dark "mud-brick at dusk" look. */
+:root{
+  --bg:#17120d; --panel:#251d15; --panel2:#31261b; --line:#4d3c2a;
+  --ink:#f4e8d0; --muted:#b8a487; --gold:#e3a63b; --gold2:#ffd27a; --blood:#c9442f; --ok:#79b553;
+  --disp:'Reem Kufi','Tajawal',system-ui,sans-serif; --body:'Tajawal',system-ui,'Segoe UI',sans-serif;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--body);-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+button{font-family:var(--body);color:var(--ink);cursor:pointer}
+button:focus-visible{outline:2px solid var(--gold2);outline-offset:2px}
+#game{position:fixed;inset:0;width:100%;height:100%;image-rendering:pixelated;touch-action:none;display:block}
+.hud{position:fixed;z-index:5}
+#stats{top:calc(env(safe-area-inset-top,0px) + 10px);left:max(10px,env(safe-area-inset-left,0px));display:flex;gap:6px;align-items:center;direction:rtl;flex-wrap:wrap;max-width:60vw}
+.chip{background:rgba(23,18,13,.82);border:1px solid var(--line);border-radius:6px;padding:4px 8px;font-weight:800;font-size:14px;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:4px;white-space:nowrap}
+#flagMini{width:30px;height:20px;image-rendering:pixelated;border:1px solid var(--line);border-radius:2px;display:block}
+#menuBtn{top:calc(env(safe-area-inset-top,0px) + 10px);right:max(10px,env(safe-area-inset-right,0px));width:44px;height:40px;border-radius:8px;background:rgba(23,18,13,.85);border:1px solid var(--line);font-size:22px}
+#mini{top:calc(env(safe-area-inset-top,0px) + 58px);right:max(10px,env(safe-area-inset-right,0px));width:116px;height:84px;border:2px solid var(--line);border-radius:6px;image-rendering:pixelated;background:#000;cursor:pointer}
+#mission{bottom:calc(env(safe-area-inset-bottom,0px) + 14px);left:50%;transform:translateX(-50%);max-width:min(56vw,520px);background:rgba(23,18,13,.86);border:1px solid var(--line);border-right:3px solid var(--gold);border-radius:6px;padding:7px 12px;font-size:14px;direction:rtl;text-align:right;line-height:1.4}
+#joy{bottom:calc(env(safe-area-inset-bottom,0px) + 16px);left:max(16px,env(safe-area-inset-left,0px));width:120px;height:120px;border-radius:50%;background:rgba(244,232,208,.06);border:2px solid rgba(244,232,208,.16);touch-action:none}
+#knob{position:absolute;left:50%;top:50%;width:50px;height:50px;margin:-25px 0 0 -25px;border-radius:50%;background:rgba(244,232,208,.22);border:2px solid rgba(244,232,208,.35)}
+#actBtn{bottom:calc(env(safe-area-inset-bottom,0px) + 30px);right:max(18px,env(safe-area-inset-right,0px));min-width:96px;height:64px;padding:0 14px;border-radius:32px;background:var(--gold);color:#2a1a08;border:none;font-weight:800;font-size:17px;box-shadow:0 3px 0 #8a5a14}
+#actBtn.idle{background:rgba(244,232,208,.12);color:var(--muted);box-shadow:none}
+#bagBtn{bottom:calc(env(safe-area-inset-bottom,0px) + 104px);right:max(26px,env(safe-area-inset-right,0px));width:50px;height:50px;border-radius:50%;background:rgba(23,18,13,.85);border:1px solid var(--line);font-size:22px}
+#toast{position:fixed;top:calc(env(safe-area-inset-top,0px) + 58px);left:50%;transform:translateX(-50%);z-index:30;background:rgba(23,18,13,.92);border:1px solid var(--gold);color:var(--gold2);padding:8px 16px;border-radius:6px;font-weight:800;direction:rtl;pointer-events:none;opacity:0;transition:opacity .25s;max-width:80vw;text-align:center}
+#toast.on{opacity:1}
+/* dialog sheet */
+#sheet{position:fixed;left:0;right:0;bottom:0;z-index:40;background:linear-gradient(transparent,rgba(10,7,4,.96) 26%);padding:40px max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 16px) max(16px,env(safe-area-inset-left,0px));direction:rtl}
+#sheet .in{max-width:720px;margin:0 auto}
+#who{font-family:var(--disp);color:var(--gold2);font-size:20px;margin-bottom:4px}
+#sayT{font-size:17px;line-height:1.6;white-space:pre-line;min-height:2.6em}
+#choices{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.btn{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:11px 16px;font-size:16px;font-weight:700}
+.btn.pri{background:var(--gold);color:#2a1a08;border-color:var(--gold);box-shadow:0 3px 0 #8a5a14}
+.btn.red{background:var(--blood);border-color:var(--blood)}
+.btn:disabled{opacity:.45;cursor:default}
+/* panels */
+#panel{position:fixed;inset:0;z-index:50;background:rgba(8,6,4,.72);display:flex;align-items:center;justify-content:center;padding:calc(env(safe-area-inset-top,0px) + 12px) max(12px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 12px) max(12px,env(safe-area-inset-left,0px))}
+#card{background:var(--panel);border:1px solid var(--line);border-radius:10px;width:min(640px,100%);max-height:100%;overflow:auto;direction:rtl;padding:16px 18px;position:relative;box-sizing:border-box}
+#card h2{font-family:var(--disp);color:var(--gold2);margin:0 0 10px;font-size:24px;text-wrap:balance}
+#card h3{font-family:var(--disp);color:var(--gold);margin:14px 0 6px;font-size:17px}
+#card p{line-height:1.6;margin:6px 0}
+.x{position:absolute;top:10px;left:10px;width:38px;height:38px;border-radius:8px;background:var(--panel2);border:1px solid var(--line);font-size:18px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px;padding-left:44px}
+.tab{background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:7px 14px;font-weight:700;font-size:14px}
+.tab.on{background:var(--gold);color:#2a1a08;border-color:var(--gold)}
+.tab.lock{opacity:.5}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:15px}
+.kv b{color:var(--muted);font-weight:700}
+.bar{height:10px;background:#0e0b08;border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--gold)}
+.job{border:1px solid var(--line);background:var(--panel2);border-radius:8px;padding:10px 12px;margin:8px 0;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.job .t{font-weight:800}
+.job .s{color:var(--muted);font-size:13px}
+.path{display:grid;gap:6px}
+.path div{display:flex;gap:8px;align-items:center;font-size:15px}
+.muted{color:var(--muted)}
+.big{font-family:var(--disp);font-size:34px;color:var(--gold2);margin:0;text-align:center;text-wrap:balance}
+/* flag editor */
+#flagEd{display:grid;gap:10px}
+#fcv{width:min(100%,420px,calc(46vh * 1.5));aspect-ratio:3/2;image-rendering:pixelated;border:2px solid var(--line);border-radius:4px;touch-action:none;background:#000;justify-self:center}
+.pal{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.sw{width:34px;height:34px;border-radius:6px;border:2px solid transparent}
+.sw.on{border-color:var(--ink);box-shadow:0 0 0 2px var(--gold)}
+.tool.on{background:var(--gold);color:#2a1a08}
+input[type=text]{background:#0e0b08;border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:10px 12px;font-family:var(--body);font-size:16px;width:100%;box-sizing:border-box;direction:rtl}
+/* build mode */
+#build{position:fixed;inset:0;z-index:20;background:#120e0a;display:grid;grid-template-rows:auto 1fr auto;direction:rtl;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)}
+#btop{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
+#bpThumb{height:56px;image-rendering:pixelated;border:2px solid var(--gold);border-radius:4px;cursor:zoom-in;background:#000}
+#btitle{flex:1;min-width:120px}
+#btitle b{display:block;font-family:var(--disp);color:var(--gold2);font-size:16px}
+#btitle span{font-size:13px;color:var(--muted)}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{background:var(--panel2);border:none;padding:9px 14px;font-weight:800;font-size:15px}
+.seg button.on{background:var(--gold);color:#2a1a08}
+#bmatch{text-align:center;min-width:64px}
+#bmatch b{display:block;font-size:22px;color:var(--gold2);font-variant-numeric:tabular-nums}
+#bmatch span{font-size:11px;color:var(--muted)}
+#bwrap{position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;min-height:0}
+#bgrid{image-rendering:pixelated;touch-action:none}
+#bpal{display:flex;gap:6px;overflow-x:auto;padding:8px 12px;background:var(--panel);border-top:1px solid var(--line)}
+.mat{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:3px;background:var(--panel2);border:2px solid var(--line);border-radius:8px;padding:5px 6px;font-size:12px;font-weight:700;min-width:62px}
+.mat canvas{width:30px;height:30px;image-rendering:pixelated;border-radius:3px}
+.mat.on{border-color:var(--gold);background:#3e2f1f}
+#bpBig canvas{width:100%;image-rendering:pixelated;border:2px solid var(--line);border-radius:4px;background:#000}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cols div{display:grid;gap:4px;text-align:center;font-weight:700}
+@media (max-width:520px){.cols{grid-template-columns:1fr}#mission{max-width:70vw;font-size:13px}}
+@media (prefers-reduced-motion:reduce){#toast{transition:none}}
+</style>
+
+<canvas id="game"></canvas>
+<div class="hud" id="stats">
+  <canvas id="flagMini" width="12" height="8"></canvas>
+  <div class="chip" title="الفلوس">💰 <span id="sMoney">0</span></div>
+  <div class="chip" title="السمعة">⭐ <span id="sRep">0</span></div>
+  <div class="chip" title="الصحة">❤️ <span id="sHp">100</span></div>
+  <div class="chip" title="اليوم">🌙 <span id="sDay">1</span></div>
+</div>
+<button class="hud" id="menuBtn" aria-label="القايمة">☰</button>
+<canvas class="hud" id="mini" width="72" height="52" aria-label="الخريطة"></canvas>
+<div class="hud" id="mission">…</div>
+<div class="hud" id="joy"><div id="knob"></div></div>
+<button class="hud" id="bagBtn" aria-label="الشنطة">🎒</button>
+<button class="hud idle" id="actBtn">✋</button>
+<div id="toast"></div>
+
+<div id="build" hidden>
+  <div id="btop">
+    <canvas id="bpThumb" width="10" height="8" title="الرسمة المطلوبة"></canvas>
+    <div id="btitle"><b id="bName">…</b><span>دوس على الرسمة عشان تكبر</span></div>
+    <div class="seg"><button id="vOut" class="on">بره</button><button id="vIn">جوه</button></div>
+    <div id="bmatch"><b id="bPct">0٪</b><span id="bSub">تطابق</span></div>
+    <button class="btn pri" id="bDone">✅ خلّصت</button>
+    <button class="btn" id="bExit" aria-label="اخرج">✖</button>
+  </div>
+  <div id="bwrap"><canvas id="bgrid"></canvas></div>
+  <div id="bpal"></div>
+</div>
+
+<div id="sheet" hidden><div class="in"><div id="who"></div><div id="sayT"></div><div id="choices"></div></div></div>
+<div id="panel" hidden><div id="card"></div></div>
+
+<script>
+(()=>{
+'use strict';
+const $=s=>document.querySelector(s);
+/* ---------------- utils ---------------- */
+let seedR=1;function mulberry(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+let R=Math.random;
+const ri=(a,b)=>a+Math.floor(R()*(b-a+1));const pick=a=>a[Math.floor(R()*a.length)];
+const rnd=Math.random;const rpick=a=>a[Math.floor(rnd()*a.length)];const rri=(a,b)=>a+Math.floor(rnd()*(b-a+1));
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const hash=(x,y)=>{let h=(x*374761393+y*668265263)|0;h=(h^(h>>>13))*1274126177|0;return((h^(h>>>16))>>>0)/4294967296};
+const ar=n=>String(n).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+/* ---------------- data ---------------- */
+const EMP=[
+  {n:'مملكة النيل',c:'#2f7fbf',k:'الملك أمنحتب',city:'طيبة'},
+  {n:'إمبراطورية الرمال',c:'#d99a2b',k:'الإمبراطور صخر',city:'وادي الذهب'},
+  {n:'سلطنة الجبل',c:'#7b5aa8',k:'السلطان برقوق',city:'قلعة الصخر'},
+  {n:'مملكة البحر',c:'#2f9e8a',k:'الملكة نفرتاري',city:'مرسى الريح'}
+];
+const PAL=['#f4f0e6','#151515','#c62f2f','#e3a63b','#f2d54a','#3f8f3a','#2f7fbf','#1f3f80','#7b5aa8','#8b5a2b','#e07ab0','#7fd0e0'];
+const NAMES=['حسن','سعيد','مرزوق','كريمة','زينب','عتمان','فتحي','نعيمة','صابر','بهية','رمضان','عزيزة','شلبي','وهدان','سنية','فرج'];
+const ROLES=['تاجر','فلاح','ظابط','صاحب فرن','حدّاد','كاهن','صياد','نجّار'];
+const TYPES=[['بيت صغير',0],['دكان',0],['مخزن غلال',1],['فرن',1],['بيت عيلة',2],['برج حراسة',2],['بيت كبير',3],['قاعة السوق',3]];
+const RANKS=[[0,'صبي بنّاء'],[25,'عامل بناء'],[70,'بنّاء ماهر'],[130,'أسطى'],[180,'معلّم']];
+const MATS={
+  brick:{n:'طوب أحمر',c:'#a4462f',l:'out',k:'wall'}, lime:{n:'حجر جيري',c:'#d6c08c',l:'out',k:'wall'},
+  granite:{n:'جرانيت',c:'#77707c',l:'out',k:'wall'}, marble:{n:'رخام',c:'#ebe6dc',l:'out',k:'wall'},
+  wood:{n:'خشب',c:'#8b5a2b',l:'out',k:'wall'}, door:{n:'باب',c:'#4f2c12',l:'out',k:'door'},
+  window:{n:'شباك',c:'#86c9dc',l:'out',k:'win'}, rtile:{n:'سقف قرميد',c:'#b5532f',l:'out',k:'roof'},
+  rwood:{n:'سقف خشب',c:'#6b4724',l:'out',k:'roof'}, rstone:{n:'سقف حجر',c:'#8f8b80',l:'out',k:'roof'},
+  fwood:{n:'أرضية خشب',c:'#a9763f',l:'in'}, ftile:{n:'بلاط',c:'#c4bba5',l:'in'},
+  fmarble:{n:'أرضية رخام',c:'#efe9de',l:'in'}, carpet:{n:'سجادة',c:'#8d2b3b',l:'in'},
+  iwall:{n:'حيطة جوه',c:'#4e3e30',l:'in'}, idoor:{n:'باب جوه',c:'#7b4b22',l:'in'}
+};
+const OUTM=Object.keys(MATS).filter(k=>MATS[k].l==='out'),INM=Object.keys(MATS).filter(k=>MATS[k].l==='in');
+
+/* ---------------- save ---------------- */
+let S=null;
+function newSave(){return{v:1,seed:(Math.random()*1e9)|0,name:'',flag:null,emp:rri(0,3),money:20,rep:0,hp:100,t:30,offers:[],active:null,builds:{},done:0,kingCalled:false,title:'',sfx:true,tts:true,nid:1,nextOffer:4,px:0,py:0,tip:false}}
+function save(){try{localStorage.setItem('empire1',JSON.stringify(S))}catch(e){}}
+function load(){try{const s=JSON.parse(localStorage.getItem('empire1')||'null');if(s&&s.v===1&&s.flag)return s}catch(e){}return null}
+
+/* ---------------- audio ---------------- */
+let AC=null;function aInit(){if(AC)return;try{AC=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}}
+function tone(f,d=.08,type='square',v=.06,f2){if(!AC||!S||!S.sfx)return;const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+d);g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+d+.02)}
+const SFX={tap:()=>tone(520,.04,'square',.03),place:()=>{tone(180,.05,'square',.05);tone(120,.06,'triangle',.05)},coin:()=>{tone(988,.07,'square',.05);setTimeout(()=>tone(1318,.12,'square',.05),70)},ui:()=>tone(660,.05,'triangle',.05),bad:()=>tone(160,.25,'sawtooth',.05,90),fan:()=>{[523,659,784,1046].forEach((f,i)=>setTimeout(()=>tone(f,.18,'square',.05),i*120))}};
+function speak(t){if(!S||!S.tts||!window.speechSynthesis)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t.replace(/[«»()…]/g,' '));u.lang='ar-EG';const v=speechSynthesis.getVoices().find(v=>/^ar/i.test(v.lang));if(v)u.voice=v;u.pitch=.7;u.rate=.92;speechSynthesis.speak(u)}catch(e){}}
+
+/* ---------------- material drawing ---------------- */
+function shade(hex,k){const n=parseInt(hex.slice(1),16);let r=n>>16,g=n>>8&255,b=n&255;const f=v=>clamp(Math.round(k<0?v*(1+k):v+(255-v)*k),0,255);return`rgb(${f(r)},${f(g)},${f(b)})`}
+function drawMat(g,key,x,y,s,cx=0,cy=0){
+  const m=MATS[key];if(!m)return;const u=Math.max(1,Math.round(s/16));g.fillStyle=m.c;g.fillRect(x,y,s,s);
+  const d=shade(m.c,-.28),l=shade(m.c,.25),F=(c,a,b,w,h)=>{g.fillStyle=c;g.fillRect(x+a,y+b,w,h)};
+  switch(key){
+    case'brick':for(let r=0;r<4;r++){F(d,0,r*s/4|0,s,u);const o=r%2?s/4:0;for(let c=o;c<s;c+=s/2)F(d,c|0,r*s/4|0,u,s/4|0)}break;
+    case'lime':for(let i=0;i<6;i++){const a=hash(cx*7+i,cy*3+i),b=hash(cx*3+i,cy*7+i*2);F(i%2?d:l,(a*(s-2*u))|0,(b*(s-2*u))|0,u*2,u)}F(d,0,s-u,s,u);break;
+    case'granite':for(let i=0;i<14;i++){const a=hash(cx*11+i,cy*5-i),b=hash(cx*5-i,cy*11+i);F(i%3?d:l,(a*(s-u))|0,(b*(s-u))|0,u,u)}break;
+    case'marble':for(let i=0;i<s;i+=u)F('#c9c3b8',i,((i*.6+hash(cx,cy)*s)%s)|0,u,u);F(l,0,0,s,u);break;
+    case'wood':for(let c=0;c<s;c+=s/4)F(d,c|0,0,u,s);F(d,0,(hash(cx,cy)*s)|0,s/4|0,u);break;
+    case'door':F('#2c180a',0,0,s,s);F(m.c,u*2,u,s-u*4,s-u);F(shade(m.c,-.4),s/2|0,u,u,s-u);F('#e3a63b',(s*.7)|0,(s*.55)|0,u*2,u*2);break;
+    case'window':F('#3a2818',0,0,s,s);F(m.c,u*2,u*2,s-u*4,s-u*4);F('#3a2818',(s/2|0)-u/2|0,u*2,u,s-u*4);F('#3a2818',u*2,(s/2|0)-u/2|0,s-u*4,u);F('#dff4fb',u*3,u*3,u*2,u*2);break;
+    case'rtile':for(let r=0;r<4;r++){F(d,0,(r*s/4+s/4-u)|0,s,u);for(let c=(r%2?s/8:0);c<s;c+=s/4)F(l,c|0,(r*s/4)|0,u*2,u)}break;
+    case'rwood':for(let r=0;r<s;r+=s/4)F(d,0,r|0,s,u);break;
+    case'rstone':F(d,0,s/2|0,s,u);F(d,s/2|0,0,u,s/2|0);F(d,s/4|0,s/2|0,u,s/2|0);F(l,0,0,s,u);break;
+    case'fwood':for(let r=0;r<s;r+=s/4)F(d,0,r|0,s,u);F(d,(hash(cx,cy)*s)|0,0,u,s/4|0);break;
+    case'ftile':if((cx+cy)%2)F(d,0,0,s,s);F(shade(m.c,-.1),0,0,s,u);F(shade(m.c,-.1),0,0,u,s);break;
+    case'fmarble':for(let i=0;i<s;i+=u*2)F('#d8d1c4',i,((s-i)*.7+hash(cy,cx)*s)%s|0,u,u);break;
+    case'carpet':F('#e3a63b',u*2,u*2,s-u*4,u);F('#e3a63b',u*2,s-u*3,s-u*4,u);F('#e3a63b',u*2,u*2,u,s-u*4);F('#e3a63b',s-u*3,u*2,u,s-u*4);F(l,s/2-u|0,s/2-u|0,u*2,u*2);break;
+    case'iwall':F(l,0,0,s,u*2);F(d,0,s-u*2,s,u*2);break;
+    case'idoor':F(d,0,0,s,s);F(m.c,u*2,0,s-u*4,s);F(d,s/2|0,0,u,s);break;
+  }
+}
+
+/* ---------------- world ---------------- */
+const TS=16,MW=72,MH=52;
+const T_GRASS=0,T_ROAD=1,T_WATER=2,T_SAND=3,T_TREE=4,T_BRIDGE=5,T_FARM=6,T_DIRT=7;
+let tiles,objs=[],plots=[],npcs=[],P={x:0,y:0,dir:0,walk:0,mov:false},palace=null,board=null,trees=[];
+const ROADX=[8,22,36,50,64],ROADY=[6,18,30,42];
+const BX=[10,24,38,52],BY=[8,20,32];
+function tAt(x,y){if(x<0||y<0||x>=MW||y>=MH)return-1;return tiles[y*MW+x]}
+function setT(x,y,v){if(x>=0&&y>=0&&x<MW&&y<MH)tiles[y*MW+x]=v}
+function genCity(){
+  R=mulberry(S.seed);tiles=new Uint8Array(MW*MH);objs=[];plots=[];trees=[];
+  for(let y=0;y<MH;y++){const cx=3+Math.round(Math.sin(y/5)*1.2);for(let x=cx-1;x<=cx+1;x++)setT(x,y,T_WATER)}
+  for(let x=0;x<MW;x++)for(let y=0;y<MH;y++){if((x>=66||x<=7||y<=5)&&tAt(x,y)===T_GRASS&&hash(x>>1,y>>1)<.55)setT(x,y,T_FARM)}
+  for(const ry of ROADY)for(let x=0;x<MW;x++)for(let k=0;k<2;k++)setT(x,ry+k,tAt(x,ry+k)===T_WATER?T_BRIDGE:T_ROAD);
+  for(const rx of ROADX)for(let y=0;y<MH;y++)for(let k=0;k<2;k++)setT(rx+k,y,T_ROAD);
+  const roles={'24,20':'palace','38,20':'market','10,8':'plot','38,8':'plot','52,20':'plot','10,32':'plot','38,32':'plot','24,8':'plot','52,8':'houses','10,20':'houses','24,32':'houses','52,32':'houses'};
+  const blocks=[];for(const bx of BX)for(const by of BY)blocks.push([bx,by,12,10]);for(const bx of BX)blocks.push([bx,44,12,8]);
+  let pid=0;
+  for(const[bx,by,bw,bh]of blocks){
+    const role=roles[bx+','+by]||'houses',x=bx+1,y=by+1,w=bw-2,h=bh-2;
+    if(role==='palace'){for(let yy=y;yy<y+h;yy++)for(let xx=x;xx<x+w;xx++)setT(xx,yy,T_SAND);
+      palace={x,y,w,h,gx:x+4,door:{x:x+5,y:y+5}};
+      // walls
+      for(let xx=x;xx<x+w;xx++){if(xx<x+4||xx>x+5)objs.push({k:'pwall',x:xx,y:y+h-1,w:1,h:1});objs.push({k:'pwall',x:xx,y,w:1,h:1})}
+      for(let yy=y+1;yy<y+h-1;yy++){objs.push({k:'pwall',x,y:yy,w:1,h:1});objs.push({k:'pwall',x:x+w-1,y:yy,w:1,h:1})}
+      objs.push({k:'palace',x:x+2,y:y+1,w:6,h:4,door:x+5});
+      objs.push({k:'banner',x:x+3,y:y+h-1,w:1,h:1,solid:false},{k:'banner',x:x+6,y:y+h-1,w:1,h:1,solid:false});
+    }else if(role==='market'){for(let yy=y;yy<y+h;yy++)for(let xx=x;xx<x+w;xx++)setT(xx,yy,T_SAND);
+      const cs=['#c62f2f','#2f7fbf','#3f8f3a','#e3a63b'];[[x+1,y+1],[x+5,y+1],[x+1,y+4],[x+5,y+4]].forEach(([a,b],i)=>objs.push({k:'stall',x:a,y:b,w:3,h:1,c:cs[i]}));
+      board={k:'board',x:x+8,y:y+5,w:1,h:1};objs.push(board);objs.push({k:'well',x:x+8,y:y+1,w:1,h:1});
+    }else if(role==='plot'){plots.push({id:pid++,x,y,w,h})}
+    else{ // houses
+      const hw=Math.floor(w/2)-1,hh=Math.floor(h/2)-1;
+      for(let a=0;a<2;a++)for(let b=0;b<2;b++){if(h<6&&b===1)continue;const ww=ri(3,hw),wh=h<6?ri(3,h-1):ri(3,hh);
+        objs.push({k:'house',x:x+a*(hw+1)+ri(0,hw-ww),y:y+b*(hh+2),w:ww,h:wh,wall:pick(['#c9a774','#a4462f','#d6c08c','#b38b5d','#e2d6bd']),roof:pick(['#b5532f','#6b4724','#8f8b80','#9c3f2a']),door:ri(0,ww-1)})}
+    }
+  }
+  for(let i=0;i<260;i++){const x=ri(0,MW-1),y=ri(0,MH-1);const t=tAt(x,y);if((t===T_GRASS||t===T_FARM)&&!inBlock(x,y)&&!nearRoad(x,y)){setT(x,y,T_TREE);trees.push({k:'tree',x,y,w:1,h:1,v:hash(x,y)})}}
+  R=Math.random;
+}
+function inBlock(x,y){for(const bx of BX)for(const by of[...BY,44])if(x>=bx&&x<bx+12&&y>=by&&y<by+(by===44?8:10))return true;return false}
+function nearRoad(x,y){for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const t=tAt(x+dx,y+dy);if(t===T_ROAD||t===T_BRIDGE)return true}return false}
+function buildRect(pid){const b=S.builds[pid];if(!b)return null;const p=plots[pid];return{x:p.x+((p.w-b.w)>>1),y:p.y+((p.h-b.h)>>1),w:b.w,h:b.h}}
+function solidRects(){const a=objs.filter(o=>o.solid!==false);for(const p of plots){const r=buildRect(p.id);if(r)a.push(r)}return a}
+let SOL=[];function refreshSolids(){SOL=solidRects()}
+function blocked(x,y,r=.3){
+  for(const[dx,dy]of[[-r,-r],[r,-r],[-r,r],[r,r]]){const t=tAt(Math.floor(x+dx),Math.floor(y+dy));if(t===-1||t===T_WATER||t===T_TREE)return true}
+  for(const o of SOL)if(x+r>o.x&&x-r<o.x+o.w&&y+r>o.y&&y-r<o.y+o.h)return true;return false}
+
+/* ---------------- npcs ---------------- */
+const SKIN=['#e2b48c','#c48d62','#a06a43','#7a4a2a'],HAIR=['#1c140e','#3a2414','#5a3a1a','#cfc6b5'],SHIRT=['#c9a774','#6d8a4b','#a4462f','#3f6a8f','#d6c08c','#7b5aa8','#e2d6bd','#8b5a2b'];
+function roadTiles(){const a=[];for(let y=0;y<MH;y++)for(let x=0;x<MW;x++){const t=tAt(x,y);if(t===T_ROAD||t===T_SAND)a.push([x+.5,y+.5])}return a}
+let RT=[];
+function mkNPC(x,y,o={}){return Object.assign({x,y,tx:x,ty:y,skin:rpick(SKIN),hair:rpick(HAIR),shirt:rpick(SHIRT),dir:0,walk:0,wait:rnd()*2,name:rpick(NAMES),role:rpick(ROLES),mov:false},o)}
+function spawnNPCs(){npcs=[];for(let i=0;i<26;i++){const p=rpick(RT);npcs.push(mkNPC(p[0],p[1]))}
+  const g1=mkNPC(palace.x+3.5,palace.y+palace.h+.6,{guard:true,shirt:'#7a1f1f',name:'حارس',role:'حارس القصر'}),g2=mkNPC(palace.x+6.5,palace.y+palace.h+.6,{guard:true,shirt:'#7a1f1f',name:'حارس',role:'حارس القصر'});npcs.push(g1,g2);
+  for(const j of S.offers)attachClient(j)}
+function attachClient(j){const n=npcs.find(n=>!n.guard&&!n.job&&!n.msg);if(n){n.job=j.id;n.name=j.client;n.role=j.role;n.shirt=j.shirt||n.shirt}}
+function npcTick(n,dt){
+  if(n.guard){n.dir=0;return}
+  if(n.wait>0){n.wait-=dt;n.mov=false;return}
+  const dx=n.tx-n.x,dy=n.ty-n.y;
+  if(Math.abs(dx)<.08&&Math.abs(dy)<.08){n.wait=1+rnd()*3;let c=0,p;do{p=rpick(RT);c++}while(c<20&&Math.hypot(p[0]-n.x,p[1]-n.y)>12);n.tx=p[0];n.ty=p[1];n.ax=rnd()<.5;return}
+  const sp=1.5*dt;let mx=0,my=0;
+  if(n.ax?Math.abs(dx)>.08:Math.abs(dy)<=.08){mx=Math.sign(dx)*Math.min(sp,Math.abs(dx))}else{my=Math.sign(dy)*Math.min(sp,Math.abs(dy))}
+  if(!blocked(n.x+mx,n.y+my,.25)){n.x+=mx;n.y+=my;n.mov=true;n.walk+=dt*8;n.dir=Math.abs(mx)>Math.abs(my)?(mx>0?3:2):(my>0?0:1)}
+  else{n.stuck=(n.stuck||0)+1;n.ax=!n.ax;if(n.stuck>8){n.stuck=0;n.tx=n.x;n.ty=n.y}}
+}
+
+/* ---------------- jobs ---------------- */
+function rankIdx(){let i=0;for(let k=0;k<RANKS.length;k++)if(S.rep>=RANKS[k][0])i=k;return i}
+function rankName(){return S.title||RANKS[rankIdx()][1]}
+function freePlot(royal){
+  const used=new Set([...S.offers.map(o=>o.plot),...(S.active?[S.active.plot]:[])]);
+  let free=plots.filter(p=>!used.has(p.id)&&!S.builds[p.id]);
+  if(royal){const all=plots.filter(p=>!used.has(p.id)&&!(S.builds[p.id]&&S.builds[p.id].royal));all.sort((a,b)=>Math.hypot(a.x-palace.x,a.y-palace.y)-Math.hypot(b.x-palace.x,b.y-palace.y));return all[0]||plots[0]}
+  if(!free.length)free=plots.filter(p=>!used.has(p.id)&&!(S.builds[p.id]&&S.builds[p.id].royal));
+  return free.length?rpick(free):null;
+}
+function genBP(w,h,lvl){
+  const walls=['brick','lime','granite','marble','wood'],roofs=['rtile','rwood','rstone'],floors=['fwood','ftile','fmarble','carpet'];
+  const wall=rpick(walls),wall2=lvl>=2&&rnd()<.75?rpick(walls.filter(x=>x!==wall)):null,roof=rpick(roofs),roof2=lvl>=3?rpick(roofs.filter(x=>x!==roof)):null;
+  const out=[],inn=[];const fA=rpick(floors),fB=rpick(floors.filter(f=>f!==fA)),fC=rpick(floors);
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const per=x===0||y===0||x===w-1||y===h-1,corner=(x===0||x===w-1)&&(y===0||y===h-1);
+    out.push(per?(corner&&wall2?wall2:wall):(roof2&&y===(h>>1)?roof2:roof));inn.push(per?null:fA)}
+  const I=(x,y)=>y*w+x;const dx=rri(1,w-2);out[I(dx,h-1)]='door';
+  for(let x=2;x<w-2;x+=3)out[I(x,0)]='window';
+  for(let x=1;x<w-1;x++)if(Math.abs(x-dx)>1&&(x%3===1)&&x!==1&&x!==w-2)out[I(x,h-1)]='window';
+  if(h>=5){out[I(0,h>>1)]='window';out[I(w-1,h>>1)]='window'}
+  const iw=w-2,ih=h-2;
+  if(lvl>=1&&iw>=4){const vx=1+(iw>>1);for(let y=1;y<h-1;y++)inn[I(vx,y)]='iwall';inn[I(vx,rri(1,h-2))]='idoor';for(let y=1;y<h-1;y++)for(let x=vx+1;x<w-1;x++)inn[I(x,y)]=fB;
+    if(lvl>=3&&ih>=4){const hy=1+(ih>>1);for(let x=1;x<vx;x++)inn[I(x,hy)]='iwall';inn[I(rri(1,vx-1),hy)]='idoor';for(let y=hy+1;y<h-1;y++)for(let x=1;x<vx;x++)inn[I(x,y)]=fC}}
+  return{w,h,out,inn};
+}
+function newOffer(){
+  const p=freePlot(false);if(!p)return null;const rk=rankIdx();
+  const opts=TYPES.filter(t=>t[1]<=rk);const ty=opts[Math.min(opts.length-1,Math.max(0,opts.length-1-rri(0,2)))];
+  const lvl=Math.min(3,ty[1]+(rnd()<.3?1:0));
+  const w=clamp(5+lvl+rri(0,1),5,9),h=clamp(4+lvl+rri(0,1)-(w>7?1:0),4,7);
+  const bp=genBP(w,h,lvl);const cells=w*h+(w-2)*(h-2);
+  const j={id:S.nid++,client:rpick(NAMES),role:rpick(ROLES.filter(r=>r!=='ظابط'||rk>=1)),type:ty[0],plot:p.id,bp,lvl,pay:Math.round(cells*1.6*(1+lvl*.35)),rep:6+lvl*4+Math.round(cells/12),shirt:rpick(SHIRT),rebuild:!!S.builds[p.id]};
+  S.offers.push(j);attachClient(j);return j;
+}
+function acceptJob(j){
+  if(S.active){toast('خلّص الشغل اللي في إيدك الأول');return false}
+  S.offers=S.offers.filter(o=>o.id!==j.id);j.cur={out:j.bp.out.map(()=>null),inn:j.bp.inn.map(v=>v==null?null:null)};S.active=j;
+  const n=npcs.find(n=>n.job===j.id);if(n)n.job=null;
+  if(S.builds[j.plot]){delete S.builds[j.plot];refreshSolids();toast('هدّيت المبنى القديم… ابدأ من الأول 🧱')}
+  SFX.coin();toast(`اتفقنا! روح الأرض رقم ${ar(j.plot+1)} 🧱`);if(S.nextOffer>20)S.nextOffer=20;save();updMission();return true;
+}
+function score(j){let t=0,ok=0,to=0,oo=0,ti=0,oi=0;for(let i=0;i<j.bp.out.length;i++){to++;if(j.cur.out[i]===j.bp.out[i])oo++;if(j.bp.inn[i]!=null){ti++;if(j.cur.inn[i]===j.bp.inn[i])oi++}}t=to+ti;ok=oo+oi;return{all:ok/t,out:oo/to,inn:ti?oi/ti:1}}
+
+/* ---------------- canvas & render ---------------- */
+const cv=$('#game'),g=cv.getContext('2d');let VW=0,VH=0,SC=3;
+function resize(){SC=Math.max(2,Math.round(Math.min(innerWidth,innerHeight)/190));VW=Math.ceil(innerWidth/SC);VH=Math.ceil(innerHeight/SC);cv.width=VW;cv.height=VH;g.imageSmoothingEnabled=false}
+addEventListener('resize',()=>{resize();if(!$('#build').hidden)layoutBuild()});
+const TEX={};
+function mkTex(){
+  const mk=(f)=>{const c=document.createElement('canvas');c.width=c.height=TS;const x=c.getContext('2d');f(x);return c};
+  for(let v=0;v<4;v++){
+    TEX['g'+v]=mk(x=>{x.fillStyle='#4f7a34';x.fillRect(0,0,16,16);for(let i=0;i<10;i++){x.fillStyle=i%2?'#5d8a3c':'#456c2d';x.fillRect((hash(v*9+i,i)*15)|0,(hash(i,v*7+i)*15)|0,1,2)}});
+    TEX['r'+v]=mk(x=>{x.fillStyle='#8c8174';x.fillRect(0,0,16,16);x.fillStyle='#776d61';for(let r=0;r<4;r++){x.fillRect(0,r*4+3,16,1);for(let c=(r%2?4:0)+v;c<16;c+=8)x.fillRect(c,r*4,1,4)}x.fillStyle='#9a8f82';x.fillRect((v*5)%14,(v*3)%14,2,1)});
+    TEX['s'+v]=mk(x=>{x.fillStyle='#c9ac78';x.fillRect(0,0,16,16);for(let i=0;i<8;i++){x.fillStyle=i%2?'#d6bb88':'#b89a68';x.fillRect((hash(i,v)*15)|0,(hash(v,i*3)*15)|0,1,1)}});
+    TEX['f'+v]=mk(x=>{x.fillStyle='#6b5530';x.fillRect(0,0,16,16);x.fillStyle='#7d9a3a';for(let r=1;r<16;r+=4)for(let c=v%2;c<16;c+=2)x.fillRect(c,r,1,2)});
+  }
+  TEX.d=mk(x=>{x.fillStyle='#7a5c3a';x.fillRect(0,0,16,16);x.fillStyle='#8a6a44';for(let i=0;i<6;i++)x.fillRect((hash(i,3)*15)|0,(hash(4,i)*15)|0,2,1)});
+  TEX.b=mk(x=>{x.fillStyle='#7a5530';x.fillRect(0,0,16,16);x.fillStyle='#5a3d22';for(let c=0;c<16;c+=4)x.fillRect(c,0,1,16)});
+}
+function drawTile(t,x,y,sx,sy,time){
+  const v=(hash(x,y)*4)|0;
+  if(t===T_GRASS||t===T_TREE)g.drawImage(TEX['g'+v],sx,sy);
+  else if(t===T_ROAD)g.drawImage(TEX['r'+v],sx,sy);
+  else if(t===T_SAND)g.drawImage(TEX['s'+v],sx,sy);
+  else if(t===T_FARM)g.drawImage(TEX['f'+v],sx,sy);
+  else if(t===T_BRIDGE)g.drawImage(TEX.b,sx,sy);
+  else if(t===T_WATER){g.fillStyle='#2e5f86';g.fillRect(sx,sy,TS,TS);g.fillStyle='#4a82a8';const o=((time*6+x*5+y*3)|0)%16;g.fillRect(sx+o%12,sy+((y*7)%12)+2,4,1);g.fillRect(sx+(o+7)%12,sy+((y*3+x)%10)+4,3,1)}
+}
+function rect(c,x,y,w,h){g.fillStyle=c;g.fillRect(x|0,y|0,w|0,h|0)}
+function drawChar(c,sx,sy,time){
+  const fr=c.mov?Math.floor(c.walk)%2:0;
+  rect('rgba(0,0,0,.28)',sx-4,sy-1,8,2);
+  rect('#2a2018',sx-3,sy-4,2,3+(fr?-1:0));rect('#2a2018',sx+1,sy-4,2,3+(fr?0:-1));
+  rect(c.shirt,sx-3,sy-9,6,5);rect(shade(c.shirt.startsWith('#')?c.shirt:'#888888',-.25),sx-3,sy-5,6,1);
+  rect(c.skin,sx-4,sy-8+(fr?1:0),1,3);rect(c.skin,sx+3,sy-8+(fr?0:1),1,3);
+  rect(c.skin,sx-2,sy-13,4,4);
+  if(c.dir===1)rect(c.hair,sx-2,sy-13,4,4);else{rect(c.hair,sx-2,sy-14,4,2);if(c.dir===0){rect('#1a1209',sx-1,sy-11,1,1);rect('#1a1209',sx+1,sy-11,1,1)}else if(c.dir===2)rect('#1a1209',sx-2,sy-11,1,1);else rect('#1a1209',sx+1,sy-11,1,1)}
+  if(c.helmet){rect('#f2c33a',sx-3,sy-15,6,2);rect('#c99a20',sx-3,sy-13,6,1)}
+  if(c.guard){rect('#9a9a9a',sx+4,sy-14,1,10);rect('#d0d0d0',sx+3,sy-16,3,2)}
+  if(c.crown){rect('#e3a63b',sx-2,sy-16,4,2);rect('#e3a63b',sx-2,sy-17,1,1);rect('#e3a63b',sx+1,sy-17,1,1)}
+  if(c.bub){const b=Math.sin(time*5)>0?0:1;rect('#2a1a08',sx-3,sy-24+b,7,8);rect(c.bub==='!'?'#f2d54a':'#7fd0e0',sx-2,sy-23+b,5,6);rect('#2a1a08',sx,sy-22+b,1,3);rect('#2a1a08',sx,sy-18+b,1,1)}
+}
+function drawObj(o,sx,sy,time){
+  const W=o.w*TS,H=o.h*TS;
+  if(o.k==='house'||o.k==='palace'){
+    const wall=o.k==='palace'?'#e6dcc4':o.wall,roof=o.k==='palace'?'#c79a3b':o.roof;
+    rect(roof,sx,sy,W,H-TS);for(let r=4;r<H-TS;r+=5)rect(shade(roof,-.18),sx,sy+r,W,1);rect(shade(roof,.2),sx,sy,W,2);rect(shade(roof,-.35),sx,sy+H-TS-2,W,2);
+    rect(wall,sx,sy+H-TS,W,TS);rect(shade(wall,-.2),sx,sy+H-2,W,2);
+    const dxp=o.k==='palace'?(o.door-o.x)*TS:o.door*TS;rect('#3a2210',sx+dxp+4,sy+H-12,8,12);
+    for(let x=0;x<o.w;x++)if(x*TS!==dxp&&(x%2===0||o.k==='palace')){rect('#2b2016',sx+x*TS+4,sy+H-11,7,6);rect('#86c9dc',sx+x*TS+5,sy+H-10,5,4)}
+    if(o.k==='palace'){for(let x=0;x<W;x+=6)rect('#c79a3b',sx+x,sy-3,4,3);const e=EMP[S.emp];rect('#5a3d22',sx+W/2-1,sy-16,1,14);rect(e.c,sx+W/2,sy-16,7,5)}
+  }else if(o.k==='pwall'){rect('#c9b48a',sx,sy,TS,TS);rect('#a48f66',sx,sy+TS-4,TS,4);rect('#e0cfa4',sx,sy,TS,2);rect('#a48f66',sx+7,sy+2,1,10)}
+  else if(o.k==='banner'){const e=EMP[S.emp];rect('#5a3d22',sx+7,sy-14,2,22);rect(e.c,sx+9,sy-14,6,10);rect(shade(e.c,-.3),sx+9,sy-5,6,1)}
+  else if(o.k==='stall'){rect('#6b4724',sx+1,sy+4,2,12);rect('#6b4724',sx+W-3,sy+4,2,12);rect('#8b5a2b',sx,sy+8,W,6);for(let x=0;x<W;x+=8){rect(o.c,sx+x,sy-2,4,8);rect('#f4f0e6',sx+x+4,sy-2,4,8)}rect('#e3a63b',sx+5,sy+6,3,2);rect('#3f8f3a',sx+12,sy+6,3,2);rect('#c62f2f',sx+20,sy+6,3,2)}
+  else if(o.k==='board'){rect('#5a3d22',sx+3,sy+6,2,10);rect('#5a3d22',sx+11,sy+6,2,10);rect('#8b5a2b',sx,sy-2,16,11);rect('#e8dcbc',sx+2,sy,5,4);rect('#e8dcbc',sx+9,sy+1,5,5);rect('#e8dcbc',sx+3,sy+5,4,3);if(S.offers.length){const b=Math.sin(time*5)>0?0:1;rect('#2a1a08',sx+4,sy-13+b,7,9);rect('#f2d54a',sx+5,sy-12+b,5,7);rect('#2a1a08',sx+7,sy-11+b,1,3);rect('#2a1a08',sx+7,sy-7+b,1,1)}}
+  else if(o.k==='well'){rect('#8c8174',sx+1,sy+3,14,12);rect('#1d3346',sx+4,sy+6,8,6);rect('#5a3d22',sx+2,sy-6,2,10);rect('#5a3d22',sx+12,sy-6,2,10);rect('#6b4724',sx+1,sy-7,14,3)}
+  else if(o.k==='tree'){rect('rgba(0,0,0,.25)',sx+2,sy+11,12,4);rect('#5a3d22',sx+6,sy+6,4,8);const c=o.v<.5?'#2f5a26':'#3a6a2c';rect(c,sx,sy-4,16,12);rect(c,sx+2,sy-8,12,4);rect(shade(c,.18),sx+3,sy-6,5,3);rect(shade(c,-.25),sx,sy+6,16,2)}
+}
+function drawBuild(pid,sx,sy){const b=S.builds[pid];
+  for(let y=0;y<b.h;y++)for(let x=0;x<b.w;x++){const m=b.out[y*b.w+x];if(m)drawMat(g,m,sx+x*TS,sy+y*TS,TS,x,y);else rect('#5a4630',sx+x*TS,sy+y*TS,TS,TS)}
+  rect('rgba(0,0,0,.25)',sx,sy+b.h*TS,b.w*TS,3);
+  const F=S.flag;rect('#3a2818',sx+2,sy-10,1,12);for(let y=0;y<8;y+=2)for(let x=0;x<12;x+=2)rect(PAL[F[y*12+x]],sx+3+x/2,sy-10+y/2,1,1);
+  if(b.royal){rect('#e3a63b',sx+b.w*TS-8,sy-6,6,2);rect('#e3a63b',sx+b.w*TS-8,sy-8,1,2);rect('#e3a63b',sx+b.w*TS-4,sy-8,1,2)}
+}
+function drawPlot(p,sx,sy,time){
+  for(let y=0;y<p.h;y++)for(let x=0;x<p.w;x++)g.drawImage(TEX.d,sx+x*TS,sy+y*TS);
+  const act=S.active&&S.active.plot===p.id;
+  for(const[a,b]of[[0,0],[p.w*TS-3,0],[0,p.h*TS-6],[p.w*TS-3,p.h*TS-6]]){rect('#d6c08c',sx+a,sy+b,3,6);rect(act?'#f2d54a':'#c62f2f',sx+a,sy+b,3,2)}
+  rect('#5a3d22',sx+6,sy+p.h*TS-14,2,10);rect('#e8dcbc',sx+2,sy+p.h*TS-20,10,8);rect('#2a1a08',sx+5,sy+p.h*TS-18,4,4);
+  if(act){const j=S.active,bx=(p.w-j.bp.w)>>1,by=(p.h-j.bp.h)>>1;g.globalAlpha=.35+.15*Math.sin(time*4);g.strokeStyle='#f2d54a';g.lineWidth=1;g.strokeRect(sx+bx*TS+.5,sy+by*TS+.5,j.bp.w*TS-1,j.bp.h*TS-1);g.globalAlpha=1;
+    for(let y=0;y<j.bp.h;y++)for(let x=0;x<j.bp.w;x++){const m=j.cur.out[y*j.bp.w+x];if(m)drawMat(g,m,sx+(bx+x)*TS,sy+(by+y)*TS,TS,x,y)}}
+}
+let camX=0,camY=0;
+function render(time){
+  camX=clamp(P.x*TS-VW/2,0,MW*TS-VW);camY=clamp(P.y*TS-VH/2,0,MH*TS-VH);if(MW*TS<VW)camX=(MW*TS-VW)/2;if(MH*TS<VH)camY=(MH*TS-VH)/2;
+  const cx=Math.round(camX),cy=Math.round(camY);g.fillStyle='#1b2a12';g.fillRect(0,0,VW,VH);
+  const x0=Math.max(0,cx/TS|0),y0=Math.max(0,cy/TS|0),x1=Math.min(MW-1,((cx+VW)/TS|0)+1),y1=Math.min(MH-1,((cy+VH)/TS|0)+1);
+  for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)drawTile(tiles[y*MW+x],x,y,x*TS-cx,y*TS-cy,time);
+  for(const p of plots){if(p.x*TS-cx>VW||p.y*TS-cy>VH||(p.x+p.w)*TS-cx<0||(p.y+p.h)*TS-cy<0)continue;drawPlot(p,p.x*TS-cx,p.y*TS-cy,time)}
+  const list=[];
+  for(const o of objs)list.push({y:o.y+o.h,f:()=>drawObj(o,o.x*TS-cx,o.y*TS-cy,time),x:o.x,w:o.w});
+  for(const t of trees)list.push({y:t.y+1,f:()=>drawObj(t,t.x*TS-cx,t.y*TS-cy,time),x:t.x,w:1});
+  for(const p of plots){const r=buildRect(p.id);if(r)list.push({y:r.y+r.h,f:()=>drawBuild(p.id,r.x*TS-cx,r.y*TS-cy),x:r.x,w:r.w})}
+  for(const n of npcs){n.bub=n.job?'!':n.msg?'!':null;list.push({y:n.y,f:()=>drawChar(n,Math.round(n.x*TS-cx),Math.round(n.y*TS-cy),time),x:n.x,w:0})}
+  list.push({y:P.y,f:()=>drawChar(P,Math.round(P.x*TS-cx),Math.round(P.y*TS-cy),time),x:P.x,w:0});
+  list.sort((a,b)=>a.y-b.y);for(const it of list){const sx=it.x*TS-cx;if(sx>VW+40||sx+it.w*TS<-40)continue;it.f()}
+  // night
+  const ph=(S.t%240)/240,night=ph>.72?Math.min(1,(ph-.72)/.08):ph<.06?1-ph/.06:0;
+  if(night>0){g.fillStyle=`rgba(12,16,48,${.42*night})`;g.fillRect(0,0,VW,VH)}
+  // target arrow
+  const tg=target();if(tg){const tx=tg[0]*TS-cx,ty=tg[1]*TS-cy;if(tx<0||ty<0||tx>VW||ty>VH){const ang=Math.atan2(ty-VH/2,tx-VW/2),m=14;const ax=clamp(VW/2+Math.cos(ang)*VW,m,VW-m),ay=clamp(VH/2+Math.sin(ang)*VH,m+16,VH-m);g.save();g.translate(ax|0,ay|0);g.rotate(ang);g.fillStyle='#2a1a08';g.beginPath();g.moveTo(8,0);g.lineTo(-6,-7);g.lineTo(-6,7);g.fill();g.fillStyle='#f2d54a';g.beginPath();g.moveTo(6,0);g.lineTo(-4,-5);g.lineTo(-4,5);g.fill();g.restore()}}
+}
+
+/* ---------------- minimap ---------------- */
+const mini=$('#mini'),mg=mini.getContext('2d');let miniBase=null;
+function tileCol(t){return t===T_ROAD?'#9b8f80':t===T_WATER?'#2e5f86':t===T_SAND?'#c9ac78':t===T_TREE?'#2a4f22':t===T_FARM?'#6b6a30':t===T_BRIDGE?'#7a5530':'#4f7a34'}
+function mkMiniBase(){const c=document.createElement('canvas');c.width=MW;c.height=MH;const x=c.getContext('2d');for(let y=0;y<MH;y++)for(let i=0;i<MW;i++){x.fillStyle=tileCol(tAt(i,y));x.fillRect(i,y,1,1)}for(const o of objs){x.fillStyle=o.k==='palace'?'#e3a63b':o.k==='house'?o.roof:o.k==='pwall'?'#e0cfa4':'#8b5a2b';x.fillRect(o.x,o.y,o.w,o.h)}for(const p of plots){x.fillStyle='#7a5c3a';x.fillRect(p.x,p.y,p.w,p.h)}miniBase=c}
+function drawMap(ctx,s,time){ctx.imageSmoothingEnabled=false;ctx.drawImage(miniBase,0,0,MW*s,MH*s);
+  for(const p of plots){const r=buildRect(p.id);if(r){ctx.fillStyle=S.builds[p.id].royal?'#ffd27a':'#d7c8b0';ctx.fillRect(r.x*s,r.y*s,r.w*s,r.h*s)}}
+  const tg=target();if(tg&&Math.sin(time*6)>-.3){ctx.fillStyle='#f2d54a';ctx.fillRect(tg[0]*s-s*1.5,tg[1]*s-s*1.5,s*3,s*3)}
+  ctx.fillStyle='#fff';ctx.fillRect(P.x*s-s,P.y*s-s,s*2,s*2);ctx.fillStyle='#c62f2f';ctx.fillRect(P.x*s-s/2,P.y*s-s/2,s,s)}
+
+/* ---------------- HUD ---------------- */
+const toastEl=$('#toast');let toastT=0;
+function toast(t,ms=2200){toastEl.textContent=t;toastEl.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>toastEl.classList.remove('on'),ms)}
+function drawFlag(c,F){const x=c.getContext('2d');c.width=12;c.height=8;for(let i=0;i<96;i++){x.fillStyle=PAL[F[i]];x.fillRect(i%12,i/12|0,1,1)}}
+function hud(){$('#sMoney').textContent=ar(S.money);$('#sRep').textContent=ar(S.rep);$('#sHp').textContent=ar(S.hp);$('#sDay').textContent='يوم '+ar(Math.floor(S.t/240)+1)}
+function target(){const j=S.active;if(j){const p=plots[j.plot];return[p.x+p.w/2,p.y+p.h/2]}if(S.kingCalled&&!S.title)return[palace.door.x+.5,palace.y+palace.h];if(S.offers.length&&board)return[board.x+.5,board.y+1];return null}
+function updMission(){const m=$('#mission');const j=S.active;
+  if(j)m.innerHTML=`📜 ${j.type} لـ<b>${j.client}</b> (${j.role}) · الأرض ${ar(j.plot+1)} · الأجر ${ar(j.pay)}💰`;
+  else if(S.kingCalled&&!S.title)m.innerHTML='👑 الملك عايزك في القصر. روح لبوابة القصر.';
+  else if(S.offers.length)m.innerHTML='📜 فيه ناس عايزة تبني. روح لوحة الطلبات في السوق، أو كلّم حد فوقه <b>!</b>';
+  else m.innerHTML='⏳ مفيش طلبات دلوقتي… لف في المدينة لحد ما حد يطلبك.'}
+function sayChoice(who,text,choices){return new Promise(res=>{mode='dialog';const sh=$('#sheet');sh.hidden=false;$('#who').textContent=who;$('#sayT').textContent=text;const ch=$('#choices');ch.innerHTML='';(choices||['تمام']).forEach((c,i)=>{const b=document.createElement('button');b.className='btn'+(i===0?' pri':'');b.textContent=c;b.onclick=()=>{SFX.ui();sh.hidden=true;mode='play';res(i)};ch.appendChild(b)})})}
+function panel(html,setup){return new Promise(res=>{mode='panel';const p=$('#panel'),c=$('#card');c.innerHTML=html;p.hidden=false;const close=v=>{p.hidden=true;mode='play';res(v)};const x=c.querySelector('.x');if(x)x.onclick=()=>{SFX.ui();close()};setup&&setup(c,close)})}
+
+/* ---------------- interaction ---------------- */
+function nearest(){
+  let best=null,bd=1.3;
+  for(const n of npcs){const d=Math.hypot(n.x-P.x,n.y-P.y);if(d<bd){bd=d;best={k:'npc',n,label:n.job||n.msg?'كلّم ❗':'كلّم 💬'}}}
+  if(board&&Math.hypot(board.x+.5-P.x,board.y+1.1-P.y)<1.4)return{k:'board',label:'الطلبات 📜'};
+  if(Math.hypot(palace.door.x+.5-P.x,palace.y+1+4.4-P.y)<1.5)return{k:'palace',label:'ادخل القصر 👑'};
+  if(S.active){const p=plots[S.active.plot];if(P.x>p.x-1&&P.x<p.x+p.w+1&&P.y>p.y-1&&P.y<p.y+p.h+1.2)return{k:'build',label:'ابني 🧱'}}
+  if(best)return best;
+  for(const o of objs)if(o.k==='house'&&Math.abs(P.x-(o.x+o.door+.5))<.8&&Math.abs(P.y-(o.y+o.h+.3))<.7)return{k:'door',label:'اخبط 🚪'};
+  return null}
+let near=null;const actBtn=$('#actBtn');
+function updAct(){near=nearest();if(near){actBtn.textContent=near.label;actBtn.classList.remove('idle')}else{actBtn.textContent='✋';actBtn.classList.add('idle')}}
+const CHAT=['النهارده الشمس نار…','سمعت إن الجيش بيجمع شباب جداد.','الملك بيحب البنّائين الشاطرين.','لو بنيت كويس الناس هتعرفك.','السوق زحمة النهارده.','فيه إمبراطوريات تانية بتبص على أرضنا…','جوزي عايز يبني دكان، بس الفلوس قليلة.','الرخام غالي، بس شكله يفتح النفس.'];
+async function act(){
+  if(mode!=='play'||!near)return;SFX.ui();const n=near;
+  if(n.k==='npc'){const c=n.n;
+    if(c.guard){if(S.kingCalled&&!S.title)return sayChoice('حارس القصر','ادخل. الملك مستنيك.');return sayChoice('حارس القصر','ارجع ورا! الملك مش بيقابل أي حد.\nلما اسمك يتعرف في المدينة… يمكن.')}
+    if(c.job){const j=S.offers.find(o=>o.id===c.job);if(!j){c.job=null;return}
+      const i=await sayChoice(`${c.name} (${c.role})`,`${j.rebuild?'عندي مبنى قديم على الأرض رقم '+ar(j.plot+1)+' وعايز أهدّه وأبني بداله':'عايز أبني '+j.type+' على الأرض رقم '+ar(j.plot+1)}.\nهديك الرسمة، وابنيه زيها بالظبط.\nالأجر: ${ar(j.pay)}💰`,['موافق 🤝','مش دلوقتي']);
+      if(i===0)acceptJob(j);return}
+    return sayChoice(`${c.name} (${c.role})`,rpick(CHAT))}
+  if(n.k==='board')return openTab('jobs');
+  if(n.k==='palace')return palaceVisit();
+  if(n.k==='door')return sayChoice('من ورا الباب',rpick(['مين؟… مش فاضيين.','لو جاي تبيع حاجة، مش عايزين!','روح يا ابني شوف شغلك.']));
+  if(n.k==='build')return openBuild();
+}
+async function palaceVisit(){const e=EMP[S.emp];
+  if(!S.kingCalled){return sayChoice('حارس القصر','ممنوع الدخول. الملك مش بيقابل غير المشهورين.')}
+  if(S.title){speak('أهلًا يا كبير المهندسين');return sayChoice(e.k+' 👑','أهلًا يا كبير المهندسين. الإمبراطورية فخورة بيك.')}
+  if(S.active&&!S.active.royal){return sayChoice(e.k+' 👑','خلّص الشغل اللي في إيدك… وتعالى. عندي ليك حاجة كبيرة.')}
+  if(S.active&&S.active.royal){return sayChoice(e.k+' 👑','جناحي لسه ما خلصش؟ أنا مبحبش الانتظار.')}
+  const line=`سمعت إنك أشطر بنّاء في ${e.n}. ابنيلي جناح جديد للقصر. لو طلع زي الرسمة بالظبط، هعيّنك كبير المهندسين.`;speak(line);
+  const i=await sayChoice(e.k+' 👑',line,['حاضر يا مولاي 👑','محتاج وقت']);
+  if(i===0){const p=freePlot(true);const bp=genBP(9,7,3);const j={id:S.nid++,client:e.k,role:'الملك',type:'جناح القصر',plot:p.id,bp,lvl:4,pay:600,rep:60,royal:true,rebuild:!!S.builds[p.id]};S.offers=S.offers.filter(o=>o.plot!==p.id);acceptJob(j)}
+}
+
+/* ---------------- build mode ---------------- */
+let bView='out',bMat='brick',bJob=null,bCell=16,bOX=0,bOY=0;const bg=$('#bgrid'),bgc=bg.getContext('2d');
+function openBuild(){toastEl.classList.remove('on');bJob=S.active;mode='build';$('#build').hidden=false;$('#bName').textContent=`${bJob.type} — ${bJob.client}`;bView='out';bMat='brick';setView('out');layoutBuild();
+  if(!S.tip){S.tip=true;save();setTimeout(()=>sayChoice('نصيحة 🧱','بص على الرسمة اللي فوق، واختار الخامة من تحت، ودوس على المربعات (أو اسحب صباعك).\nبدّل بين «بره» (الحيطان والسقف) و«جوه» (الأرضيات والأوض).\nكل ما تطابق الرسمة أكتر، تاخد فلوس وسمعة أكتر.').then(()=>mode='build'),200)}}
+function closeBuild(){$('#build').hidden=true;mode='play';save()}
+function setView(v){bView=v;$('#vOut').classList.toggle('on',v==='out');$('#vIn').classList.toggle('on',v==='in');const ms=v==='out'?OUTM:INM;if(!ms.includes(bMat))bMat=ms[0];buildPal();drawThumb();drawGrid()}
+function buildPal(){const el=$('#bpal');el.innerHTML='';const ms=[...(bView==='out'?OUTM:INM),'erase'];
+  for(const k of ms){const b=document.createElement('button');b.className='mat'+(k===bMat?' on':'');const c=document.createElement('canvas');c.width=c.height=16;const x=c.getContext('2d');if(k==='erase'){x.fillStyle='#2a2018';x.fillRect(0,0,16,16);x.fillStyle='#c62f2f';for(let i=2;i<14;i++){x.fillRect(i,i,2,1);x.fillRect(15-i,i,2,1)}}else drawMat(x,k,0,0,16,1,1);b.appendChild(c);const s=document.createElement('span');s.textContent=k==='erase'?'امسح':MATS[k].n;b.appendChild(s);b.onclick=()=>{bMat=k;SFX.tap();buildPal()};el.appendChild(b)}}
+function layoutBuild(){if(!bJob)return;const wr=$('#bwrap').getBoundingClientRect();const w=bJob.bp.w,h=bJob.bp.h;bCell=Math.max(12,Math.floor(Math.min((wr.width-16)/w,(wr.height-16)/h)));bg.width=w*bCell;bg.height=h*bCell;bg.style.width=bg.width+'px';bg.style.height=bg.height+'px';drawGrid()}
+function drawGrid(){if(!bJob)return;const{w,h,inn}=bJob.bp,c=bJob.cur,s=bCell;bgc.imageSmoothingEnabled=false;bgc.fillStyle='#2a2018';bgc.fillRect(0,0,bg.width,bg.height);
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=y*w+x,X=x*s,Y=y*s;
+    if(bView==='out'){const m=c.out[i];if(m)drawMat(bgc,m,X,Y,s,x,y);else{bgc.fillStyle=(x+y)%2?'#3a2c20':'#33271c';bgc.fillRect(X,Y,s,s)}}
+    else{if(inn[i]==null){const m=c.out[i];if(m)drawMat(bgc,m,X,Y,s,x,y);else{bgc.fillStyle='#33271c';bgc.fillRect(X,Y,s,s)}bgc.fillStyle='rgba(10,7,4,.62)';bgc.fillRect(X,Y,s,s)}else{const m=c.inn[i];if(m)drawMat(bgc,m,X,Y,s,x,y);else{bgc.fillStyle=(x+y)%2?'#3a2c20':'#33271c';bgc.fillRect(X,Y,s,s)}}}
+    bgc.fillStyle='rgba(0,0,0,.35)';bgc.fillRect(X,Y,s,1);bgc.fillRect(X,Y,1,s)}
+  const sc=score(bJob);$('#bPct').textContent=ar(Math.round(sc.all*100))+'٪';$('#bSub').textContent=`بره ${ar(Math.round(sc.out*100))}٪ · جوه ${ar(Math.round(sc.inn*100))}٪`}
+function drawBP(c,view,s){const{w,h,out,inn}=bJob.bp;c.width=w*s;c.height=h*s;const x=c.getContext('2d');x.imageSmoothingEnabled=false;for(let yy=0;yy<h;yy++)for(let xx=0;xx<w;xx++){const i=yy*w+xx;const m=view==='out'?out[i]:(inn[i]==null?out[i]:inn[i]);drawMat(x,m,xx*s,yy*s,s,xx,yy);if(view==='in'&&inn[i]==null){x.fillStyle='rgba(10,7,4,.55)';x.fillRect(xx*s,yy*s,s,s)}}}
+function drawThumb(){const t=$('#bpThumb');drawBP(t,bView,16);t.style.width=(56*bJob.bp.w/bJob.bp.h)+'px'}
+let painting=false;
+function paintAt(ev){const r=bg.getBoundingClientRect();const x=Math.floor((ev.clientX-r.left)/r.width*bJob.bp.w),y=Math.floor((ev.clientY-r.top)/r.height*bJob.bp.h);if(x<0||y<0||x>=bJob.bp.w||y>=bJob.bp.h)return;const i=y*bJob.bp.w+x;
+  if(bView==='in'&&bJob.bp.inn[i]==null){if(!painting)toast('ده حيطة بره… عدّلها من «بره»',1400);return}
+  const L=bView==='out'?bJob.cur.out:bJob.cur.inn;const v=bMat==='erase'?null:bMat;if(L[i]===v)return;L[i]=v;SFX.place();drawGrid()}
+bg.addEventListener('pointerdown',e=>{if(mode!=='build')return;e.preventDefault();bg.setPointerCapture(e.pointerId);paintAt(e);painting=true});
+bg.addEventListener('pointermove',e=>{if(painting&&mode==='build')paintAt(e)});
+addEventListener('pointerup',()=>painting=false);
+$('#vOut').onclick=()=>{SFX.ui();setView('out')};$('#vIn').onclick=()=>{SFX.ui();setView('in')};
+$('#bExit').onclick=()=>{SFX.ui();closeBuild();toast('الشغل محفوظ. ارجع كمّل وقت ما تحب')};
+$('#bpThumb').onclick=()=>{SFX.ui();mode='panel';panel(`<button class="x" aria-label="اقفل">✖</button><h2>الرسمة المطلوبة</h2><p class="muted">${bJob.type} لـ${bJob.client} — ${ar(bJob.bp.w)}×${ar(bJob.bp.h)}</p><div class="cols" id="bpBig"><div>بره (الحيطان والسقف)<canvas id="bA"></canvas></div><div>جوه (الأرضيات والأوض)<canvas id="bB"></canvas></div></div>`,c=>{drawBP(c.querySelector('#bA'),'out',16);drawBP(c.querySelector('#bB'),'in',16)}).then(()=>mode='build')};
+$('#bDone').onclick=async()=>{SFX.ui();const sc=score(bJob);mode='panel';
+  const i=await panel(`<h2>تسلّم الشغل؟</h2><p>المطابقة دلوقتي <b style="color:var(--gold2)">${ar(Math.round(sc.all*100))}٪</b>. ${sc.all<.6?'لسه فيه حاجات كتير مش زي الرسمة.':sc.all<1?'قربت، بس فيه شوية فروق.':'زي الرسمة بالظبط!'}</p><div class="row"><button class="btn pri" id="y">سلّم الشغل</button><button class="btn" id="n">كمّل بناء</button></div>`,(c,close)=>{c.querySelector('#y').onclick=()=>close(1);c.querySelector('#n').onclick=()=>close(0)});
+  if(i!==1){mode='build';return}finishJob(sc.all)};
+async function finishJob(pct){
+  const j=bJob;$('#build').hidden=true;mode='busy';const p100=Math.round(pct*100);
+  if(j.royal&&pct<.8){S.rep=Math.max(0,S.rep-15);SFX.bad();const e=EMP[S.emp];const l='ده مش زي الرسمة! أنا قلت بالظبط. ارجع صلّحه.';speak(l);await sayChoice(e.k+' 👑',l+`\n(المطابقة ${ar(p100)}٪ — الملك عايز ٨٠٪ على الأقل · السمعة −١٥)`);hud();save();mode='play';return}
+  let pay=Math.round(j.pay*(pct<.4?.2:pct)),rep=Math.round(j.rep*(pct<.4?-.5:pct));if(pct>=1){pay=Math.round(pay*1.2);rep+=3}
+  S.money+=pay;S.rep=Math.max(0,S.rep+rep);S.done++;
+  S.builds[j.plot]={w:j.bp.w,h:j.bp.h,out:j.cur.out.map((m,i)=>m||'lime'),royal:!!j.royal,by:j.client};S.active=null;bJob=null;refreshSolids();
+  // push player out if inside
+  let tries=0;while(blocked(P.x,P.y)&&tries<60){P.y+=.25;tries++}
+  const lines=pct>=1?['ده تحفة! بالظبط زي ما كنت عايز!','يا سلام! هقول لكل الناس عليك.']:pct>=.8?['حلو… فيه حاجات بسيطة مش زي الرسمة، بس ماشي.','شغل نضيف.']:pct>=.4?['إيه ده؟ نص الحاجات غلط! هدفعلك أقل.','مش ده اللي اتفقنا عليه…']:['ده إيه ده؟! ده مش بيتي! خد قرشين وامشي.'];
+  if(pay>0)SFX.coin();else SFX.bad();
+  if(j.royal){S.title='كبير المهندسين';SFX.fan();const e=EMP[S.emp];const l=`ممتاز! من النهارده انت كبير المهندسين في ${e.n}.`;speak(l);await sayChoice(e.k+' 👑',l+`\n(المطابقة ${ar(p100)}٪ · +${ar(pay)}💰 · ⭐ +${ar(rep)})`);hud();save();updMission();await stageEnd();mode='play';return}
+  await sayChoice(`${j.client} (${j.role})`,rpick(lines)+`\n\nالمطابقة ${ar(p100)}٪ · الأجر ${ar(pay)}💰 · السمعة ${rep>=0?'+':''}${ar(rep)}⭐`);
+  const r0=RANKS.filter(r=>S.rep-rep<r[0]&&S.rep>=r[0]);if(r0.length){SFX.fan();toast(`🎉 اترقّيت: ${r0[r0.length-1][1]}`,3200)}
+  hud();save();updMission();mode='play';
+}
+async function stageEnd(){const e=EMP[S.emp];await panel(`<p class="big">كبير المهندسين 👑</p><p style="text-align:center">بدأت صبي بنّاء… ودلوقتي انت أقرب واحد للملك في ${e.n}.</p><div class="path"><div>✅ 🧱 طريق البناء — خلص</div><div>🔒 ⚔️ تدخل الجيش وتترقّى — المرحلة الجاية</div><div>🔒 👑 تبقى الحاكم وتعلن الحروب — بعدها</div></div><p class="muted" style="text-align:center">تقدر تكمّل تبني للناس وتجمع فلوس وسمعة.</p><div class="row" style="justify-content:center"><button class="btn pri" id="k">كمّل</button></div>`,(c,close)=>c.querySelector('#k').onclick=()=>close())}
+
+/* ---------------- menus ---------------- */
+let curTab='me';
+function openTab(t){curTab=t;SFX.ui();return showMenu()}
+function showMenu(){const e=EMP[S.emp];const tabs=[['me','👤 أنا'],['jobs','📜 المهام'],['flag','🏳️ علمي'],['set','⚙️ الإعدادات'],['army','⚔️ الجيش'],['king','👑 المملكة']];
+  const rk=rankIdx(),next=RANKS[rk+1];const pr=next?(S.rep-RANKS[rk][0])/(next[0]-RANKS[rk][0]):1;
+  let body='';
+  if(curTab==='me')body=`<div class="row" style="gap:12px;align-items:center"><canvas id="fl" width="12" height="8" style="width:72px;height:48px;image-rendering:pixelated;border:2px solid var(--line)"></canvas><div><b style="font-size:20px">${S.name||'من غير اسم'}</b><div class="muted">${rankName()} · ${e.n}</div></div></div>
+    <h3>بياناتك</h3><div class="kv"><b>اتولدت في</b><span>${e.n} — مدينة ${e.city}</span><b>الحاكم</b><span>${e.k}</span><b>شغلك</b><span>عامل بناء 🧱</span><b>الرتبة</b><span>${rankName()}</span><b>الشغلانات اللي خلّصتها</b><span>${ar(S.done)}</span><b>الفلوس</b><span>${ar(S.money)}💰</span></div>
+    <h3>السمعة ${next?'للرتبة الجاية: '+next[1]:''}</h3><div class="bar"><i style="width:${Math.round(pr*100)}%"></i></div><p class="muted">⭐ ${ar(S.rep)}${next?' من '+ar(next[0]):''}</p>
+    <h3>الطريق للحكم</h3><div class="path">${RANKS.map(r=>`<div>${S.rep>=r[0]?'✅':'⬜'} ${r[1]} <span class="muted">(${ar(r[0])}⭐)</span></div>`).join('')}<div>${S.title?'✅':'⬜'} كبير المهندسين 👑 <span class="muted">(الملك يعيّنك)</span></div><div>🔒 ⚔️ الجيش — المرحلة الجاية</div></div>`;
+  else if(curTab==='jobs'){const j=S.active;body=`<h3>الشغل الحالي</h3>${j?`<div class="job"><div><div class="t">${j.type} لـ${j.client}</div><div class="s">${j.role} · الأرض ${ar(j.plot+1)} · ${ar(j.bp.w)}×${ar(j.bp.h)} · ${ar(j.pay)}💰</div></div></div>`:'<p class="muted">مفيش. اختار طلب من تحت.</p>'}
+    <h3>الطلبات المتاحة</h3>${S.offers.length?S.offers.map(o=>`<div class="job"><div><div class="t">${o.rebuild?'هدّ وابني ':''}${o.type} لـ${o.client}</div><div class="s">${o.role} · الأرض ${ar(o.plot+1)} · ${ar(o.bp.w)}×${ar(o.bp.h)} · ${['سهل','متوسط','صعب','صعب جدًا'][Math.min(3,o.lvl)]}</div></div><div class="row"><b style="color:var(--gold2)">${ar(o.pay)}💰</b><button class="btn pri" data-a="${o.id}" ${j?'disabled':''}>اقبل</button></div></div>`).join(''):'<p class="muted">مفيش طلبات دلوقتي. استنى شوية.</p>'}`}
+  else if(curTab==='flag')body=`<p>ده علمك. هيظهر على كل مبنى تبنيه، ولما تبقى حاكم هيبقى علم إمبراطوريتك.</p><canvas id="fl" width="12" height="8" style="width:180px;height:120px;image-rendering:pixelated;border:2px solid var(--line)"></canvas><div class="row" style="margin-top:10px"><button class="btn pri" id="edf">✏️ عدّل العلم</button></div>`;
+  else if(curTab==='set')body=`<div class="path"><div><button class="btn" id="tS">${S.sfx?'🔊':'🔇'} أصوات اللعبة: ${S.sfx?'شغالة':'مقفولة'}</button></div><div><button class="btn" id="tT">${S.tts?'🗣️':'🤐'} صوت الملوك: ${S.tts?'شغال':'مقفول'}</button></div></div><h3>مسح اللعبة</h3><p class="muted">هتبدأ من الأول: علم جديد ومولد جديد.</p><button class="btn red" id="del">🗑️ امسح وابدأ من الأول</button>`;
+  else if(curTab==='army')body=`<p class="big">🔒</p><p style="text-align:center">الجيش هيفتح في المرحلة الجاية: تدخل عسكري وتترقّى لحد لواء، وتجهّز الجيش وتبعته يحارب.</p>`;
+  else body=`<p class="big">🔒</p><p style="text-align:center">لما تبقى الحاكم: تبني وترتّب المملكة، وتعلن حروب، وتحتل أراضي.</p>`;
+  return panel(`<button class="x" aria-label="اقفل">✖</button><div class="tabs">${tabs.map(([k,n])=>`<button class="tab${k===curTab?' on':''}${k==='army'||k==='king'?' lock':''}" data-t="${k}">${n}</button>`).join('')}</div>${body}`,(c,close)=>{
+    c.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{curTab=b.dataset.t;SFX.ui();close();showMenu()});
+    const fl=c.querySelector('#fl');if(fl)drawFlag(fl,S.flag);
+    c.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{const o=S.offers.find(o=>o.id==b.dataset.a);if(o&&acceptJob(o)){close()}});
+    const ed=c.querySelector('#edf');if(ed)ed.onclick=async()=>{close();await flagEditor(false);curTab='flag';showMenu()};
+    const tS=c.querySelector('#tS');if(tS)tS.onclick=()=>{S.sfx=!S.sfx;save();close();showMenu()};
+    const tT=c.querySelector('#tT');if(tT)tT.onclick=()=>{S.tts=!S.tts;save();close();showMenu()};
+    const del=c.querySelector('#del');if(del)del.onclick=()=>{if(del.dataset.k){try{localStorage.removeItem('empire1')}catch(e){}location.reload()}else{del.dataset.k=1;del.textContent='⚠️ متأكد؟ دوس تاني عشان تمسح'}};
+  })}
+$('#menuBtn').onclick=()=>{if(mode==='play'){aInit();openTab(curTab==='army'||curTab==='king'?'me':curTab)}};
+$('#bagBtn').onclick=()=>{if(mode!=='play')return;aInit();SFX.ui();const mine=Object.values(S.builds);
+  panel(`<button class="x" aria-label="اقفل">✖</button><h2>🎒 الشنطة</h2><div class="kv"><b>💰 فلوس</b><span>${ar(S.money)}</span><b>🧱 مسطرين وميزان</b><span>عدة البنّاء</span><b>📐 رسومات</b><span>${S.active?'رسمة '+S.active.type:'مفيش'}</span></div><h3>المباني اللي بنيتها (${ar(mine.length)})</h3>${mine.length?mine.map(b=>`<div class="job"><div><div class="t">${b.royal?'👑 جناح القصر':'مبنى'} لـ${b.by}</div><div class="s">${ar(b.w)}×${ar(b.h)}</div></div></div>`).join(''):'<p class="muted">لسه مبنيتش حاجة.</p>'}`)};
+$('#mini').onclick=()=>{if(mode!=='play')return;SFX.ui();let tab='city';
+  const show=()=>panel(`<button class="x" aria-label="اقفل">✖</button><div class="tabs"><button class="tab${tab==='city'?' on':''}" data-m="city">🏙️ المدينة</button><button class="tab${tab==='world'?' on':''}" data-m="world">🌍 العالم</button></div><canvas id="bm" style="width:100%;image-rendering:pixelated;border:2px solid var(--line);border-radius:4px"></canvas><p class="muted" id="lg"></p>`,(c,close)=>{
+    c.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{tab=b.dataset.m;close();show()});const m=c.querySelector('#bm');
+    if(tab==='city'){m.width=MW*4;m.height=MH*4;drawMap(m.getContext('2d'),4,1);c.querySelector('#lg').textContent=`مدينة ${EMP[S.emp].city} · ⬜ انت · 🟨 هدفك · الأراضي البني: أراضي البناء`}
+    else{drawWorld(m);c.querySelector('#lg').textContent='٤ إمبراطوريات. النجمة: مدينتك. الحروب والاحتلال هيفتحوا لما تبقى حاكم.'}});show()};
+function drawWorld(c){const W=96,H=60;c.width=W*4;c.height=H*4;const x=c.getContext('2d');x.imageSmoothingEnabled=false;const r=mulberry(S.seed+7);const seeds=EMP.map((e,i)=>[10+r()*76,8+r()*44]);
+  for(let y=0;y<H;y++)for(let i=0;i<W;i++){const sea=Math.sin(i/9)+Math.cos(y/7)+Math.sin((i+y)/13)<-1.2||i<3||y<2||i>W-4||y>H-3;if(sea){x.fillStyle=(i+y)%7?'#23506e':'#2a5d7e';x.fillRect(i*4,y*4,4,4);continue}let b=0,bd=1e9;seeds.forEach((s,k)=>{const d=Math.hypot(s[0]-i,s[1]-y)+hash(i,y)*3;if(d<bd){bd=d;b=k}});x.fillStyle=shade(EMP[b].c,-.15+hash(i>>1,y>>1)*.1);x.fillRect(i*4,y*4,4,4)}
+  x.font='bold 15px Tajawal, sans-serif';x.textAlign='center';EMP.forEach((e,k)=>{const[sx,sy]=seeds[k];x.fillStyle='rgba(0,0,0,.55)';x.fillText(e.n,sx*4+1,sy*4+1);x.fillStyle='#fff';x.fillText(e.n,sx*4,sy*4);if(k===S.emp){x.fillStyle='#ffd27a';x.font='bold 22px sans-serif';x.fillText('★',sx*4,sy*4+22);x.font='bold 15px Tajawal, sans-serif'}})}
+
+/* ---------------- flag editor ---------------- */
+function flagEditor(first){return new Promise(res=>{let col=2,tool='brush';const F=S.flag?S.flag.slice():defaultFlag();
+  panel(`<h2>${first?'ارسم علمك':'عدّل علمك'}</h2><p class="muted">اختار لون ودوس على المربعات. العلم ده هيبقى علامتك، ولما تحكم هيبقى علم إمبراطوريتك.</p><div id="flagEd">${first?'<input type="text" id="nm" maxlength="18" placeholder="اسمك… (مثلًا: محمد)" aria-label="اسمك">':''}<canvas id="fcv" width="12" height="8"></canvas><div class="pal">${PAL.map((c,i)=>`<button class="sw${i===col?' on':''}" data-c="${i}" style="background:${c}" aria-label="لون ${i+1}"></button>`).join('')}</div>
+    <div class="row" style="justify-content:center"><button class="btn tool on" data-tl="brush">🖌️ فرشاة</button><button class="btn tool" data-tl="fill">🪣 جردل</button><button class="btn" id="rnd">🎲 عشوائي</button></div>
+    <div class="row" style="justify-content:center"><button class="btn pri" id="ok">${first?'يلا نتولد ✨':'احفظ'}</button>${first?'':'<button class="btn" id="cn">إلغاء</button>'}</div></div>`,(c,close)=>{
+    const fc=c.querySelector('#fcv'),fx=fc.getContext('2d');const draw=()=>{for(let i=0;i<96;i++){fx.fillStyle=PAL[F[i]];fx.fillRect(i%12,i/12|0,1,1)}};draw();
+    if(first&&S.name)c.querySelector('#nm').value=S.name;
+    let down=false;const at=e=>{const r=fc.getBoundingClientRect();const x=Math.floor((e.clientX-r.left)/r.width*12),y=Math.floor((e.clientY-r.top)/r.height*8);if(x<0||y<0||x>11||y>7)return;const i=y*12+x;
+      if(tool==='fill'){const t=F[i];if(t===col)return;const st=[i];while(st.length){const k=st.pop();if(F[k]!==t)continue;F[k]=col;const kx=k%12,ky=k/12|0;if(kx>0)st.push(k-1);if(kx<11)st.push(k+1);if(ky>0)st.push(k-12);if(ky<7)st.push(k+12)}SFX.place()}else if(F[i]!==col){F[i]=col;SFX.tap()}draw()};
+    fc.addEventListener('pointerdown',e=>{e.preventDefault();aInit();fc.setPointerCapture(e.pointerId);down=true;at(e)});fc.addEventListener('pointermove',e=>{if(down&&tool==='brush')at(e)});fc.addEventListener('pointerup',()=>down=false);
+    c.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{col=+b.dataset.c;c.querySelectorAll('.sw').forEach(s=>s.classList.toggle('on',s===b));SFX.tap()});
+    c.querySelectorAll('[data-tl]').forEach(b=>b.onclick=()=>{tool=b.dataset.tl;c.querySelectorAll('[data-tl]').forEach(s=>s.classList.toggle('on',s===b));SFX.tap()});
+    c.querySelector('#rnd').onclick=()=>{const r=randomFlag();for(let i=0;i<96;i++)F[i]=r[i];draw();SFX.ui()};
+    c.querySelector('#ok').onclick=()=>{if(first){const n=c.querySelector('#nm').value.trim();if(!n){c.querySelector('#nm').focus();c.querySelector('#nm').placeholder='اكتب اسمك الأول 👆';return}S.name=n}S.flag=F.slice();save();SFX.ui();close();res()};
+    const cn=c.querySelector('#cn');if(cn)cn.onclick=()=>{close();res()};
+  })})}
+function defaultFlag(){const F=[];for(let i=0;i<96;i++){const y=i/12|0;F.push(y<3?2:y<5?0:1)}return F}
+function randomFlag(){const a=rri(0,11);let b=rri(0,11);if(b===a)b=(a+3)%12;let c2=rri(0,11);const t=rri(0,3),F=[];for(let i=0;i<96;i++){const x=i%12,y=i/12|0;let v=a;if(t===0)v=y<3?a:y<5?b:c2;else if(t===1)v=x<4?a:x<8?b:c2;else if(t===2)v=(x>=4&&x<8)||(y>=3&&y<5)?b:a;else v=Math.hypot(x-5.5,y-3.5)<2.6?b:a;F.push(v)}return F}
+
+/* ---------------- input ---------------- */
+let mode='title';const keys={};let jx=0,jy=0;
+addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if((e.key==='e'||e.key===' '||e.key==='Enter')&&mode==='play'){e.preventDefault();act()}if(e.key==='Escape'&&mode==='build')closeBuild()});
+addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+const joy=$('#joy'),knob=$('#knob');let jid=null;
+function jmove(e){const r=joy.getBoundingClientRect();let dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2);const m=r.width/2-10,d=Math.hypot(dx,dy);if(d>m){dx*=m/d;dy*=m/d}knob.style.transform=`translate(${dx}px,${dy}px)`;jx=dx/m;jy=dy/m}
+joy.addEventListener('pointerdown',e=>{aInit();jid=e.pointerId;joy.setPointerCapture(jid);jmove(e)});joy.addEventListener('pointermove',e=>{if(e.pointerId===jid)jmove(e)});
+const jend=e=>{if(e.pointerId!==jid)return;jid=null;jx=jy=0;knob.style.transform=''};joy.addEventListener('pointerup',jend);joy.addEventListener('pointercancel',jend);
+actBtn.onclick=()=>{aInit();act()};
+
+/* ---------------- loop ---------------- */
+let last=performance.now(),saveT=0,miniT=0,actT=0;
+function update(dt){
+  S.t+=dt;
+  let mx=jx,my=jy;if(keys['a']||keys['arrowleft'])mx-=1;if(keys['d']||keys['arrowright'])mx+=1;if(keys['w']||keys['arrowup'])my-=1;if(keys['s']||keys['arrowdown'])my+=1;
+  const m=Math.hypot(mx,my);P.mov=false;
+  if(m>.15){if(m>1){mx/=m;my/=m}const sp=4.2*dt;const nx=P.x+mx*sp,ny=P.y+my*sp;if(!blocked(nx,P.y))P.x=nx;if(!blocked(P.x,ny))P.y=ny;P.mov=true;P.walk+=dt*9;P.dir=Math.abs(mx)>Math.abs(my)?(mx>0?3:2):(my>0?0:1)}
+  for(const n of npcs)npcTick(n,dt);
+  S.nextOffer-=dt;if(S.nextOffer<=0){S.nextOffer=S.offers.length<3?rri(25,45):10;if(S.offers.length<3&&newOffer()){toast('📜 فيه طلب بناء جديد!');updMission()}}
+  if(S.rep>=180&&!S.kingCalled&&!S.title){S.kingCalled=true;save();SFX.fan();setTimeout(()=>{const e=EMP[S.emp];sayChoice('رسول الملك 📯',`يا ${S.name}! ${e.k} سمع عن شغلك… وعايزك في القصر حالًا.`);speak(`${e.k} عايزك في القصر`)},300);updMission()}
+  actT-=dt;if(actT<=0){actT=.15;updAct()}
+  saveT-=dt;if(saveT<=0){saveT=5;S.px=P.x;S.py=P.y;save();hud()}
+}
+function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;const t=now/1000;
+  try{if(mode==='play')update(dt);else if(mode!=='title')for(const n of npcs)npcTick(n,dt);if(tiles){render(t);miniT-=dt;if(miniT<=0){miniT=.25;mg.clearRect(0,0,72,52);drawMap(mg,1,t)}}}catch(e){console.error(e)}
+  requestAnimationFrame(frame)}
+
+/* ---------------- boot ---------------- */
+function startWorld(){
+  genCity();refreshSolids();RT=roadTiles();mkMiniBase();
+  P.helmet=true;P.skin=SKIN[0];P.hair=HAIR[0];
+  const cnt={};S.flag.forEach(c=>cnt[c]=(cnt[c]||0)+1);const dom=+Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a])[0];P.shirt=PAL[dom]==='#151515'||PAL[dom]==='#f4f0e6'?PAL[+Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a])[1]||3]:PAL[dom];
+  if(S.px&&!blocked(S.px,S.py)){P.x=S.px;P.y=S.py}else{P.x=board.x-1.5;P.y=board.y+1.5;if(blocked(P.x,P.y)){P.x=40.5;P.y=19}}
+  // drop stale offers whose plot got built
+  S.offers=S.offers.filter(o=>!(o.plot==null||(S.active&&S.active.plot===o.plot)));
+  spawnNPCs();drawFlag($('#flagMini'),S.flag);hud();updMission();
+  if(!S.offers.length&&!S.active){newOffer();newOffer()}
+}
+function showHUD(on){['#stats','#menuBtn','#mini','#mission','#joy','#bagBtn','#actBtn'].forEach(s=>$(s).hidden=!on)}
+async function boot(){
+  resize();mkTex();showHUD(false);
+  const sv=load();
+  if(sv){S=sv;startWorld();
+    await panel(`<p class="big">كوّن إمبراطوريتك</p><p style="text-align:center">أهلًا يا ${S.name}… ${rankName()} في ${EMP[S.emp].n}.</p><div class="row" style="justify-content:center"><button class="btn pri" id="go">كمّل 🧱</button></div>`,(c,close)=>c.querySelector('#go').onclick=()=>{aInit();close()});
+    showHUD(true);mode='play';return}
+  S=newSave();S.flag=randomFlag();startWorld();mode='title';
+  await panel(`<p class="big">كوّن إمبراطوريتك</p><p style="text-align:center">هتبدأ مواطن عادي… وممكن في يوم تحكم إمبراطورية.<br>بس الأول: ارسم علمك.</p><div class="row" style="justify-content:center"><button class="btn pri" id="go">ابدأ ✨</button></div>`,(c,close)=>c.querySelector('#go').onclick=()=>{aInit();close()});
+  await flagEditor(true);
+  startWorld();const e=EMP[S.emp];
+  await panel(`<p class="big">اتولدت! 👶</p><p style="text-align:center">اتولدت في <b style="color:${e.c}">${e.n}</b>، في مدينة ${e.city}.<br>الحاكم: ${e.k}.</p><p style="text-align:center">انت مواطن عادي… وشغلك الأول: <b>عامل بناء 🧱</b>.<br>ابني للناس زي الرسمة بالظبط، واجمع فلوس وسمعة… لحد ما الملك نفسه يطلبك.</p><div class="row" style="justify-content:center"><button class="btn pri" id="go">يلا على السوق</button></div>`,(c,close)=>c.querySelector('#go').onclick=()=>close());
+  save();showHUD(true);mode='play';toast('روح لوحة الطلبات في السوق 📜',3000);
+}
+boot();requestAnimationFrame(frame);
+window.__emp={get S(){return S},get P(){return P},plots:()=>plots,acceptJob,openBuild,finishJob,score,newOffer,get mode(){return mode},palaceVisit,setMode:m=>mode=m};
+})();
+</script>
