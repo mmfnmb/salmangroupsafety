@@ -164,7 +164,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
 
 // ================= textures =================
 const manager=new THREE.LoadingManager();
-manager.onProgress=(u,l,t)=>{const p=Math.round(l/t*100);$('lb').style.width=p+'%';$('lt').textContent=p+'%'};
+
 const TL=new THREE.TextureLoader(manager);
 function img(u,rx,ry){const t=TL.load('a/'+u,()=>{(t.userData.clones||[]).forEach(c=>c.needsUpdate=true)});t.userData.clones=[];t.encoding=THREE.sRGBEncoding;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(rx,ry);return t}
 function ctex(w,h,draw){const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h,c);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.wrapS=t.wrapT=THREE.RepeatWrapping;return t}
@@ -342,7 +342,12 @@ cam.add(torch);torch.position.set(.18,-.15,0);cam.add(torch.target);torch.target
 // ================= characters =================
 const MODELS={soldier:{f:'soldier.glb',clips:'own'},xbot:{f:'xbot.glb',clips:'own'},man:{f:'man.glb',clips:'retarget'}};
 const GL=new THREE.GLTFLoader(manager);
-const loadG=u=>new Promise((res,rej)=>GL.load('a/'+u,res,undefined,rej));
+// models ship as base64 inside .js files; load the script, decode, then parse
+let loadedN=0;
+const loadG=u=>new Promise((res,rej)=>{const k=u.replace('.glb','');const sc=document.createElement('script');sc.src='a/'+k+'.js';
+  sc.onload=()=>{try{const b64=GLB[k],bin=atob(b64),buf=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);delete GLB[k];
+    loadedN++;const pc=Math.round(loadedN/4*100);$('lb').style.width=pc+'%';$('lt').textContent=pc+'%';GL.parse(buf.buffer,'a/',res,rej)}catch(e){rej(e)}};
+  sc.onerror=()=>rej(new Error('ما قدرتش أحمّل '+k));document.head.appendChild(sc)});
 const LIB={};
 function pickClips(list,names){const out={};names.forEach(([k,re])=>{out[k]=list.find(c=>re.test(c.name))});return out}
 function retarget(clip,strip){const c=clip.clone();c.tracks=c.tracks.filter(t=>!/\.(position|scale)$/.test(t.name)||/Hips\.position$/.test(t.name)&&false);if(strip)c.tracks.forEach(t=>t.name=t.name.replace(strip,''));return c}
