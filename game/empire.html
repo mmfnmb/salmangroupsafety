@@ -32,6 +32,7 @@ button:focus-visible{outline:2px solid var(--gold2);outline-offset:2px}
 .fgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;max-width:360px}
 .fgrid button{aspect-ratio:1;border-radius:6px;border:1px solid var(--line);background:#0e0b08;font-size:20px}
 .fgrid button.lk{opacity:.35}
+#placeBar{top:calc(env(safe-area-inset-top,0px) + 52px);left:50%;transform:translateX(-50%);background:rgba(23,18,13,.92);border:1px solid var(--gold);border-radius:10px;padding:8px 12px;display:flex;flex-direction:column;gap:6px;align-items:center;direction:rtl;max-width:min(92vw,520px);text-align:center;font-weight:700;font-size:14px}
 #toast{position:fixed;top:calc(env(safe-area-inset-top,0px) + 58px);left:50%;transform:translateX(-50%);z-index:30;background:rgba(23,18,13,.92);border:1px solid var(--gold);color:var(--gold2);padding:8px 16px;border-radius:6px;font-weight:800;direction:rtl;pointer-events:none;opacity:0;transition:opacity .25s;max-width:80vw;text-align:center}
 #toast.on{opacity:1}
 /* dialog sheet */
@@ -117,6 +118,7 @@ input[type=text]{background:#0e0b08;border:1px solid var(--line);color:var(--ink
 <button class="hud" id="spdBtn" hidden>⏩ سرّع</button>
 <button class="hud idle" id="actBtn">✋</button>
 <div id="toast"></div>
+<div class="hud" id="placeBar" hidden><span id="plTxt"></span><div class="row"><button class="btn pri" id="plOk">✅ ابني هنا</button><button class="btn" id="plNo">✖ إلغاء</button></div></div>
 
 <div id="build" hidden>
   <div id="btop">
@@ -182,7 +184,7 @@ const OUTM=Object.keys(MATS).filter(k=>MATS[k].l==='out'),INM=Object.keys(MATS).
 let S=null;
 function newSave(){return{v:1,seed:(Math.random()*1e9)|0,name:'',flag:null,emp:rri(0,3),money:20,rep:0,hp:100,t:30,offers:[],active:null,builds:{},done:0,kingCalled:false,title:'',sfx:true,tts:true,nid:1,nextOffer:4,px:0,py:0,tip:false,army:newArmy(),lastDay:0}}
 function newArmy(){return{in:false,rank:0,xp:0,troops:{inf:0,arc:0,cav:0},form:Array(18).fill(null),mission:null,wins:0,done:false}}
-function save(){try{localStorage.setItem('empire1',JSON.stringify(S))}catch(e){}}
+function save(){if(S&&S.king)return kSave();try{localStorage.setItem('empire1',JSON.stringify(S))}catch(e){}}
 function load(){try{const s=JSON.parse(localStorage.getItem('empire1')||'null');if(s&&s.v===1&&s.flag){if(!s.army)s.army=newArmy();if(s.lastDay==null)s.lastDay=Math.floor(s.t/240);return s}}catch(e){}return null}
 
 /* ---------------- audio ---------------- */
@@ -415,6 +417,7 @@ function mkChar(c){const g=new THREE.Group();const ud={};
   msh(SPHG,c.skin,g,.21,.2,.2,0,.77,0);msh(SPHG,c.hair,g,.215,.12,.21,0,.88,-.02);
   bxm(g,.045,.06,.02,'#2a1a08',-.075,.78,.195);bxm(g,.045,.06,.02,'#2a1a08',.075,.78,.195);
   if(c.army)msh(SPHG,'#6f7d5a',g,.235,.15,.235,0,.9,0);else if(c.helmet)msh(SPHG,'#ffc531',g,.235,.15,.235,0,.9,0);
+  if(c.crown){msh(CYLG,'#ffd23f',g,.2,.13,.2,0,1.0,0);for(let i=0;i<5;i++){const a=i/5*Math.PI*2;msh(CONE4,'#ffd23f',g,.05,.12,.05,Math.cos(a)*.17,1.12,Math.sin(a)*.17)}bxm(g,.42,.5,.05,'#b3263a',0,.45,-.19);bxm(g,.06,.06,.03,'#e05a8a',0,1.02,.2)}
   if(c.officer){bxm(g,.4,.08,.4,'#3f5a2a',0,.97,0);bxm(g,.08,.08,.04,'#e3a63b',0,.97,.2)}else if(c.guard){msh(SPHG,'#b8b8b8',g,.235,.15,.235,0,.9,0);bxm(g,.04,1.2,.04,'#8a5a2e',.3,.6,.05);msh(CONE4,'#d8d8d8',g,.06,.16,.06,.3,1.25,.05)}
   if(c.hood)msh(SPHG,'#3a2e24',g,.24,.2,.24,0,.86,-.03);
   const bub=new THREE.Sprite(BUBT);bub.scale.set(.42,.42,1);bub.position.y=1.38;bub.visible=false;g.add(bub);ud.bub=bub;ud.shirt=c.shirt;ud.army=!!c.army;
@@ -449,8 +452,8 @@ function buildBattle3(){clearG(BG3);ARW.hidden=true;ring.visible=false;
   const gp=new THREE.Mesh(new THREE.PlaneGeometry(BW,BH),new THREE.MeshLambertMaterial({map:BFT}));gp.rotation.x=-Math.PI/2;gp.position.set(BW/2,0,BH/2);gp.receiveShadow=true;BG3.add(gp);
   const out=new THREE.Mesh(new THREE.PlaneGeometry(200,200),mat('#7fc25c'));out.rotation.x=-Math.PI/2;out.position.set(BW/2,-.02,BH/2);out.receiveShadow=true;BG3.add(out);
   for(let i=0;i<40;i++){const a=hash(i,7)*Math.PI*2,r=Math.max(BW,BH)/2+2+hash(7,i)*6;tree3(BG3,BW/2+Math.cos(a)*r*1.1,BH/2+Math.sin(a)*r*.75,hash(i,i))}
-  const eFlag=(x,c)=>{bxm(BG3,.08,2.2,.08,'#6b4724',x,1.1,-.6);bxm(BG3,.9,.55,.05,c,x+.5,1.9,-.6)};eFlag(1.5,EMP[S.emp].c);eFlag(BW-2.5,B.eColor);
-  for(const u of B.units){const ally=!u.team;const c={shirt:u.isP?P.shirt:ally?EMP[S.emp].c:B.eColor,skin:u.skin,hair:u.hair,army:ally,hood:!ally&&B.kind==='bandit'};const g=new THREE.Group();const ch=mkChar(c);g.add(ch);const ud={ch};
+  const eFlag=(x,c)=>{bxm(BG3,.08,2.2,.08,'#6b4724',x,1.1,-.6);bxm(BG3,.9,.55,.05,c,x+.5,1.9,-.6)};eFlag(1.5,B.aColor||EMP[S.emp].c);eFlag(BW-2.5,B.eColor);
+  for(const u of B.units){const ally=!u.team;const c={crown:u.king,shirt:u.isP?P.shirt:ally?(B.aColor||EMP[S.emp].c):B.eColor,skin:u.skin,hair:u.hair,army:ally,hood:!ally&&B.kind==='bandit'};const g=new THREE.Group();const ch=mkChar(c);g.add(ch);const ud={ch};
     if(u.type==='cav'&&!u.isP){const h=new THREE.Group();g.add(h);bxm(h,.34,.34,.85,'#8a5a32',0,.5,0);bxm(h,.24,.42,.26,'#8a5a32',0,.78,.42);bxm(h,.2,.18,.3,'#7a4a28',0,.95,.58);for(const[a,b]of[[-.12,-.3],[.12,-.3],[-.12,.3],[.12,.3]])bxm(h,.08,.36,.08,'#5a3a20',a,.18,b);bxm(h,.06,.3,.3,'#3a2414',0,.85,.3);ch.position.y=.42;ud.horse=h}
     if(u.type==='arc'&&!u.isP){const bow=new THREE.Mesh(new THREE.TorusGeometry(.2,.022,6,14,Math.PI),mat('#8a5a2e'));bow.position.set(.3,.5,.12);bow.rotation.z=-Math.PI/2;ch.add(bow)}
     else{const sw=new THREE.Group();sw.position.set(.3,.45,.05);ch.add(sw);bxm(sw,.05,.42,.03,'#dfe6ea',0,.25,0);bxm(sw,.16,.04,.05,'#8a5a2e',0,.05,0);ud.sw=sw}
@@ -644,7 +647,7 @@ function startBattle(kind,go){
   buildBattle3();SFX.fan();toast(`⚔️ المعركة بدأت ضد ${eName}!`,2400);updBattleBar();
 }
 function updBattleBar(){if(!B)return;const a=B.units.filter(u=>!u.team&&u.hp>0).length,e=B.units.filter(u=>u.team&&u.hp>0).length;const p=B.units.find(u=>u.isP);$('#mission').innerHTML=`⚔️ جيشنا <b>${ar(a)}</b> × <b>${ar(e)}</b> ${B.eName}${p?` · ❤️ ${ar(Math.max(0,Math.round(p.hp)))}`:''} · ${ar(Math.max(0,Math.ceil(120-B.t)))} ث`}
-function bdmg(t,a){if(t.hp<=0)return;t.hp-=a;t.hit=.15;if(t.hp<=0){t.hp=0;tone(140,.15,'sawtooth',.04,70);if(t.isP){SFX.bad();toast('اتصابت! وقعت في المعركة… الجيش بيكمّل من غيرك',3000);$('#joy').hidden=true;actBtn.hidden=true}}}
+function bdmg(t,a){if(t.hp<=0)return;t.hp-=a;t.hit=.15;if(t.hp<=0){t.hp=0;tone(140,.15,'sawtooth',.04,70);if(t.isP){SFX.bad();if(t.king)toast('👑 الملك وقع!!',3000);else toast('اتصابت! وقعت في المعركة… الجيش بيكمّل من غيرك',3000);$('#joy').hidden=true;actBtn.hidden=true}}}
 function pAttack(){if(!B||B.over)return;const p=B.units.find(u=>u.isP&&u.hp>0);if(!p||p.cd>0)return;p.cd=.45;p.sw=.2;SFX.tap();let t=null,bd=1.3;for(const v of B.units)if(v.team&&v.hp>0){const d=Math.hypot(v.x-p.x,v.y-p.y);if(d<bd){bd=d;t=v}}if(t){bdmg(t,10);tone(220,.06,'square',.05)}}
 function battleTick(dt0){
   if(!B||B.over)return;const dt=dt0*B.speed;B.t+=dt;
@@ -662,6 +665,7 @@ function battleTick(dt0){
   if(a===0||e===0||B.t>=120)endBattle(e===0||(B.t>=120&&a>e));
 }
 async function endBattle(win){
+  if(B.k)return kEndBattle(win);
   B.over=true;mode='busy';await sleep(1200);const A=S.army,rk=A.rank;
   const lost={inf:0,arc:0,cav:0};for(const u of B.units)if(!u.team&&!u.isP&&!u.preset&&u.hp<=0&&u.slot!=null)lost[u.type]++;
   for(const k in lost){A.troops[k]=Math.max(0,A.troops[k]-lost[k]);let n=lost[k];for(let i=17;i>=0&&n>0;i--)if(A.form[i]===k&&placed(k)>A.troops[k]){A.form[i]=null;n--}}
@@ -701,10 +705,10 @@ function showMenu(){const e=EMP[S.emp];const tabs=[['me','👤 أنا'],['jobs',
     armySetup(c,close);
     const del=c.querySelector('#del');if(del)del.onclick=()=>{if(del.dataset.k){try{localStorage.removeItem('empire1')}catch(e){}location.reload()}else{del.dataset.k=1;del.textContent='⚠️ متأكد؟ دوس تاني عشان تمسح'}};
   })}
-$('#menuBtn').onclick=()=>{if(mode==='play'){aInit();openTab(curTab==='king'?'me':curTab)}};
-$('#bagBtn').onclick=()=>{if(mode!=='play')return;aInit();SFX.ui();const mine=Object.values(S.builds);
+$('#menuBtn').onclick=()=>{if(KM){if(mode==='play'){aInit();SFX.ui();kMenu()}return}if(mode==='play'){aInit();openTab(curTab==='king'?'me':curTab)}};
+$('#bagBtn').onclick=()=>{if(KM){if(mode==='play'){aInit();SFX.ui();kWorld()}return}if(mode!=='play')return;aInit();SFX.ui();const mine=Object.values(S.builds);
   panel(`<button class="x" aria-label="اقفل">✖</button><h2>🎒 الشنطة</h2><div class="kv"><b>💰 فلوس</b><span>${ar(S.money)}</span><b>🧱 مسطرين وميزان</b><span>عدة البنّاء</span><b>📐 رسومات</b><span>${S.active?'رسمة '+S.active.type:'مفيش'}</span></div><h3>المباني اللي بنيتها (${ar(mine.length)})</h3>${mine.length?mine.map(b=>`<div class="job"><div><div class="t">${b.royal?'👑 جناح القصر':'مبنى'} لـ${b.by}</div><div class="s">${ar(b.w)}×${ar(b.h)}</div></div></div>`).join(''):'<p class="muted">لسه مبنيتش حاجة.</p>'}`)};
-$('#mini').onclick=()=>{if(mode!=='play')return;SFX.ui();let tab='city';
+$('#mini').onclick=()=>{if(KM){if(mode!=='play')return;SFX.ui();panel(`<button class="x" aria-label="اقفل">✖</button><h2>🗺️ ${S.kname}</h2><canvas id="bm" style="width:100%;image-rendering:pixelated;border:2px solid var(--line);border-radius:4px"></canvas>`,c=>{const m=c.querySelector('#bm');m.width=MW*4;m.height=MH*4;kMiniDraw(m.getContext('2d'),4)});return}if(mode!=='play')return;SFX.ui();let tab='city';
   const show=()=>panel(`<button class="x" aria-label="اقفل">✖</button><div class="tabs"><button class="tab${tab==='city'?' on':''}" data-m="city">🏙️ المدينة</button><button class="tab${tab==='world'?' on':''}" data-m="world">🌍 العالم</button></div><canvas id="bm" style="width:100%;image-rendering:pixelated;border:2px solid var(--line);border-radius:4px"></canvas><p class="muted" id="lg"></p>`,(c,close)=>{
     c.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{tab=b.dataset.m;close();show()});const m=c.querySelector('#bm');
     if(tab==='city'){m.width=MW*4;m.height=MH*4;drawMap(m.getContext('2d'),4,1);c.querySelector('#lg').textContent=`مدينة ${EMP[S.emp].city} · ⬜ انت · 🟨 هدفك · الأراضي البني: أراضي البناء`}
@@ -734,13 +738,14 @@ function randomFlag(){const a=rri(0,11);let b=rri(0,11);if(b===a)b=(a+3)%12;let 
 
 /* ---------------- input ---------------- */
 let mode='title';const keys={};let jx=0,jy=0;
-addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if((e.key==='e'||e.key===' '||e.key==='Enter')&&(mode==='play'||mode==='battle')){e.preventDefault();mode==='battle'?pAttack():act()}if(e.key==='Escape'&&mode==='build')closeBuild()});
+addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if((e.key==='e'||e.key===' '||e.key==='Enter')&&(mode==='play'||mode==='battle')&&!(e.target&&e.target.tagName==='INPUT')){e.preventDefault();mode==='battle'?pAttack():KM?(PL?kConfirm():kCatalog()):act()}if(e.key==='Escape'&&mode==='build')closeBuild()});
 addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
 const joy=$('#joy'),knob=$('#knob');let jid=null;
 function jmove(e){const r=joy.getBoundingClientRect();let dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2);const m=r.width/2-10,d=Math.hypot(dx,dy);if(d>m){dx*=m/d;dy*=m/d}knob.style.transform=`translate(${dx}px,${dy}px)`;jx=dx/m;jy=dy/m}
 joy.addEventListener('pointerdown',e=>{aInit();jid=e.pointerId;joy.setPointerCapture(jid);jmove(e)});joy.addEventListener('pointermove',e=>{if(e.pointerId===jid)jmove(e)});
 const jend=e=>{if(e.pointerId!==jid)return;jid=null;jx=jy=0;knob.style.transform=''};joy.addEventListener('pointerup',jend);joy.addEventListener('pointercancel',jend);
-actBtn.onclick=()=>{aInit();mode==='battle'?pAttack():act()};
+actBtn.onclick=()=>{aInit();if(mode==='battle')return pAttack();if(KM){if(mode==='play'){SFX.ui();kCatalog()}return}act()};
+$('#plOk').onclick=()=>{aInit();kConfirm()};$('#plNo').onclick=()=>{SFX.ui();kEndPlace()};
 $('#spdBtn').onclick=()=>{if(!B)return;B.speed=B.speed===1?3:1;$('#spdBtn').textContent=B.speed===1?'⏩ سرّع':'▶️ عادي';SFX.ui()};
 
 /* ---------------- loop ---------------- */
@@ -764,8 +769,265 @@ function update(dt){
 }
 function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;const t=now/1000;
   try{if(B&&(mode==='battle'||B.over)){if(mode==='battle')battleTick(dt);renderBattle(t,dt);requestAnimationFrame(frame);return}
+  if(KM){if(mode==='play')kUpdate(dt);kRender(t,dt);miniT-=dt;if(miniT<=0){miniT=.25;mg.clearRect(0,0,72,52);kMiniDraw(mg,1)}requestAnimationFrame(frame);return}
   if(mode==='play')update(dt);else if(mode!=='title')for(const n of npcs)npcTick(n,dt);if(tiles){render(t,dt);miniT-=dt;if(miniT<=0){miniT=.25;mg.clearRect(0,0,72,52);drawMap(mg,1,t)}}}catch(e){console.error(e)}
   requestAnimationFrame(frame)}
+
+/* ===================== KING MODE (owner only) ===================== */
+const KHASH=7328719137117540;
+function cyrb53(str,seed=7){let h1=0xdeadbeef^seed,h2=0x41c6ce57^seed;for(let i=0,ch;i<str.length;i++){ch=str.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677)}h1=Math.imul(h1^(h1>>>16),2246822507);h1^=Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507);h2^=Math.imul(h1^(h1>>>13),3266489909);return 4294967296*(2097151&h2)+(h1>>>0)}
+let KM=false,PC='#c62f2f';
+const RES={g:['💰','دهب'],w:['🪵','خشب'],s:['🪨','حجر'],f:['🌾','أكل']};
+const KB={
+  house:{n:'بيت',e:'🏠',w:2,h:2,c:{g:10,w:20},t:12,pop:6,d:'سكان +٦'},
+  bighouse:{n:'بيت كبير',e:'🏘️',w:3,h:3,c:{g:40,w:40,s:20},t:25,pop:16,d:'سكان +١٦'},
+  farm:{n:'مزرعة',e:'🌾',w:3,h:3,c:{g:10,w:15},t:12,prod:{f:9},d:'أكل +٩ في الدقيقة'},
+  lumber:{n:'منشرة خشب',e:'🪵',w:2,h:2,c:{g:20},t:12,prod:{w:8},d:'خشب +٨ في الدقيقة'},
+  quarry:{n:'محجر',e:'🪨',w:2,h:2,c:{g:25,w:20},t:18,prod:{s:7},d:'حجر +٧ في الدقيقة'},
+  market:{n:'سوق',e:'🏪',w:3,h:2,c:{g:30,w:30},t:20,prod:{g:12},d:'دهب +١٢ في الدقيقة'},
+  barracks:{n:'ثكنات',e:'⚔️',w:3,h:3,c:{g:50,w:40,s:30},t:30,cap:6,d:'جنود +٦ وتقدر تجنّد'},
+  tower:{n:'برج حراسة',e:'🗼',w:1,h:1,c:{g:15,s:30},t:18,def:1,d:'رماة بيدافعوا عن المدينة'},
+  wall:{n:'سور',e:'🧱',w:1,h:1,c:{s:6},t:3,d:'حماية وشكل'},
+  garden:{n:'حديقة ونافورة',e:'⛲',w:2,h:2,c:{g:25,s:15},t:14,happy:5,d:'سعادة +٥'},
+  temple:{n:'معبد',e:'🏛️',w:3,h:3,c:{g:80,s:70},t:40,happy:12,d:'سعادة +١٢'},
+  statue:{n:'تمثال الملك',e:'🗿',w:1,h:1,c:{g:90,s:40},t:30,happy:6,d:'سعادة +٦ وهيبة'},
+  palace:{n:'قصر',e:'🏰',w:4,h:4,c:{g:200,w:80,s:150},t:60,prod:{g:15},happy:8,pop:10,d:'دهب +١٥ · سعادة +٨ · سكان +١٠'}
+};
+const KCAT=[['🏠 سكن',['house','bighouse']],['🌾 موارد',['farm','lumber','quarry','market']],['⚔️ حرب',['barracks','tower','wall']],['👑 فخامة',['palace','temple','garden','statue']]];
+const TRIB={village:{g:5,f:5},town:{g:12,w:5,s:5},cap:{g:25,w:10,s:10,f:10}};
+const RCOST={inf:{g:20,f:10},arc:{g:30,w:10},cav:{g:55,f:20}};
+const kB=()=>S.blds,kCount=t=>S.blds.filter(b=>b.type===t&&b.st==='done').length,kTroops=()=>S.troops.inf+S.troops.arc+S.troops.cav;
+const GOALS=[
+  {t:'ابني بيتين كمان',ok:()=>kCount('house')>=4,r:{g:40}},{t:'ابني مزرعة تانية',ok:()=>kCount('farm')>=2,r:{g:40}},{t:'ابني محجر',ok:()=>kCount('quarry')>=1,r:{g:50}},
+  {t:'وظّف بنّاء تالت (من القايمة ← البنّائين)',ok:()=>S.builders>=3,r:{w:40}},{t:'ابني ثكنات',ok:()=>kCount('barracks')>=1,r:{g:60}},{t:'جنّد ٦ جنود',ok:()=>kTroops()>=6,r:{g:60}},
+  {t:'احتل قرية من خريطة العالم 🌍',ok:()=>S.regions.some(r=>r.o==='p'&&r.kind!=='home'),r:{g:100}},{t:'ابني برجين حراسة',ok:()=>kCount('tower')>=2,r:{s:60}},
+  {t:'طوّر القصر لمستوى ٢ (دوس على القصر)',ok:()=>S.blds.some(b=>b.type==='palace'&&b.lvl>=2),r:{g:150}},{t:'ابني معبد',ok:()=>kCount('temple')>=1,r:{g:100}},
+  {t:'وصّل السكان لـ ١٠٠',ok:()=>S.pop>=100,r:{g:150}},{t:'احتل عاصمة إمبراطورية',ok:()=>S.regions.some(r=>r.kind==='cap'&&r.o==='p'),r:{g:300}},
+  {t:'احكم العالم كله 🌍',ok:()=>S.regions.filter(r=>r.kind==='cap').every(r=>r.o==='p'),r:{g:1000}}];
+function kNewSave(){return{v:1,king:true,seed:(Math.random()*1e9)|0,name:'',kname:'',flag:null,res:{g:180,w:120,s:80,f:80},pop:10,happy:65,t:30,blds:[],nid:1,builders:2,troops:{inf:2,arc:1,cav:0},form:['inf','inf','arc',...Array(15).fill(null)],regions:null,goal:0,raidT:480,growT:300,sfx:true,tts:true,px:0,py:0}}
+function kSave(){try{localStorage.setItem('empireKing1',JSON.stringify(S))}catch(e){}}
+function kLoad(){try{const s=JSON.parse(localStorage.getItem('empireKing1')||'null');if(s&&s.king&&s.flag)return s}catch(e){}return null}
+function canPay(c){return Object.keys(c).every(k=>S.res[k]>=c[k])}
+function pay(c){for(const k in c)S.res[k]-=c[k]}
+function costTxt(c){return Object.keys(c).map(k=>`${RES[k][0]}${ar(Math.round(c[k]))}`).join(' ')}
+function upCost(b){const c={};const D=KB[b.type];for(const k in D.c)c[k]=Math.round(D.c[k]*(b.lvl+1)*.8);return c}
+/* map */
+const KCX=34,KCY=24;
+function kGenCity(){R=mulberry(S.seed);tiles=new Uint8Array(MW*MH);objs=[];plots=[];trees=[];dummies=[];board=null;palace=null;barracks=null;
+  for(let y=0;y<MH;y++){const cx=3+Math.round(Math.sin(y/5)*1.2);for(let x=cx-1;x<=cx+1;x++)setT(x,y,T_WATER)}
+  for(let x=0;x<MW;x++)for(const yy of[KCY+1,KCY+2])setT(x,yy,tAt(x,yy)===T_WATER?T_BRIDGE:T_ROAD);
+  for(let y=0;y<MH;y++)for(const xx of[KCX+1,KCX+2])setT(xx,y,T_ROAD);
+  for(let y=1;y<MH-1;y++)for(let x=1;x<MW-1;x++)if(tAt(x,y)===T_GRASS&&Math.hypot(x-KCX,y-KCY)>9&&hash(x*3,y*5)<.11&&!nearRoad(x,y)){setT(x,y,T_TREE);trees.push({k:'tree',x,y,w:1,h:1,v:hash(x,y)})}
+  R=Math.random}
+let KSOLID=new Uint8Array(1);
+function kRefresh(){SOL=S.blds.map(b=>({x:b.x,y:b.y,w:KB[b.type].w,h:KB[b.type].h}));KSOLID=new Uint8Array(MW*MH);for(let i=0;i<MW*MH;i++){const t=tiles[i];if(t===T_WATER||t===T_TREE)KSOLID[i]=1}for(const r of SOL)for(let y=r.y;y<r.y+r.h;y++)for(let x=r.x;x<r.x+r.w;x++)KSOLID[y*MW+x]=1}
+function bfsPath(sx,sy,tx,ty){sx|=0;sy|=0;tx|=0;ty|=0;if(sx===tx&&sy===ty)return[];const N=MW*MH,prev=new Int32Array(N).fill(-1),s=sy*MW+sx,goal=ty*MW+tx;if(goal<0||goal>=N||KSOLID[goal])return null;prev[s]=s;const q=[s];let h=0;
+  while(h<q.length){const c=q[h++];if(c===goal)break;const cx=c%MW,cy=c/MW|0;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=cx+dx,ny=cy+dy;if(nx<0||ny<0||nx>=MW||ny>=MH)continue;const n=ny*MW+nx;if(prev[n]<0&&!KSOLID[n]){prev[n]=c;q.push(n)}}}
+  if(prev[goal]<0)return null;const p=[];let c=goal;while(c!==s){p.push([c%MW+.5,(c/MW|0)+.5]);c=prev[c]}return p.reverse()}
+function kValid(type,x,y){const D=KB[type];if(x<1||y<1||x+D.w>MW-1||y+D.h>MH-1)return false;
+  for(let yy=y;yy<y+D.h;yy++)for(let xx=x;xx<x+D.w;xx++){const t=tAt(xx,yy);if(t===T_WATER||t===T_ROAD||t===T_BRIDGE)return false}
+  for(const b of S.blds){const E=KB[b.type];if(x<b.x+E.w&&x+D.w>b.x&&y<b.y+E.h&&y+D.h>b.y)return false}
+  if(P.x>x-.3&&P.x<x+D.w+.3&&P.y>y-.3&&P.y<y+D.h+.3)return false;return true}
+/* world regions */
+function kRegions(){const r=mulberry(S.seed+3),pts=[],RG=[];
+  const add=(kind,ai,name)=>{let x,y,c=0;do{x=10+r()*80;y=9+r()*46;c++}while(c<300&&pts.some(p=>Math.hypot(p[0]-x,p[1]-y)<16));pts.push([x,y]);RG.push({id:RG.length,kind,ai,name,x,y,o:kind==='home'?'p':ai>=0?ai:'n',pw:kind==='cap'?13:kind==='town'?8:4})};
+  add('home',-1,S.kname);EMP.forEach((e,i)=>add('cap',i,e.city));['الواحة','تل الدهب','وادي النخيل','الميناء الأبيض','جبل النسر','قرية الصيادين','بحيرة الفضة'].forEach((n,i)=>add(i<3?'town':'village',-1,n));
+  RG.forEach(q=>{if(q.o==='n'&&r()<.45)q.o=Math.floor(r()*4)});return RG}
+const ownerName=o=>o==='p'?S.kname:o==='n'?'محايدة':EMP[o].n,ownerCol=o=>o==='p'?PC:o==='n'?'#b8b0a2':EMP[o].c;
+/* 3D models */
+const KM3=new Map();let ghost=null,PL=null,camOff={x:0,z:0};
+function door(g,x,z){bxm(g,.42,.7,.06,'#6b3d1c',x,.35,z)}function win(g,x,y,z){bxm(g,.34,.3,.06,'#a8e4f7',x,y,z)}
+function kModel(b){const D=KB[b.type],g=new THREE.Group(),L=b.lvl,w=D.w,h=D.h,cx=w/2,cz=h/2;const hc=hash(b.id,3),roofC=['#d9573b','#c9463a','#e07040','#b84a3a'][hc*4|0],wallC=['#f3e3c3','#efd9b0','#f6ead0','#e8d2a8'][hash(b.id,5)*4|0];
+  switch(b.type){
+    case'house':{const H=1+.45*(L-1);bxm(g,1.6,H,1.6,wallC,cx,H/2,cz);roofm(g,1.9,1.9,.85,roofC,cx,H,cz);door(g,cx-.3,h-.2);win(g,cx+.4,H*.6,h-.2);if(L>=3)bxm(g,.22,.7,.22,'#9a8a7a',cx+.45,H+.5,cz-.3);break}
+    case'bighouse':{const H=1.8+.5*(L-1);bxm(g,2.6,H,2.6,wallC,cx,H/2,cz);roofm(g,2.95,2.95,1.1,roofC,cx,H,cz);door(g,cx,h-.2);for(const yy of[.75,H-.45])for(const xx of[-.85,.85])win(g,cx+xx,yy,h-.2);break}
+    case'farm':{bxm(g,3,.08,3,'#a8743f',cx,.04,cz);for(let i=0;i<5;i++)bxm(g,1.9,.24,.28,L>=2?'#e8c84a':'#7cc34a',1.05,.16,.4+i*.55);bxm(g,.9,.85,.9,'#c9463a',2.45,.42,.6);roofm(g,1,1,.5,'#8a3a2a',2.45,.85,.6);for(let i=0;i<4;i++)bxm(g,.06,.35,.06,'#c08850',2.1+i*.25,.18,2.9);break}
+    case'lumber':{bxm(g,1,.8,1,'#b07a45',.6,.4,.6);roofm(g,1.15,1.15,.5,'#7a4a28',.6,.8,.6);for(let r=0;r<2;r++)for(let i=0;i<3-r;i++){const l=msh(CYLG,'#9a6a3a',g,.14,1.1,.14,1.45,.15+r*.26,1.2+i*.28+r*.14);l.rotation.z=Math.PI/2}msh(CYLG,'#8a5a2e',g,.22,.3,.22,.5,.15,1.55);break}
+    case'quarry':{msh(ICO,'#9a958c',g,.55,.45,.55,.6,.3,.7,true);msh(ICO,'#b0aaa0',g,.45,.5,.45,1.4,.35,.6,true);msh(ICO,'#8a857c',g,.35,.3,.35,1.1,.2,1.45,true);for(let i=0;i<L+1;i++)bxm(g,.3,.3,.3,'#dcd6ca',.4+i*.35,.15,1.6);bxm(g,.08,1.6,.08,'#8a5a2e',1.75,.8,1.7);bxm(g,.9,.07,.07,'#8a5a2e',1.35,1.55,1.7);break}
+    case'market':for(let s=0;s<2;s++){const ox=.2+s*1.5;for(const[a,bb]of[[ox,.25],[ox+1.2,.25],[ox,1.6],[ox+1.2,1.6]])bxm(g,.07,1.1,.07,'#8a5a2e',a,.55,bb);bxm(g,1.2,.12,.5,'#b07a45',ox+.6,.55,.95);for(let i=0;i<5;i++){const a=bxm(g,.25,.06,1.5,i%2?'#ffffff':['#e05a4a','#4a7fd0'][s],ox+.1+i*.25,1.15,.95);a.rotation.x=-.1}['#e3a63b','#6cbf4f','#e05a4a'].forEach((c,i)=>msh(SPHG,c,g,.1,.1,.1,ox+.3+i*.3,.68,.95))}break;
+    case'barracks':{const H=1.3+.3*(L-1);bxm(g,2.6,H,2.6,'#ddd2a6',cx,H/2,cz);roofm(g,2.9,2.9,1,'#5c8a45',cx,H,cz);door(g,cx,h-.2);bxm(g,.06,1.3,.06,'#6b4724',cx,H+1.3,cz);bxm(g,.6,.36,.04,PC,cx+.33,H+1.7,cz);break}
+    case'tower':{const H=2.3+.6*(L-1);msh(CYLG,'#d4cab6',g,.42,H,.42,.5,H/2,.5);for(let i=0;i<6;i++){const a=i/6*Math.PI*2;bxm(g,.16,.2,.16,'#d4cab6',.5+Math.cos(a)*.38,H+.1,.5+Math.sin(a)*.38)}msh(CONEG,PC,g,.5,.8,.5,.5,H+.55,.5,true);break}
+    case'wall':bxm(g,1,1.1,1,'#d8cdb5',.5,.55,.5);bxm(g,.3,.25,.3,'#d8cdb5',.25,1.22,.5);bxm(g,.3,.25,.3,'#d8cdb5',.75,1.22,.5);break;
+    case'garden':{bxm(g,2,.08,2,'#6cbf4f',1,.04,1);for(const[a,bb]of[[.25,.25],[1.75,.25],[.25,1.75],[1.75,1.75]])msh(SPHG,'#4f9e45',g,.22,.2,.22,a,.22,bb);msh(CYLG,'#cfc6b4',g,.55,.28,.55,1,.18,1);msh(CYLG,'#5cc0e6',g,.47,.04,.47,1,.33,1);msh(CYLG,'#cfc6b4',g,.08,.5,.08,1,.5,1);msh(SPHG,'#8fd8f2',g,.14,.1,.14,1,.78,1);['#ff8fb0','#ffd23f','#ffffff'].forEach((c,i)=>msh(SPHG,c,g,.07,.07,.07,.5+i*.5,.15,1.85));break}
+    case'temple':{bxm(g,3,.2,3,'#e8e0d0',cx,.1,cz);bxm(g,2.7,.2,2.7,'#f0e8da',cx,.3,cz);const H=1.6+.3*(L-1);for(const xx of[.5,1.1,1.9,2.5])for(const zz of[.5,2.5])msh(CYLG,'#fbf6ec',g,.13,H,.13,xx,.4+H/2,zz);bxm(g,2.4,H*.8,1.6,'#efe4cf',cx,.4+H*.4,cz);bxm(g,2.9,.18,2.9,'#f0e8da',cx,.49+H,cz);roofm(g,2.9,2.9,.7,L>=2?'#e3b23b':'#d9cdb6',cx,.58+H,cz);break}
+    case'statue':{bxm(g,.8,.6,.8,'#e8e0d0',.5,.3,.5);msh(CYLG,'#e3b23b',g,.17,.45,.15,.5,.85,.5);msh(SPHG,'#e3b23b',g,.15,.15,.15,.5,1.2,.5);msh(CYLG,'#ffd23f',g,.13,.1,.13,.5,1.36,.5);break}
+    case'palace':{const H=2+.5*(L-1);bxm(g,3,H,2.6,'#f6ead0',cx,H/2,cz);roofm(g,3.3,2.9,1.2,'#4a7fd0',cx,H,cz);door(g,cx,h-.65);bxm(g,.7,1,.06,'#6b3d1c',cx,.5,h-.68);for(const xx of[.45,w-.45])for(const zz of[.45,h-.45]){msh(CYLG,'#f6ead0',g,.42,H+1,.42,xx,(H+1)/2,zz);msh(CONEG,'#4a7fd0',g,.55,1,.55,xx,H+1.5,zz,true)}
+      for(const xx of[-.9,0,.9])win(g,cx+xx,H*.6,h-.68);if(L>=3)msh(SPHG,'#e3b23b',g,.6,.6,.6,cx,H+1.3,cz);bxm(g,.06,1.3,.06,'#6b4724',cx,H+1.9,cz);const fl=new THREE.Mesh(new THREE.PlaneGeometry(.8,.53),new THREE.MeshLambertMaterial({map:flagTexture(),side:THREE.DoubleSide}));fl.position.set(cx+.42,H+2.3,cz);g.add(fl);break}
+  }
+  return g}
+function kMeshFor(b){const D=KB[b.type],root=new THREE.Group();root.position.set(b.x,0,b.y);const m=kModel(b);root.add(m);
+  if(b.st==='site'||b.up){bxm(root,D.w,.05,D.h,'#c39466',D.w/2,.025,D.h/2);for(const[a,c]of[[.08,.08],[D.w-.08,.08],[.08,D.h-.08],[D.w-.08,D.h-.08]])bxm(root,.06,2,.06,'#c08850',a,1,c);
+    if(b.st==='site')m.scale.y=Math.max(.06,b.prog);const pb=new THREE.Group();pb.position.set(D.w/2,2.4,D.h/2);root.add(pb);const bg=new THREE.Sprite(new THREE.SpriteMaterial({color:'#2a1a08',depthTest:false}));bg.scale.set(1.2,.14,1);const fg=new THREE.Sprite(new THREE.SpriteMaterial({color:'#ffd23f',depthTest:false}));fg.center.set(0,.5);fg.position.x=-.58;fg.scale.set(1.16*b.prog,.1,1);pb.add(bg,fg)}
+  return root}
+function kSync(){const seen=new Set();for(const b of S.blds){seen.add(b.id);const sig=b.type+b.lvl+b.st+(b.up?'u':'')+((b.st==='site'||b.up)?Math.floor(b.prog*20):'')+flagSig;const cur=KM3.get(b.id);if(!cur||cur.sig!==sig){if(cur)WG.remove(cur.m);const m=kMeshFor(b);WG.add(m);KM3.set(b.id,{m,sig})}}
+  for(const[id,v]of KM3)if(!seen.has(id)){WG.remove(v.m);KM3.delete(id)}}
+function kBuildWorld3(){clearG(WG);KM3.clear();flagTexture();
+  const gt=groundTex(MW,MH,(i,j)=>tAt(i,j));const gp=new THREE.Mesh(new THREE.PlaneGeometry(MW,MH),new THREE.MeshLambertMaterial({map:gt}));gp.rotation.x=-Math.PI/2;gp.position.set(MW/2,0,MH/2);gp.receiveShadow=true;WG.add(gp);
+  const out=new THREE.Mesh(new THREE.PlaneGeometry(400,400),mat('#7fc25c'));out.rotation.x=-Math.PI/2;out.position.set(MW/2,-.02,MH/2);out.receiveShadow=true;WG.add(out);
+  for(const t of trees){t.mesh=new THREE.Group();tree3(t.mesh,t.x+.5,t.y+.5,t.v);WG.add(t.mesh)}
+  ghost=new THREE.Mesh(BOXG,new THREE.MeshBasicMaterial({color:'#4ade80',transparent:true,opacity:.45,depthWrite:false}));ghost.visible=false;scene.add(ghost)}
+/* people */
+let BLDRS=[];
+function kSpawnPeople(){npcs=[];for(let i=0;i<Math.min(22,Math.floor(S.pop/4));i++){const p=rpick(RT);npcs.push(mkNPC(p[0],p[1]))}
+  BLDRS=[];for(let i=0;i<S.builders;i++)BLDRS.push(mkBuilder());clearG(CG);for(const n of[...npcs,...BLDRS]){n.m=mkChar(n);CG.add(n.m)}P.m=mkChar(P);CG.add(P.m)}
+function mkBuilder(){const pal=S.blds.find(b=>b.type==='palace')||{x:KCX,y:KCY};return{x:pal.x+2+(rnd()-.5),y:pal.y+4.6,dir:0,walk:0,mov:false,skin:rpick(SKIN),hair:rpick(HAIR),shirt:'#f08a24',helmet:true,job:null,path:null,wait:rnd()*2,work:false}}
+function workSpot(b,k){const D=KB[b.type],sp=[[b.x+D.w/2,b.y+D.h+.5],[b.x-.5,b.y+D.h/2],[b.x+D.w+.5,b.y+D.h/2],[b.x+D.w/2,b.y-.5]];for(let i=0;i<4;i++){const s=sp[(i+k)%4];const tx=Math.floor(s[0]),ty=Math.floor(s[1]);if(tx>=0&&ty>=0&&tx<MW&&ty<MH&&!KSOLID[ty*MW+tx])return[tx+.5,ty+.5]}return[b.x+D.w/2,b.y+D.h+.5]}
+function followPath(c,dt,sp){if(!c.path||!c.path.length){c.mov=false;return true}const q=c.path[0],dx=q[0]-c.x,dy=q[1]-c.y,d=Math.hypot(dx,dy);if(d<.06){c.path.shift();return!c.path.length}const s=Math.min(d,sp*dt);c.x+=dx/d*s;c.y+=dy/d*s;c.mov=true;c.walk+=dt*8;c.dir=Math.abs(dx)>Math.abs(dy)?(dx>0?3:2):(dy>0?0:1);return false}
+function goTo(c,tx,ty){const p=bfsPath(c.x,c.y,tx,ty);if(p===null){c.x=tx;c.y=ty;c.path=[]}else c.path=p}
+function kAssign(){const need=S.blds.filter(b=>b.st==='site'||b.up);for(const b of need){const on=BLDRS.filter(x=>x.job===b.id).length;if(on>=2)continue;const free=BLDRS.find(x=>!x.job);if(!free)break;free.job=b.id;free.k=on;free.work=false;const s=workSpot(b,on);goTo(free,s[0],s[1])}}
+function kBuilderTick(c,dt){
+  if(c.job){const b=S.blds.find(x=>x.id===c.job);if(!b||(b.st==='done'&&!b.up)){c.job=null;c.work=false;c.path=null;c.wait=.5;return}
+    if(!c.work){if(followPath(c,dt,2.4)){c.work=true;c.mov=false;const D=KB[b.type];const ax=b.x+D.w/2-c.x,ay=b.y+D.h/2-c.y;c.dir=Math.abs(ax)>Math.abs(ay)?(ax>0?3:2):(ay>0?0:1)}return}
+    const D=KB[b.type],T=b.up?D.t*b.lvl*.8:D.t;b.prog=Math.min(1,b.prog+dt/T);if(Math.random()<dt*2)tone(300+rnd()*80,.03,'square',.015);
+    if(b.prog>=1){if(b.up){b.lvl++;b.up=false;toast(`⬆️ ${D.n} بقى مستوى ${ar(b.lvl)}`)}else{b.st='done';toast(`✅ خلص بناء ${D.n} ${D.e}`)}b.prog=1;SFX.coin();kRefresh();kSave()}return}
+  c.work=false;if(c.path&&c.path.length){followPath(c,dt,1.6);return}c.wait-=dt;if(c.wait<=0){c.wait=2+rnd()*4;const pal=S.blds.find(b=>b.type==='palace');const bx=(pal?pal.x+2:KCX)+rri(-4,4),by=(pal?pal.y+5:KCY)+rri(-1,3);if(bx>0&&by>0&&bx<MW&&by<MH&&!KSOLID[by*MW+bx]){const p=bfsPath(c.x,c.y,bx+.5,by+.5);if(p)c.path=p}}}
+/* economy */
+let kEconT=0,kGoalT=0,kAssignT=0;
+function kEcon(dt){let cap=0,hb=0,tc=4;const pr={g:0,w:0,s:0,f:0};
+  for(const b of S.blds){if(b.st!=='done')continue;const D=KB[b.type],L=b.lvl;if(D.pop)cap+=D.pop*L;if(D.happy)hb+=D.happy*L;if(D.cap)tc+=D.cap*L;if(D.prod)for(const k in D.prod)pr[k]+=D.prod[k]*L}
+  for(const r of S.regions)if(r.o==='p'&&TRIB[r.kind])for(const k in TRIB[r.kind])pr[k]+=TRIB[r.kind][k];
+  pr.g+=S.pop*.4*(S.happy/70);pr.f-=S.pop*.3;for(const k in pr)S.res[k]=Math.max(0,S.res[k]+pr[k]*dt/60);
+  S.cap=cap;S.tcap=Math.min(18,tc);S.rate=pr;S.popT=(S.popT||0)+dt;
+  if(S.popT>=2.5){S.popT=0;if(S.res.f>0&&S.pop<cap)S.pop++;else if((S.res.f<=0&&S.pop>5)||S.pop>cap)S.pop--}
+  const tgt=clamp(50+hb+(S.res.f>0?5:-25)-(S.pop>=cap?5:0),0,100);S.happy+=(tgt-S.happy)*Math.min(1,dt*.1)}
+function kHud(){const r=S.res;$('#stats').innerHTML=`<canvas id="flagMini" width="12" height="8"></canvas><div class="chip">💰 ${ar(Math.floor(r.g))}</div><div class="chip">🪵 ${ar(Math.floor(r.w))}</div><div class="chip">🪨 ${ar(Math.floor(r.s))}</div><div class="chip" style="${r.f<=0?'color:var(--blood)':''}">🌾 ${ar(Math.floor(r.f))}</div><div class="chip">👥 ${ar(S.pop)}/${ar(S.cap||0)}</div><div class="chip">${S.happy>60?'😊':S.happy>35?'😐':'😠'} ${ar(Math.round(S.happy))}</div>`;drawFlag($('#flagMini'),S.flag)}
+function kMission(){const g=GOALS[S.goal];$('#mission').innerHTML=g?`🎯 ${g.t} <span class="muted">· جايزة ${costTxt(g.r)}</span>`:'👑 انت إمبراطور العالم!'}
+/* update */
+function kUpdate(dt){S.t+=dt;
+  let mx=jx,my=jy;if(keys['a']||keys['arrowleft'])mx-=1;if(keys['d']||keys['arrowright'])mx+=1;if(keys['w']||keys['arrowup'])my-=1;if(keys['s']||keys['arrowdown'])my+=1;
+  const m=Math.hypot(mx,my);P.mov=false;if(m>.15){if(m>1){mx/=m;my/=m}const sp=4.4*dt;const nx=P.x+mx*sp,ny=P.y+my*sp;if(!blocked(nx,P.y))P.x=nx;if(!blocked(P.x,ny))P.y=ny;P.mov=true;P.walk+=dt*9;P.dir=Math.abs(mx)>Math.abs(my)?(mx>0?3:2):(my>0?0:1);camOff.x*=1-Math.min(1,dt*3);camOff.z*=1-Math.min(1,dt*3)}
+  for(const n of npcs)npcTick(n,dt);for(const c of BLDRS)kBuilderTick(c,dt);
+  kAssignT-=dt;if(kAssignT<=0){kAssignT=.5;kAssign()}
+  kEconT+=dt;if(kEconT>=1){kEcon(kEconT);kEconT=0;kHud();const want=Math.min(22,Math.floor(S.pop/4));if(npcs.length<want){const p=rpick(RT);const n=mkNPC(p[0],p[1]);n.m=mkChar(n);CG.add(n.m);npcs.push(n)}else if(npcs.length>want+2){const n=npcs.pop();CG.remove(n.m)}}
+  kGoalT-=dt;if(kGoalT<=0){kGoalT=1;const g=GOALS[S.goal];if(g&&g.ok()){for(const k in g.r)S.res[k]+=g.r[k];S.goal++;SFX.fan();toast(`🎯 هدف خلص! +${costTxt(g.r)}`,3000);kMission();kSave();if(S.goal>=GOALS.length)kVictory()}}
+  S.growT-=dt;if(S.growT<=0){S.growT=300;for(const r of S.regions)if(r.o!=='p')r.pw=Math.min(18,r.pw+1)}
+  if(S.regions.some(r=>r.kind==='cap'&&r.o!=='p')){S.raidT-=dt;if(S.raidT<=0){S.raidT=rri(360,520);kRaid()}}
+  saveT-=dt;if(saveT<=0){saveT=5;S.px=P.x;S.py=P.y;kSave()}}
+/* render */
+function kRender(time,dt){kSync();
+  for(const n of npcs){if(!n.m){n.m=mkChar(n);CG.add(n.m)}animChar(n,n.m,dt,time)}
+  for(const c of BLDRS){if(!c.m){c.m=mkChar(c);CG.add(c.m)}animChar(c,c.m,dt,time);if(c.work)c.m.userData.armR.rotation.x=-1.2+Math.sin(time*14)*1}
+  if(!P.m){P.m=mkChar(P);CG.add(P.m)}animChar(P,P.m,dt,time);
+  const por=innerHeight>innerWidth;const tx=P.x+camOff.x,tz=P.y+camOff.z;if(!camT)camT=new THREE.Vector3(tx,0,tz);camT.x+=(tx-camT.x)*Math.min(1,dt*7);camT.z+=(tz-camT.z)*Math.min(1,dt*7);
+  const D=por?1.6:1.05;cam.position.set(camT.x,11*D,camT.z+9*D);cam.lookAt(camT.x,0,camT.z-.5);sun.position.set(camT.x-9,18,camT.z+7);sun.target.position.set(camT.x,0,camT.z);
+  const ph=(S.t%300)/300,night=ph>.75?Math.min(1,(ph-.75)/.08):ph<.05?1-ph/.05:0;hemi.intensity=.58-.3*night;sun.intensity=.7-.5*night;scene.background.set('#a8dcf0').lerp(new THREE.Color('#25335a'),night);scene.fog.color.copy(scene.background);
+  WG.visible=CG.visible=true;BG3.visible=false;ring.visible=false;ARW.hidden=true;
+  if(PL&&ghost){const D2=KB[PL.type],ok=kValid(PL.type,PL.x,PL.y)&&canPay(D2.c);ghost.visible=true;ghost.material.color.set(ok?'#4ade80':'#ef4444');ghost.scale.set(D2.w,1.2,D2.h);ghost.position.set(PL.x+D2.w/2,.6,PL.y+D2.h/2)}else if(ghost)ghost.visible=false;
+  R3.render(scene,cam)}
+function kMiniDraw(ctx,s){ctx.imageSmoothingEnabled=false;ctx.drawImage(miniBase,0,0,MW*s,MH*s);for(const b of S.blds){const D=KB[b.type];ctx.fillStyle=b.st==='done'?(b.type==='palace'?'#4a7fd0':b.type==='farm'?'#e8c84a':'#e07040'):'#c39466';ctx.fillRect(b.x*s,b.y*s,D.w*s,D.h*s)}ctx.fillStyle='#fff';ctx.fillRect(P.x*s-s,P.y*s-s,s*2,s*2);ctx.fillStyle=PC;ctx.fillRect(P.x*s-s/2,P.y*s-s/2,s,s)}
+/* taps & pan */
+const rc=new THREE.Raycaster(),ndc=new THREE.Vector2(),gpl=new THREE.Plane(new THREE.Vector3(0,1,0),0),hitV=new THREE.Vector3();
+function s2w(cx,cy){ndc.set(cx/innerWidth*2-1,-(cy/innerHeight)*2+1);rc.setFromCamera(ndc,cam);return rc.ray.intersectPlane(gpl,hitV)?[hitV.x,hitV.z]:null}
+let tp=null;
+cv.addEventListener('pointerdown',e=>{if(!KM||mode!=='play')return;tp={x:e.clientX,y:e.clientY,t:performance.now(),moved:false,id:e.pointerId};cv.setPointerCapture(e.pointerId)});
+cv.addEventListener('pointermove',e=>{if(!tp||e.pointerId!==tp.id)return;const dx=e.clientX-tp.x,dy=e.clientY-tp.y;if(!tp.moved&&Math.hypot(dx,dy)<9)return;tp.moved=true;const k=(innerHeight>innerWidth?.05:.032);camOff.x=clamp(camOff.x-dx*k,-30,30);camOff.z=clamp(camOff.z-dy*k,-25,25);tp.x=e.clientX;tp.y=e.clientY});
+cv.addEventListener('pointerup',e=>{if(!tp||e.pointerId!==tp.id)return;const t=tp;tp=null;if(t.moved||mode!=='play')return;const w=s2w(e.clientX,e.clientY);if(!w)return;
+  if(PL){const D=KB[PL.type];PL.x=Math.floor(w[0]-D.w/2+.5);PL.y=Math.floor(w[1]-D.h/2+.5);SFX.tap();return}
+  const tx=Math.floor(w[0]),ty=Math.floor(w[1]);const b=S.blds.find(b=>tx>=b.x&&tx<b.x+KB[b.type].w&&ty>=b.y&&ty<b.y+KB[b.type].h);if(b){SFX.ui();kBldPanel(b)}});
+/* building UI */
+function kCatalog(){let cat=0;const show=()=>panel(`<button class="x" aria-label="اقفل">✖</button><h2>🔨 ابني</h2><div class="tabs">${KCAT.map((c,i)=>`<button class="tab${i===cat?' on':''}" data-c="${i}">${c[0]}</button>`).join('')}</div>
+  ${KCAT[cat][1].map(k=>{const D=KB[k],ok=canPay(D.c);return`<div class="job"><div><div class="t">${D.e} ${D.n} <span class="muted" style="font-size:12px">${ar(D.w)}×${ar(D.h)}</span></div><div class="s">${D.d} · ⏱️ ${ar(D.t)} ث</div><div class="s">${costTxt(D.c)}</div></div><button class="btn pri" data-k="${k}" ${ok?'':'disabled'}>${ok?'اختار مكانه':'مش كفاية'}</button></div>`}).join('')}`,(c,close)=>{
+    c.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{cat=+b.dataset.c;SFX.tap();close();show()});c.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{close();kStartPlace(b.dataset.k)})});show()}
+function kStartPlace(type){const D=KB[type];const c=camT||{x:P.x,z:P.y};let x=Math.floor(c.x-D.w/2),y=Math.floor(c.z-D.h/2-1.5);
+  outer:for(let r=0;r<8;r++)for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++)if(kValid(type,x+dx,y+dy)){x+=dx;y+=dy;break outer}
+  PL={type,x,y};$('#placeBar').hidden=false;$('#plTxt').textContent=`${D.e} ${D.n} · دوس على الأرض عشان تحطه، واسحب عشان تتحرك`;actBtn.hidden=true;$('#bagBtn').hidden=true;SFX.ui()}
+function kEndPlace(){PL=null;$('#placeBar').hidden=true;actBtn.hidden=false;$('#bagBtn').hidden=false}
+function kConfirm(){if(!PL)return;const D=KB[PL.type];if(!kValid(PL.type,PL.x,PL.y)){SFX.bad();toast('المكان ده مينفعش (طريق أو مية أو مبنى)');return}if(!canPay(D.c)){SFX.bad();toast('الموارد مش كفاية');return}
+  pay(D.c);let wood=0;for(let y=PL.y;y<PL.y+D.h;y++)for(let x=PL.x;x<PL.x+D.w;x++)if(tAt(x,y)===T_TREE){setT(x,y,T_GRASS);const i=trees.findIndex(t=>t.x===x&&t.y===y);if(i>=0){if(trees[i].mesh)WG.remove(trees[i].mesh);trees.splice(i,1)}wood+=2}
+  if(wood){S.res.w+=wood;toast(`🌳 قطعت شجر: +${ar(wood)} خشب`)}
+  S.blds.push({id:S.nid++,type:PL.type,x:PL.x,y:PL.y,lvl:1,st:'site',prog:0});S.cut=S.cut||[];kRefresh();SFX.place();kHud();kSave();
+  const busy=BLDRS.every(b=>b.job);toast(busy?`👷 ${D.n} مستني بنّاء فاضي`:`👷 البنّائين رايحين يبنوا ${D.n}`);
+  if(PL.type==='wall'||PL.type==='tower'){if(canPay(D.c))PL.x+=1;else kEndPlace()}else kEndPlace()}
+function kBldPanel(b){const D=KB[b.type];const st=b.st==='site'?`🚧 بيتبني ${ar(Math.round(b.prog*100))}٪`:b.up?`⬆️ بيتطوّر ${ar(Math.round(b.prog*100))}٪`:'✅ شغال';const uc=upCost(b);const canUp=b.st==='done'&&!b.up&&b.lvl<3;
+  panel(`<button class="x" aria-label="اقفل">✖</button><h2>${D.e} ${D.n} ${'⭐'.repeat(b.lvl)}</h2><div class="kv"><b>الحالة</b><span>${st}</span><b>بيعمل إيه</b><span>${D.d}${b.lvl>1?` (×${ar(b.lvl)})`:''}</span></div>
+  <div class="row" style="margin-top:12px">${b.lvl<3?`<button class="btn pri" id="up" ${canUp&&canPay(uc)?'':'disabled'}>⬆️ طوّر لمستوى ${ar(b.lvl+1)} · ${costTxt(uc)}</button>`:'<span class="muted">أعلى مستوى ⭐⭐⭐</span>'}${b.type==='barracks'&&b.st==='done'?'<button class="btn" id="arm">⚔️ جنّد</button>':''}${b.type!=='palace'?'<button class="btn red" id="del">🗑️ اهدم</button>':''}</div>`,(c,close)=>{
+    const u=c.querySelector('#up');if(u)u.onclick=()=>{pay(uc);b.up=true;b.prog=0;SFX.place();kSave();close();toast(`👷 البنّائين هيطوّروا ${D.n}`)};
+    const a=c.querySelector('#arm');if(a)a.onclick=()=>{close();kMenu('army')};
+    const d=c.querySelector('#del');if(d)d.onclick=()=>{if(!d.dataset.k){d.dataset.k=1;d.textContent='⚠️ متأكد؟ دوس تاني';return}const ref={};for(const k in D.c)ref[k]=Math.round(D.c[k]*.3);for(const k in ref)S.res[k]+=ref[k];S.blds=S.blds.filter(x=>x!==b);kRefresh();SFX.bad();kSave();close();toast(`اتهد. رجعلك ${costTxt(ref)}`)}})}
+/* menus */
+function kForm(){const m=S.tcap||4,f=Array(18).fill(null);const seq=[...Array(S.troops.inf).fill('inf'),...Array(S.troops.cav).fill('cav'),...Array(S.troops.arc).fill('arc')];for(let i=0;i<m&&i<seq.length;i++)f[i]=seq[i];S.form=f}
+function kPlaced(t){return S.form.filter((f,i)=>f===t&&i<(S.tcap||4)).length}
+function kMenu(tab='king'){const tabs=[['king','👑 المملكة'],['army','⚔️ الجيش'],['bld','👷 البنّائين'],['flag','🏳️ علمي'],['set','⚙️ الإعدادات']];let h='';const r=S.rate||{g:0,w:0,s:0,f:0};
+  if(tab==='king')h=`<div class="row" style="gap:12px"><canvas id="fl" width="12" height="8" style="width:72px;height:48px;image-rendering:pixelated;border:2px solid var(--line)"></canvas><div><b style="font-size:20px">الملك ${S.name} 👑</b><div class="muted">إمبراطورية ${S.kname}</div></div></div>
+    <h3>في الدقيقة</h3><div class="kv">${Object.keys(RES).map(k=>`<b>${RES[k][0]} ${RES[k][1]}</b><span style="color:${r[k]<0?'var(--blood)':'inherit'}">${r[k]>=0?'+':''}${ar(Math.round(r[k]))}</span>`).join('')}<b>👥 السكان</b><span>${ar(S.pop)} من ${ar(S.cap||0)}</span><b>😊 السعادة</b><span>${ar(Math.round(S.happy))}٪</span><b>🏗️ المباني</b><span>${ar(S.blds.length)}</span><b>🌍 أراضيك</b><span>${ar(S.regions.filter(x=>x.o==='p').length)} من ${ar(S.regions.length)}</span></div>
+    <h3>الأهداف</h3><div class="path">${GOALS.map((g,i)=>`<div>${i<S.goal?'✅':i===S.goal?'🎯':'⬜'} ${g.t}</div>`).join('')}</div>`;
+  else if(tab==='army'){const bar=kCount('barracks')>0,tot=kTroops(),cap=S.tcap||4;h=`<div class="kv"><b>جنودك</b><span>${ar(tot)} من ${ar(cap)}</span></div>${bar?'':'<p class="muted">⚠️ ابني <b>ثكنات</b> عشان تقدر تجنّد جنود جداد.</p>'}
+    <h3>جنّد</h3><div class="row">${Object.entries(UT).map(([k,u])=>`<button class="btn" data-r="${k}" ${bar?'':'disabled'}>${u.e} ${u.n}: ${ar(S.troops[k])} · ${costTxt(RCOST[k])}</button>`).join('')}</div>
+    <h3>التشكيل <span class="muted" style="font-size:13px">(الصف الأول قدام)</span></h3><div class="fgrid">${S.form.map((f,i)=>`<button data-f="${i}" class="${i>=cap?'lk':''}">${i>=cap?'🔒':f?UT[f].e:'·'}</button>`).join('')}</div><div class="row" style="margin-top:8px"><button class="btn" id="af">🪄 رتّب تلقائي</button><button class="btn pri" id="wm">🌍 خريطة العالم</button></div>`}
+  else if(tab==='bld'){const busy=BLDRS.filter(b=>b.job).length,c={g:60+S.builders*20};h=`<div class="kv"><b>👷 البنّائين</b><span>${ar(S.builders)}</span><b>شغالين دلوقتي</b><span>${ar(busy)}</span><b>مباني مستنية</b><span>${ar(S.blds.filter(b=>b.st==='site'||b.up).length)}</span></div><p class="muted">كل مبنى بياخد لحد ٢ بنّائين. كل ما البنّائين يزيدوا، تبني أسرع وأكتر في نفس الوقت.</p><button class="btn pri" id="hire" ${S.builders>=10||!canPay(c)?'disabled':''}>👷 وظّف بنّاء · ${costTxt(c)}</button>`}
+  else if(tab==='flag')h=`<p>علمك بيظهر على القصر والثكنات وأبراجك.</p><canvas id="fl" width="12" height="8" style="width:180px;height:120px;image-rendering:pixelated;border:2px solid var(--line)"></canvas><div class="row" style="margin-top:10px"><button class="btn pri" id="edf">✏️ عدّل العلم</button></div>`;
+  else h=`<div class="path"><div><button class="btn" id="tS">${S.sfx?'🔊':'🔇'} أصوات اللعبة</button></div><div><button class="btn" id="tT">${S.tts?'🗣️':'🤐'} صوت الملوك</button></div></div><h3>مسح المملكة</h3><button class="btn red" id="del">🗑️ امسح المملكة وابدأ من الأول</button>`;
+  return panel(`<button class="x" aria-label="اقفل">✖</button><div class="tabs">${tabs.map(([k,n])=>`<button class="tab${k===tab?' on':''}" data-t="${k}">${n}</button>`).join('')}</div>${h}`,(c,close)=>{
+    c.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{SFX.ui();close();kMenu(b.dataset.t)});const fl=c.querySelector('#fl');if(fl)drawFlag(fl,S.flag);
+    c.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{const k=b.dataset.r;if(kTroops()>=(S.tcap||4)){toast('وصلت للحد. ابني أو طوّر ثكنات');return}if(!canPay(RCOST[k])){toast('الموارد مش كفاية');return}pay(RCOST[k]);S.troops[k]++;const fi=S.form.findIndex((f,i)=>!f&&i<(S.tcap||4));if(fi>=0)S.form[fi]=k;SFX.coin();kSave();close();kMenu('army')});
+    c.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{const i=+b.dataset.f;if(i>=(S.tcap||4))return;const o=[null,'inf','arc','cav'];let k=o.indexOf(S.form[i]);for(let n=0;n<4;n++){k=(k+1)%4;const t=o[k];S.form[i]=null;if(!t||kPlaced(t)<S.troops[t]){S.form[i]=t;break}}SFX.tap();kSave();b.textContent=S.form[i]?UT[S.form[i]].e:'·'});
+    const af=c.querySelector('#af');if(af)af.onclick=()=>{kForm();SFX.ui();close();kMenu('army')};const wm=c.querySelector('#wm');if(wm)wm.onclick=()=>{close();kWorld()};
+    const hi=c.querySelector('#hire');if(hi)hi.onclick=()=>{pay({g:60+S.builders*20});S.builders++;const n=mkBuilder();n.m=mkChar(n);CG.add(n.m);BLDRS.push(n);SFX.coin();kSave();close();kMenu('bld')};
+    const ed=c.querySelector('#edf');if(ed)ed.onclick=async()=>{close();await flagEditor(false);PC=domColor();kSave();kBuildWorld3();kMenu('flag')};
+    const tS=c.querySelector('#tS');if(tS)tS.onclick=()=>{S.sfx=!S.sfx;kSave();close();kMenu('set')};const tT=c.querySelector('#tT');if(tT)tT.onclick=()=>{S.tts=!S.tts;kSave();close();kMenu('set')};
+    const del=c.querySelector('#del');if(del)del.onclick=()=>{if(del.dataset.k){try{localStorage.removeItem('empireKing1')}catch(e){}location.reload()}else{del.dataset.k=1;del.textContent='⚠️ متأكد؟ دوس تاني'}}})}
+/* world map */
+function drawKWorld(c){const W=100,H=64,s=6;c.width=W*s;c.height=H*s;const x=c.getContext('2d');const gr=x.createLinearGradient(0,0,0,H*s);gr.addColorStop(0,'#7cc8ec');gr.addColorStop(1,'#4fa9d8');x.fillStyle=gr;x.fillRect(0,0,W*s,H*s);
+  for(let i=0;i<40;i++){x.strokeStyle='rgba(255,255,255,.25)';x.lineWidth=2;x.beginPath();const a=hash(i,2)*W*s,b=hash(2,i)*H*s;x.arc(a,b,8,Math.PI*.1,Math.PI*.9);x.stroke()}
+  x.fillStyle='#f0dca0';for(const r of S.regions){x.beginPath();x.arc(r.x*s,r.y*s,15*s,0,7);x.fill()}
+  x.fillStyle='#9fd67a';for(const r of S.regions){x.beginPath();x.arc(r.x*s,r.y*s,14*s,0,7);x.fill()}
+  for(const r of S.regions){x.globalAlpha=.35;x.fillStyle=ownerCol(r.o);x.beginPath();x.arc(r.x*s,r.y*s,9*s,0,7);x.fill();x.globalAlpha=1;x.setLineDash([6,6]);x.strokeStyle=ownerCol(r.o);x.lineWidth=3;x.beginPath();x.arc(r.x*s,r.y*s,9*s,0,7);x.stroke();x.setLineDash([])}
+  for(let i=0;i<70;i++){const a=hash(i,9)*W,b=hash(9,i)*H;if(!S.regions.some(r=>Math.hypot(r.x-a,r.y-b)<13&&Math.hypot(r.x-a,r.y-b)>8))continue;x.fillStyle='#4f9e45';x.beginPath();x.moveTo(a*s,b*s-10);x.lineTo(a*s-6,b*s+4);x.lineTo(a*s+6,b*s+4);x.fill()}
+  for(const r of S.regions){const X=r.x*s,Y=r.y*s,c2=ownerCol(r.o);if(r.kind==='cap'||r.kind==='home'){x.fillStyle='#f6ead0';x.fillRect(X-16,Y-12,32,20);for(const dx of[-16,10]){x.fillRect(X+dx,Y-20,6,28);x.fillStyle=c2;x.beginPath();x.moveTo(X+dx-2,Y-20);x.lineTo(X+dx+3,Y-30);x.lineTo(X+dx+8,Y-20);x.fill();x.fillStyle='#f6ead0'}x.fillStyle=c2;x.beginPath();x.moveTo(X-18,Y-12);x.lineTo(X,Y-24);x.lineTo(X+18,Y-12);x.fill();x.fillStyle='#6b3d1c';x.fillRect(X-4,Y,8,8)}
+    else{const n=r.kind==='town'?3:2;for(let i=0;i<n;i++){const hx=X-12+i*10,hy=Y-4+(i%2)*4;x.fillStyle='#f3e3c3';x.fillRect(hx,hy,9,8);x.fillStyle=c2;x.beginPath();x.moveTo(hx-1,hy);x.lineTo(hx+4.5,hy-6);x.lineTo(hx+10,hy);x.fill()}}
+    x.font='bold 15px Tajawal, sans-serif';x.textAlign='center';const nm=r.name+(r.o==='p'?' 👑':'');const tw=x.measureText(nm).width+14;x.fillStyle='rgba(30,20,10,.75)';x.beginPath();x.roundRect?x.roundRect(X-tw/2,Y+14,tw,22,8):x.rect(X-tw/2,Y+14,tw,22);x.fill();x.fillStyle='#fff';x.fillText(nm,X,Y+30);
+    if(r.o!=='p'){x.fillStyle=c2;x.beginPath();x.arc(X+22,Y-18,13,0,7);x.fill();x.fillStyle='#fff';x.font='bold 13px Tajawal, sans-serif';x.fillText('⚔'+r.pw,X+22,Y-13)}}}
+function kWorld(){panel(`<button class="x" aria-label="اقفل">✖</button><h2>🌍 خريطة العالم</h2><p class="muted">دوس على أي أرض تشوفها وتهاجمها. الرقم = قوة جيشهم.</p><canvas id="wm" style="width:100%;border-radius:8px;border:2px solid var(--line);cursor:pointer"></canvas><div class="row" style="gap:10px;margin-top:6px;font-size:13px">${['p',0,1,2,3,'n'].map(o=>`<span><b style="color:${ownerCol(o)}">●</b> ${ownerName(o)}</span>`).join('')}</div>`,(c,close)=>{const cv2=c.querySelector('#wm');drawKWorld(cv2);
+  cv2.onclick=e=>{const rr=cv2.getBoundingClientRect(),wx=(e.clientX-rr.left)/rr.width*100,wy=(e.clientY-rr.top)/rr.height*64;let best=null,bd=10;for(const r of S.regions){const d=Math.hypot(r.x-wx,r.y-wy);if(d<bd){bd=d;best=r}}if(best){close();kRegion(best)}}})}
+async function kRegion(r){const t=TRIB[r.kind];const i=await panel(`<button class="x" aria-label="اقفل">✖</button><h2>${r.kind==='cap'||r.kind==='home'?'🏰':r.kind==='town'?'🏘️':'🛖'} ${r.name}</h2><div class="kv"><b>تبع</b><span style="color:${ownerCol(r.o)}">${ownerName(r.o)}</span><b>النوع</b><span>${{cap:'عاصمة',home:'عاصمتك',town:'مدينة',village:'قرية'}[r.kind]}</span>${r.o!=='p'?`<b>قوة جيشهم</b><span>⚔️ ${ar(r.pw)} جندي</span>`:''}${t?`<b>لو احتليتها</b><span>${costTxt(t)} في الدقيقة</span>`:''}<b>جيشك</b><span>${ar(kTroops())} جندي</span></div>
+  <div class="row" style="margin-top:12px">${r.o==='p'?'<span class="muted">✅ دي أرضك</span>':`<button class="btn pri" id="go">⚔️ هاجم</button>`}<button class="btn" id="bk">🌍 رجوع للخريطة</button></div>`,(c,close)=>{const g=c.querySelector('#go');if(g)g.onclick=()=>close(1);c.querySelector('#bk').onclick=()=>close(2)});
+  if(i===2)return kWorld();if(i!==1)return;
+  if(!S.form.some((f,j)=>f&&j<(S.tcap||4))){toast('محتاج جنود في التشكيل (القايمة ← الجيش)');return}
+  const c=await sayChoice('قبل الهجوم ⚔️',`هتهاجم ${r.name} (⚔️ ${ar(r.pw)}).\nتروح بنفسك مع الجيش؟\n⚠️ لو الملك مات… الإمبراطورية كلها بتتمسح.`,['أبعت الجيش بس 🏰','أروح بنفسي 👑⚔️','إلغاء']);if(c===2)return;
+  const ec=r.o==='n'?'#7a6a58':EMP[r.o].c,en=r.o==='n'?`أهل ${r.name}`:EMP[r.o].n;
+  if(r.o!=='n'&&r.kind==='cap'){const l=`${EMP[r.o].k}: جاي لحد عاصمتي يا ${S.name}؟ هتندم.`;speak(l)}
+  kStartBattle({go:c===1,pw:r.pw,eName:en,eColor:ec,towers:0,onEnd:win=>{if(win){const wasCap=r.kind==='cap',ai=r.o;r.o='p';if(wasCap&&ai!=='n'){for(const q of S.regions)if(q.o===ai)q.o='n';speak(`${EMP[ai].k} سقط. ${S.kname} أقوى إمبراطورية`)}return`🏳️ ${r.name} بقت أرضك! ${t?'+'+costTxt(t)+' في الدقيقة':''}`}r.pw=Math.min(18,r.pw+1);return`${r.name} صمدت. جهّز جيش أكبر.`}})}
+async function kRaid(){if(mode!=='play'){S.raidT=30;return}const alive=S.regions.filter(r=>r.kind==='cap'&&r.o!=='p'&&r.o!=='n');if(!alive.length)return;const cap=rpick(alive),ai=cap.o,E=EMP[ai];
+  const pw=Math.min(16,3+S.regions.filter(r=>r.o==='p').length*2+Math.floor(S.t/420));const l=`يا ${S.name}! أنا ${E.k}… جيشي جاي ياخد مدينتك!`;speak(l);SFX.bad();
+  const i=await sayChoice(`${E.k} 👑`,l+`\n(قوة جيشهم ⚔️ ${ar(pw)})`,['الجيش يدافع 🏰','أدافع بنفسي 👑⚔️','أدفع جزية 💰']);
+  if(i===2){const loss=Math.round(S.res.g*.35);S.res.g-=loss;S.happy-=8;toast(`دفعت ${ar(loss)}💰 جزية… الناس زعلانة`);kHud();return}
+  const towers=S.blds.filter(b=>b.type==='tower'&&b.st==='done').reduce((a,b)=>a+b.lvl,0);
+  if(!S.form.some((f,j)=>f&&j<(S.tcap||4))&&!towers&&i===0){kLoseRaid(ai,E);return}
+  kStartBattle({go:i===1,pw,eName:E.n,eColor:E.c,towers:Math.min(6,towers),defend:true,onEnd:win=>{if(win){const g=40+pw*6;S.res.g+=g;S.happy=Math.min(100,S.happy+6);return`دافعت عن ${S.kname}! +${ar(g)}💰`}return kLoseRaid(ai,E,true)}})}
+function kLoseRaid(ai,E,ret){const loss=Math.round(S.res.g*.3);S.res.g-=loss;S.happy=Math.max(0,S.happy-15);const mine=S.regions.filter(r=>r.o==='p'&&r.kind!=='home');let lost='';if(mine.length){const r=rpick(mine);r.o=ai;lost=` وخدوا ${r.name}`}const m=`${E.n} نهبوا ${ar(loss)}💰${lost}.`;if(ret)return m;toast(m,3500);kHud()}
+function kStartBattle(o){const units=[];const add=(team,type,x,y,e)=>{const t=UT[type];units.push(Object.assign({team,type,x,y,hp:t.hp,max:t.hp,cd:rnd()*.8,sw:0,dir:team?2:3,walk:0,mov:false,skin:rpick(SKIN),hair:rpick(HAIR)},e||{}))};
+  const pf=(team,form,ex)=>form.forEach((f,i)=>{if(!f)return;const r=i/6|0,c=i%6;add(team,f,team?BW-6+r*1.8:6-r*1.8,1.6+c*1.95+(rnd()-.5)*.3,Object.assign({slot:i},ex||{}))});
+  pf(0,S.form.slice(0,S.tcap||4));for(let i=0;i<o.towers;i++)add(0,'arc',1.2,1.8+i*1.9,{preset:true});
+  const n=Math.min(18,o.pw),ef=Array(18).fill(null);for(let i=0;i<n;i++)ef[i]=i<6?(o.pw>9&&(i===0||i===5)?'cav':'inf'):i<12?(o.pw>12&&rnd()<.3?'cav':'inf'):'arc';pf(1,ef);
+  if(o.go)add(0,'inf',3.2,BH/2,{isP:true,king:true,hp:130,max:130,skin:P.skin,hair:P.hair});
+  B={kind:'k',units,arrows:[],t:0,eName:o.eName,eColor:o.eColor,aColor:PC,go:o.go,speed:1,over:false,msgT:0,k:o};
+  mode='battle';showHUD(false);$('#mission').hidden=false;$('#spdBtn').hidden=false;$('#spdBtn').textContent='⏩ سرّع';if(o.go){$('#joy').hidden=false;actBtn.hidden=false;actBtn.textContent='اضرب ⚔️';actBtn.classList.remove('idle')}
+  buildBattle3();SFX.fan();toast(`⚔️ المعركة بدأت ضد ${o.eName}!`,2400);updBattleBar()}
+async function kEndBattle(win){B.over=true;mode='busy';await sleep(1200);
+  const lost={inf:0,arc:0,cav:0};for(const u of B.units)if(!u.team&&!u.isP&&!u.preset&&u.hp<=0)lost[u.type]++;
+  for(const k in lost){S.troops[k]=Math.max(0,S.troops[k]-lost[k]);let n=lost[k];for(let i=17;i>=0&&n>0;i--)if(S.form[i]===k&&kPlaced(k)>S.troops[k]){S.form[i]=null;n--}}
+  const king=B.units.find(u=>u.king);if(king&&king.hp<=0)return kGameOver();
+  const msg=B.k.onEnd(win);if(win)SFX.fan();else SFX.bad();kSave();$('#spdBtn').hidden=true;const aL=B.units.filter(u=>!u.team&&!u.isP&&u.hp<=0).length,eL=B.units.filter(u=>u.team&&u.hp<=0).length;
+  await panel(`<p class="big">${win?'انتصار! 🏆':'هزيمة… 🏳️'}</p><p style="text-align:center">${msg}</p><div class="kv"><b>خسايرنا</b><span>${ar(aL)} جندي</span><b>خساير العدو</b><span>${ar(eL)}</span></div><div class="row" style="justify-content:center;margin-top:12px"><button class="btn pri" id="k">ارجع للمملكة</button></div>`,(c,close)=>c.querySelector('#k').onclick=()=>close());
+  B=null;clearBattle3();kShowHUD();mode='play';kHud();kMission()}
+async function kGameOver(){try{localStorage.removeItem('empireKing1')}catch(e){}SFX.bad();speak(`الملك ${S.name} مات`);
+  await panel(`<p class="big">👑💀</p><p class="big" style="font-size:26px">الملك ${S.name} مات في المعركة</p><p style="text-align:center">ومن غير ملك… إمبراطورية ${S.kname} وقعت. اللعبة اتمسحت.</p><div class="row" style="justify-content:center"><button class="btn pri" id="k">ابدأ من الأول</button></div>`,(c,close)=>c.querySelector('#k').onclick=()=>close());location.reload()}
+async function kVictory(){SFX.fan();speak(`عاش الإمبراطور ${S.name}`);await panel(`<p class="big">إمبراطور العالم 👑🌍</p><p style="text-align:center">كل العواصم بقت تحت علمك يا ${S.name}.</p><div class="row" style="justify-content:center"><button class="btn pri" id="k">كمّل حكم</button></div>`,(c,close)=>c.querySelector('#k').onclick=()=>close())}
+function kShowHUD(){showHUD(true);actBtn.textContent='🔨 ابني';actBtn.classList.remove('idle');$('#bagBtn').textContent='🌍';$('#bagBtn').setAttribute('aria-label','خريطة العالم')}
+function domColor(){const cnt={};S.flag.forEach(c=>cnt[c]=(cnt[c]||0)+1);const o=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]).map(Number).filter(i=>PAL[i]!=='#151515'&&PAL[i]!=='#f4f0e6');return PAL[o[0]??2]}
+function kStart(){KM=true;kGenCity();RT=roadTiles();mkMiniBase();if(!S.regions)S.regions=kRegions();
+  if(!S.blds.length){const add=(type,x,y)=>S.blds.push({id:S.nid++,type,x,y,lvl:1,st:'done',prog:1});add('palace',KCX-4,KCY-5);add('house',KCX+4,KCY-3);add('house',KCX+4,KCY-6);add('farm',KCX-4,KCY+4);add('lumber',KCX+4,KCY+4)}
+  for(const b of S.blds)for(let y=b.y;y<b.y+KB[b.type].h;y++)for(let x=b.x;x<b.x+KB[b.type].w;x++)if(tAt(x,y)===T_TREE){setT(x,y,T_GRASS);const i=trees.findIndex(t=>t.x===x&&t.y===y);if(i>=0)trees.splice(i,1)}
+  kRefresh();PC=domColor();P.crown=true;P.helmet=false;P.army=false;P.shirt=PC;P.skin=SKIN[0];P.hair=HAIR[0];
+  if(S.px&&!blocked(S.px,S.py)){P.x=S.px;P.y=S.py}else{P.x=KCX+.5;P.y=KCY+.5}
+  kBuildWorld3();kSpawnPeople();kEcon(0);kHud();kMission();kShowHUD()}
+async function kEnter(){const ok=(()=>{try{return localStorage.getItem('empireKey')==='1'}catch(e){return false}})();
+  if(!ok){const r=await panel(`<button class="x" aria-label="اقفل">✖</button><h2>👑 دخول الملك</h2><p class="muted">الوضع ده لصاحب اللعبة بس. اكتب الكود السري.</p><input type="text" id="code" inputmode="numeric" autocomplete="off" placeholder="الكود…" aria-label="الكود"><p id="err" style="color:var(--blood)" hidden>الكود غلط.</p><div class="row" style="margin-top:10px"><button class="btn pri" id="ok">ادخل</button></div>`,(c,close)=>{const go=()=>{const v=c.querySelector('#code').value.trim();if(cyrb53(v)===KHASH){try{localStorage.setItem('empireKey','1')}catch(e){}close(1)}else{SFX.bad();c.querySelector('#err').hidden=false}};c.querySelector('#ok').onclick=go;c.querySelector('#code').onkeydown=e=>{if(e.key==='Enter')go()}});if(r!==1)return false}
+  const ks=kLoad();if(ks){S=ks;kStart();mode='play';toast(`أهلًا يا ملك ${S.name} 👑`);return true}
+  S=kNewSave();S.flag=randomFlag();await flagEditor(true);
+  await panel(`<h2>اسم إمبراطوريتك</h2><input type="text" id="kn" maxlength="22" placeholder="مثلًا: إمبراطورية الشمس" aria-label="اسم الإمبراطورية"><div class="row" style="margin-top:10px"><button class="btn pri" id="ok">تمام 👑</button></div>`,(c,close)=>{c.querySelector('#ok').onclick=()=>{const v=c.querySelector('#kn').value.trim();if(!v){c.querySelector('#kn').focus();return}S.kname=v;close()}});
+  kStart();kSave();await panel(`<p class="big">عاش الملك ${S.name}! 👑</p><p style="text-align:center">انت ملك <b>${S.kname}</b>. عندك قصر، وشوية بيوت، ومزرعة، ومنشرة، و٢ بنّائين.</p><p style="text-align:center">🔨 <b>ابني</b>: اختار مبنى وحطه، والبنّائين يروحوا يبنوه.<br>👆 دوس على أي مبنى تطوّره. اسحب الشاشة تتفرّج.<br>🌍 من الخريطة احتل الأراضي… وخلي بالك، الملوك التانيين هيهجموا عليك.</p><div class="row" style="justify-content:center"><button class="btn pri" id="k">يلا نحكم</button></div>`,(c,close)=>c.querySelector('#k').onclick=()=>close());
+  mode='play';return true}
 
 /* ---------------- boot ---------------- */
 function startWorld(){
@@ -781,18 +1043,19 @@ function startWorld(){
 function showHUD(on){['#stats','#menuBtn','#mini','#mission','#joy','#bagBtn','#actBtn'].forEach(s=>$(s).hidden=!on)}
 async function boot(){
   init3D();showHUD(false);
-  const sv=load();
-  if(sv){S=sv;startWorld();
-    await panel(`<p class="big">كوّن إمبراطوريتك</p><p style="text-align:center">أهلًا يا ${S.name}… ${rankName()} في ${EMP[S.emp].n}.</p><div class="row" style="justify-content:center"><button class="btn pri" id="go">كمّل 🧱</button></div>`,(c,close)=>c.querySelector('#go').onclick=()=>{aInit();close()});
-    showHUD(true);mode='play';return}
-  S=newSave();S.flag=randomFlag();startWorld();mode='title';
-  await panel(`<p class="big">كوّن إمبراطوريتك</p><p style="text-align:center">هتبدأ مواطن عادي… وممكن في يوم تحكم إمبراطورية.<br>بس الأول: ارسم علمك.</p><div class="row" style="justify-content:center"><button class="btn pri" id="go">ابدأ ✨</button></div>`,(c,close)=>c.querySelector('#go').onclick=()=>{aInit();close()});
+  const sv=load(),ks=(()=>{try{return localStorage.getItem('empireKing1')}catch(e){return null}})();
+  if(sv)S=sv;else{S=newSave();S.flag=randomFlag()}startWorld();mode='title';
+  for(;;){
+    const ch=await panel(`<p class="big">كوّن إمبراطوريتك</p><p style="text-align:center">ابدأ مواطن عادي… وممكن في يوم تحكم.</p><div class="row" style="justify-content:center"><button class="btn pri" id="cz">🧱 ${sv?'كمّل كمواطن':'العب مواطن'}</button><button class="btn" id="kg">👑 دخول الملك</button></div>`,(c,close)=>{c.querySelector('#cz').onclick=()=>{aInit();close('c')};c.querySelector('#kg').onclick=()=>{aInit();close('k')}});
+    if(ch==='k'){mode='title';if(await kEnter())return;mode='title';continue}
+    break}
+  if(sv){showHUD(true);mode='play';return}
   await flagEditor(true);
   startWorld();const e=EMP[S.emp];
   await panel(`<p class="big">اتولدت! 👶</p><p style="text-align:center">اتولدت في <b style="color:${e.c}">${e.n}</b>، في مدينة ${e.city}.<br>الحاكم: ${e.k}.</p><p style="text-align:center">انت مواطن عادي… وشغلك الأول: <b>عامل بناء 🧱</b>.<br>ابني للناس زي الرسمة بالظبط، واجمع فلوس وسمعة… لحد ما الملك نفسه يطلبك.</p><div class="row" style="justify-content:center"><button class="btn pri" id="go">يلا على السوق</button></div>`,(c,close)=>c.querySelector('#go').onclick=()=>close());
   save();showHUD(true);mode='play';toast('روح لوحة الطلبات في السوق 📜',3000);
 }
 boot();requestAnimationFrame(frame);
-window.__emp={startBattle,startMission,addXP,get B(){return B},get S(){return S},get P(){return P},plots:()=>plots,acceptJob,openBuild,finishJob,score,newOffer,get mode(){return mode},palaceVisit,setMode:m=>mode=m};
+window.__emp={kStart,kStartPlace,kConfirm,kStartBattle,kWorld,kRegion,get KM(){return KM},get BLDRS(){return BLDRS},startBattle,startMission,addXP,get B(){return B},get S(){return S},get P(){return P},plots:()=>plots,acceptJob,openBuild,finishJob,score,newOffer,get mode(){return mode},palaceVisit,setMode:m=>mode=m};
 })();
 </script>
