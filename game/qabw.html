@@ -1713,7 +1713,7 @@ const LV={
       if(G.lf.wave>=6&&alive===0&&!G.lf.done){G.lf.done=1;ui.timer.hidden=true;big('الشارع نضف!','gold');setTimeout(levelDone,1500)}}},
   final:{name:'المعركة الأخيرة',intro:'<p class="muted">المعمل – ورا الأهرامات</p><p>هنا بتعيش <b>أميرة الطاعون</b>… اللي سرقت جثة وحش القبو وعملت منها الطاعون، وبقت بتأمر كل اللي يتعدي.</p><p>هنا هيخلص كل ده.</p>',go:'ادخل المعمل',final:true,
     wh:3.4,eye:1.6,floor:'lfloor',ceil:'hceil',pal:{L:'lab',l:'lab2'},map:['lllllllllllllllllllllll','l.....................l','l..L....L.....L....L..l','l.....................l','l.....................l','l.....................l','l..L....L.....L....L..l','l.....................l','l.....................l','l.....................l','l..L....L.....L....L..l','l.....................l','lllllllllllllllllllllll'],
-    light:{ac:0x608070,ai:.3,hi:.1,fog:.08},combat:true,flash:true,start:[2,6.5,0],obj:'اقتل صاحب الفيروس.',
+    light:{ac:0x608070,ai:.3,hi:.1,fog:.08},combat:true,flash:true,start:[2,6.5,0],obj:'اقتل أميرة الطاعون.',
     setup(){scatter({ammo:5,serum:2,med:3});const b=spawnBoss('final',19,6.5,70,false);ui.boss.hidden=false;ui.bossN.textContent=b.name;bossBar();setTimeout(()=>{big('أميرة الطاعون');princessMsg('«وصلت لحد عندي يا صياد؟ تعالى… خليني أشوف جدتك هتنقذك إزاي المرة دي.»')},600)},
     onBossDie:finalFake}
 };
