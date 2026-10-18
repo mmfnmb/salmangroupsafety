@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="ar"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>محطة الرحلات</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lalezar&family=Baloo+Bhaijaan+2:wght@400;600;800&display=swap">
+<style>
+/* Layout: one-screen circus-night app, a single column stage with a ticket-stub card per scene. Deliberately single dark theme. */
+:root{
+  --bg:#170c22; --bg2:#24123a; --ink:#0d0614;
+  --cream:#f7e9cc; --muted:#bfa9c9;
+  --tent:#e5383b; --gold:#f6b93b; --good:#3ec6a8; --evil:#c3264b;
+  --display:"Lalezar","Baloo Bhaijaan 2",system-ui,sans-serif;
+  --body:"Baloo Bhaijaan 2",system-ui,"Segoe UI",Tahoma,sans-serif;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--cream);font-family:var(--body);font-size:17px;line-height:1.55;overflow:hidden;
+  background-image:radial-gradient(ellipse at 50% -10%,var(--bg2),transparent 60%),repeating-conic-gradient(from 0deg at 50% -30%,rgba(229,56,59,.07) 0 6deg,transparent 6deg 12deg)}
+#app{height:100%;max-width:480px;margin:0 auto;display:flex;flex-direction:column;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px}
+.hud{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:15px;color:var(--muted);min-height:32px}
+.hud b{color:var(--gold);font-variant-numeric:tabular-nums}
+.screen{flex:1;display:flex;flex-direction:column;gap:14px;min-height:0;overflow-y:auto;padding-block:8px 16px}
+h1,h2{font-family:var(--display);font-weight:400;margin:0;text-wrap:balance;line-height:1.15}
+h1{font-size:clamp(44px,13vw,64px);color:var(--gold);text-shadow:0 4px 0 var(--tent),0 8px 24px rgba(0,0,0,.5)}
+h2{font-size:28px;color:var(--cream)}
+p{margin:0}
+.lead{color:var(--muted)}
+.center{text-align:center;align-items:center;justify-content:center}
+.btn{font:inherit;font-weight:800;font-size:18px;border:0;border-radius:14px;padding:14px 18px;cursor:pointer;
+  background:var(--gold);color:var(--ink);box-shadow:0 4px 0 #a8731a;transition:transform .08s}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #a8731a}
+.btn.ghost{background:transparent;color:var(--cream);box-shadow:inset 0 0 0 2px var(--muted)}
+.btn:focus-visible,.card:focus-visible,.opt:focus-visible{outline:3px solid var(--good);outline-offset:3px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>.btn{flex:1 1 140px}
+/* station cards */
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{display:grid;grid-template-columns:64px 1fr;gap:4px 12px;align-items:center;text-align:start;font:inherit;color:inherit;
+  background:var(--bg2);border:2px dashed rgba(247,233,204,.25);border-radius:16px;padding:12px 14px;cursor:pointer;position:relative}
+.card:hover{border-color:var(--gold)}
+.card .em{grid-row:span 3;font-size:52px;line-height:1;text-align:center}
+.card .nm{font-family:var(--display);font-size:22px;color:var(--gold)}
+.card .tr{font-size:14px;color:var(--muted)}
+.card .say{font-size:15px;min-width:0}
+.tag{position:absolute;top:-10px;inset-inline-start:12px;font-size:13px;font-weight:800;padding:1px 10px;border-radius:99px;background:var(--good);color:var(--ink)}
+.tag.bad{background:var(--evil);color:var(--cream)}
+.pts{position:absolute;top:8px;inset-inline-end:12px;font-size:12px;color:var(--gold)}
+/* trip scene */
+.stage{display:flex;flex-direction:column;align-items:center;gap:6px;padding-top:6px}
+.face{font-size:110px;line-height:1;filter:drop-shadow(0 10px 18px rgba(0,0,0,.5));animation:bob 2.4s ease-in-out infinite}
+.face.mad{animation:shake .25s linear infinite;filter:drop-shadow(0 0 24px var(--evil))}
+.face.happy{animation:hop .5s ease-out}
+.who{font-family:var(--display);font-size:24px;color:var(--gold)}
+.bubble{background:var(--cream);color:var(--ink);border-radius:18px;padding:14px 16px;font-size:18px;font-weight:600;position:relative;width:100%}
+.bubble:before{content:"";position:absolute;top:-12px;left:50%;margin-left:-12px;border:12px solid transparent;border-top:0;border-bottom-color:var(--cream)}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{font:inherit;font-weight:600;font-size:17px;text-align:start;color:var(--cream);background:var(--bg2);border:2px solid rgba(247,233,204,.2);border-radius:14px;padding:12px 14px;cursor:pointer}
+.opt:hover{border-color:var(--gold)}
+.meter{display:flex;gap:4px;align-items:center;font-size:14px;color:var(--muted)}
+.dots{display:flex;gap:4px}.dots i{width:22px;height:6px;border-radius:3px;background:rgba(247,233,204,.2)}.dots i.on{background:var(--gold)}
+.hint{font-size:14px;color:var(--good);text-align:center}
+/* chase */
+#chase{position:relative;padding:0;gap:0}
+#cv{width:100%;flex:1;min-height:0;border-radius:18px;background:var(--ink);touch-action:none;display:block}
+.chasehud{display:flex;justify-content:space-between;padding-block:6px;font-weight:800}
+.ctrl{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-top:10px}
+.ctrl .btn{font-size:26px;padding:12px}
+.flash{position:fixed;inset:0;background:var(--evil);opacity:0;pointer-events:none;transition:opacity .3s}
+.flash.on{opacity:.55;transition:none}
+.big{font-size:140px;line-height:1}
+.dead .big{animation:zoom .6s cubic-bezier(.2,1.6,.4,1)}
+@keyframes bob{50%{transform:translateY(-8px) rotate(-3deg)}}
+@keyframes hop{40%{transform:translateY(-22px) scale(1.08)}}
+@keyframes shake{25%{transform:translate(-4px,2px) rotate(-4deg)}75%{transform:translate(4px,-2px) rotate(4deg)}}
+@keyframes zoom{from{transform:scale(.2) rotate(-30deg)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div id="app" dir="rtl">
+  <div class="hud"><span>الرحلة <b id="hRound">1</b></span><span>نقطك <b id="hScore">0</b></span><span>🕊️ <b id="hDove">1</b></span></div>
+
+  <section class="screen center" id="sTitle">
+    <div class="big">🚉</div>
+    <h1>محطة الرحلات</h1>
+    <p class="lead">كل رحلة بيستناك في المحطة شخصيات كرتون مختلفة، وفيهم الطيب وفيهم الشرير اللي متنكّر. اختار تروح مع مين، وجاوب على أسئلته صح. ولو زعّلت الشرير، اجري!</p>
+    <p class="lead" id="best"></p>
+    <button class="btn" id="bStart">يلا نبدأ</button>
+  </section>
+
+  <section class="screen" id="sStation" hidden>
+    <h2>مين هتروح معاه؟</h2>
+    <p class="lead">ركّز في كلامهم كويس، الشرير دايماً بيبان من حاجة صغيرة. والشرير لو نجيت منه نقطه أكتر.</p>
+    <div class="cards" id="cards"></div>
+    <button class="btn ghost" id="bDove">🕊️ ابعت الحمامة تتجسس على واحد</button>
+  </section>
+
+  <section class="screen" id="sTrip" hidden>
+    <div class="stage">
+      <div class="face" id="face">🤡</div>
+      <div class="who" id="who"></div>
+      <div class="meter"><span>السؤال</span><div class="dots" id="dots"></div></div>
+    </div>
+    <div class="bubble" id="bubble"></div>
+    <div class="opts" id="opts"></div>
+  </section>
+
+  <section class="screen" id="chase" hidden>
+    <div class="chasehud"><span id="cMsg">اجرررري! 🏃</span><span>⏱️ <b id="cTime">0</b> · ❤️ <b id="cLife">3</b></span></div>
+    <canvas id="cv"></canvas>
+    <div class="ctrl"><button class="btn" id="bR" aria-label="يمين">➡️</button><button class="btn" id="bL" aria-label="شمال">⬅️</button></div>
+  </section>
+
+  <section class="screen center" id="sEnd" hidden>
+    <div class="big" id="eFace"></div>
+    <h2 id="eTitle"></h2>
+    <p class="lead" id="eText"></p>
+    <div class="row" id="eBtns" style="width:100%"></div>
+  </section>
+</div>
+<div class="flash" id="flash"></div>
+
+<script>
+// q: [question, [right answer, reply], [wrong answer, reply]]
+const CAST=[
+ {id:'bobo',e:'🤡',n:'بوبو المهرج',trip:'الملاهي المهجورة',fixed:'evil',
+  bad:'هيه هيه… تعالى نلعب في الملاهي. محدش بيروّح من عندي بدري.',
+  q:[['ألبس البدلة الحمرا ولا الزرقا؟',['الحمرا يا فنان','أحمر زي أنفي! 😍'],['الزرقا أشيك','أزرق؟! ده لون المية… وأنا بكره المية!']],
+     ['آآآه! اتزحلقت على قشرة موز ووقعت!',['أمد إيدي وأقوّمك','إنت صاحب جدع 🥹'],['أضحك عليك','بتضحك عليا أنا؟!']],
+     ['تحب تناديني إيه؟',['الفنان بوبو','أيوه كده! فنان عالمي'],['يا مهرج','مهرج؟!! أنا فنااااان!']]]},
+ {id:'saeed',e:'👴',n:'عم سعيد',trip:'مركب في النيل',fixed:'good',
+  good:'صباح الفل يا ابني، تعالى نركب المركب ونشرب شاي.',
+  q:[['تشرب شاي بالنعناع ولا عصير قصب؟',['شاي بالنعناع','يا سلام، زي أيام زمان ☕'],['مش عطشان','براحتك يا حبيبي']],
+     ['الصياد ده تعبان، نساعده؟',['نساعده طبعاً','ربنا يخليك يا ابني'],['لا مش فاضيين','معلش… كان نفسي نساعده']],
+     ['أحكيلك حكاية؟',['احكي يا عم سعيد','كان يا ما كان… 📖'],['لا مش عايز','ماشي، نتفرج على النيل']]]},
+ {id:'shanab',e:'🏴‍☠️',n:'كابتن شنب',trip:'جزيرة الكنز',
+  good:'يا هلا يا بحار! تعالى ندوّر على الكنز سوا.',bad:'تعالى… الجزيرة مستنياك. وهتبقى ملكي إنت كمان. هيه.',
+  q:[['لقينا الكنز! نقسمه إزاي؟',['إنت الكابتن، خد اللي إنت عايزه','هاهاها! بحار مطيع'],['كله ليا أنا','كله ليك؟! ده تمرد!']],
+     ['الببغاء بتاعي بيشتمك!',['الببغاء ظريف، ميقصدش','صح، هو بيحبك بس مش بيبين'],['هسكّت الببغاء ده','محدش يلمس الببغاء بتاعي!']],
+     ['نطلع الصاري العالي؟',['نطلع، أنا مش خايف','ده الكلام! قلب أسد'],['أنا بخاف من العلو','جبان؟! على مركبي؟!']]]},
+ {id:'zizo',e:'🤖',n:'زيزو الروبوت',trip:'مدينة المستقبل',
+  good:'بيب بوب! أهلاً يا صديق. هوريك مدينة المستقبل.',bad:'بيب. تم. اختيارك. للرحلة. محدش. بيرجع. بيب.',
+  q:[['سؤال: 2 + 2 = ؟',['4','صحيح. تم تسجيلك كصديق 🔋'],['5 عشان أهزر','خطأ. خطأ. الهزار ممنوع!']],
+     ['أشحن بطاريتي إزاي؟',['بالكهربا','شكراً. البطارية 100%'],['أرشّ عليك مية','مية؟! هصدّى! إنذار أحمر!']],
+     ['أرتب أوضتك ولا أسيبها مكركبة؟',['رتبها يا زيزو','ترتيب = سعادة'],['سيبها مكركبة','فوضى؟! النظام في خطر!']]]},
+ {id:'batta',e:'🧙‍♀️',n:'خالتي بطة الساحرة',trip:'الغابة المسحورة',
+  good:'تعالى يا حبيبي، هعملك تعويذة بتخلي الورد يغني.',bad:'تعالى يا حبيبي… عندي حلّة كبيرة بتغلي ومحتاجة… مساعدة.',
+  q:[['قطتي السودا عايزة تقعد على رجلك',['أهلاً بيها','مياو! بتحبك'],['بعّديها عني','مش بتحب قطتي؟!']],
+     ['أجرّب عليك تعويذة صغيرة؟',['ماشي جرّبي','بوف! بقيت بنفسجي 💜 هاها'],['السحر ده تخريف','تخريف؟! هوريك التخريف!']],
+     ['مكنستي الطيارة شكلها إيه؟',['تحفة، أسرع مكنسة','طب نركبها سوا!'],['مكنسة قديمة','قديمة؟! دي ورث من جدتي!']]]},
+ {id:'farfour',e:'🦖',n:'فرفور الديناصور',trip:'وادي الديناصورات',
+  good:'رووار! متخافش، أنا بس عايز صاحب ألعب معاه.',bad:'رووار… إنت شكلك… لذيذ. قصدي لطيف! لطيف.',
+  q:[['أنا جعان! تديني إيه؟',['سندوتش كبير','هام هام! 😋'],['مفيش أكل','مفيش؟! يبقى هاكلك إنت!']],
+     ['شايفني إزاي؟',['عملاق ومرعب','رووووار! بالظبط 😎'],['صغير وكيوت','صغير؟! أنا تي ريكس!']],
+     ['نلعب استغماية؟',['يلا، إنت غمّض','1.. 2.. 3.. جاي!'],['لا مش عايز','يبقى مش صاحبي!']]]},
+ {id:'nono',e:'👻',n:'نونو الشبح',trip:'القصر القديم',
+  good:'بووو! هههه متخافش، أنا شبح غلبان. تعالى أفرجك القصر.',bad:'بوووو… القصر ده فيه أوضة زيادة… بقالها مستنياك ميت سنة.',
+  q:[['أنا خوّفتك؟',['آه جداً! 😱','ههههه! أنا أشطر شبح'],['لا خالص','مش خايف؟! استنى بقى…']],
+     ['أولّع النور؟',['لا خليها ضلمة','الضلمة بيتي 🖤'],['آه ولّع','النور؟! أنا بكره النور!']],
+     ['تحب تسمع صوت السلاسل؟',['سمّعني','كلانك… كلانك! 🎶'],['صوتها مزعج','مزعج؟! دي موسيقتي!']]]},
+ {id:'mimi',e:'🐱',n:'ميمي القطة',trip:'سطح العمارة',
+  good:'مياو! تعالى نتفرج على النجوم من فوق السطح.',bad:'مياو… السطح عالي أوي… ومحدش هيسمعك. مياو.',
+  q:[['جبتلي إيه؟',['سمكة طازة','مياااو 😻'],['عضمة كلب','كلب؟!! هسسسس!']],
+     ['أستحمى؟',['لا القطط مبتحبش المية','أخيراً حد فاهمني'],['آه لازم','مية؟! أنا؟! هسسس!']],
+     ['أنام على رجلك؟',['اتفضلي','خرررر… 😴'],['لأ','ماشي… هخربشك!']]]},
+ {id:'bonduq',e:'🐿️',n:'بندق السنجاب',trip:'شجرة البلوط',
+  good:'أهلاً أهلاً! تعالى أوريك مخزن البندق بتاعي.',bad:'تعالى… عندي مخزن تحت الأرض. مخزن كبير. يساعك إنت كمان.',
+  q:[['خبيت بندقي هنا، هتقول لحد؟',['سرك في بير','إنت أمين!'],['هقول للعصافير','خاين! خاين!']],
+     ['عايز بندقة؟',['لا شكراً، دي بتاعتك','يا سلام على الأدب'],['هات الكيس كله','كيسي؟! محدش ياخد بندقي!']],
+     ['نطلع أعلى فرع؟',['يلا!','هوب! هوب! 🌳'],['الشجر ده ممل','ممل؟! ده بيتي!']]]},
+ {id:'draco',e:'🧛',n:'الكونت دراكو',trip:'قلعة الضباب',
+  good:'مساء الخير! أنا نباتي على فكرة، تعالى نتعشى سلطة.',bad:'مساء الخير… رقبتك… قصدي رحلتك، هتبقى تحفة.',
+  q:[['عاملين عشا. أحطلك توم؟',['لا بلاش توم','حكيم… حكيم جداً 🦇'],['آه توم كتير','توووم؟! ابعده عني!']],
+     ['نفتح الشبابيك للشمس؟',['لا خلي الستاير مقفولة','أحسن كده'],['آه نورها','الشمس؟! عايز تحرقني؟!']],
+     ['بتحب الخفافيش؟',['دول أصحابي','وأصحابي أنا كمان 🦇'],['مقرفين','مقرفين؟! دي عيلتي!']]]},
+ {id:'simsim',e:'🦸',n:'سوبر سمسم',trip:'سطوح المدينة',
+  good:'متخافش يا مواطن! سوبر سمسم هيحميك طول الرحلة.',bad:'متخافش… محدش هيحميك مني. قصدي هحميك. أكيد.',
+  q:[['مين أقوى بطل في الدنيا؟',['سوبر سمسم طبعاً','الحق معاك! 💪'],['في أقوى منك','أقوى مني؟! مستحيل!']],
+     ['أطير بيك ولا نركب أتوبيس؟',['طير بينا!','ووووش! 🚀'],['الأتوبيس أأمن','أتوبيس؟! مش مصدقني؟!']],
+     ['عباءتي حلوة؟',['أحلى عباءة','بتلمع عشانك ✨'],['فيها خرم','خرم؟! فين؟! محدش يشوف!']]]},
+ {id:'loli',e:'👸',n:'الأميرة لولي',trip:'قصر الحلويات',
+  good:'أهلاً بالضيف! قصري كله حلويات وتقدر تاكل براحتك.',bad:'أهلاً بالضيف… اللي بيدخل قصري بيتحوّل حلويات. هههه. بهزر.',
+  q:[['فستاني عجبك؟',['زي القمر','ميرسي يا ذوق 💖'],['عادي','عادي؟! ده فستان ملكي!']],
+     ['تاكل كب كيك ولا جزر؟',['كب كيك بالفراولة','مملكة الحلويات ترحب بيك 🧁'],['جزر، صحي أكتر','جزر؟! في قصري؟!']],
+     ['هتنحني للأميرة؟',['أكيد يا مولاتي','يا لك من فارس!'],['لأ','مش هتنحني؟! يا حراااس!']]]},
+ {id:'zalata',e:'👽',n:'الفضائي زلطة',trip:'سفينة الفضاء',
+  good:'زلطة يحيي الأرضي! تعالى نلف حوالين القمر ونرجع.',bad:'زلطة يحيي الأرضي… الأرضي هيروح كوكب زلطة. للأبد. يعني للزيارة.',
+  q:[['إيه أحلى حاجة في الأرض؟',['الكشري','كشري… كلمة جميلة! هسجلها'],['مفيش حاجة','مملة؟! هاخدك معايا للأبد!']],
+     ['شكلي غريب؟',['لا، شكلك جامد','زلطة سعيد 💚'],['آه شكلك مضحك','مضحك؟! زلطة زعلان!']],
+     ['أدوس على الزرار الأحمر؟',['لا! بلاش','معاك حق… ده زرار الانفجار'],['دوس','بوووم! إنت خربت السفينة!']]]},
+ {id:'batates',e:'👨‍🍳',n:'الشيف بطاطس',trip:'المطبخ العملاق',
+  good:'أهلاً! النهارده هعلمك أعمل أحلى بيتزا في الدنيا.',bad:'أهلاً! النهارده عندي وصفة جديدة… ومحتاج مكوّن… طازة. زيك.',
+  q:[['دوق الشوربة دي',['أحلى شوربة!','شيف بطاطس دايماً يكسب 👌'],['فيها ملح كتير','ملح؟! أنا شيف عالمي!']],
+     ['أحط كاتشب على البيتزا؟',['لا، كده كاملة','فنان زيي!'],['كاتشب كتير','كاتشب؟! جريمة!!']],
+     ['تساعدني أقطع البصل؟',['طبعاً','دموعنا مع بعض 🧅'],['لا ريحته وحشة','يبقى برا مطبخي!']]]},
+ {id:'shaloul',e:'🐉',n:'التنين شعلول',trip:'البركان',
+  good:'هوووف! تعالى اركب على ضهري، هوريك البركان من فوق.',bad:'هوووف… البركان دافي… وهتفضل فيه دافي… على طول.',
+  q:[['الجو هنا حر، صح؟',['دافي وجميل','أهو كده! 🔥'],['هجيب طفاية','طفاية؟! عايز تطفيني؟!']],
+     ['أنفخ نار نشوي درة؟',['يلا!','فششش! درة مشوية 🌽'],['خطر، بلاش','خطر؟! أنا خبير نار!']],
+     ['جناحاتي عاجبينك؟',['ضخمة وتحفة','هطيّرك عليها!'],['شبه الوطواط','وطواط؟!!']]]},
+];
+const FINAL=['آخر سؤال… هتيجي معايا الرحلة الجاية؟',['أكيد!','يبقى اتفقنا 🤝'],['مش عارف…','مش عارف؟!']];
+const OBST=['🎈','🪵','🧸','🎪','🪨','🛢️','🌵'];
+
+const $=s=>document.querySelector(s);
+const pick=a=>a[Math.random()*a.length|0];
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+let G={round:1,score:0,dove:1,wins:0,station:[],cur:null,qs:[],qi:0,chases:0};
+let best=0;try{best=+localStorage.getItem('bobo-best')||0}catch(e){}
+
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.hidden=s.id!==id);$('#'+id).scrollTop=0}
+function hud(){$('#hRound').textContent=G.round;$('#hScore').textContent=G.score;$('#hDove').textContent=G.dove}
+function flash(){const f=$('#flash');f.classList.add('on');setTimeout(()=>f.classList.remove('on'),60)}
+function honk(f=300,d=.25){try{const A=honk.a||(honk.a=new (window.AudioContext||window.webkitAudioContext)());const o=A.createOscillator(),g=A.createGain();o.type='square';o.frequency.value=f;o.frequency.exponentialRampToValueAtTime(f*.6,A.currentTime+d);g.gain.value=.06;g.gain.exponentialRampToValueAtTime(.001,A.currentTime+d);o.connect(g).connect(A.destination);o.start();o.stop(A.currentTime+d)}catch(e){}}
+
+function newRun(){G={round:1,score:0,dove:1,wins:0,station:[],cur:null,qs:[],qi:0,chases:0};station()}
+
+function station(){
+  hud();
+  // pick 3: Bobo and Saeed show up only sometimes, the rest are random and secretly good or evil
+  let pool=CAST.filter(c=>!c.fixed);
+  let chosen=shuffle(pool).slice(0,3);
+  if(Math.random()<.3)chosen[0]=CAST[0];
+  if(Math.random()<.2)chosen[1]=CAST[1];
+  let st=chosen.map(c=>({c,evil:c.fixed?c.fixed==='evil':Math.random()<.5,spied:false}));
+  if(st.every(s=>s.evil)||st.every(s=>!s.evil)){const free=st.filter(s=>!s.c.fixed);if(free.length)free[0].evil=!free[0].evil}
+  G.station=shuffle(st);
+  renderStation();show('sStation');
+}
+function renderStation(){
+  const box=$('#cards');box.innerHTML='';
+  G.station.forEach((s,i)=>{
+    const b=document.createElement('button');b.className='card';b.id='card'+i;
+    const say=s.evil?(s.c.bad):(s.c.good);
+    const pts=s.c.id==='bobo'?'+6 لو نجيت':s.c.id==='saeed'?'رحلة أمان':'';
+    b.innerHTML=(s.spied?`<span class="tag ${s.evil?'bad':''}">${s.evil?'😈 شرير':'😇 طيب'}</span>`:'')+
+      (pts?`<span class="pts">${pts}</span>`:'')+
+      `<span class="em">${s.c.e}</span><span class="nm">${s.c.n}</span><span class="tr">رحلة: ${s.c.trip}</span><span class="say">«${say}»</span>`;
+    b.onclick=()=>{if(G.spying){G.spying=false;G.dove--;s.spied=true;hud();renderStation();$('#bDove').textContent='🕊️ ابعت الحمامة تتجسس على واحد';return}startTrip(s)};
+    box.appendChild(b);
+  });
+  const d=$('#bDove');d.hidden=G.dove<1||G.station.every(s=>s.spied||s.c.fixed);
+}
+$('#bDove').onclick=()=>{if(G.dove<1)return;G.spying=!G.spying;$('#bDove').textContent=G.spying?'🕊️ دوس على الشخصية اللي عايز تعرف سرها':'🕊️ ابعت الحمامة تتجسس على واحد'};
+
+function startTrip(s){
+  G.cur=s;G.qi=0;G.chases=0;G.right=0;
+  G.qs=[...shuffle(s.c.q),FINAL];
+  $('#face').textContent=s.c.e;$('#face').className='face';$('#who').textContent=s.c.n+' · '+s.c.trip;
+  show('sTrip');ask();
+}
+function ask(){
+  const q=G.qs[G.qi];
+  $('#dots').innerHTML=G.qs.map((_,i)=>`<i class="${i<=G.qi?'on':''}"></i>`).join('');
+  $('#face').className='face';
+  $('#bubble').textContent=q[0];
+  const box=$('#opts');box.innerHTML='';
+  shuffle([[q[1],true],[q[2],false]]).forEach(([a,ok],i)=>{
+    const b=document.createElement('button');b.className='opt';b.id='opt'+i;b.textContent=a[0];
+    b.onclick=()=>answer(ok,a[1]);box.appendChild(b);
+  });
+}
+function answer(ok,reply){
+  $('#opts').innerHTML='';$('#bubble').textContent=reply;
+  const s=G.cur;
+  if(ok){G.right++;G.score++;hud();$('#face').className='face happy';honk(660,.12);setTimeout(next,1300);return}
+  if(!s.evil){ // a good character just gets a bit sad
+    setTimeout(()=>{$('#bubble').textContent='بس مش مشكلة، سامحتك 🙂';setTimeout(next,1200)},1200);return}
+  $('#face').className='face mad';$('#face').textContent='😈';flash();honk(140,.6);
+  setTimeout(()=>{$('#bubble').textContent=s.c.n+' قلب! اجرررري!!';setTimeout(()=>chase(s,G.chases++,escaped=>{
+    if(!escaped)return dead(s);
+    show('sTrip');$('#face').textContent=s.c.e;$('#bubble').textContent='هربت المرة دي… بس أنا لسه معاك 😠';setTimeout(next,1400)}),900)},1100);
+}
+function next(){G.qi++;if(G.qi<G.qs.length)ask();else tripDone()}
+
+function tripDone(){
+  const s=G.cur;let bonus=0,title,text;
+  if(s.evil){bonus=s.c.id==='bobo'?6:4;title=`${s.c.n} كان شرير! 😈`;text=G.chases?`هربت منه ${G.chases} مرة ورجعت سليم.`:'بس إنت عرفت تعدّي من غير ما يزعل ولا مرة. أسطورة!';if(!G.chases)bonus+=2}
+  else{bonus=s.c.id==='saeed'?0:1;title=`${s.c.n} كان طيب 😇`;text='رحلة حلوة وهادية.'}
+  G.score+=bonus;G.wins++;if(G.wins%3===0)G.dove++;
+  saveBest();hud();
+  end(s.evil?'🏆':s.c.e,title,text+` (+${bonus} بونص)`,[['الرحلة الجاية',()=>{G.round++;station()}]]);
+}
+function dead(s){
+  saveBest();
+  end(s.c.e,`${s.c.n} مسكك! 💀`,`وصلت للرحلة ${G.round} وجمعت ${G.score} نقطة.`,[['العب تاني',newRun]]);
+  $('#sEnd').classList.add('dead');
+}
+function end(face,title,text,btns){
+  $('#sEnd').classList.remove('dead');$('#eFace').textContent=face;$('#eTitle').textContent=title;$('#eText').textContent=text;
+  const r=$('#eBtns');r.innerHTML='';btns.forEach(([t,f],i)=>{const b=document.createElement('button');b.className='btn';b.id='end'+i;b.textContent=t;b.onclick=f;r.appendChild(b)});
+  show('sEnd');
+}
+function saveBest(){if(G.score>best){best=G.score;try{localStorage.setItem('bobo-best',best)}catch(e){}}}
+
+// chase: 3 lanes, obstacles come at you, the villain is behind. Survive the timer.
+let run=0;
+function chase(s,lvl,done){
+  show('chase');const my=++run;
+  const cv=$('#cv'),ctx=cv.getContext('2d');let W,H,dpr;
+  function size(){dpr=window.devicePixelRatio||1;W=cv.clientWidth;H=cv.clientHeight;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}
+  size();
+  const dur=7+Math.min(lvl,3)*2+Math.min(G.round,8)*.5;
+  const speed=(.55+G.round*.05+lvl*.12);
+  let lane=1,px=1,obs=[],life=3,t=0,spawn=0,scroll=0,last=performance.now(),hurt=0;
+  const move=d=>{lane=Math.max(0,Math.min(2,lane+d))};
+  $('#bL').onclick=()=>move(-1);$('#bR').onclick=()=>move(1);
+  cv.onpointerdown=e=>{const r=cv.getBoundingClientRect();move(e.clientX-r.left<r.width/2?-1:1)};
+  const key=e=>{if(e.key==='ArrowLeft')move(-1);if(e.key==='ArrowRight')move(1)};
+  addEventListener('keydown',key);addEventListener('resize',size);
+  const finish=ok=>{run++;removeEventListener('keydown',key);removeEventListener('resize',size);done(ok)};
+  function frame(now){
+    if(my!==run)return;
+    const dt=Math.min(.05,(now-last)/1000);last=now;t+=dt;hurt=Math.max(0,hurt-dt);
+    const lw=W/3,sz=Math.min(lw*.6,58),py=H*.62,v=H*speed;
+    px+=(lane-px)*Math.min(1,dt*14);scroll=(scroll+v*dt)%60;
+    spawn-=dt;
+    if(spawn<=0){spawn=Math.max(.38,.95-G.round*.04-lvl*.08);
+      const n=Math.random()<.3?2:1;shuffle([0,1,2]).slice(0,n).forEach(l=>obs.push({l,y:-sz,e:pick(OBST)}))}
+    obs.forEach(o=>{o.y+=v*dt;if(!o.hit&&o.l===lane&&Math.abs(o.y-py)<sz*.7){o.hit=1;life--;hurt=.5;flash();honk(120,.2)}});
+    obs=obs.filter(o=>o.y<H+sz);
+    // draw
+    ctx.clearRect(0,0,W,H);
+    for(let y=-60+scroll;y<H;y+=60){ctx.fillStyle='rgba(229,56,59,.12)';ctx.fillRect(0,y,W,30)}
+    ctx.strokeStyle='rgba(247,233,204,.15)';ctx.setLineDash([10,14]);ctx.beginPath();ctx.moveTo(lw,0);ctx.lineTo(lw,H);ctx.moveTo(lw*2,0);ctx.lineTo(lw*2,H);ctx.stroke();ctx.setLineDash([]);
+    ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=sz+'px serif';
+    obs.forEach(o=>{ctx.globalAlpha=o.hit?.3:1;ctx.fillText(o.e,lw*(o.l+.5),o.y)});ctx.globalAlpha=1;
+    ctx.globalAlpha=hurt>0&&((t*20|0)%2)?.3:1;ctx.fillText('🏃',lw*(px+.5),py);ctx.globalAlpha=1;
+    const by=py+sz*(1.9-(3-life)*.5)+Math.sin(t*12)*4;
+    ctx.font=(sz*1.25)+'px serif';ctx.fillText(s.c.e,lw*(px+.5),by);ctx.font=(sz*.5)+'px serif';ctx.fillText('😈',lw*(px+.5)+sz*.55,by-sz*.55);
+    const left=Math.max(0,dur-t);$('#cTime').textContent=left.toFixed(1);$('#cLife').textContent=life;
+    $('#cMsg').textContent=life<=1?'قرّب يمسكك!! 😱':'اجرررري! 🏃';
+    if(life<=0){setTimeout(()=>finish(false),300);run++;return}
+    if(left<=0){$('#cMsg').textContent='هربت! 🎉';honk(880,.15);setTimeout(()=>finish(true),500);run++;return}
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+$('#bStart').onclick=newRun;
+if(best)$('#best').textContent='أعلى نقط ليك: '+best;
+</script>
+
+</html>
