@@ -478,8 +478,9 @@ function fade(v,ms=600){ui.fade.style.transition=`opacity ${ms}ms`;ui.fade.style
 function hudSync(){
   const base=G.stage==='base',lv=G.stage==='lvl';
   ui.keys.hidden=!(base||lv);ui.bat.hidden=!(base||lv);ui.chg.hidden=lv;
-  $('#bBat').hidden=!(base||(lv&&G.lvl&&G.lvl.combat&&!G.lvl.cane));
-  if(lv){ui.keys.textContent=`❤️ ${Math.round(G.hp)}`;ui.bat.textContent=`🦠 ${Math.round(G.inf)}٪`;const cb=G.lvl&&G.lvl.combat&&!G.lvl.cane;ui.ammo.hidden=!cb;ui.ammo.textContent=wpnLabel();ui.ser.hidden=false;ui.ser.textContent=`💉 ${G.serum}`;ui.cash.hidden=false;ui.cash.textContent=`💰 ${G.money}`;$('#bBat').textContent='مصل';ui.bat.style.color=G.inf>70?'var(--blood)':''}
+  $('#bBat').hidden=!(base||(lv&&G.lvl&&G.lvl.combat&&!G.lvl.cane&&!G.lvl.villain));
+  if(lv&&G.lvl&&G.lvl.villain){ui.keys.textContent=`❤️ ${Math.round(G.hp)}`;ui.bat.textContent=`🧟 ${G.lf.inf||0}/${G.lvl.goalN}`;ui.ammo.hidden=ui.ser.hidden=ui.cash.hidden=true;ui.bat.style.color='var(--blood)'}
+  else if(lv){ui.keys.textContent=`❤️ ${Math.round(G.hp)}`;ui.bat.textContent=`🦠 ${Math.round(G.inf)}٪`;const cb=G.lvl&&G.lvl.combat&&!G.lvl.cane;ui.ammo.hidden=!cb;ui.ammo.textContent=wpnLabel();ui.ser.hidden=false;ui.ser.textContent=`💉 ${G.serum}`;ui.cash.hidden=false;ui.cash.textContent=`💰 ${G.money}`;$('#bBat').textContent='مصل';ui.bat.style.color=G.inf>70?'var(--blood)':''}
   else{ui.ammo.hidden=ui.ser.hidden=ui.cash.hidden=true;$('#bBat').textContent='بطارية';ui.keys.textContent=`🔑 ${G.keys}/3`;ui.bat.textContent=`🔋 ${G.bats}`;ui.bat.style.color=''}
   ui.charge.style.width=G.charge+'%';ui.charge.style.background=G.charge<20?'var(--blood)':'var(--amber)';
   ui.bLight.classList.toggle('on',G.flash);ui.bMap.classList.toggle('on',G.showMap);
@@ -581,7 +582,8 @@ function syncScene(dt,t){
   cam.position.set(G.px+sx,eye+bob+sy,G.py);
   cam.rotation.set(G.pitch,-G.pa-Math.PI/2,G.roll||0);
   if(G.recoil>0)G.recoil=Math.max(0,G.recoil-dt*5);gunVM.position.z=-.42+(G.recoil||0)*.07;gunVM.rotation.x=(G.recoil||0)*.25;gunVM.position.y=-.2+Math.sin(G.bob)*.008;caneVM.rotation.x=-(G.recoil||0)*1.3;muzzle.intensity*=.7;
-  if(G.stage==='lvl'&&G.lvl&&G.lvl.combat&&!G.lvl.cane&&G.w){const g=G.lvl.mg||curGun();gunVM.visible=!!g;rodVM.visible=!g&&G.w.rod>0;fistVM.visible=!g&&G.w.rod<=0;rodVM.rotation.x=-(G.recoil||0)*1.2;fistVM.position.z=-.36-(G.recoil||0)*.15}else if(typeof rodVM!=='undefined'){rodVM.visible=fistVM.visible=false}
+  if(G.stage==='lvl'&&G.lvl&&G.lvl.villain){gunVM.visible=rodVM.visible=false;fistVM.visible=true;fistVM.position.z=-.36-(G.recoil||0)*.25}
+  else if(G.stage==='lvl'&&G.lvl&&G.lvl.combat&&!G.lvl.cane&&G.w){const g=G.lvl.mg||curGun();gunVM.visible=!!g;rodVM.visible=!g&&G.w.rod>0;fistVM.visible=!g&&G.w.rod<=0;rodVM.rotation.x=-(G.recoil||0)*1.2;fistVM.position.z=-.36-(G.recoil||0)*.15}else if(typeof rodVM!=='undefined'){rodVM.visible=fistVM.visible=false}
   const on=G.flash&&G.mode!=='title';
   spot.intensity=on?(G.stage==='base'&&G.charge<15&&Math.random()<.15?.3:3.2):0;near.intensity=on?.4:.14;
   for(const o of G.objs){
@@ -839,8 +841,12 @@ function scareTick(dt){
 }
 async function afterScare(){
   const lvMsg=G.stage==='lvl'?(({inf:'العدوى وصلت ١٠٠٪… اتحوّلت.',zinger:'زنجر وقع…',time:'الوقت خلص… زنجر اتحوّل.'}[G.deathWhy]||'المتحولين خلّصوا عليك.')+' هتبدأ المهمة دي من الأول.'):null;G.deathWhy=null;
-  await panel(`<h2>${lvMsg?'مُت!':'اتمسكت!'}</h2><p>${lvMsg?lvMsg:G.stage==='house2'?'الوحش لقاك. جدتك لسه مرجعتش… حاول تاني.':'الوحش مسكك في الضلمة. حاجتك لسه معاك، حاول تاني.'}</p><div class="stack"><button class="primary" id="pR">حاول تاني</button></div>`,(r,close)=>{r.querySelector('#pR').onclick=()=>{SFX.click();close()}});
-  G.mon.yo=0;respawn();
+  const evil=lvMsg&&G.lvl&&!G.lvl.cane&&!G.lvl.villain;
+  const ch=await panel(`<h2>${lvMsg?(evil?'العدوى بتسيطر عليك…':'مُت!'):'اتمسكت!'}</h2><p>${lvMsg?(evil?'جسمك بيترعش وعروقك بتسود. فاضلك ثواني قبل ما تتحوّل.':lvMsg):G.stage==='house2'?'الوحش لقاك. جدتك لسه مرجعتش… حاول تاني.':'الوحش مسكك في الضلمة. حاجتك لسه معاك، حاول تاني.'}</p><div class="stack"><button class="primary" id="pR">حاول تاني ${evil?'(المرحلة من الأول)':''}</button>${evil?'<button id="pV">😈 اتحوّل… والعب دور الشرير</button><button id="pS">ضحّي بنفسك قبل ما تتحوّل</button>':''}</div>`,(r,close)=>{r.querySelector('#pR').onclick=()=>{SFX.click();close('r')};if(evil){r.querySelector('#pV').onclick=()=>{SFX.click();close('v')};r.querySelector('#pS').onclick=()=>{SFX.click();close('s')}}});
+  G.mon.yo=0;
+  if(ch==='v')return startVillain();
+  if(ch==='s')return sacrifice();
+  respawn();
 }
 function respawn(){
   const m=G.mon;G.red=0;G.shake=0;
@@ -1372,6 +1378,7 @@ function killEnemy(o){
 function fire(){
   if(G.mode!=='play'||!G.lvl||!G.lvl.combat||G.fireCD>0)return;
   aInit();
+  if(G.lvl.villain)return villainBite();
   if(G.lvl.cane){
     G.fireCD=.5;G.recoil=1;SFX.whoosh();
     let best=null,bd=1.9;for(const o of G.ens){if(o.st==='dead')continue;const dx=o.x-G.px,dy=o.y-G.py,d=Math.hypot(dx,dy);if(d<bd&&Math.abs(angDiff(Math.atan2(dy,dx),G.pa))<.75){bd=d;best=o}}
@@ -1447,7 +1454,7 @@ function buildLevel(def){
   const st=def.start||G.floors[0];placePlayer(st[0],st[1],st[2]||0);
   gunVM.visible=!!def.combat&&!def.cane;caneVM.visible=!!def.cane;hand.visible=false;
   pMat.uniforms.sepia.value=def.sepia?1:0;G.roll=0;G.lockMove=!!def.lock;
-  $('#bFire').hidden=!def.combat;$('#bWpn').hidden=!(def.combat&&!def.cane&&!def.mg);$('#bFire').textContent=def.cane?'هبش!':'نار';
+  $('#bFire').hidden=!def.combat;$('#bWpn').hidden=!(def.combat&&!def.cane&&!def.mg&&!def.villain);$('#bFire').textContent=def.villain?'عضّ':def.cane?'هبش!':'نار';
   G.comp=null;G.cObj=null;
   if(def.zinger!==false&&!G.c2.zingerGone){G.comp={id:'zinger2',name:'زنجر',voice:'kid',bad:false,stay:def.zinger==='stay',redT:0};makeComp(G.px-G.dirX*.9,G.py-G.dirY*.9);if(def.zingerAt){G.cObj.x=def.zingerAt[0];G.cObj.y=def.zingerAt[1];G.comp.stay=true}}
   def.setup&&def.setup();
@@ -1582,7 +1589,13 @@ const TRIPS={
   home:{dest:'home',name:'مصر',city:'القاهرة',from:'سويسرا',via:'plane',pal:{K:'city2',k:'mud',q:'city3'}}
 };
 const T=()=>TRIPS[G.c2&&G.c2.trip]||TRIPS.italy;
+setTimeout(()=>Object.assign(LV,LV_V));
 function startTrip(id){G.c2.trip=id;goLevel('street')}
+const LV_V={villain:{name:'دور الشرير',intro:'<p class="muted">قصة تانية…</p><p>العدوى سيطرت عليك. بقيت واحد منهم.</p><p><b>الصياد بقى هو الوحش.</b> انشر الطاعون… واهرب من الجنود.</p>',go:'😈 يلا',
+    wh:24,eye:1.75,floor:'asphalt',ceil:null,sky:0x1a0808,fogc:0x1a0808,pal:{K:'city1',k:'city2',q:'city3'},map:()=>genCity(32,28,['K','k','q'],{open:.15,big:true}),light:{ac:0xc08070,ai:.5,hi:.4,fog:.05},combat:true,villain:true,flash:false,zinger:false,noInf:true,goalN:15,start:[2,2,.7],
+    obj:'عضّ الناس (دوس «عضّ» وانت قريب). اللي بتعضّه بيتحوّل ويساعدك. خلي بالك من الجنود!',
+    setup(){G.lf.inf=0;for(let i=0;i<14;i++){const p=farFloor(5);const o=makeNPC(p[0],p[1],{},rand(0,6));o.civ=true;o.ps='ok';o.solid=.25}for(let i=0;i<5;i++){const p=farFloor(8);const v=buildSoldier();addObj({x:p[0],y:p[1],mesh:v.g,vis:v,rig:true,face:0,sold:true,ps:'ok',solid:.25})}},
+    tick(dt){villainTick(dt)}}};
 const LV={
   base2:{name:'القاعدة',wh:2.6,eye:1.6,floor:'concrete',ceil:'hceil',pal:{H:'hwall',J:'hposter',D:'hdoor'},map:BASE2,light:{ac:0x8a90a0,ai:.45,hi:.2,fog:.05},start:[7.5,3.5,Math.PI],zinger:false,
     wallAct:{D:()=>leaveBase()},wallLbl:{D:'اطلع للشارع'},obj:'شوف الخريطة على الترابيزة وجهّز سلاحك.',
@@ -1897,6 +1910,78 @@ async function finalFake(o){
 async function continue2(sv){const s=JSON.parse(sv.snap);ui.overlay.hidden=true;Object.assign(G,{hp:s.hp,inf:s.inf,serum:s.serum,money:s.money,c2:s.c2,w:s.w||{pistol:true,shotgun:true,pAmmo:24,sAmmo:12,rod:30,cur:'shotgun'},kills:0,caught:0});
   if(sv.lvl==='base2'||!LV[sv.lvl])return startCh2();
   ui.controls.hidden=false;ui.obj.hidden=false;ui.inv.hidden=false;ui.cross.hidden=false;G.tStart=performance.now();G.lvlId=sv.lvl;G.snap=sv.snap;await fade(1,10);buildLevel(LV[sv.lvl]);await fade(0,600);G.mode='play';if(LV[sv.lvl].start2)LV[sv.lvl].start2()}
+
+
+/* ===================== VILLAIN PATH ===================== */
+function buildSoldier(){const v=buildPerson({shirt:0x3a4a2a,pants:0x2a3420,skin:pick(SKINS)});box(v.head,.3,.12,.31,col(0x2e3a24),0,.33,0);box(v.armR,.05,.05,.4,col(0x1a1a1a),0,-.55,.2);return v}
+function startVillain(){G.villainFrom=G.lvlId;G.hp=100;G.inf=0;goLevel('villain')}
+function villainHumans(){return G.objs.filter(o=>(o.civ||o.sold)&&o.ps==='ok')}
+function villainBite(){
+  if(G.fireCD>0)return;G.fireCD=.6;G.recoil=1;SFX.growl(.35,0);
+  let best=null,bd=1.8;for(const o of villainHumans()){const dx=o.x-G.px,dy=o.y-G.py,d=Math.hypot(dx,dy);if(d<bd&&Math.abs(angDiff(Math.atan2(dy,dx),G.pa))<.85){bd=d;best=o}}
+  if(!best)return;convertHuman(best,true);G.hp=Math.min(100,G.hp+12);
+}
+function convertHuman(o,byPlayer){
+  o.ps='bitten';o.lie=true;o.speed=0;o.solid=0;SFX.hit();SFX.scream();G.lf.inf=(G.lf.inf||0)+1;G.shake=.3;
+  if(byPlayer)toast(pick(['عضّة!','واحد كمان…','الطاعون بينتشر 😈']),900);
+  hudSync();
+  setTimeout(()=>{if(G.lvl&&G.lvl.villain&&o.ps==='bitten'){o.lie=false;setLook(o.vis,'z');o.zarms=true;o.isMon=true;o.ps='ally';o.biteT=3}},2600);
+  if(G.lf.inf>=G.lvl.goalN&&!G.lf.won){G.lf.won=1;setTimeout(villainWin,1500)}
+}
+function villainTick(dt){
+  G.red=Math.max(G.red,.32);if(G.hp<100)G.hp=Math.min(100,G.hp+dt*1.5);
+  for(const o of G.objs){
+    if(!(o.civ||o.sold))continue;
+    if(o.ps==='ok'){
+      const dx=o.x-G.px,dy=o.y-G.py,d=Math.hypot(dx,dy);
+      if(o.sold){
+        if(d<13&&los(o.x,o.y,G.px,G.py)){o.face=lerpAng(o.face,Math.atan2(-dx,-dy),.2);o.speed=0;
+          if(d<4){const t=randFloorNear(o.x+dx/d*3,o.y+dy/d*3,1.2);moveMon(o,t[0],t[1],1.6*dt)}
+          o.shootT=(o.shootT??rand(.8,1.6))-dt;if(o.shootT<=0){o.shootT=rand(1.1,1.9);SFX.bang(false);G.shotT=1;
+            if(Math.random()<.45){G.hp-=8;G.red=.8;G.shake=.4;SFX.hit();if(G.hp<=0&&!G.lf.dead){G.lf.dead=1;villainDie()}}}}
+        else{o.wt=(o.wt||0)-dt;if(o.wt<=0||!o.wp){o.wp=randFloorNear(o.x,o.y,5);o.wt=rand(3,6)}moveMon(o,o.wp[0],o.wp[1],.8*dt)}
+      }else{
+        if(d<6){const t=randFloorNear(o.x+dx/d*4,o.y+dy/d*4,1.5);moveMon(o,t[0],t[1],2.2*dt);if(!o.scr){o.scr=1;if(Math.random()<.5)noise(.5,{v:.2,f:1400,ft:'bandpass',q:2,pan:panOf(o),wet:.3})}}
+        else{o.scr=0;o.wt=(o.wt||0)-dt;if(o.wt<=0||!o.wp){o.wp=randFloorNear(o.x,o.y,4);o.wt=rand(3,6)}moveMon(o,o.wp[0],o.wp[1],.5*dt)}
+      }
+    }else if(o.ps==='ally'){
+      let n=null,bd=10;for(const h of villainHumans()){const d=Math.hypot(h.x-o.x,h.y-o.y);if(d<bd){bd=d;n=h}}
+      if(n){moveMon(o,n.x,n.y,1.25*dt);o.biteT-=dt;if(bd<.8&&o.biteT<=0){o.biteT=4;convertHuman(n,false)}}else o.speed=0;
+    }
+  }
+}
+async function villainDie(){
+  G.mode='busy';SFX.scream();G.red=1;G.shake=1.2;await sleep(900);
+  const c=await panel(`<h2>الجنود وقّعوك</h2><p>الصياد اللي اتحوّل… وقع في شارع فاضي. حاول تاني؟</p><div class="stack"><button class="primary" id="a">حاول تاني</button><button id="b">القائمة الرئيسية</button></div>`,(r,close)=>{r.querySelector('#a').onclick=()=>close(0);r.querySelector('#b').onclick=()=>close(1)});
+  if(c===1)return location.reload();G.hp=100;G.lvlId='villain';buildLevel(LV.villain);G.mode='play';
+}
+async function villainWin(){
+  G.mode='busy';setMon(0,0);await fade(1,700);ui.controls.hidden=true;ui.obj.hidden=true;ui.inv.hidden=true;ui.cross.hidden=true;
+  const mon=SPR.mon;
+  await playCut(slides([
+    {d:3,sub:'في أسابيع… الصياد بقى أخطر متحول في أوروبا.',draw:(g,t)=>drawEurope(g,t+3,'spread')},
+    {d:3,sub:'زنجر لقاك أخيرًا… رافع المسدس. وإيده بتترعش.',draw:(g,t)=>{drawLab(g);P(g,60,82,12,32,'#3a4a3a');P(g,62,74,8,8,'#c48d62');P(g,72,90,14,3,'#1a1a1a');P(g,150,70,14,44,'#3a3a3a');P(g,151,58,12,12,'#5e665a');P(g,153,62,3,2,'#ff2a1a');P(g,159,62,3,2,'#ff2a1a')}},
+    {d:2.4,sub:'<b>زنجر:</b> مش قادر… انت أخويا.',draw:(g,t)=>{drawLab(g);P(g,60,82,12,32,'#3a4a3a');P(g,62,74,8,8,'#c48d62');P(g,150,70,14,44,'#3a3a3a');P(g,151,58,12,12,'#5e665a')}},
+    {d:2.2,sub:'(طق… طق… طق…)',ev:[[.2,SFX.tap],[.8,SFX.tap],[1.4,SFX.tap]],draw:(g,t)=>{drawLab(g);P(g,150,70,14,44,'#3a3a3a');P(g,151,58,12,12,'#5e665a');drawGranny(g,lerp(240,210,seg(t,0,2)),112,{angry:true})}},
+    {d:2.6,sub:'<b>جدتك:</b> حتى لو اتحولت… انت حفيدي. بس برضه…',ev:[[.1,()=>voice('حتى لو اتحولت انت حفيدي بس برضه','granny')]],draw:(g,t)=>{drawLab(g);P(g,150,70,14,44,'#3a3a3a');P(g,151,58,12,12,'#5e665a');drawGranny(g,210,112,{cane:'up',angry:true})}},
+    {d:2,ev:[[.3,()=>{big('هبش دربكش!','gold');voice('هبش دربكش','granny');SFX.whoosh()}],[1.6,SFX.bonk]],draw:(g,t)=>{drawLab(g);P(g,150,70,14,44,'#3a3a3a');P(g,151,58,12,12,'#5e665a');const e=ease(seg(t,.2,1.6));drawGranny(g,lerp(210,158,e),lerp(112,52,e)-Math.sin(Math.PI*e)*30,{cane:'up',angry:true,rot:e*Math.PI*4})}},
+    {d:2.6,sub:'<b>انت وصلت القمر 🌕</b>',ev:[[1.6,SFX.twinkle]],draw:(g,t)=>{P(g,0,0,W,H,'#060818');for(let i=0;i<40;i++)P(g,(i*53)%W,(i*31)%H,1,1,'#ccd');P(g,170,20,40,40,'#e8e0c0');const k=ease(seg(t,0,1.5));g.save();g.translate(lerp(60,190,k),lerp(150,40,k));g.rotate(t*10);P(g,-4*(1-k*.7),-8*(1-k*.7),8*(1-k*.7),16*(1-k*.7),'#5e665a');g.restore()}},
+    {d:2.4,sub:'<b>جدتك:</b> هناك هتهدى شوية. قوم يا زنجر، الأكل هيبرد.',draw:(g,t)=>{drawLab(g);drawGranny(g,150,112,{fix:Math.floor(t*2)%2===0});P(g,90,82,12,32,'#3a4a3a');P(g,92,74,8,8,'#c48d62')}}
+  ]));
+  ui.cut.hidden=true;ui.cutbg.hidden=true;sub('');
+  panel(`<h1>القبو</h1><p class="tag">نهاية الشرير 😈</p><p style="text-align:center">نشرت الطاعون في ${G.lf.inf} من الناس… لحد ما جدتك وصلت.</p>
+  <div class="stack"><button class="primary" id="a">ارجع للمرحلة اللي اتحوّلت فيها</button><button id="b">القائمة الرئيسية</button></div>`,(r,close)=>{r.querySelector('#b').onclick=()=>location.reload();r.querySelector('#a').onclick=()=>{close();ui.controls.hidden=false;ui.obj.hidden=false;ui.inv.hidden=false;ui.cross.hidden=false;G.lvlId=G.villainFrom||'italy';restartLevel()}});
+  G.mode='end';
+}
+async function sacrifice(){
+  G.mode='busy';await fade(1,1200);ui.controls.hidden=true;ui.obj.hidden=true;ui.inv.hidden=true;ui.cross.hidden=true;
+  sub('<b>أنت:</b> زنجر… كمّل انت. ومتخليش حد يعرف إني اتعضيت.');await sleep(3600);
+  sub('…');await sleep(1600);
+  sub('<b>زنجر:</b> …ليه؟ ليه عملت كده؟');await sleep(3200);sub('');
+  panel(`<h1>القبو</h1><p class="tag">نهاية حزينة</p><p style="text-align:center">ضحّيت بنفسك قبل ما تتحوّل… وزنجر كمّل الطريق لوحده، وشايل عكاز جدتك.</p>
+  <div class="stack"><button class="primary" id="a">ارجع وحاول تاني</button><button id="b">القائمة الرئيسية</button></div>`,(r,close)=>{r.querySelector('#b').onclick=()=>location.reload();r.querySelector('#a').onclick=()=>{close();ui.controls.hidden=false;ui.obj.hidden=false;ui.inv.hidden=false;ui.cross.hidden=false;fade(0,500);restartLevel()}});
+  G.mode='end';
+}
 
 /* ===================== menus / flow ===================== */
 function ending(){
