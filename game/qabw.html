@@ -543,8 +543,9 @@ function setSpecial(x,y,cvs){const me=G.special[x+','+y];if(me){me.material.map=
 function addObj(o){G.objs.push(o);if(o.mesh){o.mesh.position.set(o.x,o.z||0,o.y);if(o.rot!=null)o.mesh.rotation.y=o.rot;world.add(o.mesh)}return o}
 function placePlayer(x,y,a){G.px=x;G.py=y;G.pa=a;G.pitch=0;G.trail=[];syncDir()}
 function syncDir(){G.dirX=Math.cos(G.pa);G.dirY=Math.sin(G.pa)}
+function freeSpot(x,y){if(!G.map||!wallHit(x,y))return[x,y];let best=null,bd=1e9;for(const f of (G.floors&&G.floors.length?G.floors:[])){const d=Math.hypot(f[0]-x,f[1]-y);if(d<bd&&!wallHit(f[0],f[1]))bd=d,best=f}return best?[best[0],best[1]]:[G.px,G.py]}
 function makeComp(x,y){
-  if(!G.comp)return;const id=G.comp.id;const v=id==='cat'?buildCat():id==='robot'?buildRobot():id==='zinger2'?{}:buildKid();
+  if(!G.comp)return;if(G.stage==='lvl'){[x,y]=freeSpot(x,y)}const id=G.comp.id;const v=id==='cat'?buildCat():id==='robot'?buildRobot():id==='zinger2'?{}:buildKid();
   const vv=id==='zinger2'?buildPerson({shirt:0x3a4a3a,coat:0x2a2a22,skin:0xc48d62,hair:0x1a1410}):v;
   if(id==='zinger2')box(vv.armR,.05,.07,.3,col(0x1a1a1a),0,-.62,.12);
   G.cObj=addObj({x,y,mesh:vv.g,vis:vv,isComp:true,act:'talk',walk:0,face:0,rig:id==='zinger2'});if(G.comp.gone){G.cObj.gone=true;v.g.visible=false}
@@ -686,11 +687,13 @@ function bfsNext(sx,sy,tx,ty){
 }
 let lastDt=.016;
 function lerpAng(a,b,t){return a+angDiff(b,a)*t}
+function wallHit(x,y,r=.27){return solidAt(Math.floor(x-r),Math.floor(y-r))||solidAt(Math.floor(x+r),Math.floor(y-r))||solidAt(Math.floor(x-r),Math.floor(y+r))||solidAt(Math.floor(x+r),Math.floor(y+r))}
+function stepTo(m,nx,ny){if(!G.map){m.x=nx;m.y=ny;return}const stuck=wallHit(m.x,m.y);if(stuck||!wallHit(nx,m.y))m.x=nx;if(stuck||!wallHit(m.x,ny))m.y=ny}
 function moveMon(m,tx,ty,step){
   const a=Math.floor(m.x),b=Math.floor(m.y),c=Math.floor(tx),d=Math.floor(ty);let gx=tx,gy=ty;
   if(a!==c||b!==d){const key=a+','+b+'>'+c+','+d;m.pt=(m.pt||0)-lastDt;if(m.pt<=0||m.nkey!==key){m.nx=bfsNext(a,b,c,d);m.nkey=key;m.pt=.3}if(m.nx){gx=m.nx[0]+.5;gy=m.nx[1]+.5}}
   const dx=gx-m.x,dy=gy-m.y,dd=Math.hypot(dx,dy);
-  if(dd>.001){const s=Math.min(step,dd);m.x+=dx/dd*s;m.y+=dy/dd*s;m.face=lerpAng(m.face||0,Math.atan2(dx,dy),.15);m.speed=s/Math.max(.001,lastDt)}else m.speed=0;
+  if(dd>.001){const s=Math.min(step,dd);stepTo(m,m.x+dx/dd*s,m.y+dy/dd*s);m.face=lerpAng(m.face||0,Math.atan2(dx,dy),.15);m.speed=s/Math.max(.001,lastDt)}else m.speed=0;
 }
 function findTarget(){
   let best=null,bd=1.45;
@@ -750,7 +753,7 @@ function compUpdate(dt){
   if(c.stay||G.hidden||d<.85){o.speed=0;lookAt();return}
   let tx=G.px,ty=G.py,acc=0;for(let i=G.trail.length-1;i>0;i--){const a=G.trail[i],b=G.trail[i-1];acc+=Math.hypot(a[0]-b[0],a[1]-b[1]);if(acc>1){tx=b[0];ty=b[1];break}}
   const dx=tx-o.x,dy=ty-o.y,dd=Math.hypot(dx,dy);
-  if(dd>.05){const s=Math.min(dd,3.3*dt);o.x+=dx/dd*s;o.y+=dy/dd*s;o.face=lerpAng(o.face,Math.atan2(dx,dy),.2);o.speed=s/dt}else{o.speed=0;lookAt()}
+  if(dd>.05){const s=Math.min(dd,3.3*dt);stepTo(o,o.x+dx/dd*s,o.y+dy/dd*s);o.face=lerpAng(o.face,Math.atan2(dx,dy),.2);o.speed=s/dt}else{o.speed=0;lookAt()}
   if(d>6){o.x=tx;o.y=ty}
 }
 function tick(dt){
