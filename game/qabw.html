@@ -443,7 +443,11 @@ const SFX={
   heart(v){tone(56,.16,{v,to:40,wet:0});tone(52,.16,{v:v*.8,to:38,at:.21,wet:0})},
   hum(){if(!A.c||A.hum)return;const c=A.c,o=c.createOscillator();o.type='sawtooth';o.frequency.value=50;const f=c.createBiquadFilter();f.type='lowpass';f.frequency.value=220;const g=c.createGain();g.gain.value=.035;o.connect(f);f.connect(g);g.connect(bus(0,.2));o.start();A.hum=g}
 };
-function voice(text,kind){const base={granny:540,cat:930,kid:660,robot:250}[kind];if(!base)return;const type=kind==='robot'?'sawtooth':'square';const n=Math.min(24,Math.ceil(text.length/2.4));for(let i=0;i<n;i++)tone(base*(.82+Math.random()*.42),.055,{type,v:.04,at:i*.075,lp:2400,wet:.1})}
+let ttsVoice=null;
+function pickVoice(){try{const vs=speechSynthesis.getVoices();ttsVoice=vs.find(v=>/ar[-_]EG/i.test(v.lang))||vs.find(v=>/^ar/i.test(v.lang))||null}catch(e){}}
+try{pickVoice();speechSynthesis.onvoiceschanged=pickVoice}catch(e){}
+function say(text,o={}){try{if(!ttsVoice)pickVoice();if(!ttsVoice)return false;const u=new SpeechSynthesisUtterance(text);u.voice=ttsVoice;u.lang=ttsVoice.lang;u.rate=o.rate||.85;u.pitch=o.pitch||.8;u.volume=1;speechSynthesis.cancel();speechSynthesis.speak(u);return true}catch(e){return false}}
+function voice(text,kind){if(kind==='granny'&&say(text,{pitch:1.35,rate:.95}))return;const base={granny:540,cat:930,kid:660,robot:250}[kind];if(!base)return;const type=kind==='robot'?'sawtooth':'square';const n=Math.min(24,Math.ceil(text.length/2.4));for(let i=0;i<n;i++)tone(base*(.82+Math.random()*.42),.055,{type,v:.04,at:i*.075,lp:2400,wet:.1})}
 function setMon(v,pan){if(!A.mon)return;const t=A.c.currentTime;A.mon.g.gain.setTargetAtTime(v,t,.12);if(A.mon.p)A.mon.p.pan.setTargetAtTime(clamp(pan,-1,1),t,.12)}
 function setAmb(v){if(A.amb)A.amb.gain.setTargetAtTime(v,A.c.currentTime,.6)}
 function stopHum(){if(A.hum){A.hum.gain.setTargetAtTime(0,A.c.currentTime,.2);A.hum=null}}
@@ -1678,8 +1682,8 @@ async function glassMoment(){
   G.lf.intro=0;G.lf.caseObj.label='عكاز جدتك';G.mode='busy';ui.prompt.hidden=true;ui.controls.hidden=true;ui.cross.hidden=true;hand.visible=true;
   const x0=G.px;await tween(1.4,k=>{G.px=lerp(x0,2.95,ease(k));G.pitch=lerp(0,-.12,k);G.roll=lerp(0,.16,ease(k));hand.position.y=lerp(-.35,-.05,k)});
   ui.hideov.className='fog';
-  const dur=await playVoice();sub('<b>أنت:</b> لن أخيب أملك يا جدتي.');
-  await sleep(Math.max(3200,dur*1000+700));sub('');hand.visible=false;
+  say('لن أخيب أملك يا جدتي',{pitch:.65,rate:.75});sub('<b>أنت:</b> لن أخيب أملك يا جدتي.');
+  await sleep(4200);sub('');hand.visible=false;
   await fade(1,900);rain(false);G.roll=0;G.pitch=0;ui.hideov.className='';
   big('الفصل التاني');await sleep(1300);big('الطاعون الأسود');SFX.sting();await sleep(1500);
   lights(LV.base2.light);placePlayer(5.5,3.5,0);G.lockMove=false;await fade(0,800);
