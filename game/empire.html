@@ -456,7 +456,8 @@ function buildBattle3(){clearG(BG3);ARW.hidden=true;ring.visible=false;
   for(const u of B.units){const ally=!u.team;const c={crown:u.king,shirt:u.isP?P.shirt:ally?(B.aColor||EMP[S.emp].c):B.eColor,skin:u.skin,hair:u.hair,army:ally,hood:!ally&&B.kind==='bandit'};const g=new THREE.Group();const ch=mkChar(c);g.add(ch);const ud={ch};
     if(u.type==='cav'&&!u.isP){const h=new THREE.Group();g.add(h);bxm(h,.34,.34,.85,'#8a5a32',0,.5,0);bxm(h,.24,.42,.26,'#8a5a32',0,.78,.42);bxm(h,.2,.18,.3,'#7a4a28',0,.95,.58);for(const[a,b]of[[-.12,-.3],[.12,-.3],[-.12,.3],[.12,.3]])bxm(h,.08,.36,.08,'#5a3a20',a,.18,b);bxm(h,.06,.3,.3,'#3a2414',0,.85,.3);ch.position.y=.42;ud.horse=h}
     if(u.type==='arc'&&!u.isP){const bow=new THREE.Mesh(new THREE.TorusGeometry(.2,.022,6,14,Math.PI),mat('#8a5a2e'));bow.position.set(.3,.5,.12);bow.rotation.z=-Math.PI/2;ch.add(bow)}
-    else{const sw=new THREE.Group();sw.position.set(.3,.45,.05);ch.add(sw);bxm(sw,.05,.42,.03,'#dfe6ea',0,.25,0);bxm(sw,.16,.04,.05,'#8a5a2e',0,.05,0);ud.sw=sw}
+    else{const sw=new THREE.Group();sw.position.set(.3,.45,.05);ch.add(sw);if(u.king){bxm(sw,.09,.85,.04,'#f4f0e6',0,.48,0);bxm(sw,.3,.07,.08,'#ffd23f',0,.06,0);msh(SPHG,'#ff3b5c',sw,.05,.05,.05,0,.06,.05)}else{bxm(sw,.05,.42,.03,'#dfe6ea',0,.25,0);bxm(sw,.16,.04,.05,'#8a5a2e',0,.05,0)}ud.sw=sw}
+    if(u.king){ch.scale.setScalar(1.3*1.45);bxm(g,1,.02,1,'#ffd23f',0,.02,0).material=new THREE.MeshBasicMaterial({color:'#ffd23f',transparent:true,opacity:.35})}
     if(u.isP){ud.mark=msh(CONEG,'#ffd23f',g,.14,.25,.14,0,1.75+(ud.horse?.4:0),0);ud.mark.rotation.x=Math.PI}
     const hb=new THREE.Sprite(new THREE.SpriteMaterial({color:'#2a1a08',depthTest:false}));hb.scale.set(.62,.08,1);const hf=new THREE.Sprite(new THREE.SpriteMaterial({color:ally?'#6fd04a':'#e8503a',depthTest:false}));hf.center.set(0,.5);hf.scale.set(.6,.06,1);BG3.add(hb,hf);ud.hb=hb;ud.hf=hf;
     g.userData=ud;u.m=g;BG3.add(g)}
@@ -470,6 +471,7 @@ function renderBattle(time,dt=.016){WG.visible=CG.visible=false;BG3.visible=true
     if(ud.horse){ud.horse.position.y=u.mov?Math.abs(w)*.06:0}
     const top=ud.horse?1.75:1.35;ud.hb.position.set(u.x,top,u.y);ud.hf.position.set(u.x-.3,top,u.y);ud.hf.scale.x=.6*Math.max(0,u.hp/u.max);ud.hb.visible=ud.hf.visible=u.hp<u.max;
     if(ud.mark)ud.mark.position.y=1.75+(ud.horse?.4:0)+Math.sin(time*5)*.08}
+  if(B.fx){for(const f of B.fx){if(!f.m){f.m=new THREE.Mesh(new THREE.RingGeometry(.8,1,40),new THREE.MeshBasicMaterial({color:f.c,transparent:true,opacity:.9,depthWrite:false,side:THREE.DoubleSide}));f.m.rotation.x=-Math.PI/2;BG3.add(f.m)}f.t+=dt;const k=Math.min(1,f.t/.35);f.m.position.set(f.x,.08,f.y);f.m.scale.setScalar(.2+f.r*k);f.m.material.opacity=.9*(1-k);if(k>=1){BG3.remove(f.m);f.done=1}}B.fx=B.fx.filter(f=>!f.done)}
   for(const a of B.arrows){if(!a.m){a.m=bxm(BG3,.04,.04,.45,'#f2e6c8',a.x,.7,a.y)}a.m.position.set(a.x,.75,a.y);a.m.rotation.y=Math.atan2(a.t.x-a.x,a.t.y-a.y)}
   const por=innerHeight>innerWidth,D=por?1.9:1;cam.position.set(BW/2,13*D,BH/2+11.5*D);cam.lookAt(BW/2,0,BH/2+.5);sun.position.set(BW/2-9,18,BH/2+7);sun.target.position.set(BW/2,0,BH/2);hemi.intensity=.58;sun.intensity=.7;scene.background.set('#a8dcf0');scene.fog.color.copy(scene.background);
   R3.render(scene,cam)}
@@ -648,11 +650,14 @@ function startBattle(kind,go){
 }
 function updBattleBar(){if(!B)return;const a=B.units.filter(u=>!u.team&&u.hp>0).length,e=B.units.filter(u=>u.team&&u.hp>0).length;const p=B.units.find(u=>u.isP);$('#mission').innerHTML=`⚔️ جيشنا <b>${ar(a)}</b> × <b>${ar(e)}</b> ${B.eName}${p?` · ❤️ ${ar(Math.max(0,Math.round(p.hp)))}`:''} · ${ar(Math.max(0,Math.ceil(120-B.t)))} ث`}
 function bdmg(t,a){if(t.hp<=0)return;t.hp-=a;t.hit=.15;if(t.hp<=0){t.hp=0;tone(140,.15,'sawtooth',.04,70);if(t.isP){SFX.bad();if(t.king)toast('👑 الملك وقع!!',3000);else toast('اتصابت! وقعت في المعركة… الجيش بيكمّل من غيرك',3000);$('#joy').hidden=true;actBtn.hidden=true}}}
-function pAttack(){if(!B||B.over)return;const p=B.units.find(u=>u.isP&&u.hp>0);if(!p||p.cd>0)return;p.cd=.45;p.sw=.2;SFX.tap();let t=null,bd=1.3;for(const v of B.units)if(v.team&&v.hp>0){const d=Math.hypot(v.x-p.x,v.y-p.y);if(d<bd){bd=d;t=v}}if(t){bdmg(t,10);tone(220,.06,'square',.05)}}
+function pAttack(){if(!B||B.over)return;const p=B.units.find(u=>u.isP&&u.hp>0);if(!p||p.cd>0)return;
+  if(p.king){p.cd=.3;p.sw=.2;let n=0;for(const v of B.units)if(v.team&&v.hp>0&&Math.hypot(v.x-p.x,v.y-p.y)<1.9){bdmg(v,38);n++;const d=Math.hypot(v.x-p.x,v.y-p.y)||1;v.x=clamp(v.x+(v.x-p.x)/d*.35,.5,BW-.5);v.y=clamp(v.y+(v.y-p.y)/d*.35,.5,BH-.5)}tone(n?190:420,.07,'square',.05);B.fx=B.fx||[];B.fx.push({x:p.x,y:p.y,t:0,r:1.9,c:'#ffd23f'});return}p.cd=.45;p.sw=.2;SFX.tap();let t=null,bd=1.3;for(const v of B.units)if(v.team&&v.hp>0){const d=Math.hypot(v.x-p.x,v.y-p.y);if(d<bd){bd=d;t=v}}if(t){bdmg(t,10);tone(220,.06,'square',.05)}}
+function kSkill(){if(!B||B.over)return;const p=B.units.find(u=>u.king&&u.hp>0);if(!p)return;if(p.sk>0){toast(`⚡ ضربة الملك جاهزة بعد ${ar(Math.ceil(p.sk))} ث`,900);return}p.sk=6;p.sw=.3;SFX.fan();tone(80,.4,'sawtooth',.08,40);let n=0;for(const v of B.units)if(v.team&&v.hp>0){const d=Math.hypot(v.x-p.x,v.y-p.y);if(d<3.4){bdmg(v,95);n++;const k=(3.4-d)*.6/(d||1);v.x=clamp(v.x+(v.x-p.x)*k,.5,BW-.5);v.y=clamp(v.y+(v.y-p.y)*k,.5,BH-.5)}}B.fx=B.fx||[];B.fx.push({x:p.x,y:p.y,t:0,r:3.4,c:'#ff8a3d'});toast(n?`⚡ ضربة الملك! ${ar(n)} عدو`:'⚡ ضربة الملك!',1200)}
 function battleTick(dt0){
   if(!B||B.over)return;const dt=dt0*B.speed;B.t+=dt;
   for(const u of B.units){if(u.hp<=0)continue;if(u.sw>0)u.sw-=dt;if(u.hit>0)u.hit-=dt;u.cd-=dt;
-    if(u.isP){let mx=jx,my=jy;if(keys['a']||keys['arrowleft'])mx-=1;if(keys['d']||keys['arrowright'])mx+=1;if(keys['w']||keys['arrowup'])my-=1;if(keys['s']||keys['arrowdown'])my+=1;const m=Math.hypot(mx,my);u.mov=false;if(m>.15){if(m>1){mx/=m;my/=m}u.x=clamp(u.x+mx*3*dt0,.5,BW-.5);u.y=clamp(u.y+my*3*dt0,.5,BH-.5);u.mov=true;u.walk+=dt0*9;u.dir=Math.abs(mx)>Math.abs(my)?(mx>0?3:2):(my>0?0:1)}continue}
+    if(u.king){if(u.sk>0)u.sk-=dt0;u.hp=Math.min(u.max,u.hp+dt0*6);if(u.cd<=0&&B.units.some(v=>v.team&&v.hp>0&&Math.hypot(v.x-u.x,v.y-u.y)<1.6))pAttack()}
+    if(u.isP){let mx=jx,my=jy;if(keys['a']||keys['arrowleft'])mx-=1;if(keys['d']||keys['arrowright'])mx+=1;if(keys['w']||keys['arrowup'])my-=1;if(keys['s']||keys['arrowdown'])my+=1;const m=Math.hypot(mx,my);u.mov=false;if(m>.15){if(m>1){mx/=m;my/=m}u.x=clamp(u.x+mx*(u.king?4.6:3)*dt0,.5,BW-.5);u.y=clamp(u.y+my*(u.king?4.6:3)*dt0,.5,BH-.5);u.mov=true;u.walk+=dt0*9;u.dir=Math.abs(mx)>Math.abs(my)?(mx>0?3:2):(my>0?0:1)}continue}
     let t=null,bd=1e9;for(const v of B.units)if(v.team!==u.team&&v.hp>0){const d=Math.hypot(v.x-u.x,v.y-u.y)-(v.isP?.4:0);if(d<bd){bd=d;t=v}}
     if(!t){u.mov=false;continue}const T=UT[u.type];
     if(bd>T.range){let dx=(t.x-u.x)/bd,dy=(t.y-u.y)/bd;for(const v of B.units)if(v!==u&&v.hp>0){const ex=u.x-v.x,ey=u.y-v.y,ed=Math.hypot(ex,ey);if(ed<.65&&ed>0){dx+=ex/ed*.7;dy+=ey/ed*.7}}
@@ -706,7 +711,7 @@ function showMenu(){const e=EMP[S.emp];const tabs=[['me','👤 أنا'],['jobs',
     const del=c.querySelector('#del');if(del)del.onclick=()=>{if(del.dataset.k){try{localStorage.removeItem('empire1')}catch(e){}location.reload()}else{del.dataset.k=1;del.textContent='⚠️ متأكد؟ دوس تاني عشان تمسح'}};
   })}
 $('#menuBtn').onclick=()=>{if(KM){if(mode==='play'){aInit();SFX.ui();kMenu()}return}if(mode==='play'){aInit();openTab(curTab==='king'?'me':curTab)}};
-$('#bagBtn').onclick=()=>{if(KM){if(mode==='play'){aInit();SFX.ui();kWorld()}return}if(mode!=='play')return;aInit();SFX.ui();const mine=Object.values(S.builds);
+$('#bagBtn').onclick=()=>{if(mode==='battle'){aInit();return kSkill()}if(KM){if(mode==='play'){aInit();SFX.ui();kWorld()}return}if(mode!=='play')return;aInit();SFX.ui();const mine=Object.values(S.builds);
   panel(`<button class="x" aria-label="اقفل">✖</button><h2>🎒 الشنطة</h2><div class="kv"><b>💰 فلوس</b><span>${ar(S.money)}</span><b>🧱 مسطرين وميزان</b><span>عدة البنّاء</span><b>📐 رسومات</b><span>${S.active?'رسمة '+S.active.type:'مفيش'}</span></div><h3>المباني اللي بنيتها (${ar(mine.length)})</h3>${mine.length?mine.map(b=>`<div class="job"><div><div class="t">${b.royal?'👑 جناح القصر':'مبنى'} لـ${b.by}</div><div class="s">${ar(b.w)}×${ar(b.h)}</div></div></div>`).join(''):'<p class="muted">لسه مبنيتش حاجة.</p>'}`)};
 $('#mini').onclick=()=>{if(KM){if(mode!=='play')return;SFX.ui();panel(`<button class="x" aria-label="اقفل">✖</button><h2>🗺️ ${S.kname}</h2><canvas id="bm" style="width:100%;image-rendering:pixelated;border:2px solid var(--line);border-radius:4px"></canvas>`,c=>{const m=c.querySelector('#bm');m.width=MW*4;m.height=MH*4;kMiniDraw(m.getContext('2d'),4)});return}if(mode!=='play')return;SFX.ui();let tab='city';
   const show=()=>panel(`<button class="x" aria-label="اقفل">✖</button><div class="tabs"><button class="tab${tab==='city'?' on':''}" data-m="city">🏙️ المدينة</button><button class="tab${tab==='world'?' on':''}" data-m="world">🌍 العالم</button></div><canvas id="bm" style="width:100%;image-rendering:pixelated;border:2px solid var(--line);border-radius:4px"></canvas><p class="muted" id="lg"></p>`,(c,close)=>{
@@ -738,7 +743,7 @@ function randomFlag(){const a=rri(0,11);let b=rri(0,11);if(b===a)b=(a+3)%12;let 
 
 /* ---------------- input ---------------- */
 let mode='title';const keys={};let jx=0,jy=0;
-addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if((e.key==='e'||e.key===' '||e.key==='Enter')&&(mode==='play'||mode==='battle')&&!(e.target&&e.target.tagName==='INPUT')){e.preventDefault();mode==='battle'?pAttack():KM?(PL?kConfirm():kCatalog()):act()}if(e.key==='Escape'&&mode==='build')closeBuild()});
+addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.key==='q'&&mode==='battle')kSkill();if((e.key==='e'||e.key===' '||e.key==='Enter')&&(mode==='play'||mode==='battle')&&!(e.target&&e.target.tagName==='INPUT')){e.preventDefault();mode==='battle'?pAttack():KM?(PL?kConfirm():kCatalog()):act()}if(e.key==='Escape'&&mode==='build')closeBuild()});
 addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
 const joy=$('#joy'),knob=$('#knob');let jid=null;
 function jmove(e){const r=joy.getBoundingClientRect();let dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2);const m=r.width/2-10,d=Math.hypot(dx,dy);if(d>m){dx*=m/d;dy*=m/d}knob.style.transform=`translate(${dx}px,${dy}px)`;jx=dx/m;jy=dy/m}
@@ -807,8 +812,8 @@ const GOALS=[
 function kNewSave(){return{v:1,king:true,seed:(Math.random()*1e9)|0,name:'',kname:'',flag:null,res:{g:180,w:120,s:80,f:80},pop:10,happy:65,t:30,blds:[],nid:1,builders:2,troops:{inf:2,arc:1,cav:0},form:['inf','inf','arc',...Array(15).fill(null)],regions:null,goal:0,raidT:480,growT:300,sfx:true,tts:true,px:0,py:0}}
 function kSave(){try{localStorage.setItem('empireKing1',JSON.stringify(S))}catch(e){}}
 function kLoad(){try{const s=JSON.parse(localStorage.getItem('empireKing1')||'null');if(s&&s.king&&s.flag)return s}catch(e){}return null}
-function canPay(c){return Object.keys(c).every(k=>S.res[k]>=c[k])}
-function pay(c){for(const k in c)S.res[k]-=c[k]}
+function canPay(c){if(S.inf)return true;return Object.keys(c).every(k=>S.res[k]>=c[k])}
+function pay(c){if(S.inf)return;for(const k in c)S.res[k]-=c[k]}
 function costTxt(c){return Object.keys(c).map(k=>`${RES[k][0]}${ar(Math.round(c[k]))}`).join(' ')}
 function upCost(b){const c={};const D=KB[b.type];for(const k in D.c)c[k]=Math.round(D.c[k]*(b.lvl+1)*.8);return c}
 /* map */
@@ -886,11 +891,11 @@ let kEconT=0,kGoalT=0,kAssignT=0;
 function kEcon(dt){let cap=0,hb=0,tc=4;const pr={g:0,w:0,s:0,f:0};
   for(const b of S.blds){if(b.st!=='done')continue;const D=KB[b.type],L=b.lvl;if(D.pop)cap+=D.pop*L;if(D.happy)hb+=D.happy*L;if(D.cap)tc+=D.cap*L;if(D.prod)for(const k in D.prod)pr[k]+=D.prod[k]*L}
   for(const r of S.regions)if(r.o==='p'&&TRIB[r.kind])for(const k in TRIB[r.kind])pr[k]+=TRIB[r.kind][k];
-  pr.g+=S.pop*.4*(S.happy/70);pr.f-=S.pop*.3;for(const k in pr)S.res[k]=Math.max(0,S.res[k]+pr[k]*dt/60);
-  S.cap=cap;S.tcap=Math.min(18,tc);S.rate=pr;S.popT=(S.popT||0)+dt;
+  pr.g+=S.pop*.4*(S.happy/70);pr.f-=S.pop*.3;if(S.inf){for(const k in S.res)S.res[k]=99999}else for(const k in pr)S.res[k]=Math.max(0,S.res[k]+pr[k]*dt/60);
+  S.cap=cap;S.tcap=S.inf?18:Math.min(18,tc);S.rate=pr;S.popT=(S.popT||0)+dt;
   if(S.popT>=2.5){S.popT=0;if(S.res.f>0&&S.pop<cap)S.pop++;else if((S.res.f<=0&&S.pop>5)||S.pop>cap)S.pop--}
   const tgt=clamp(50+hb+(S.res.f>0?5:-25)-(S.pop>=cap?5:0),0,100);S.happy+=(tgt-S.happy)*Math.min(1,dt*.1)}
-function kHud(){const r=S.res;$('#stats').innerHTML=`<canvas id="flagMini" width="12" height="8"></canvas><div class="chip">💰 ${ar(Math.floor(r.g))}</div><div class="chip">🪵 ${ar(Math.floor(r.w))}</div><div class="chip">🪨 ${ar(Math.floor(r.s))}</div><div class="chip" style="${r.f<=0?'color:var(--blood)':''}">🌾 ${ar(Math.floor(r.f))}</div><div class="chip">👥 ${ar(S.pop)}/${ar(S.cap||0)}</div><div class="chip">${S.happy>60?'😊':S.happy>35?'😐':'😠'} ${ar(Math.round(S.happy))}</div>`;drawFlag($('#flagMini'),S.flag)}
+function kHud(){const r=S.res,V=k=>S.inf?'∞':ar(Math.floor(r[k]));$('#stats').innerHTML=`<canvas id="flagMini" width="12" height="8"></canvas><div class="chip">💰 ${V('g')}</div><div class="chip">🪵 ${V('w')}</div><div class="chip">🪨 ${V('s')}</div><div class="chip" style="${r.f<=0&&!S.inf?'color:var(--blood)':''}">🌾 ${V('f')}</div><div class="chip">👥 ${ar(S.pop)}/${ar(S.cap||0)}</div><div class="chip">${S.happy>60?'😊':S.happy>35?'😐':'😠'} ${ar(Math.round(S.happy))}</div>`;drawFlag($('#flagMini'),S.flag)}
 function kMission(){const g=GOALS[S.goal];$('#mission').innerHTML=g?`🎯 ${g.t} <span class="muted">· جايزة ${costTxt(g.r)}</span>`:'👑 انت إمبراطور العالم!'}
 /* update */
 function kUpdate(dt){S.t+=dt;
@@ -951,10 +956,10 @@ function kMenu(tab='king'){const tabs=[['king','👑 المملكة'],['army','�
   if(tab==='king')h=`<div class="row" style="gap:12px"><canvas id="fl" width="12" height="8" style="width:72px;height:48px;image-rendering:pixelated;border:2px solid var(--line)"></canvas><div><b style="font-size:20px">الملك ${S.name} 👑</b><div class="muted">إمبراطورية ${S.kname}</div></div></div>
     <h3>في الدقيقة</h3><div class="kv">${Object.keys(RES).map(k=>`<b>${RES[k][0]} ${RES[k][1]}</b><span style="color:${r[k]<0?'var(--blood)':'inherit'}">${r[k]>=0?'+':''}${ar(Math.round(r[k]))}</span>`).join('')}<b>👥 السكان</b><span>${ar(S.pop)} من ${ar(S.cap||0)}</span><b>😊 السعادة</b><span>${ar(Math.round(S.happy))}٪</span><b>🏗️ المباني</b><span>${ar(S.blds.length)}</span><b>🌍 أراضيك</b><span>${ar(S.regions.filter(x=>x.o==='p').length)} من ${ar(S.regions.length)}</span></div>
     <h3>الأهداف</h3><div class="path">${GOALS.map((g,i)=>`<div>${i<S.goal?'✅':i===S.goal?'🎯':'⬜'} ${g.t}</div>`).join('')}</div>`;
-  else if(tab==='army'){const bar=kCount('barracks')>0,tot=kTroops(),cap=S.tcap||4;h=`<div class="kv"><b>جنودك</b><span>${ar(tot)} من ${ar(cap)}</span></div>${bar?'':'<p class="muted">⚠️ ابني <b>ثكنات</b> عشان تقدر تجنّد جنود جداد.</p>'}
+  else if(tab==='army'){const bar=kCount('barracks')>0||S.inf,tot=kTroops(),cap=S.tcap||4;h=`<div class="kv"><b>جنودك</b><span>${ar(tot)} من ${ar(cap)}</span></div>${bar?'':'<p class="muted">⚠️ ابني <b>ثكنات</b> عشان تقدر تجنّد جنود جداد.</p>'}
     <h3>جنّد</h3><div class="row">${Object.entries(UT).map(([k,u])=>`<button class="btn" data-r="${k}" ${bar?'':'disabled'}>${u.e} ${u.n}: ${ar(S.troops[k])} · ${costTxt(RCOST[k])}</button>`).join('')}</div>
     <h3>التشكيل <span class="muted" style="font-size:13px">(الصف الأول قدام)</span></h3><div class="fgrid">${S.form.map((f,i)=>`<button data-f="${i}" class="${i>=cap?'lk':''}">${i>=cap?'🔒':f?UT[f].e:'·'}</button>`).join('')}</div><div class="row" style="margin-top:8px"><button class="btn" id="af">🪄 رتّب تلقائي</button><button class="btn pri" id="wm">🌍 خريطة العالم</button></div>`}
-  else if(tab==='bld'){const busy=BLDRS.filter(b=>b.job).length,c={g:60+S.builders*20};h=`<div class="kv"><b>👷 البنّائين</b><span>${ar(S.builders)}</span><b>شغالين دلوقتي</b><span>${ar(busy)}</span><b>مباني مستنية</b><span>${ar(S.blds.filter(b=>b.st==='site'||b.up).length)}</span></div><p class="muted">كل مبنى بياخد لحد ٢ بنّائين. كل ما البنّائين يزيدوا، تبني أسرع وأكتر في نفس الوقت.</p><button class="btn pri" id="hire" ${S.builders>=10||!canPay(c)?'disabled':''}>👷 وظّف بنّاء · ${costTxt(c)}</button>`}
+  else if(tab==='bld'){const busy=BLDRS.filter(b=>b.job).length,c={g:60+S.builders*20};h=`<div class="kv"><b>👷 البنّائين</b><span>${ar(S.builders)}</span><b>شغالين دلوقتي</b><span>${ar(busy)}</span><b>مباني مستنية</b><span>${ar(S.blds.filter(b=>b.st==='site'||b.up).length)}</span></div><p class="muted">كل مبنى بياخد لحد ٢ بنّائين. كل ما البنّائين يزيدوا، تبني أسرع وأكتر في نفس الوقت.</p><button class="btn pri" id="hire" ${S.builders>=(S.inf?20:10)||!canPay(c)?'disabled':''}>👷 وظّف بنّاء · ${costTxt(c)}</button>`}
   else if(tab==='flag')h=`<p>علمك بيظهر على القصر والثكنات وأبراجك.</p><canvas id="fl" width="12" height="8" style="width:180px;height:120px;image-rendering:pixelated;border:2px solid var(--line)"></canvas><div class="row" style="margin-top:10px"><button class="btn pri" id="edf">✏️ عدّل العلم</button></div>`;
   else h=`<div class="path"><div><button class="btn" id="tS">${S.sfx?'🔊':'🔇'} أصوات اللعبة</button></div><div><button class="btn" id="tT">${S.tts?'🗣️':'🤐'} صوت الملوك</button></div></div><h3>مسح المملكة</h3><button class="btn red" id="del">🗑️ امسح المملكة وابدأ من الأول</button>`;
   return panel(`<button class="x" aria-label="اقفل">✖</button><div class="tabs">${tabs.map(([k,n])=>`<button class="tab${k===tab?' on':''}" data-t="${k}">${n}</button>`).join('')}</div>${h}`,(c,close)=>{
@@ -999,10 +1004,10 @@ function kStartBattle(o){const units=[];const add=(team,type,x,y,e)=>{const t=UT
   const pf=(team,form,ex)=>form.forEach((f,i)=>{if(!f)return;const r=i/6|0,c=i%6;add(team,f,team?BW-6+r*1.8:6-r*1.8,1.6+c*1.95+(rnd()-.5)*.3,Object.assign({slot:i},ex||{}))});
   pf(0,S.form.slice(0,S.tcap||4));for(let i=0;i<o.towers;i++)add(0,'arc',1.2,1.8+i*1.9,{preset:true});
   const n=Math.min(18,o.pw),ef=Array(18).fill(null);for(let i=0;i<n;i++)ef[i]=i<6?(o.pw>9&&(i===0||i===5)?'cav':'inf'):i<12?(o.pw>12&&rnd()<.3?'cav':'inf'):'arc';pf(1,ef);
-  if(o.go)add(0,'inf',3.2,BH/2,{isP:true,king:true,hp:130,max:130,skin:P.skin,hair:P.hair});
+  if(o.go)add(0,'inf',3.2,BH/2,{isP:true,king:true,hp:900,max:900,skin:P.skin,hair:P.hair,sk:0});
   B={kind:'k',units,arrows:[],t:0,eName:o.eName,eColor:o.eColor,aColor:PC,go:o.go,speed:1,over:false,msgT:0,k:o};
-  mode='battle';showHUD(false);$('#mission').hidden=false;$('#spdBtn').hidden=false;$('#spdBtn').textContent='⏩ سرّع';if(o.go){$('#joy').hidden=false;actBtn.hidden=false;actBtn.textContent='اضرب ⚔️';actBtn.classList.remove('idle')}
-  buildBattle3();SFX.fan();toast(`⚔️ المعركة بدأت ضد ${o.eName}!`,2400);updBattleBar()}
+  mode='battle';showHUD(false);$('#mission').hidden=false;$('#spdBtn').hidden=false;$('#spdBtn').textContent='⏩ سرّع';if(o.go){$('#joy').hidden=false;actBtn.hidden=false;actBtn.textContent='اضرب ⚔️';actBtn.classList.remove('idle');$('#bagBtn').hidden=false;$('#bagBtn').textContent='⚡'}
+  buildBattle3();SFX.fan();toast(o.go?'👑 الملك نزل الميدان! اضرب ⚔️ · ⚡ ضربة الملك':`⚔️ المعركة بدأت ضد ${o.eName}!`,2600);updBattleBar()}
 async function kEndBattle(win){B.over=true;mode='busy';await sleep(1200);
   const lost={inf:0,arc:0,cav:0};for(const u of B.units)if(!u.team&&!u.isP&&!u.preset&&u.hp<=0)lost[u.type]++;
   for(const k in lost){S.troops[k]=Math.max(0,S.troops[k]-lost[k]);let n=lost[k];for(let i=17;i>=0&&n>0;i--)if(S.form[i]===k&&kPlaced(k)>S.troops[k]){S.form[i]=null;n--}}
@@ -1015,7 +1020,7 @@ async function kGameOver(){try{localStorage.removeItem('empireKing1')}catch(e){}
 async function kVictory(){SFX.fan();speak(`عاش الإمبراطور ${S.name}`);await panel(`<p class="big">إمبراطور العالم 👑🌍</p><p style="text-align:center">كل العواصم بقت تحت علمك يا ${S.name}.</p><div class="row" style="justify-content:center"><button class="btn pri" id="k">كمّل حكم</button></div>`,(c,close)=>c.querySelector('#k').onclick=()=>close())}
 function kShowHUD(){showHUD(true);actBtn.textContent='🔨 ابني';actBtn.classList.remove('idle');$('#bagBtn').textContent='🌍';$('#bagBtn').setAttribute('aria-label','خريطة العالم')}
 function domColor(){const cnt={};S.flag.forEach(c=>cnt[c]=(cnt[c]||0)+1);const o=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]).map(Number).filter(i=>PAL[i]!=='#151515'&&PAL[i]!=='#f4f0e6');return PAL[o[0]??2]}
-function kStart(){KM=true;kGenCity();RT=roadTiles();mkMiniBase();if(!S.regions)S.regions=kRegions();
+function kStart(){KM=true;S.inf=true;kGenCity();RT=roadTiles();mkMiniBase();if(!S.regions)S.regions=kRegions();
   if(!S.blds.length){const add=(type,x,y)=>S.blds.push({id:S.nid++,type,x,y,lvl:1,st:'done',prog:1});add('palace',KCX-4,KCY-5);add('house',KCX+4,KCY-3);add('house',KCX+4,KCY-6);add('farm',KCX-4,KCY+4);add('lumber',KCX+4,KCY+4)}
   for(const b of S.blds)for(let y=b.y;y<b.y+KB[b.type].h;y++)for(let x=b.x;x<b.x+KB[b.type].w;x++)if(tAt(x,y)===T_TREE){setT(x,y,T_GRASS);const i=trees.findIndex(t=>t.x===x&&t.y===y);if(i>=0)trees.splice(i,1)}
   kRefresh();PC=domColor();P.crown=true;P.helmet=false;P.army=false;P.shirt=PC;P.skin=SKIN[0];P.hair=HAIR[0];
@@ -1026,7 +1031,7 @@ async function kEnter(){const ok=(()=>{try{return localStorage.getItem('empireKe
   const ks=kLoad();if(ks){S=ks;kStart();mode='play';toast(`أهلًا يا ملك ${S.name} 👑`);return true}
   S=kNewSave();S.flag=randomFlag();await flagEditor(true);
   await panel(`<h2>اسم إمبراطوريتك</h2><input type="text" id="kn" maxlength="22" placeholder="مثلًا: إمبراطورية الشمس" aria-label="اسم الإمبراطورية"><div class="row" style="margin-top:10px"><button class="btn pri" id="ok">تمام 👑</button></div>`,(c,close)=>{c.querySelector('#ok').onclick=()=>{const v=c.querySelector('#kn').value.trim();if(!v){c.querySelector('#kn').focus();return}S.kname=v;close()}});
-  kStart();kSave();await panel(`<p class="big">عاش الملك ${S.name}! 👑</p><p style="text-align:center">انت ملك <b>${S.kname}</b>. عندك قصر، وشوية بيوت، ومزرعة، ومنشرة، و٢ بنّائين.</p><p style="text-align:center">🔨 <b>ابني</b>: اختار مبنى وحطه، والبنّائين يروحوا يبنوه.<br>👆 دوس على أي مبنى تطوّره. اسحب الشاشة تتفرّج.<br>🌍 من الخريطة احتل الأراضي… وخلي بالك، الملوك التانيين هيهجموا عليك.</p><div class="row" style="justify-content:center"><button class="btn pri" id="k">يلا نحكم</button></div>`,(c,close)=>c.querySelector('#k').onclick=()=>close());
+  kStart();kSave();await panel(`<p class="big">عاش الملك ${S.name}! 👑</p><p style="text-align:center">انت ملك <b>${S.kname}</b>. وعندك <b>موارد مالهاش آخر ∞</b> وجيش لحد ١٨ جندي من غير ثكنات.<br>وانت نفسك <b>محارب جبّار</b>: في المعركة بتضرب كل اللي حواليك، وعندك ⚡ ضربة الملك.</p><p style="text-align:center">🔨 <b>ابني</b>: اختار مبنى وحطه، والبنّائين يروحوا يبنوه.<br>👆 دوس على أي مبنى تطوّره. اسحب الشاشة تتفرّج.<br>🌍 من الخريطة احتل الأراضي… وخلي بالك، الملوك التانيين هيهجموا عليك.</p><div class="row" style="justify-content:center"><button class="btn pri" id="k">يلا نحكم</button></div>`,(c,close)=>c.querySelector('#k').onclick=()=>close());
   mode='play';return true}
 
 /* ---------------- boot ---------------- */
@@ -1056,6 +1061,6 @@ async function boot(){
   save();showHUD(true);mode='play';toast('روح لوحة الطلبات في السوق 📜',3000);
 }
 boot();requestAnimationFrame(frame);
-window.__emp={kStart,kStartPlace,kConfirm,kStartBattle,kWorld,kRegion,get KM(){return KM},get BLDRS(){return BLDRS},startBattle,startMission,addXP,get B(){return B},get S(){return S},get P(){return P},plots:()=>plots,acceptJob,openBuild,finishJob,score,newOffer,get mode(){return mode},palaceVisit,setMode:m=>mode=m};
+window.__emp={kSkill,pAttack,kStart,kStartPlace,kConfirm,kStartBattle,kWorld,kRegion,get KM(){return KM},get BLDRS(){return BLDRS},startBattle,startMission,addXP,get B(){return B},get S(){return S},get P(){return P},plots:()=>plots,acceptJob,openBuild,finishJob,score,newOffer,get mode(){return mode},palaceVisit,setMode:m=>mode=m};
 })();
 </script>
