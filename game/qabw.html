@@ -136,6 +136,7 @@ body{font:16px/1.55 var(--body);-webkit-user-select:none;user-select:none;-webki
     <button class="btn" id="bBat">بطارية</button>
     <button class="btn" id="bMap">خريطة</button>
     <button class="btn" id="bRun">جري</button>
+    <button class="btn" id="bWpn" hidden>سلاح</button>
     <button class="btn act fire" id="bFire" hidden>نار</button>
     <button class="btn act" id="bAct">تفاعل</button>
   </div>
@@ -478,7 +479,7 @@ function hudSync(){
   const base=G.stage==='base',lv=G.stage==='lvl';
   ui.keys.hidden=!(base||lv);ui.bat.hidden=!(base||lv);ui.chg.hidden=lv;
   $('#bBat').hidden=!(base||(lv&&G.lvl&&G.lvl.combat&&!G.lvl.cane));
-  if(lv){ui.keys.textContent=`❤️ ${Math.round(G.hp)}`;ui.bat.textContent=`🦠 ${Math.round(G.inf)}٪`;const cb=G.lvl&&G.lvl.combat&&!G.lvl.cane;ui.ammo.hidden=!cb;ui.ammo.textContent=G.gear&&G.gear.shotgun?`🔫 ${G.ammo}`:'🔫 ∞';ui.ser.hidden=false;ui.ser.textContent=`💉 ${G.serum}`;ui.cash.hidden=false;ui.cash.textContent=`💰 ${G.money}`;$('#bBat').textContent='مصل';ui.bat.style.color=G.inf>70?'var(--blood)':''}
+  if(lv){ui.keys.textContent=`❤️ ${Math.round(G.hp)}`;ui.bat.textContent=`🦠 ${Math.round(G.inf)}٪`;const cb=G.lvl&&G.lvl.combat&&!G.lvl.cane;ui.ammo.hidden=!cb;ui.ammo.textContent=wpnLabel();ui.ser.hidden=false;ui.ser.textContent=`💉 ${G.serum}`;ui.cash.hidden=false;ui.cash.textContent=`💰 ${G.money}`;$('#bBat').textContent='مصل';ui.bat.style.color=G.inf>70?'var(--blood)':''}
   else{ui.ammo.hidden=ui.ser.hidden=ui.cash.hidden=true;$('#bBat').textContent='بطارية';ui.keys.textContent=`🔑 ${G.keys}/3`;ui.bat.textContent=`🔋 ${G.bats}`;ui.bat.style.color=''}
   ui.charge.style.width=G.charge+'%';ui.charge.style.background=G.charge<20?'var(--blood)':'var(--amber)';
   ui.bLight.classList.toggle('on',G.flash);ui.bMap.classList.toggle('on',G.showMap);
@@ -509,7 +510,7 @@ function clearSave(){try{localStorage.removeItem('qabw1')}catch(e){}}
 
 /* ===================== level building ===================== */
 const WALLC={B:'paper','#':'paper2',W:'window',K:'doorK',F:'doorF',S:'stone',P:'pillar',U:'doorU',O:'doorO',C:'safe',V:'levers',X:'wires',G:'gen0',L:'bigLever'};
-function clearWorld(){while(world.children.length)world.remove(world.children[0]);G.objs=[];G.special={};G.waterMesh=null;G.lvl=null;G.wallAct=null;G.wallLbl=null;G.ens=[];G.boss=null;G.roll=0;G.lockMove=false;scene.background.setHex(0);scene.fog.color.setHex(0);pMat.uniforms.sepia.value=0;if(typeof gunVM!=='undefined'){gunVM.visible=false;caneVM.visible=false;hand.visible=false}ui.boss.hidden=true;$('#bFire').hidden=true}
+function clearWorld(){while(world.children.length)world.remove(world.children[0]);G.objs=[];G.special={};G.waterMesh=null;G.lvl=null;G.wallAct=null;G.wallLbl=null;G.ens=[];G.boss=null;G.roll=0;G.lockMove=false;scene.background.setHex(0);scene.fog.color.setHex(0);pMat.uniforms.sepia.value=0;if(typeof gunVM!=='undefined'){gunVM.visible=false;caneVM.visible=false;hand.visible=false}$('#bWpn').hidden=true;ui.boss.hidden=true;$('#bFire').hidden=true}
 function buildMap(rows,floorC,ceilC,pal,specKeys){
   const ch1=!pal;pal=pal||WALLC;
   const m=parseMap(rows);G.map=m;G.explored=new Uint8Array(m.w*m.h);
@@ -579,6 +580,7 @@ function syncScene(dt,t){
   cam.position.set(G.px+sx,eye+bob+sy,G.py);
   cam.rotation.set(G.pitch,-G.pa-Math.PI/2,G.roll||0);
   if(G.recoil>0)G.recoil=Math.max(0,G.recoil-dt*5);gunVM.position.z=-.42+(G.recoil||0)*.07;gunVM.rotation.x=(G.recoil||0)*.25;gunVM.position.y=-.2+Math.sin(G.bob)*.008;caneVM.rotation.x=-(G.recoil||0)*1.3;muzzle.intensity*=.7;
+  if(G.stage==='lvl'&&G.lvl&&G.lvl.combat&&!G.lvl.cane&&G.w){const g=G.lvl.mg||curGun();gunVM.visible=!!g;rodVM.visible=!g&&G.w.rod>0;fistVM.visible=!g&&G.w.rod<=0;rodVM.rotation.x=-(G.recoil||0)*1.2;fistVM.position.z=-.36-(G.recoil||0)*.15}else if(typeof rodVM!=='undefined'){rodVM.visible=fistVM.visible=false}
   const on=G.flash&&G.mode!=='title';
   spot.intensity=on?(G.stage==='base'&&G.charge<15&&Math.random()<.15?.3:3.2):0;near.intensity=on?.4:.14;
   for(const o of G.objs){
@@ -629,7 +631,7 @@ function drawMini(){
 const keys={};const inp={jx:0,jy:0,run:false};
 addEventListener('keydown',e=>{keys[e.code]=true;
   if(e.code==='KeyE'||e.code==='Space'||e.code==='Enter'){if(G.mode==='play'){e.preventDefault();act()}}
-  if(e.code==='KeyF')toggleLight();if(e.code==='KeyX'||e.code==='KeyJ'){fire()}if(e.code==='KeyR')useSerum();if(e.code==='KeyB')useBattery();if(e.code==='KeyM')toggleMap()});
+  if(e.code==='KeyF')toggleLight();if(e.code==='KeyX'||e.code==='KeyJ'){fire()}if(e.code==='KeyR')useSerum();if(e.code==='KeyC')switchWpn();if(e.code==='KeyB')useBattery();if(e.code==='KeyM')toggleMap()});
 addEventListener('keyup',e=>{keys[e.code]=false});
 const stick=$('#stick'),knob=$('#knob');let sid=null;
 function stickMove(e){const r=stick.getBoundingClientRect();let x=(e.clientX-(r.left+r.width/2))/(r.width/2),y=(e.clientY-(r.top+r.height/2))/(r.height/2);const l=Math.hypot(x,y);if(l>1){x/=l;y/=l}inp.jx=x;inp.jy=y;knob.style.transform=`translate(${x*42}px,${y*42}px)`}
@@ -647,6 +649,7 @@ $('#bAct').addEventListener('pointerdown',e=>{e.preventDefault();aInit();if(G.mo
 $('#bLight').addEventListener('pointerdown',e=>{e.preventDefault();toggleLight()});
 $('#bBat').addEventListener('pointerdown',e=>{e.preventDefault();useSerum()});
 $('#bFire').addEventListener('pointerdown',e=>{e.preventDefault();fire()});
+$('#bWpn').addEventListener('pointerdown',e=>{e.preventDefault();switchWpn()});
 $('#bMap').addEventListener('pointerdown',e=>{e.preventDefault();toggleMap()});
 function toggleLight(){if(G.mode!=='play')return;if(!G.flash&&G.charge<=0){toast('البطارية خلصت. دوس «بطارية» عشان تغيرها.');return}G.flash=!G.flash;SFX.click();hudSync()}
 function toggleMap(){if(G.mode!=='play')return;G.showMap=!G.showMap;ui.mini.hidden=!G.showMap;hudSync()}
@@ -681,7 +684,7 @@ function moveMon(m,tx,ty,step){
 }
 function findTarget(){
   let best=null,bd=1.45;
-  for(const o of G.objs){if(o.gone||o.invis)continue;if(!(o.act||o.onAct||(o.hide&&G.stage==='house2')))continue;if(o.en&&o.st==='dead')continue;if(o.pax&&o.ps==='tied')continue;
+  for(const o of G.objs){if(o.gone||o.invis)continue;if(!(o.act||o.onAct||(o.hide&&G.stage==='house2')))continue;if(o.en&&o.st==='dead')continue;if((o.pax||o.civ)&&o.ps==='dead')continue;
     const dx=o.x-G.px,dy=o.y-G.py,d=Math.hypot(dx,dy);if(d>(o.en?1.7:1.45))continue;const ang=Math.abs(angDiff(Math.atan2(dy,dx),G.pa));
     if((ang<.6||(d<.6&&!o.isComp))&&d<bd){bd=d;best={kind:'obj',o}}}
   for(let s=.1;s<=1.3;s+=.05){const x=Math.floor(G.px+G.dirX*s),y=Math.floor(G.py+G.dirY*s);if(solidAt(x,y)){const ch=G.map.g[y]&&G.map.g[y][x];const ii=G.stage==='lvl'?(G.wallAct&&G.wallAct[ch]):INTER[ch];if(ch&&ii&&(!best||s<bd))return{kind:'wall',ch,x,y};break}}
@@ -690,7 +693,7 @@ function findTarget(){
 function promptFor(t){
   if(G.hidden)return'تفاعل = اطلع من المخبى';
   if(!t)return'';
-  if(t.kind==='obj'){const o=t.o;if(o.en)return o.st==='cured'?'كلّم الناجي':o.st==='stun'?(o.def.cure&&G.serum>0?'عالجه بالمصل 💉':'خلّص عليه'):'اصعقه ⚡';if(o.pax)return o.ps==='turning'?'⚠️ بيتحوّل!':o.ps==='z'?'اصعقه ⚡':o.ps==='stun'?'اربطه 🔒':'اكشف على الراكب';if(o.label)return o.label;if(o.act==='talk')return`كلّم ${G.comp.name}`;if(o.act==='read')return'اقرا الورقة';if(o.hide)return`استخبى ${o.hide}`;return''}
+  if(t.kind==='obj'){const o=t.o;if(o.en)return G.w&&G.w.rod>0?'اضرب بالسيخ 🔩':'اضرب بإيدك ✊';if(o.pax||o.civ)return o.ps==='turning'?'⚠️ بيتحوّل!':o.ps==='sick'?'اكشف على المصاب 🤒':'كلّمه';if(o.label)return o.label;if(o.act==='talk')return`كلّم ${G.comp.name}`;if(o.act==='read')return'اقرا الورقة';if(o.hide)return`استخبى ${o.hide}`;return''}
   if(G.stage==='lvl')return(G.wallLbl&&G.wallLbl[t.ch])||'';
   return{K:G.stage==='house1'?'افتح باب القبو':'باب القبو',F:'باب البيت',W:'الشباك',U:'باب القبو',O:'اطلع من القبو',C:'الخزنة',V:'الرافعات',X:'علبة الأسلاك',G:'المولّد',L:'الرافعة الكبيرة','1':'اقرا المكتوب','2':'اقرا المكتوب','3':'اقرا المكتوب'}[t.ch]||'';
 }
@@ -834,7 +837,7 @@ function scareTick(dt){
   if(G.scareT>1.3&&!G.scareDone){G.scareDone=1;afterScare()}
 }
 async function afterScare(){
-  const lvMsg=G.stage==='lvl'?(({inf:'العدوى وصلت ١٠٠٪… اتحوّلت.',zinger:'زنجر وقع…',time:'الوقت خلص… زنجر اتحوّل.'}[G.deathWhy]||'المسوخ خلّصوا عليك.')+' هتبدأ المهمة دي من الأول.'):null;G.deathWhy=null;
+  const lvMsg=G.stage==='lvl'?(({inf:'العدوى وصلت ١٠٠٪… اتحوّلت.',zinger:'زنجر وقع…',time:'الوقت خلص… زنجر اتحوّل.'}[G.deathWhy]||'المتحولين خلّصوا عليك.')+' هتبدأ المهمة دي من الأول.'):null;G.deathWhy=null;
   await panel(`<h2>${lvMsg?'مُت!':'اتمسكت!'}</h2><p>${lvMsg?lvMsg:G.stage==='house2'?'الوحش لقاك. جدتك لسه مرجعتش… حاول تاني.':'الوحش مسكك في الضلمة. حاجتك لسه معاك، حاول تاني.'}</p><div class="stack"><button class="primary" id="pR">حاول تاني</button></div>`,(r,close)=>{r.querySelector('#pR').onclick=()=>{SFX.click();close()}});
   G.mon.yo=0;respawn();
 }
@@ -1198,6 +1201,9 @@ function buildArt2(){
   C.lab2=cv(TW,THh,R=>{speck(R,0,0,TW,THh,[60,66,74],6);R(0,18,TW,2,'#a82a2a');for(let i=0;i<6;i++)R(ri(0,31),ri(0,51),ri(2,6),1,'#2a2e34')});
   C.lfloor=cv(32,32,R=>{speck(R,0,0,32,32,[60,64,70],5);for(let i=0;i<32;i+=8)R(i,0,1,32,'#4a4e54')});
   C.mapTop=cv(64,40,R=>{R(0,0,64,40,'#1d4566');R(20,8,24,14,'#3f6b3a');R(28,22,10,12,'#3f6b3a');R(12,14,10,8,'#3f6b3a');R(44,6,18,20,'#3f6b3a');R(30,26,3,3,'#c33');R(26,14,3,3,'#c33');R(34,10,2,2,'#c80');R(22,10,2,2,'#c33')});
+  C.metroW=cv(TW,THh,R=>{R(0,0,TW,THh,'#d8dce0');R(0,36,TW,16,'#2a3a8a');R(0,34,TW,2,'#c82a2a');R(4,10,24,18,'#3a3e46');R(5,11,22,16,'#06080c');for(let i=0;i<3;i++)R(ri(6,25),ri(12,25),2,1,'#ffd27a');R(0,0,TW,3,'#9aa0a6')});
+  C.mfloor=cv(32,32,R=>{speck(R,0,0,32,32,[110,112,116],6);for(let i=0;i<32;i+=8)R(i,0,1,32,'#8a8c90')});
+  C.busW=cv(TW,THh,R=>{R(0,0,TW,THh,'#c8b890');R(0,34,TW,18,'#7a6a4a');R(3,8,26,22,'#3a3a3a');R(4,9,24,20,'#2a3a50');R(4,22,24,7,'#4a4030');for(let i=0;i<4;i++)R(ri(5,26),ri(10,20),2,2,'#ffd27a')});
   C.letter=cv(16,12,R=>{R(0,0,16,12,'#e8d8b0');R(0,0,16,1,'#a88a5a');R(1,1,7,5,'#d8c8a0');R(8,1,7,5,'#d8c8a0');R(6,5,4,3,'#a82a2a')});
   if(!C.w1){C.w1=makeWriting(0,4);C.w2=makeWriting(1,7);C.w3=makeWriting(2,1)}
 }
@@ -1348,18 +1354,8 @@ function enemyTick(o,dt){
     else if(Math.hypot(G.px-o.x,G.py-o.y)<(G.lvl.reach||.8)){o.hitT=1.1;hurt(d0.dmg,d0.inf,o)}
   }
 }
-function screamFrom(o){SFX.scream();toast('صرّاخ! المسوخ جاية على الصوت',2000);for(const e of G.ens)if(e!==o&&e.st!=='dead'&&Math.hypot(e.x-o.x,e.y-o.y)<12){e.st='chase';e.lx=G.px;e.ly=G.py}for(let i=0;i<2;i++){const p=randFloorNear(o.x,o.y,3);spawnEnemy('walker',p[0],p[1]).st='chase'}}
-function enemyAct(o){
-  if(o.st==='cured')return talk('ناجي',pick(['شكرًا يا بطل… أنا حاسس إني اتولدت من جديد.','أنا كنت فين؟! آخر حاجة فاكرها إني اتعضيت…','ربنا يخليك… أنا هستخبى هنا لحد ما تخلّص.']),null);
-  if(o.st==='dead')return;
-  if(o.st==='stun'){
-    if(o.def.cure&&G.serum>0){G.serum--;o.st='cured';o.lie=false;o.isMon=false;o.zarms=false;setLook(o.vis,'ok');G.c2.rescued++;G.money+=25;SFX.key();toast('عالجته بالمصل! رجع بني آدم 💉',2400);hudSync();return}
-    killEnemy(o);SFX.hit();return;
-  }
-  if(G.batonCD>0)return toast('الصاعق بيشحن…',900);
-  G.batonCD=2.2;o.st='stun';o.stunT=5;o.lie=true;SFX.zap(.35);G.flashFx=.25;
-  toast(o.def.cure?(G.serum>0?'اتصعق! دوس «تفاعل» تاني وعالجه بالمصل':'اتصعق! (مفيش مصل… دوس تاني تخلّص عليه)'):'اتصعق! دوس «تفاعل» تاني تخلّص عليه',2200);
-}
+function screamFrom(o){SFX.scream();toast('صرّاخ! المتحولين جاية على الصوت',2000);for(const e of G.ens)if(e!==o&&e.st!=='dead'&&Math.hypot(e.x-o.x,e.y-o.y)<12){e.st='chase';e.lx=G.px;e.ly=G.py}for(let i=0;i<2;i++){const p=randFloorNear(o.x,o.y,3);spawnEnemy('walker',p[0],p[1]).st='chase'}}
+function enemyAct(o){if(o.st==='dead')return;melee(o)}
 function damageEnemy(o,dmg){
   if(o.isBoss)return bossHit(o,dmg);
   o.hp-=dmg;o.flashT=.15;if(o.st!=='chase'&&o.st!=='stun'){o.st='chase';o.lx=G.px;o.ly=G.py}
@@ -1379,14 +1375,16 @@ function fire(){
     if(best){killEnemy(best);SFX.bonk();G.shake=.4;if(Math.random()<.45)big('هبش دربكش!','gold');voice('هبش دربكش','granny')}
     return;
   }
-  const sg=G.gear.shotgun&&G.ammo>0&&!G.lvl.mg;
-  if(sg){G.ammo--;G.fireCD=.75}else G.fireCD=G.lvl.mg?.11:.33;
+  const g=G.lvl.mg?'mg':curGun();if(!g){melee();return}
+  const sg=g==='shotgun';
+  if(sg){G.w.sAmmo--;G.fireCD=.75}else if(g==='pistol'){G.w.pAmmo--;G.fireCD=.33}else G.fireCD=.11;
   G.recoil=1;G.shotT=1.2;muzzle.intensity=3;SFX.bang(sg);
   let best=null,bs=1e9;const list=G.ens.concat(G.boss?[G.boss]:[]);
   for(const o of list){if(!o||o.st==='dead'||o.gone||o.st==='cured'||o.dormant)continue;if(o.isBoss&&o.invis&&o.kind!=='whisper')continue;
     const dx=o.x-G.px,dy=o.y-G.py,d=Math.hypot(dx,dy);const range=sg?10:16;if(d>range)continue;
     const tol=(sg?.17:G.lvl.mg?.1:.07)+(o.isBoss?.35:.28)/d;if(Math.abs(angDiff(Math.atan2(dy,dx),G.pa))>tol)continue;if(!los(G.px,G.py,o.x,o.y))continue;if(d<bs){bs=d;best=o}}
   if(best)damageEnemy(best,sg?(bs<4?4:2.5):G.lvl.mg?1.2:1.4);
+  if(!G.lvl.mg&&!hasGun()&&G.w.cur!=='melee')toast('الذخيرة خلصت! '+(G.w.rod>0?'هتضرب بالسيخ':'هتضرب بإيدك… خطر'),2000);
   hudSync();
 }
 function useSerum(){
@@ -1446,7 +1444,7 @@ function buildLevel(def){
   const st=def.start||G.floors[0];placePlayer(st[0],st[1],st[2]||0);
   gunVM.visible=!!def.combat&&!def.cane;caneVM.visible=!!def.cane;hand.visible=false;
   pMat.uniforms.sepia.value=def.sepia?1:0;G.roll=0;G.lockMove=!!def.lock;
-  $('#bFire').hidden=!def.combat;$('#bFire').textContent=def.cane?'هبش!':'نار';
+  $('#bFire').hidden=!def.combat;$('#bWpn').hidden=!(def.combat&&!def.cane&&!def.mg);$('#bFire').textContent=def.cane?'هبش!':'نار';
   G.comp=null;G.cObj=null;
   if(def.zinger!==false&&!G.c2.zingerGone){G.comp={id:'zinger2',name:'زنجر',voice:'kid',bad:false,stay:def.zinger==='stay',redT:0};makeComp(G.px-G.dirX*.9,G.py-G.dirY*.9);if(def.zingerAt){G.cObj.x=def.zingerAt[0];G.cObj.y=def.zingerAt[1];G.comp.stay=true}}
   def.setup&&def.setup();
@@ -1458,12 +1456,12 @@ function levelDone(){
   if(def.final)return;
   const next=def.next;
   panel(`<h2>${def.doneTitle||'المهمة خلصت'}</h2><p>${def.doneText||''}</p>
-    <div class="stats"><span>المسوخ اللي قتلتهم</span><span>${G.lvlKills}</span><span>الفلوس</span><span>${G.money} €</span><span>الصحة</span><span>${Math.round(G.hp)}</span><span>العدوى</span><span>${Math.round(G.inf)}٪</span></div>
+    <div class="stats"><span>المتحولين اللي قتلتهم</span><span>${G.lvlKills}</span><span>الفلوس</span><span>${G.money} €</span><span>الصحة</span><span>${Math.round(G.hp)}</span><span>العدوى</span><span>${Math.round(G.inf)}٪</span></div>
     <p class="muted">المحل (قبل المهمة الجاية):</p>
     <div class="row"><button id="bS">💉 مصل ٤٠€</button><button id="bA">🔫 ذخيرة ٣٠€</button><button id="bH">❤️ علاج ٥٠€</button></div>
     <div class="stack"><button class="primary" id="bN">كمّل</button></div>`,(r,close)=>{
     const buy=(c,f)=>{if(G.money<c){toast('الفلوس مش كفاية');return}G.money-=c;f();SFX.pick();r.querySelector('.stats span:nth-child(4)').textContent=G.money+' €';r.querySelector('.stats span:nth-child(6)').textContent=Math.round(G.hp)};
-    r.querySelector('#bS').onclick=()=>buy(40,()=>G.serum++);r.querySelector('#bA').onclick=()=>buy(30,()=>G.ammo+=8);r.querySelector('#bH').onclick=()=>buy(50,()=>G.hp=Math.min(100,G.hp+50));
+    r.querySelector('#bS').onclick=()=>buy(40,()=>G.serum++);r.querySelector('#bA').onclick=()=>buy(30,()=>{G.w.pAmmo+=8;if(G.w.shotgun)G.w.sAmmo+=3});r.querySelector('#bH').onclick=()=>buy(50,()=>G.hp=Math.min(100,G.hp+50));
     r.querySelector('#bN').onclick=()=>{close();goLevel(next)};
   });
 }
@@ -1471,16 +1469,17 @@ async function goLevel(id){
   const def=LV[id];G.mode='busy';
   if(def.intro){await panel(`<div class="story">${def.intro}</div><div class="stack"><button class="primary" id="bGo">${def.go||'يلا'}</button></div>`,(r,close)=>{r.querySelector('#bGo').onclick=()=>{SFX.click();close()}})}
   G.mode='busy';await fade(1,400);
-  G.lvlId=id;G.snap=JSON.stringify({hp:G.hp,inf:G.inf,ammo:G.ammo,serum:G.serum,money:G.money,c2:G.c2,gear:G.gear});
+  G.lvlId=id;G.snap=JSON.stringify({hp:G.hp,inf:G.inf,serum:G.serum,money:G.money,c2:G.c2,w:G.w});
   buildLevel(def);await fade(0,600);G.mode='play';
   if(def.start2)def.start2();
 }
-function restartLevel(){const s=JSON.parse(G.snap);Object.assign(G,{hp:Math.max(60,s.hp),inf:Math.min(40,s.inf),ammo:Math.max(8,s.ammo),serum:Math.max(1,s.serum),money:s.money,c2:s.c2,gear:s.gear||G.gear});buildLevel(LV[G.lvlId]);G.mode='play';if(LV[G.lvlId].start2)LV[G.lvlId].start2()}
+function restartLevel(){const s=JSON.parse(G.snap);Object.assign(G,{hp:Math.max(60,s.hp),inf:Math.min(40,s.inf),serum:Math.max(1,s.serum),money:s.money,c2:s.c2,w:s.w||G.w});G.w.pAmmo=Math.max(10,G.w.pAmmo);buildLevel(LV[G.lvlId]);G.mode='play';if(LV[G.lvlId].start2)LV[G.lvlId].start2()}
 function save2(){try{localStorage.setItem('qabw2',JSON.stringify({lvl:G.lvlId,snap:G.snap}))}catch(e){}}
 function load2(){try{return JSON.parse(localStorage.getItem('qabw2')||'null')}catch(e){return null}}
 function lvlTick(dt){
   const L=G.lvl;G.lt+=dt;
-  if(G.fireCD>0)G.fireCD-=dt;if(G.batonCD>0)G.batonCD-=dt;if(G.shotT>0)G.shotT-=dt;
+  if(G.fireCD>0)G.fireCD-=dt;if(G.meleeCD>0)G.meleeCD-=dt;if(G.shotT>0)G.shotT-=dt;
+  sickTick(dt);if(L.veh)vehicleTick(dt);
   for(const o of G.objs){if(o.pick&&!o.gone&&Math.hypot(o.x-G.px,o.y-G.py)<.6)pickup(o)}
   for(const o of G.ens)enemyTick(o,dt);
   if(G.boss)bossTick(G.boss,dt);else if(!G.ens.some(e=>e.st==='chase'))setMon(0,0);
@@ -1492,7 +1491,8 @@ function lvlTick(dt){
 }
 function pickup(o){
   o.gone=true;SFX.pick();
-  if(o.pick==='ammo'){G.ammo+=6;toast('🔫 ذخيرة +٦')}
+  if(o.pick==='ammo'){G.w.pAmmo+=6;if(G.w.shotgun)G.w.sAmmo+=2;toast(G.w.shotgun?'🔫 ذخيرة +٦ · 💥 خرطوش +٢':'🔫 ذخيرة +٦')}
+  else if(o.pick==='rod'){G.w.rod=30;toast('🔩 لقيت سيخ حديد')}
   else if(o.pick==='serum'){G.serum++;toast('💉 لقيت مصل')}
   else if(o.pick==='cash'){const c=ri(20,60);G.money+=c;toast(`💰 ${c}€`)}
   else if(o.pick==='med'){G.hp=Math.min(100,G.hp+35);toast('❤️ شنطة إسعاف +٣٥')}
@@ -1501,7 +1501,7 @@ function pickup(o){
 }
 const LETTERS=['«يا حبيبي، لو لقيت الجواب ده يبقى كبرت… وأنا عارفة إنك هتكمل الطريق.»','«العكاز ده مش بس عشان المشي.»','«الوحوش بتخاف من حاجتين: الكهربا… وستّ زعلانة.»','«أول وحش قتلته كان سنة ٥٦. كنت لابسة الشبشب.»','«متاكلش حاجة من إيد حد غريب في السفر.»','«الخوف طبيعي. المهم متسيبش أخوك.»','«لو قابلت راجل بيقول إنه بيعالج الناس بحاجة من القبو… متصدقوش.»','«كل الصيادين في عيلتنا بيبدأوا من القبو.»','«أنا مش بموت بسهولة يا واد.»','«قوم اغسل إيدك… ومتنساش تتعشى.»'];
 function scatter(items){for(const[k,n]of Object.entries(items))for(let i=0;i<n;i++){const p=farFloor(4);const m=k==='letter'?letterMesh():pickMesh(k);addObj({x:p[0],y:p[1],z:.12,mesh:m,pick:k})}}
-function pickMesh(k){const g=new THREE.Group();const c={ammo:0xd8a020,serum:0x40e0a0,cash:0x60d060,med:0xe03030}[k];box(g,.22,.16,.16,new THREE.MeshPhongMaterial({color:c,emissive:c,emissiveIntensity:.35,shininess:0,specular:0}),0,0,0);if(k==='med'){box(g,.06,.17,.17,col(0xffffff),0,0,0);box(g,.23,.06,.17,col(0xffffff),0,0,0)}return g}
+function pickMesh(k){const g=new THREE.Group();if(k==='rod'){box(g,.05,.05,.8,col(0x8a8e96),0,0,0);return g}const c={ammo:0xd8a020,serum:0x40e0a0,cash:0x60d060,med:0xe03030}[k];box(g,.22,.16,.16,new THREE.MeshPhongMaterial({color:c,emissive:c,emissiveIntensity:.35,shininess:0,specular:0}),0,0,0);if(k==='med'){box(g,.06,.17,.17,col(0xffffff),0,0,0);box(g,.23,.06,.17,col(0xffffff),0,0,0)}return g}
 function letterMesh(){const g=new THREE.Group();box(g,.26,.02,.18,new THREE.MeshPhongMaterial({map:tex(C.letter),emissive:0x332a18,shininess:0,specular:0}),0,0,0);const l=new THREE.PointLight(0xffe0a0,.5,1.6,2);l.position.y=.2;g.add(l);return g}
 function spawnWave(types,n,minD=6){for(let i=0;i<n;i++){const p=farFloor(minD);spawnEnemy(pick(types),p[0],p[1])}}
 function makeNPC(x,y,opts,face=0){const v=buildPerson(opts);return addObj({x,y,mesh:v.g,vis:v,rig:true,face,npc:true,solid:.3})}
@@ -1570,7 +1570,7 @@ const HELI=['K'.repeat(62),'k'+'.'.repeat(60)+'k','.'.repeat(62),'.'.repeat(62),
 const TRAIN=["RRRRRRRRRRRRRRRRRRRRRRRR","R......................R","Z......................Z","R......................R","RRRRRRRRRRRRRRRRRRRRRRRR"];
 const LV={
   base2:{name:'القاعدة',wh:2.6,eye:1.6,floor:'concrete',ceil:'hceil',pal:{H:'hwall',J:'hposter',D:'hdoor'},map:BASE2,light:{ac:0x8a90a0,ai:.45,hi:.2,fog:.05},start:[7.5,3.5,Math.PI],zinger:false,
-    wallAct:{D:()=>leaveBase()},wallLbl:{D:'اطلع على المطار'},obj:'شوف الخريطة على الترابيزة وجهّز سلاحك.',
+    wallAct:{D:()=>leaveBase()},wallLbl:{D:'اطلع للشارع'},obj:'شوف الخريطة على الترابيزة وجهّز سلاحك.',
     setup(){
       G.lf.caseObj=addObj({x:2.2,y:3.5,mesh:buildGlassCase(),solid:.5,label:'عكاز جدتك',onAct:()=>G.lf.intro?glassMoment():talk('العكاز','عكاز جدتك… لسه فيه ريحة البخور.',null)});
       addObj({x:6.5,y:1.3,mesh:buildTable(),solid:.6,label:'خريطة أوروبا',onAct:mapPanel});
@@ -1587,26 +1587,43 @@ const LV={
       for(let i=0;i<7;i++){const p=[rand(3,17),rand(3,8)];if(!solidAt(Math.floor(p[0]),Math.floor(p[1])))makeNPC(p[0],p[1],{},rand(0,6))}
     }},
   plane:{name:'الطيارة',wh:2.3,eye:1.55,floor:'carpet',ceil:'pceil',pal:{Q:'qwall',Y:'qdoor',T:'tdoor'},map:PLANE,light:{ac:0xb0a890,ai:.55,hi:.35,fog:.05},start:[2.5,2.5,0],zinger:'stay',zingerAt:[1.6,1.5],
-    wallAct:{Y:()=>toast('كابينة الطيار مقفولة.'),T:()=>toast('الحمام مشغول… 😶')},noInf:true,obj:'اكشف على الركاب. لو حد عيان ادّيله مصل، ولو اتحوّل اصعقه واربطه.',
-    setup(){planeSetup()},tick(dt){planeTick(dt)}},
+    wallAct:{Y:()=>toast('كابينة الطيار مقفولة.'),T:()=>toast('الحمام مشغول… 😶')},noInf:true,combat:true,aggro:true,bites:true,veh:{kind:'plane',dur:150,inf:[12,70],turb:[55,100],label:'الوصول بعد'},next:'italy',
+    obj:'اكشف على الركاب. لو حد عيان: حاول تعالجه أو اقتله قبل ما يتحوّل. ولو اتحوّل… اضرب.',
+    setup(){vehicleSetup()}},
+  street:{name:'الشارع',intro:'<p class="muted">برا القاعدة</p><p>زنجر حدد موقف الأتوبيس اللي بيودّي <b>المطار</b>. لازم نوصله قبل ما يمشي.</p>',go:'يلا',
+    wh:4,eye:1.6,floor:'asphalt',ceil:null,sky:0x1c1428,fogc:0x1c1428,pal:{K:'city2',k:'city1',q:'city3'},map:()=>genCity(26,22,['K','k','q'],{open:.25}),light:{ac:0xb8a088,ai:.55,hi:.45,fog:.05},flash:false,start:[1.5,1.5,.7],
+    obj:'روح موقف الأتوبيس (العمود الأصفر).',
+    setup(){const f=bfsFar(1,1);reachGoal(f.far[0],f.far[1],0xffd040,'اركب الأتوبيس',()=>goLevel('bus'));for(let i=0;i<6;i++){const p=farFloor(2);addObj({x:p[0],y:p[1],mesh:buildPalm(),solid:.2})}for(let i=0;i<6;i++){const p=farFloor(3);makeNPC(p[0],p[1],{},rand(0,6))}},
+    start2(){talk('زنجر','الموقف في آخر الشارع. الأتوبيس ده رايح المطار على طول.',null,'kid')}},
+  bus:{name:'الأتوبيس',wh:2.3,eye:1.2,floor:'carpet',ceil:'mceil',pal:{Y:'busW'},map:["YYYYYYYYYYYYYY","Y............Y","Y............Y","YYYYYYYYYYYYYY"],light:{ac:0xd0c0a0,ai:.6,hi:.3,fog:.04},lock:true,zinger:'stay',zingerAt:[6.5,1.5],start:[5.6,1.5,Math.PI],
+    obj:'الأتوبيس رايح المطار…',
+    setup(){for(let x=2;x<=11;x++){if(x===5||x===6)continue;addObj({x:x+.5,y:1.5,mesh:buildSeat(),solid:.3});if(Math.random()<.6){const v=buildPerson({});addObj({x:x+.5,y:1.5,mesh:v.g,vis:v,rig:true,seated:true,yo:-.42,face:-Math.PI/2})}}
+      genLight.color.setHex(0xffc070);genLight.distance=5;G.lf.ride=0},
+    tick(dt){G.lf.ride+=dt;genLight.position.set(14-((G.lf.ride*5)%16),1.6,3.3);genLight.intensity=1.2;if(Math.random()<dt*2)G.shake=Math.max(G.shake,.1);rotorT-=dt;if(rotorT<=0){rotorT=.25;noise(.25,{v:.05,f:160,wet:0})}},
+    async start2(){await sleep(1500);await talk('زنجر','إيطاليا… الطاعون الأسود بقى في كل حتة هناك. خليك جاهز.',null,'kid');await sleep(2500);await talk('زنجر','وصلنا المطار. يلا.',null,'kid');await fade(1,800);goLevel('air')}},
+  metro:{name:'مترو لندن',intro:'<p class="muted">بريطانيا – مترو لندن</p><p>المترو زحمة… وفيه ناس شكلهم تعبانين. زنجر: «ركز في أي حد بيكح.»</p>',go:'اركب المترو',
+    wh:2.3,eye:1.55,floor:'mfloor',ceil:'pceil',pal:{M:'metroW'},map:["MMMMMMMMMMMMMMMMMMMMMMMMMMMM","M..........................M","M..........................M","M..........................M","MMMMMMMMMMMMMMMMMMMMMMMMMMMM"],light:{ac:0xc8d0d8,ai:.55,hi:.3,fog:.05},start:[1.6,2.5,0],zinger:'stay',zingerAt:[1.4,1.5],
+    combat:true,aggro:true,bites:true,noInf:true,veh:{kind:'metro',dur:100,inf:[8,45],turb:[60],label:'المحطة الجاية بعد'},next:'uk',
+    obj:'اكشف على الركاب. لو حد عيان: حاول تعالجه أو اقتله قبل ما يتحوّل.',
+    setup(){vehicleSetup()}},
   italy:{name:'إيطاليا',intro:'<p class="muted">إيطاليا – فينيسيا</p><p>المدينة اللي كانت بتغني… بقت ساكتة. القنوات مليانة جثث، والناس بيقولوا إن فيه «طبيب» لابس قناع بيلف بالليل.</p>',go:'انزل فينيسيا',
     wh:4,eye:1.6,floor:'pav',ceil:null,sky:0x0a1028,fogc:0x0a1028,pal:{V:'ven1',v:'ven2',u:'ven3'},map:()=>genCity(30,26,['V','v','u'],{canal:14,open:.2}),light:{ac:0x6a78b0,ai:.4,hi:.35,fog:.07},combat:true,flash:true,killReq:8,
-    obj:'نضّف الشوارع (اقتل ٨ مسوخ) وبعدين لاقي الطبيب الأسود.',next:'france',doneText:'فينيسيا اتنضفت. لقيتوا في شنطة الطبيب ورقة: «العينة الأصلية جت من مصر».',
-    setup(){G.water=(x,y)=>G.map.g[y]&&G.map.g[y][x]==='w';const f=bfsFar(Math.floor(G.px),Math.floor(G.py));placePlayer(1.5,1.5,.6);spawnWave(['walker','walker','crawler'],12);scatter({ammo:4,serum:2,cash:4,med:2,letter:1});spawnBoss('doctor',f.far[0],f.far[1],32)}},
+    obj:'نضّف الشوارع (اقتل ٨ متحولين) وبعدين لاقي الطبيب الأسود.',next:'france',doneText:'فينيسيا اتنضفت. لقيتوا في شنطة الطبيب ورقة: «العينة الأصلية جت من مصر».',
+    bites:true,setup(){if(G.w.cargo){const c=G.w.cargo;G.w.shotgun=c.shotgun;G.w.sAmmo=c.sAmmo;G.w.rod=c.rod;G.w.cargo=null;if(c.shotgun)G.w.cur='shotgun';setTimeout(()=>toast('استلمت الشوتجن والسيخ من المخزن 🔫🔩',2800),800)}spawnCivs(3,2);G.water=(x,y)=>G.map.g[y]&&G.map.g[y][x]==='w';const f=bfsFar(Math.floor(G.px),Math.floor(G.py));placePlayer(1.5,1.5,.6);spawnWave(['walker','walker','crawler'],12);scatter({ammo:4,serum:2,cash:4,med:2,letter:1});spawnBoss('doctor',f.far[0],f.far[1],32)}},
   france:{name:'فرنسا',intro:'<p class="muted">فرنسا – سراديب باريس</p><p>تحت باريس فيه ملايين الهياكل العظمية… وفيه حاجة بتجمّعهم مع بعض.</p>',go:'انزل السراديب',
     wh:2.4,eye:1.5,floor:'dirt',ceil:'dirt',pal:{O:'bone'},map:()=>genMaze(27,21,'O'),light:{ac:0x403830,ai:.12,hi:0,fog:.2},combat:true,flash:true,killReq:7,start:[1.5,1.5,0],
-    obj:'اقتل ٧ مسوخ وواجه ملك العظام. خلي بالك من المنتفخين.',next:'ferry',doneText:'ملك العظام وقع. السراديب ساكتة أخيرًا.',
-    setup(){const f=bfsFar(1,1);spawnWave(['crawler','crawler','bloater','walker'],12);scatter({ammo:4,serum:2,cash:3,med:2,letter:1});spawnBoss('bones',f.far[0],f.far[1],38)}},
+    obj:'اقتل ٧ متحولين وواجه ملك العظام. خلي بالك من المنتفخين.',next:'ferry',doneText:'ملك العظام وقع. السراديب ساكتة أخيرًا.',
+    setup(){const f=bfsFar(1,1);scatter({rod:1});spawnWave(['crawler','crawler','bloater','walker'],12);scatter({ammo:4,serum:2,cash:3,med:2,letter:1});spawnBoss('bones',f.far[0],f.far[1],38)}},
   ferry:{name:'العبّارة',intro:'<p class="muted">العبّارة – من فرنسا لبريطانيا</p><p>عاصفة بالليل… والعبّارة بتتمايل. فيه حاجة منتفخة متخبية في الجراج تحت.</p>',go:'اركب العبّارة',
     wh:2.5,eye:1.6,floor:'deck',ceil:'mceil',pal:{M:'metal',b:'boat'},map:()=>genRooms(25,19,'M'),light:{ac:0x8090a0,ai:.35,hi:.25,fog:.08},combat:true,flash:true,roll:.07,start:[1.5,1.5,0],
-    obj:'اقتل المنتفخ الكبير قبل ما يتفجر جنب الركاب، وبعدين روح لقوارب النجاة.',next:'uk',doneText:'وصلتوا قوارب النجاة والعبّارة بتغرق وراكم.',
+    obj:'اقتل المنتفخ الكبير قبل ما يتفجر جنب الركاب، وبعدين روح لقوارب النجاة.',next:'metro',doneText:'وصلتوا قوارب النجاة والعبّارة بتغرق وراكم.',
     setup(){const f=bfsFar(1,1);const big2=spawnEnemy('bloater',f.far[0],f.far[1]);big2.hp=14;big2.mesh.scale.setScalar(1.5);big2.bigOne=true;spawnWave(['walker','crawler'],7);scatter({ammo:3,serum:2,med:2,letter:1});G.lf.next=0},
     onKill(o){if(o.bigOne){toast('المنتفخ الكبير مات! روح لقوارب النجاة 🛟',3000);setObj('روح لقوارب النجاة (العمود المنور).');const p=farFloor(8);reachGoal(p[0],p[1],0xff8a2a,'اركب قارب النجاة',()=>levelDone())}},
     tick(dt){if(Math.random()<dt*.08){G.shake=.6;toast('موجة!',900)}}},
-  uk:{name:'بريطانيا',intro:'<p class="muted">بريطانيا – مترو لندن</p><p>الضباب نازل جوه الأنفاق. الناجيين بيقولوا إن فيه حاجة بتهمس… ومحدش بيشوفها وهو منوّر.</p>',go:'انزل المترو',
+  uk:{name:'أنفاق لندن',intro:'<p class="muted">بريطانيا – أنفاق المترو</p><p>نزلتوا من المترو للأنفاق. الضباب نازل. الناجيين بيقولوا إن فيه حاجة بتهمس… ومحدش بيشوفها وهو منوّر.</p>',go:'انزل المترو',
     wh:2.8,eye:1.6,floor:'platform',ceil:'hceil',pal:{U:'utile'},map:()=>genMaze(29,19,'U'),light:{ac:0x8a8a9a,ai:.18,hi:.05,fog:.16},fogc:0x1a1a20,combat:true,flash:true,killReq:6,start:[1.5,1.5,0],
-    obj:'اقتل ٦ مسوخ. الهامس مبيظهرش غير في الضلمة: طفّي الكشاف عشان تشوفه وتضربه.',next:'train',doneText:'الهامس سكت للأبد.',
-    setup(){const f=bfsFar(1,1);spawnWave(['walker','screamer','crawler'],11);scatter({ammo:4,serum:2,cash:3,med:2,letter:1});spawnBoss('whisper',f.far[0],f.far[1],30)}},
+    obj:'اقتل ٦ متحولين. الهامس مبيظهرش غير في الضلمة: طفّي الكشاف عشان تشوفه وتضربه.',next:'train',doneText:'الهامس سكت للأبد.',
+    bites:true,setup(){const f=bfsFar(1,1);spawnCivs(2,2);scatter({rod:1});spawnWave(['walker','screamer','crawler'],11);scatter({ammo:4,serum:2,cash:3,med:2,letter:1});spawnBoss('whisper',f.far[0],f.far[1],30)}},
   train:{name:'القطر',intro:'<p class="muted">القطر – نفق تحت البحر</p><p>القطر وقف فجأة في نص النفق والنور قطع. زنجر لازم يصلّح الكهربا… وانت تحميه.</p>',go:'احمي زنجر',
     wh:2.4,eye:1.55,floor:'carpet',ceil:'mceil',pal:{R:'train',Z:'tdoor2'},map:TRAIN,light:{ac:0x506070,ai:.15,hi:0,fog:.12},combat:true,flash:true,zinger:false,start:[8.5,2.5,0],
     obj:'احمي زنجر لحد ما يصلّح الكهربا.',next:'germany',doneText:'النور رجع والقطر اتحرك! زنجر: «قولتلك أنا مهندس… تقريبًا.»',
@@ -1619,16 +1636,16 @@ const LV={
     obj:'احمي د. هيلدا لحد ما العلاج يخلص. بعدها المريض صفر هيظهر.',next:'bitten',doneText:'المريض صفر مات.',
     setup(){const c=[12.5,9.5];const p=solidAt(12,9)?farFloor(4):c;const h=makeNPC(p[0],p[1],{shirt:0xe8e8e8,coat:0xf4f4f4,long:true,hair:0xc8a060,skin:0xf0c8a8},0);h.hp=100;h.label='د. هيلدا';h.onAct=()=>talk('د. هيلدا','Schnell! العلاج قرب يخلص… متسيبهمش يوصلولي!',null);G.lvl.protect=h;
       h.onDie=()=>{if(G.c2.hildaDead)return;G.c2.hildaDead=true;h.lie=true;h.dead=true;G.red=.8;toast('د. هيلدا ماتت… مفيش علاج 💔',3500);G.lvl.protect=null};
-      G.lf.t=80;ui.timer.hidden=false;scatter({ammo:4,serum:2,med:3,letter:1})},
+      G.lf.t=80;ui.timer.hidden=false;scatter({ammo:4,serum:2,med:3,letter:1,rod:1});spawnCivs(1,3)},bites:true,
     tick(dt){if(G.lf.boss)return;G.lf.t-=dt;const h=G.lvl.protect;ui.timer.textContent=`العلاج: ${Math.max(0,Math.ceil(G.lf.t))} ث`+(h?` · هيلدا ${Math.max(0,Math.round(h.hp))}٪`:' · هيلدا ماتت');
       G.lf.sp=(G.lf.sp||2)-dt;if(G.lf.sp<=0&&G.lf.t>2){G.lf.sp=rand(3,4.5);spawnWave(['walker','crawler','screamer'],1,7)}
       if(G.lf.t<=0){G.lf.boss=1;ui.timer.hidden=true;if(!G.c2.hildaDead)toast('العلاج خلص! هيلدا: «العينة في أمان!»',3000);const f=farFloor(8);spawnBoss('zero',f[0],f[1],40,false);ui.boss.hidden=false;ui.bossN.textContent='المريض صفر';big('المريض صفر');bossBar()}}},
-  bitten:{name:'زنجر اتعضّ',intro:'<p class="muted">برلين – بالليل</p><p>في الطريق… مسخ نط على زنجر من الضلمة. <b>زنجر اتعضّ.</b></p><p>عندك دقيقة ونص تلاقي مصل في الصيدلية اللي في آخر المدينة.</p>',go:'اجري!',
+  bitten:{name:'زنجر اتعضّ',intro:'<p class="muted">برلين – بالليل</p><p>في الطريق… متحول نط على زنجر من الضلمة. <b>زنجر اتعضّ.</b></p><p>عندك دقيقة ونص تلاقي مصل في الصيدلية اللي في آخر المدينة.</p>',go:'اجري!',
     wh:4,eye:1.6,floor:'asphalt',ceil:null,sky:0x0a0c14,fogc:0x0a0c14,pal:{K:'city1',k:'city2',q:'city3'},map:()=>genCity(30,30,['K','k','q'],{open:.1}),light:{ac:0x6a7088,ai:.35,hi:.3,fog:.08},combat:true,flash:true,zinger:false,start:[1.5,1.5,.7],
     obj:'لاقي الصيدلية (العمود الأخضر) قبل ما الوقت يخلص!',next:'swiss',
-    setup(){const f=bfsFar(1,1);reachGoal(f.far[0],f.far[1],0x40ff80,'ادخل الصيدلية',pharmacy);spawnWave(['walker','walker','crawler','screamer'],12,5);scatter({ammo:3,med:2,cash:3,letter:1});G.lf.t=95;ui.timer.hidden=false},
+    bites:true,setup(){const f=bfsFar(1,1);spawnCivs(2,2);reachGoal(f.far[0],f.far[1],0x40ff80,'ادخل الصيدلية',pharmacy);spawnWave(['walker','walker','crawler','screamer'],12,5);scatter({ammo:3,med:2,cash:3,letter:1});G.lf.t=95;ui.timer.hidden=false},
     tick(dt){if(G.lf.found)return;G.lf.t-=dt;ui.timer.textContent=`زنجر: ${Math.max(0,Math.ceil(G.lf.t))} ث`;if(G.lf.t<=0){G.lf.found=1;G.mon=G.ens.find(e=>e.st!=='dead');G.deathWhy='time';if(G.mon)caught()}}},
-  swiss:{name:'سويسرا',intro:'<p class="muted">سويسرا – دير في الجبال</p><p>الرهبان كانوا بيدرسوا الطاعون الأسود من ٧٠٠ سنة. المسوخ هنا <b>عُمي</b>… بس بيسمعوا كويس جدًا.</p><p>متجريش. متضربش نار إلا لو مضطر.</p>',go:'ادخل بهدوء',
+  swiss:{name:'سويسرا',intro:'<p class="muted">سويسرا – دير في الجبال</p><p>الرهبان كانوا بيدرسوا الطاعون الأسود من ٧٠٠ سنة. المتحولين هنا <b>عُمي</b>… بس بيسمعوا كويس جدًا.</p><p>متجريش. متضربش نار إلا لو مضطر.</p>',go:'ادخل بهدوء',
     wh:3,eye:1.6,floor:'wood2',ceil:'wood2',pal:{S:'monk'},map:()=>genMaze(27,21,'S'),light:{ac:0x8a7050,ai:.16,hi:.05,fog:.15},combat:true,flash:true,start:[1.5,1.5,0],
     obj:'امشي بهدوء ولاقي الكتاب القديم (العمود الدهبي).',next:'flash',
     setup(){const f=bfsFar(1,1);reachGoal(f.far[0],f.far[1],0xffd060,'اقرا الكتاب القديم',async()=>{G.mode='busy';await talk('كتاب قديم','«سنة ١٣٤٧ ظهر وحش في قبو بيت في مصر… كل اللي لمسه اتحوّل.\nالوحش اتقتل بالكهربا بعد ٦٠٠ سنة على إيد طفل…\nواللي سرق جثته عمل منها الطاعون الجديد.»',null);await talk('زنجر','ده… ده وحش القبو بتاعنا! حد سرق جثته من بيت ستّي!',null,'kid');G.c2.book=1;levelDone()});spawnWave(['blind'],12,5);scatter({ammo:2,serum:1,med:2,letter:1})}},
@@ -1645,13 +1662,13 @@ const LV={
     obj:'دوّر على أي أثر للي سرق جثة الوحش (عند المولّد).',next:'heli',doneText:'«المعمل في الصحرا… ورا الأهرامات.» عرفتوا مكانه.',
     wallAct:{U:()=>toast('مش وقته…')},
     setup(){addObj({x:15,y:14.5,mesh:buildProp('ash'),label:'مكان الجثة',onAct:()=>talk('','مكان الجثة فاضي… فيه آثار عجل ونقالة.',null)});const n=addObj({x:21.5,y:14.5,mesh:buildProp('note'),label:'ورقة',onAct:async()=>{await talk('ورقة مقطوعة','«تم نقل العينة للمعمل الرئيسي — ورا الأهرامات.\nالتوقيع: د. ر.»',null);await talk('زنجر','المعمل في مصر؟! يعني كل ده بدأ من عندنا…',null,'kid');levelDone()}})}},
-  heli:{name:'الهليكوبتر',intro:'<p class="muted">في الطريق للمعمل</p><p>الشارع اللي بيودّي للمعمل مليان <b>مئات المسوخ</b>… جايين موجات ورا بعض.</p><p>انت على رشاش الهليكوبتر. لو وصلوا تحتك هيطلعوا عليك.</p>',go:'افتح النار',
+  heli:{name:'الهليكوبتر',intro:'<p class="muted">في الطريق للمعمل</p><p>الشارع اللي بيودّي للمعمل مليان <b>مئات المتحولين</b>… جايين موجات ورا بعض.</p><p>انت على رشاش الهليكوبتر. لو وصلوا تحتك هيطلعوا عليك.</p>',go:'افتح النار',
     wh:6,eye:4.4,floor:'asphalt',ceil:null,sky:0x0e1020,fogc:0x0e1020,pal:{K:'city1',k:'city2'},map:HELI,
     light:{ac:0x8088a8,ai:.5,hi:.4,fog:.035},combat:true,mg:true,flash:false,lock:true,zinger:false,noInf:true,aggro:true,reach:1.5,start:[1,3.5,0],start2(){G.pitch=-.45},
     obj:'اضرب الموجات قبل ما توصل تحت الهليكوبتر.',next:'final',doneText:'الشارع بقى مقبرة… والمعمل قدامك.',
-    setup(){G.gear.shotgun=false;G.lf.x=1;G.lf.wave=0;G.lf.wt=2;ui.timer.hidden=false},
+    setup(){G.lf.x=1;G.lf.wave=0;G.lf.wt=2;ui.timer.hidden=false},
     tick(dt){G.lf.x+=dt*.7;placePlayer2(Math.min(G.lf.x,56),3.5);rotorT-=dt;if(rotorT<=0){rotorT=.11;noise(.08,{v:.08,f:220,wet:0})}
-      const alive=G.ens.filter(e=>e.st!=='dead').length;ui.timer.textContent=`الموجة ${G.lf.wave}/6 · مسوخ: ${alive}`;
+      const alive=G.ens.filter(e=>e.st!=='dead').length;ui.timer.textContent=`الموجة ${G.lf.wave}/6 · متحولين: ${alive}`;
       G.lf.wt-=dt;if(G.lf.wt<=0&&G.lf.wave<6){G.lf.wave++;G.lf.wt=G.lf.wave<6?11:999;const n=8+G.lf.wave*2;big(`الموجة ${G.lf.wave}`);SFX.growl(.9,0);
         for(let i=0;i<n;i++){const x=Math.min(60,G.lf.x+rand(9,16)),y=pick([1.5,2.5,3.5,4.5,5.5]);if(!solidAt(Math.floor(x),Math.floor(y))){const e=spawnEnemy(pick(['walker','walker','crawler','crawler','screamer']),x,y);e.st='chase'}}}
       if(G.lf.wave>=6&&alive===0&&!G.lf.done){G.lf.done=1;ui.timer.hidden=true;big('الشارع نضف!','gold');setTimeout(levelDone,1500)}}},
@@ -1667,9 +1684,9 @@ function placePlayer2(x,y){G.px=x;G.py=y}
 async function startCh2(){
   aInit();ui.overlay.hidden=true;
   G.c2={pax:0,hildaDead:false,choice:null,busLost:false,rescued:0,letters:0,zingerGone:false};
-  G.hp=100;G.inf=0;G.ammo=16;G.serum=3;G.money=100;G.kills=0;G.gear={shotgun:true};G.caught=0;
+  G.hp=100;G.inf=0;G.serum=3;G.money=100;G.kills=0;G.gear={};G.w={pistol:true,shotgun:true,pAmmo:24,sAmmo:12,rod:30,cur:'shotgun'};G.caught=0;
   ui.controls.hidden=false;ui.obj.hidden=false;ui.inv.hidden=false;ui.cross.hidden=false;G.tStart=performance.now();
-  G.lvlId='base2';G.snap=JSON.stringify({hp:100,inf:0,ammo:16,serum:3,money:100,c2:G.c2});
+  G.lvlId='base2';G.snap=JSON.stringify({hp:100,inf:0,serum:3,money:100,c2:G.c2,w:G.w});
   await fade(1,10);buildLevel(LV.base2);G.mode='busy';
   // night intro lighting
   lights({ac:0x202638,ai:.08,hi:0,fog:.1});rain(true);ui.controls.hidden=true;ui.obj.hidden=true;ui.inv.hidden=true;ui.cross.hidden=true;
@@ -1688,30 +1705,26 @@ async function glassMoment(){
   big('الفصل التاني');await sleep(1300);big('الطاعون الأسود');SFX.sting();await sleep(1500);
   lights(LV.base2.light);placePlayer(5.5,3.5,0);G.lockMove=false;await fade(0,800);
   ui.controls.hidden=false;ui.obj.hidden=false;ui.inv.hidden=false;ui.cross.hidden=false;G.mode='play';
-  await talk('زنجر','صباح الخير يا صياد. جالنا نداء من أوروبا… الطاعون الأسود. الناس بتموت وبتقوم تاني مسوخ.',null,'kid');
+  await talk('زنجر','صباح الخير يا صياد. جالنا نداء من أوروبا… الطاعون الأسود. الناس بتموت وبتقوم تاني متحولين.',null,'kid');
   await talk('زنجر','شوف الخريطة على الترابيزة، وجهّز سلاحك من الدولاب. أنا مستنيك.',null,'kid');
 }
 function mapPanel(){
   const C3=[['إيطاليا',34,true],['فرنسا',21],['بريطانيا',12],['ألمانيا',9],['سويسرا',5]];
   return panel(`<h2>خريطة الوباء</h2><p class="muted">نسبة الانتشار في كل دولة. الدول هتتفتح واحدة ورا التانية.</p>
   <div class="stack">${C3.map(c=>`<button ${c[2]?'class="primary"':'disabled style="opacity:.55"'} data-c="${c[0]}">${c[0]} — ${c[1]}٪ ${c[2]?'(ابدأ هنا)':'🔒'}</button>`).join('')}</div><div class="row"><button id="pX">ارجع</button></div>`,(r,close)=>{
-    r.querySelector('[data-c="إيطاليا"]').onclick=()=>{G.lf.dest=1;close();toast('الوجهة: إيطاليا 🇮🇹',2000);setObj(G.lf.gear?'روح للباب اللي على اليمين.':'جهّز سلاحك من الدولاب.')};r.querySelector('#pX').onclick=()=>close()});
+    r.querySelector('[data-c="إيطاليا"]').onclick=()=>{G.lf.dest=1;close();toast('الوجهة: إيطاليا 🇮🇹',2000);setObj(G.lf.gear?'اطلع من الباب اللي على اليمين وروح موقف الأتوبيس.':'جهّز سلاحك من الدولاب.')};r.querySelector('#pX').onclick=()=>close()});
 }
 function gearPanel(){
-  return panel(`<h2>دولاب السلاح</h2><p>شنطة الصائد فيها:</p><div class="clues">• صاعق كهربا (مسموح في الطيارات برخصة صائد)\n• ٣ حقن مصل\n• عكاز جدتك 👵 (متعلق في الشنطة، مش هتسيبه)</div>
+  return panel(`<h2>دولاب السلاح</h2><p>شنطة الصائد فيها:</p><div class="clues">• مسدس ٩ مم + ٢٤ طلقة (مسموح برخصة صائد)\n• سيخ حديد (للضرب من قريب لو الذخيرة خلصت)\n• ٣ حقن مصل\n• عكاز جدتك 👵 (متعلق في الشنطة، مش هتسيبه)</div>
   <p class="muted" style="margin-top:10px">تاخد الشوتجن كمان؟ هيعدي على تفتيش المطار.</p>
-  <div class="stack"><button class="primary" id="g1">خد الشوتجن + ١٦ طلقة</button><button id="g2">الصاعق والمصل بس</button></div>`,(r,close)=>{
-    r.querySelector('#g1').onclick=()=>{G.gear.shotgun=true;G.ammo=16;G.lf.gear=1;close();toast('اتجهزت 🔫',1500);setObj(G.lf.dest?'روح للباب اللي على اليمين.':'شوف الخريطة على الترابيزة.')};
-    r.querySelector('#g2').onclick=()=>{G.gear.shotgun=false;G.lf.gear=1;close();toast('اتجهزت ⚡',1500);setObj(G.lf.dest?'روح للباب اللي على اليمين.':'شوف الخريطة على الترابيزة.')}});
+  <div class="stack"><button class="primary" id="g1">خد الشوتجن + ١٢ خرطوشة</button><button id="g2">المسدس والسيخ بس</button></div>`,(r,close)=>{
+    const done=()=>{G.lf.gear=1;close();toast('اتجهزت 🔫🔩',1500);setObj(G.lf.dest?'اطلع من الباب اللي على اليمين وروح موقف الأتوبيس.':'شوف الخريطة على الترابيزة.')};
+    r.querySelector('#g1').onclick=()=>{G.w.shotgun=true;G.w.sAmmo=12;G.w.cur='shotgun';done()};
+    r.querySelector('#g2').onclick=()=>{G.w.shotgun=false;G.w.sAmmo=0;G.w.cur='pistol';done()}});
 }
 async function leaveBase(){
   if(!G.lf.dest||!G.lf.gear)return toast(!G.lf.dest?'شوف الخريطة الأول.':'جهّز سلاحك الأول.');
-  G.mode='busy';
-  const ev=Math.random()<.6;
-  if(ev){const i=await panel(`<div class="story"><p class="muted">في الطريق للمطار…</p><p>الفيروس وصل بلدنا! عربية إسعاف مقلوبة في الشارع، ومسوخ بيهاجموا المسعفين.</p><p>لو وقفت ممكن تتأخر على الطيارة.</p></div><div class="stack"><button class="primary" id="a">نقف ننقذهم</button><button id="b">نكمّل</button></div>`,(r,close)=>{r.querySelector('#a').onclick=()=>close(0);r.querySelector('#b').onclick=()=>close(1)});
-    if(i===0){G.c2.rescued+=3;G.money+=40;await panel('<div class="story"><p>نزلتوا من العربية، وزنجر صعق اتنين وانت ضربت التالت.</p><p>أنقذتوا ٣ مسعفين! واحد منهم إداكوا ٤٠ يورو «عشان القهوة».</p></div><div class="stack"><button class="primary" id="a">كمّل على المطار</button></div>',(r,c)=>r.querySelector('#a').onclick=()=>c())}
-    else await panel('<div class="story"><p>كمّلتوا… وفي المراية شفت المسعفين بيجروا.</p><p>زنجر ساكت طول الطريق.</p></div><div class="stack"><button class="primary" id="a">المطار</button></div>',(r,c)=>r.querySelector('#a').onclick=()=>c())}
-  goLevel('air');
+  goLevel('street');
 }
 async function checkin(){
   if(G.lf.chk)return toast('خلصت الكاونتر.');
@@ -1728,71 +1741,107 @@ async function passport(){
 }
 async function security(){
   if(!G.lf.pass)return toast('خلّص الجوازات الأول.');if(G.lf.sec)return toast('عديت التفتيش.');
-  G.mode='busy';
+  G.mode='busy';const sg=G.w.shotgun;
   const res=await panel(`<h2>جهاز الأشعة</h2><canvas id="xr" width="160" height="90" style="width:100%;image-rendering:pixelated;border-radius:6px;background:#0a1830"></canvas>
-  <p class="muted">${G.gear.shotgun?'الشوتجن باين في الأشعة!':'مفيش حاجة غريبة… غير الصاعق والمصل.'}</p>
-  <div class="stack">${G.gear.shotgun?'<button class="primary" id="d">صرّح بيه (معاك رخصة صائد)</button><button id="h">حاول تخبّيه 😅</button>':'<button class="primary" id="ok">عدّي</button>'}</div>`,(r,close)=>{
-    const g=r.querySelector('#xr').getContext('2d');const p=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(x,y,w,h)};p(10,10,140,70,'#183a6a');p(16,16,40,20,'#2a6ab0');p(70,20,30,40,'#3a8ad0');for(let i=0;i<3;i++)p(110+i*8,20,4,18,'#40e0a0');p(20,50,26,6,'#e8a040');if(G.gear.shotgun){p(40,60,90,6,'#ff7a2a');p(120,56,20,12,'#ff7a2a')}
-    if(G.gear.shotgun){r.querySelector('#d').onclick=()=>close('declare');r.querySelector('#h').onclick=()=>close('hide')}else r.querySelector('#ok').onclick=()=>close('ok')});
-  if(res==='declare'){await talk('ظابط التفتيش','رخصة صائد؟ تمام. السلاح هيتشحن في المخزن ويستلموه في روما. الصاعق والمصل مسموح بيهم.',null)}
-  else if(res==='hide'){const ok=Math.random()<.5;if(ok)await talk('ظابط التفتيش','(بيتاوب)… اتفضل. 😴',null);else{await talk('ظابط التفتيش','إيه ده؟! غرامة ١٠٠ يورو… والسلاح هيتشحن في المخزن.',null);G.money=Math.max(0,G.money-100)}}
-  G.lf.sec=1;SFX.pick();airObj();G.mode='play';
+  <p class="muted">${sg?'المسدس والشوتجن والسيخ باينين في الأشعة!':'المسدس والسيخ باينين في الأشعة!'}</p>
+  <div class="stack"><button class="primary" id="d">صرّح بيهم (معاك رخصة صائد)</button><button id="h">حاول تخبّيهم 😅</button></div>`,(r,close)=>{
+    const g=r.querySelector('#xr').getContext('2d');const p=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(x,y,w,h)};p(10,10,140,70,'#183a6a');p(16,16,40,20,'#2a6ab0');for(let i=0;i<3;i++)p(110+i*8,20,4,18,'#40e0a0');p(70,30,22,8,'#ff7a2a');p(70,38,6,10,'#ff7a2a');p(20,70,110,3,'#e8a040');if(sg){p(40,56,90,6,'#ff7a2a');p(120,52,20,12,'#ff7a2a')}
+    r.querySelector('#d').onclick=()=>close('declare');r.querySelector('#h').onclick=()=>close('hide')});
+  const cargo=()=>{G.w.cargo={shotgun:G.w.shotgun,sAmmo:G.w.sAmmo,rod:G.w.rod};G.w.shotgun=false;G.w.rod=0;G.w.cur='pistol'};
+  if(res==='declare'){cargo();await talk('ظابط التفتيش','رخصة صائد؟ تمام. المسدس معاك. الشوتجن والسيخ هيتشحنوا في المخزن وتستلمهم في روما.',null)}
+  else{if(Math.random()<.5)await talk('ظابط التفتيش','(بيتاوب)… اتفضل. 😴',null);else{cargo();await talk('ظابط التفتيش','إيه ده؟! غرامة ١٠٠ يورو… والسلاح التقيل هيتشحن في المخزن.',null);G.money=Math.max(0,G.money-100)}}
+  G.lf.sec=1;SFX.pick();airObj();hudSync();G.mode='play';
 }
 function airObj(){setObj(!G.lf.chk?'روح كاونتر السفر.':!G.lf.pass?'روح الجوازات.':!G.lf.sec?'روح تفتيش الشنط.':'روح البوابة ١٢ (آخر الصالة).')}
 async function gate(){
   if(!G.lf.sec)return toast('لسه مخلصتش الإجراءات.');
-  if(Math.random()<.5&&!G.lf.att){G.lf.att=1;G.mode='busy';SFX.scream();toast('واحد اتحول عند البوابة!',2000);await sleep(400);G.mode='play';G.lvl.combat=true;$('#bFire').hidden=false;gunVM.visible=false;
-    const p=randFloorNear(17,4.5,1.5);const e=spawnEnemy('walker',p[0],p[1]);e.st='chase';setObj('اصعقه بـ«تفاعل» وهو قريب، وبعدين عالجه بالمصل!');G.lvl.onKill=()=>{G.lvl.combat=false};return}
-  if(G.ens.some(e=>e.st==='chase'||e.st==='stun'))return toast('خلّص على المسخ الأول!');
+  if(Math.random()<.5&&!G.lf.att){G.lf.att=1;G.mode='busy';SFX.scream();toast('واحد اتحول عند البوابة!',2000);await sleep(400);G.mode='play';G.lvl.combat=true;$('#bFire').hidden=false;$('#bWpn').hidden=false;
+    const p=randFloorNear(17,4.5,1.5);const e=spawnEnemy('walker',p[0],p[1]);e.st='chase';setObj('اضربه! دوس «نار» أو «تفاعل» وهو قريب.');G.lvl.onKill=()=>{G.lvl.combat=false};return}
+  if(G.ens.some(e=>e.st==='chase'))return toast('خلّص عليه الأول!');
   goLevel('plane');
 }
-/* plane */
-function planeSetup(){
-  G.pax=[];
-  for(let x=4;x<=15;x++)for(const y of[1.5,3.5]){addObj({x:x+.5,y,mesh:buildSeat(),solid:.38});
-    const v=buildPerson({});const o=addObj({x:x+.5,y,mesh:v.g,vis:v,rig:true,seated:true,yo:-.42,face:-Math.PI/2,pax:true,ps:'ok',label:'اكشف على الراكب',onAct:paxAct});G.pax.push(o)}
-  G.lf.pz=0;G.lf.turb=[55,100];ui.timer.hidden=false;SFX.rumble(6,.35);G.shake=.6;
+/* ---------- infection (sick people) ---------- */
+function makeSick(o,dur){if(o.ps!=='ok')return;o.ps='sick';o.prog=0;o.dur=dur||rand(26,34);o.coughT=rand(.5,2);o.twT=rand(1,3);o.stage=1;o.anim=sickAnim}
+function sickStage(o){return o.prog<.4?1:o.prog<.75?2:3}
+function sickAnim(o,dt,t){const v=o.vis;if(o.ps!=='sick')return;const st=o.stage;o.twT-=dt;if(o.twT<=0){o.twT=st===3?rand(.3,.9):st===2?rand(1,2.5):rand(2,4);o.jerk=st===3?.5:.3}
+  if(o.jerk>0){o.jerk-=dt;const a=st*.35;v.head.rotation.x=rand(-a,a*.6);v.head.rotation.z=rand(-a,a);v.torso.rotation.x=.2+rand(-a*.3,a*.4);v.torso.rotation.z=rand(-a*.3,a*.3);v.armL.rotation.x=rand(-a*2,0);v.armR.rotation.x=rand(-a*2,0)}
+  else{v.head.rotation.x=lerp(v.head.rotation.x,.3,.1);v.head.rotation.z=lerp(v.head.rotation.z,0,.1);v.torso.rotation.x=lerp(v.torso.rotation.x,.15+Math.sin(t*2)*.05,.1);v.torso.rotation.z=lerp(v.torso.rotation.z,0,.1)}
+  if(st===3)v.eyes.forEach(e=>e.visible=Math.random()<.5)}
+function sickTick(dt){
+  for(const o of G.objs){if(o.ps!=='sick')continue;o.prog+=dt/o.dur;const st=sickStage(o);
+    if(st!==o.stage){o.stage=st;if(st===2)setLook(o.vis,'sick');if(st===3&&Math.hypot(o.x-G.px,o.y-G.py)<7)toast('فيه حد بيتشنّج جامد!',1500)}
+    o.coughT-=dt;if(o.coughT<=0){o.coughT=o.stage===3?rand(1,2):rand(2.5,4.5);SFX.cough(panOf(o));if(o.stage===3)noise(.4,{v:.15,f:250,ft:'bandpass',q:5,pan:panOf(o),wet:.2})}
+    if(o.prog>=1)startTurn(o)}
+  if(!G.lvl.bites)return;
+  for(const e of G.ens){if(e.st==='dead')continue;e.biteT=(e.biteT??4)-dt;if(e.biteT>0)continue;e.biteT=5;let n=null,bd=1.6;
+    for(const q of G.objs)if((q.pax||q.civ)&&q.ps==='ok'){const d=Math.hypot(q.x-e.x,q.y-e.y);if(d<bd){bd=d;n=q}}
+    if(n){makeSick(n,rand(18,24));SFX.hit();toast('عضّ حد تاني!',1400)}}
 }
-async function paxAct(o){
-  if(o.ps==='ok')return talk('راكب',pick(['(بيبصلك باستغراب) في حاجة يا أستاذ؟','(نايم وبيشخر)','عايز تقعد مكاني؟ 😅','هو احنا وصلنا؟']),null);
-  if(o.ps==='sick'){const i=await talk('راكب','كح كح… أنا كويس… كح… بس عروقي واجعاني.\n(عروقه سودا وعينيه حمرا!)',[`ادّيله مصل (فاضل ${G.serum})`,'سيبه']);
-    if(i===0){if(G.serum<=0)return toast('المصل خلص!');G.serum--;o.ps='cured';setLook(o.vis,'ok');SFX.key();toast('اتعالج! 💉');hudSync()}return}
-  if(o.ps==='turning')return toast('بيتحوّل! استنى ثانية واصعقه!',1200);
-  if(o.ps==='z'){if(G.batonCD>0)return toast('الصاعق بيشحن…');G.batonCD=1.8;o.ps='stun';o.stunT=6;o.lie=true;o.isMon=false;SFX.zap(.35);G.flashFx=.25;toast('اتصعق! دوس تاني واربطه بسرعة',2000);return}
-  if(o.ps==='stun'){o.ps='tied';o.label='مربوط';SFX.click();toast('اتربط بالحزام 🔒');return}
-  if(o.ps==='cured')return talk('راكب','شكرًا يا بطل… حاسس إني اتولدت من جديد.',null);
-}
-function planeTick(dt){
-  const L=G.lvl,t=G.lt;const left=Math.max(0,150-t);ui.timer.textContent=`الوصول بعد ${Math.floor(left/60)}:${String(Math.floor(left%60)).padStart(2,'0')} · ❤️ ${Math.round(G.hp)}`;
-  if(t>12&&!G.lf.pz){G.lf.pz=1;const o=pick(G.pax);paxSick(o);setTimeout(()=>{if(G.stage==='lvl')toast('زنجر: فيه حد بيكح جامد… دوّر عليه!',3000)},500)}
-  for(const tb of G.lf.turb)if(t>tb&&t-dt<=tb){G.shake=1.4;toast('مطب هوائي!',1500);SFX.rumble(2.5,.4)}
-  const turb=G.lf.turb.some(tb=>t>tb&&t<tb+3);amb.intensity=turb?(Math.random()<.3?.1:.55):.55;
-  for(const o of G.pax){
-    if(o.ps==='sick'){o.sickT-=dt;o.coughT-=dt;if(o.coughT<=0){o.coughT=rand(2.5,4.5);SFX.cough(panOf(o))}if(o.sickT<=0)paxTurn(o)}
-    else if(o.ps==='z'){
-      moveMon(o,G.px,G.py,1.3*dt);o.biteT-=dt;
-      if(o.biteT<=0){o.biteT=5;let n=null,bd=1.7;for(const p of G.pax)if(p.ps==='ok'){const d=Math.hypot(p.x-o.x,p.y-o.y);if(d<bd){bd=d;n=p}}if(n){paxSick(n);toast('عضّ راكب تاني!',1400)}}
-      o.hitT=(o.hitT||0)-dt;if(Math.hypot(G.px-o.x,G.py-o.y)<.75&&o.hitT<=0){o.hitT=1.2;G.hp-=25;G.red=.8;G.shake=.6;SFX.hit();if(G.hp<=0){G.mon=o;o.scareYo=-.12;caught()}}
-    }
-    else if(o.ps==='stun'){o.stunT-=dt;if(o.stunT<=0){o.ps='z';o.lie=false;o.isMon=true}}
-    else if(o.ps==='turning'){}
-  }
-  if(t>=150&&!G.lf.land){G.lf.land=1;planeLand()}
-}
-function paxSick(o){if(o.ps!=='ok')return;o.ps='sick';o.sickT=rand(24,32);o.coughT=rand(.5,2);o.twT=rand(1,3);setLook(o.vis,'sick');o.anim=sickAnim}
-function sickAnim(o,dt,t){const v=o.vis;if(o.ps!=='sick'){return}o.twT-=dt;if(o.twT<=0){o.twT=rand(1.5,3.5);o.jerk=.35}
-  if(o.jerk>0){o.jerk-=dt;v.head.rotation.x=rand(-.5,.3);v.head.rotation.z=rand(-.4,.4);v.torso.rotation.x=.25;v.armL.rotation.x=rand(-.6,0)}else{v.head.rotation.x=lerp(v.head.rotation.x,.25,.1);v.head.rotation.z=lerp(v.head.rotation.z,0,.1);v.torso.rotation.x=lerp(v.torso.rotation.x,.12+Math.sin(t*2)*.05,.1)}}
+function startTurn(o){o.ps='turning';o.tt=0;o.sy=o.y;setLook(o.vis,'z');o.anim=turnAnim;SFX.growl(.7,panOf(o));noise(1.6,{v:.3,f:300,ft:'bandpass',q:4,pan:panOf(o),wet:.3});if(Math.hypot(o.x-G.px,o.y-G.py)<5)G.shake=.4;toast('بيتحوّل!!',1600)}
 function turnAnim(o,dt,t){const v=o.vis;o.tt+=dt;const k=o.tt;
   if(k<1.8){const a=1+k;v.torso.rotation.x=rand(-.45,.45)*a*.6;v.torso.rotation.z=rand(-.35,.35)*a*.6;v.head.rotation.x=-.9+rand(-.4,.4);v.head.rotation.z=rand(-.6,.6);v.armL.rotation.x=rand(-2.6,.4);v.armR.rotation.x=rand(-2.6,.4);v.armL.rotation.z=rand(-.6,.2);v.armR.rotation.z=rand(-.2,.6);o.mesh.position.x+=rand(-.03,.03);if(Math.random()<.1)SFX.hit()}
-  else if(k<2.6){const e=ease(seg(k,1.8,2.6));o.seated=false;o.yo=lerp(-.42,0,e);o.y=lerp(o.sy,2.5,e);v.torso.rotation.set(lerp(.6,.25,e),0,0);v.head.rotation.set(lerp(.9,.1,e),0,0);v.armL.rotation.z=v.armR.rotation.z=0;v.legL.rotation.x=v.legR.rotation.x=lerp(-1.5,0,e)}
-  else{v.torso.rotation.set(.25,0,0);o.anim=null;o.ps='z';o.isMon=true;o.zarms=true;o.biteT=3;o.label='اصعقه';SFX.scream();G.red=.6;G.shake=Math.max(G.shake,.5);toast('اتحوّل! اصعقه!',1600)}}
-function paxTurn(o){o.ps='turning';o.tt=0;o.sy=o.y;setLook(o.vis,'z');o.anim=turnAnim;SFX.growl(.7,panOf(o));noise(1.6,{v:.3,f:300,ft:'bandpass',q:4,pan:panOf(o),wet:.3});if(Math.hypot(o.x-G.px,o.y-G.py)<5)G.shake=.4;toast('الراكب بيتشنّج!!',1600)}
-async function planeLand(){
-  G.mode='busy';SFX.rumble(3,.4);G.shake=1;ui.timer.hidden=true;
-  const saved=G.pax.filter(p=>p.ps==='ok'||p.ps==='cured').length;G.c2.pax=saved;G.money+=saved*5;
+  else if(o.wasSeated&&k<2.6){const e=ease(seg(k,1.8,2.6));o.seated=false;o.yo=lerp(-.42,0,e);o.y=lerp(o.sy,o.aisle??2.5,e);v.torso.rotation.set(lerp(.6,.25,e),0,0);v.head.rotation.set(lerp(.9,.1,e),0,0);v.armL.rotation.z=v.armR.rotation.z=0;v.legL.rotation.x=v.legR.rotation.x=lerp(-1.5,0,e)}
+  else becomeEnemy(o)}
+function becomeEnemy(o){const v=o.vis;v.torso.rotation.set(.25,0,0);v.armL.rotation.z=v.armR.rotation.z=0;o.anim=null;o.ps='z';o.seated=false;o.yo=0;o.en=true;o.def=ET.walker;o.hp=3;o.st='chase';o.lx=G.px;o.ly=G.py;o.isMon=true;o.zarms=true;o.hitT=1;o.scareYo=-.12;o.solid=0;o.onAct=enemyAct;G.ens.push(o);SFX.scream();G.red=.6;G.shake=Math.max(G.shake,.5);toast('اتحوّل!',1400)}
+async function sickAct(o){
+  if(o.ps==='ok')return talk(o.civ?'واحد من الناس':'راكب',pick(o.civ?['إنت صياد؟ الحمد لله…','متسيبنيش هنا!','شفت جاري بيتشنّج امبارح… وبعدين قام وعضّ مراته.']:['(بيبصلك باستغراب) في حاجة يا أستاذ؟','(نايم وبيشخر)','عايز تقعد مكاني؟ 😅','هو احنا وصلنا؟']),null);
+  if(o.ps==='cured')return talk('ناجي','شكرًا يا بطل… حاسس إني اتولدت من جديد.',null);
+  if(o.ps==='turning')return toast('بيتحوّل! جهّز سلاحك!',1200);
+  if(o.ps!=='sick')return;
+  const st=o.stage,pct=[0,35,20,8][st];
+  const desc=['','بيكح كتير وعرقان… «أنا كويس… كح… كح»','عروقه بقت سودا وإيده بترتعش… «جسمي… مش بتاعي…»','بيتشنّج وعينيه بتحمر! «ابعد… ابعد عني…»'][st];
+  const i=await talk(`مصاب بالطاعون – المرحلة ${st} من ٣`,desc,[`حاول تعالجه بالمصل (الفرصة ${pct}٪ · معاك ${G.serum})`,'اقتله قبل ما يتحوّل','سيبه']);
+  if(o.ps!=='sick')return;
+  if(i===0){if(G.serum<=0)return toast('معاكش مصل!');G.serum--;hudSync();
+    if(Math.random()*100<pct){o.ps='cured';o.anim=null;setLook(o.vis,'ok');o.vis.torso.rotation.set(0,0,0);o.vis.head.rotation.set(0,0,0);G.c2.rescued++;G.money+=25;SFX.key();toast('رجع طبيعي! 💉 معجزة',2400)}
+    else{o.prog=Math.min(.98,o.prog+.25);o.jerk=.8;SFX.bad();toast('المصل ما نفعش… وحالته بتسوء',2200)}}
+  else if(i===1){o.ps='dead';o.anim=null;o.lie=true;o.seated=false;o.yo=0;if(curGun())SFX.bang(false);else SFX.hit();G.c2.mercy=(G.c2.mercy||0)+1;toast('خلّصت عليه قبل ما يتحوّل…',2000)}
+}
+function spawnCivs(ok,sick){for(let i=0;i<ok+sick;i++){const p=farFloor(3);const o=makeNPC(p[0],p[1],{},rand(0,6));o.civ=true;o.ps='ok';o.onAct=sickAct;o.solid=.25;if(i>=ok)makeSick(o,rand(45,70))}}
+/* ---------- vehicles: plane & metro ---------- */
+function seatPax(x,y,face,aisle,seatRot){addObj({x,y,mesh:buildSeat(),rot:seatRot,solid:.38});const v=buildPerson({});const o=addObj({x,y,mesh:v.g,vis:v,rig:true,seated:true,wasSeated:true,aisle,yo:-.42,face,pax:true,ps:'ok',onAct:sickAct});G.pax.push(o);return o}
+function vehicleSetup(){
+  G.pax=[];const c=G.lvl.veh;
+  if(c.kind==='plane'){for(let x=4;x<=15;x++)for(const y of[1.5,3.5])seatPax(x+.5,y,-Math.PI/2,2.5,0)}
+  else{for(let x=2;x<=25;x+=2){seatPax(x+.5,1.5,0,2.5,Math.PI/2);seatPax(x+.5,3.5,Math.PI,2.5,-Math.PI/2)}
+    for(let i=0;i<6;i++){const x=rand(3,25);const v=buildPerson({});const o=addObj({x,y:2.5+rand(-.15,.15),mesh:v.g,vis:v,rig:true,face:rand(0,6),pax:true,ps:'ok',onAct:sickAct,solid:.22});G.pax.push(o)}}
+  if(G.w.rod<=0){addObj({x:2.4,y:3.3,z:.12,mesh:pickMesh('rod'),pick:'rod'});setTimeout(()=>{if(G.lvl&&G.lvl.veh)toast('فيه حتة حديد على الأرض جنبك… خدها!',2600)},2500)}
+  G.lf.infs=c.inf.slice();ui.timer.hidden=false;SFX.rumble(6,.35);G.shake=.6;
+}
+function vehicleTick(dt){
+  const c=G.lvl.veh,t=G.lt;const left=Math.max(0,c.dur-t);
+  ui.timer.textContent=`${c.label} ${Math.floor(left/60)}:${String(Math.floor(left%60)).padStart(2,'0')}`;
+  if(G.lf.infs.length&&t>G.lf.infs[0]){G.lf.infs.shift();const ok=G.pax.filter(p=>p.ps==='ok');if(ok.length){makeSick(pick(ok));toast('زنجر: فيه حد بيكح جامد… دوّر عليه!',2600)}}
+  if(c.turb)for(const tb of c.turb)if(t>tb&&t-dt<=tb){G.shake=1.4;toast(c.kind==='plane'?'مطب هوائي!':'المترو فرمل فجأة!',1500);SFX.rumble(2.5,.4)}
+  if(c.turb){const tu=c.turb.some(tb=>t>tb&&t<tb+3);amb.intensity=tu?(Math.random()<.3?.1:G.lvl.light.ai):G.lvl.light.ai}
+  if(c.kind==='metro'&&Math.random()<dt*.5)G.shake=Math.max(G.shake,.12);
+  if(t>=c.dur&&!G.lf.land){G.lf.land=1;vehicleArrive()}
+}
+async function vehicleArrive(){
+  const c=G.lvl.veh;G.mode='busy';SFX.rumble(3,.4);G.shake=1;ui.timer.hidden=true;
+  for(const e of G.ens)if(e.st!=='dead')killEnemy(e);
+  const saved=G.pax.filter(p=>p.ps==='ok'||p.ps==='cured').length,tot=G.pax.length;G.money+=saved*5;if(c.kind==='plane')G.c2.pax=saved;
   await sleep(1200);
-  LV.plane.doneTitle='الطيارة نزلت في روما';LV.plane.doneText=`أنقذت ${saved} من ٢٤ راكب. ${saved>=20?'الطيارين بيصقفولك! 👏':saved>=12?'مش وحش… بس كان ممكن أحسن.':'الطيارة كانت كابوس.'}`;LV.plane.next='italy';
+  G.lvl.doneTitle=c.kind==='plane'?'الطيارة نزلت في روما':'المترو وصل المحطة';
+  G.lvl.doneText=`أنقذت ${saved} من ${tot} راكب. ${saved>=tot*.8?'الناس بتصقفلك! 👏':saved>=tot*.5?'مش وحش… بس كان ممكن أحسن.':'كانت كابوس.'}`;
   levelDone();
+}
+/* ---------- weapons ---------- */
+const rodVM=new THREE.Group();cam.add(rodVM);rodVM.position.set(.22,-.24,-.4);{const s2=new THREE.Mesh(new THREE.CylinderGeometry(.012,.012,.7,6),col(0x7a7e86));s2.rotation.x=-1.25;rodVM.add(s2)}rodVM.visible=false;
+const fistVM=new THREE.Group();cam.add(fistVM);box(fistVM,.09,.09,.12,col(0xc48d62),0,0,0);box(fistVM,.1,.12,.25,col(0x2a2a22),0,-.01,.17);fistVM.position.set(.2,-.22,-.36);fistVM.visible=false;
+function hasGun(){const w=G.w;return(w.shotgun&&w.sAmmo>0)||(w.pistol&&w.pAmmo>0)}
+function curGun(){const w=G.w;if(!w||w.cur==='melee')return null;if(w.cur==='shotgun'&&w.shotgun&&w.sAmmo>0)return'shotgun';if(w.pistol&&w.pAmmo>0)return'pistol';if(w.shotgun&&w.sAmmo>0)return'shotgun';return null}
+function switchWpn(){if(G.mode!=='play'||!G.lvl||!G.lvl.combat||G.lvl.cane||G.lvl.mg)return;const w=G.w,opts=[];if(w.shotgun)opts.push('shotgun');if(w.pistol)opts.push('pistol');opts.push('melee');w.cur=opts[(opts.indexOf(w.cur)+1)%opts.length];SFX.click();toast({shotgun:'💥 الشوتجن',pistol:'🔫 المسدس',melee:w.rod>0?'🔩 السيخ':'✊ إيدك'}[w.cur],900);hudSync()}
+function wpnLabel(){if(G.lvl&&G.lvl.mg)return'🔫 رشاش';const g=curGun();if(g==='shotgun')return`💥 ${G.w.sAmmo}`;if(g==='pistol')return`🔫 ${G.w.pAmmo}`;return G.w.rod>0?`🔩 سيخ ${G.w.rod}`:'✊ إيدك'}
+function meleeTarget(){let best=null,bd=1.7;for(const o of G.ens){if(o.st==='dead')continue;const dx=o.x-G.px,dy=o.y-G.py,d=Math.hypot(dx,dy);if(d<bd&&Math.abs(angDiff(Math.atan2(dy,dx),G.pa))<.8){bd=d;best=o}}
+  if(!best&&G.boss&&!G.boss.dormant&&G.boss.st!=='dead'&&Math.hypot(G.boss.x-G.px,G.boss.y-G.py)<2.3)best=G.boss;return best}
+function melee(t){
+  if(G.meleeCD>0)return;const rod=G.w.rod>0;G.meleeCD=rod?.55:.45;G.recoil=1;SFX.whoosh();
+  const o=t||meleeTarget();if(!o)return;
+  damageEnemy(o,rod?2:.7);SFX.hit();G.shake=.25;
+  if(rod){G.w.rod--;if(G.w.rod<=0){toast('السيخ اتكسر! هتضرب بإيدك… خلي بالك',2200);SFX.bad()}}
+  else if(Math.random()<.4){G.inf=Math.min(100,G.inf+8);G.hp=Math.max(1,G.hp-5);G.red=.5;toast('اتخربشت وانت بتضرب بإيدك! 🦠',1800)}
+  hudSync();
 }
 async function pharmacy(){
   if(G.lf.found)return;G.lf.found=1;G.mode='busy';ui.timer.hidden=true;
@@ -1824,13 +1873,13 @@ async function finalFake(o){
   try{localStorage.removeItem('qabw2')}catch(e){}
   const sec=Math.round((performance.now()-G.tStart)/1000);
   panel(`<h1>القبو</h1><p class="tag">نهاية الفصل التاني — ${good?'النهاية الحلوة 😊':'النهاية السيئة 😔'}</p>
-  <div class="stats"><span>الوقت</span><span>${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}</span><span>المسوخ</span><span>${G.kills}</span><span>ركاب الطيارة</span><span>${G.c2.pax}/24</span><span>د. هيلدا</span><span>${G.c2.hildaDead?'ماتت':'عاشت'}</span><span>اللي عالجتهم</span><span>${G.c2.rescued}</span><span>جوابات الجدة</span><span>${G.c2.letters}</span></div>
+  <div class="stats"><span>الوقت</span><span>${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}</span><span>المتحولين</span><span>${G.kills}</span><span>ركاب الطيارة</span><span>${G.c2.pax}/24</span><span>د. هيلدا</span><span>${G.c2.hildaDead?'ماتت':'عاشت'}</span><span>اللي عالجتهم</span><span>${G.c2.rescued}</span><span>جوابات الجدة</span><span>${G.c2.letters}</span></div>
   <div class="next"><b>انتظر الجزء التاني</b><span class="muted">القبو ٢: لعنة الرمال</span></div>
   <div class="stack"><button class="primary" id="pA">القائمة الرئيسية</button></div>`,(r,close)=>{r.querySelector('#pA').onclick=()=>{close();location.reload()}});
   G.mode='end';
 }
 
-async function continue2(sv){const s=JSON.parse(sv.snap);ui.overlay.hidden=true;Object.assign(G,{hp:s.hp,inf:s.inf,ammo:s.ammo,serum:s.serum,money:s.money,c2:s.c2,gear:s.gear||{shotgun:true},kills:0,caught:0});
+async function continue2(sv){const s=JSON.parse(sv.snap);ui.overlay.hidden=true;Object.assign(G,{hp:s.hp,inf:s.inf,serum:s.serum,money:s.money,c2:s.c2,w:s.w||{pistol:true,shotgun:true,pAmmo:24,sAmmo:12,rod:30,cur:'shotgun'},kills:0,caught:0});
   if(sv.lvl==='base2'||!LV[sv.lvl])return startCh2();
   ui.controls.hidden=false;ui.obj.hidden=false;ui.inv.hidden=false;ui.cross.hidden=false;G.tStart=performance.now();G.lvlId=sv.lvl;G.snap=sv.snap;await fade(1,10);buildLevel(LV[sv.lvl]);await fade(0,600);G.mode='play';if(LV[sv.lvl].start2)LV[sv.lvl].start2()}
 
@@ -1873,6 +1922,6 @@ function frame(now){
   requestAnimationFrame(frame);
 }
 buildArt();buildArt2();resize();loadHouse('house1');placePlayer(3.3,2.4,Math.PI/2);title();requestAnimationFrame(frame);
-window.__qabw={paxTurn,paxSick,LV,goLevel,startCh2,buildLevel,spawnEnemy,fire,glassMoment,finalFake,levelDone,G,act,loadBase,loadHouse,startHouse2,startBasement,grannyTime,killMonster,setupComp,placePlayer,makeComp,spawnMon,caught,inp};
+window.__qabw={makeSick,startTurn,vehicleArrive,LV,goLevel,startCh2,buildLevel,spawnEnemy,fire,glassMoment,finalFake,levelDone,G,act,loadBase,loadHouse,startHouse2,startBasement,grannyTime,killMonster,setupComp,placePlayer,makeComp,spawnMon,caught,inp};
 })();
 </script>
