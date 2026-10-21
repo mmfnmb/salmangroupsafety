@@ -1,4 +1,4 @@
-<title>العبور ٧٣</title>
+<title>أبطال أكتوبر</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lalezar&family=Cairo:wght@500;700;900&display=swap">
@@ -745,7 +745,7 @@ function sJets(){return sFront({jets:true,sky:'day'})}
 /* --- slide lists --- */
 const SL={
  pro:[
-  {d:sTitle('العبور ٧٣','حكاية حسن وعبده… ولاد بلد واحدة'),cap:'<b>العبور ٧٣</b> — حكاية حسن وعبده، ولاد قرية واحدة في <b>الشرقية</b>.'},
+  {d:sTitle('أبطال أكتوبر','حكاية حسن وعبده… ولاد بلد واحدة'),cap:'<b>أبطال أكتوبر</b> — حكاية حسن وعبده، ولاد قرية واحدة في <b>الشرقية</b>.'},
   {d:sMap({occupied:true,title:'يونيو ١٩٦٧'}),cap:'يونيو <b>١٩٦٧</b>… النكسة. سينا اتاخدت، والعدو بقى قاعد على الضفة الشرقية للقنال.'},
   {d:sFront({towers:true,sepia:.25}),cap:'العدو بنى <b>خط بارليف</b>: ساتر رملي عالي زي الجبل، ونقط حصينة على طول القنال… وقالوا: <b>مستحيل يتعدّى</b>.'},
   {d:sFront({booms:true,sepia:.3,sky:'dusk'}),cap:'بس الجيش المصري ما سكتش. <b>حرب الاستنزاف</b>: سنين من الاشتباكات والإغارات عشان العدو ما يرتاحش.'},
@@ -810,7 +810,7 @@ function carryMesh(kind){const g=new THREE.Group();if(kind==='boat'){const b=boa
 function carryTick(){if(!CARRY)return;const h=CTRL.pts[2];CARRY.position.set(h.x,h.y+.35,h.z);CARRY.rotation.y=CTRL.yaw}
 /* ---------- tasks ---------- */
 function nearSpot(id,r){const s=SPOTS.find(s=>s.id===id);if(!s)return null;return Math.hypot(CTRL.x-s.x,CTRL.z-s.z)<(r||s.r)?s:null}
-async function doTask(t,tok){const c=CTRL,m=MATE;t.busy=true;ACTF=null;
+async function doTask(t,tok){const c=CTRL,m=MATE;t.busy=true;
   const lock=(a)=>{c.lock=true;c.vx=c.vz=0;c.anim=a};const unlock=()=>{c.lock=false};
   if(t.id==='cane'){lock('eat');m.task='eat';await talk(c,m,c===HASSAN?['القصب ده حلو قوي… زي قصب البلد','وكل ما نتفرج عليهم يتفرجوا علينا هههه','سيبهم يفتكرونا فاضيين']:['أنا لو فضلت آكل قصب كده هتخن','ما هو ده الشغل يا عبده… كُل وابتسم','ماشي يا باشمهندس، أبتسم أهو']);m.task=null}
   else if(t.id==='radio'){lock('sit');radioTune();await talk(c,m,['الست هتغني النهارده بالليل','سيبك… أنا بحب عبد الحليم أكتر','عبد الحليم ولا الست… المهم إن العدو شايفنا سهرانين']);}
@@ -862,7 +862,7 @@ async function nightPhase(d,tok){const N=NIGHTS[d];for(const h of[HASSAN,ABDO]){
 async function octMorning(tok){setClock('٦ أكتوبر ١٩٧٣ · ١٠ رمضان',12.5);campCrowd(false);for(const f of FRIENDS){if(f.beh==='eat'){f.beh='sit'}}const cm=cmdr();placeHero(HASSAN,-30,-2,Math.PI/2);placeHero(ABDO,-30,.5,Math.PI/2);
   TASKS=[{id:'cmd',l:'روح للقائد',done:false},{id:'arm',l:'خد سلاحك من المخبأ',done:false},{id:'wait',l:'استنى الساعة ٢',done:false}];TASKS.title='يوم ٦ أكتوبر';setObj(taskHtml('صايمين… ومستنيين'));
   await fadeTo(0);mode='play';banner('٦ أكتوبر ١٩٧٣','١٠ رمضان · صايمين',2600);await talk(ABDO,HASSAN,['ريقي ناشف يا حسن','صايمين يا عبده… واليوم شكله مش عادي','حاسس بكده أنا كمان']);
-  ACTF=()=>{if(!TASKS[0].done&&Math.hypot(CTRL.x-cm.c.x,CTRL.z-cm.c.z)<3)return{l:'كلّم القائد',f:async()=>{TASKS[0].busy=true;ACTF=null;CTRL.lock=true;CTRL.anim='salute';await talk(cm.c,CTRL,['يا رجالة… الكلام ده سر لحد آخر لحظة','تمام يا فندم','النهارده الساعة اتنين الضهر… هنعبر','الله أكبر!','الإفطار إن شاء الله على الضفة التانية. روحوا خدوا سلاحكم']);CTRL.lock=false;TASKS[0].done=true;SFX.coin()}};
+  ACTF=()=>{if(!TASKS[0].done&&!TASKS[0].busy&&Math.hypot(CTRL.x-cm.c.x,CTRL.z-cm.c.z)<3)return{l:'كلّم القائد',f:async()=>{TASKS[0].busy=true;CTRL.lock=true;CTRL.anim='salute';await talk(cm.c,CTRL,['يا رجالة… الكلام ده سر لحد آخر لحظة','تمام يا فندم','النهارده الساعة اتنين الضهر… هنعبر','الله أكبر!','الإفطار إن شاء الله على الضفة التانية. روحوا خدوا سلاحكم']);CTRL.lock=false;TASKS[0].done=true;SFX.coin()}};
     if(TASKS[0].done&&!TASKS[1].done&&Math.hypot(CTRL.x-PIT.x,CTRL.z-PIT.z)<4)return{l:'خد السلاح',f:()=>{TASKS[1].done=true;HASSAN.armed=ABDO.armed=true;SFX.click();say(CTRL,'السلاح جاهز');ST=13.8}};return null};
   STEPFN=dt=>{const t=!TASKS[0].done?{x:cm.c.x,z:cm.c.z}:!TASKS[1].done?{x:PIT.x,z:PIT.z}:null;setTarget(t);setObj(taskHtml('صايمين… ومستنيين'));if(TASKS[1].done)ST=Math.min(14,ST+dt*.012)};
   await until(()=>TASKS[1].done,tok);ACTF=null;setTarget(null);setObj('<b>استنى… بص للسما ناحية الغرب</b>');await wait(2500,tok);ST=13.95;
@@ -1056,7 +1056,7 @@ function openSettings(){const seg=(k,opts)=>`<div class="seg" data-k="${k}">${op
 async function boot(){const had=loadAll();buildTextures();applyQuality();scene.fog.far=240*SET.far;
   makeHeroes();buildFront();setClock('',10);placeHero(HASSAN,-20,-1);placeHero(ABDO,-20,1.5);camYaw=Math.PI/2;requestAnimationFrame(frame);mode='busy';
   const cont=G.unl>1;let sel=0;
-  await panel(`<p class="big">العبور ٧٣</p><p style="text-align:center">حرب أكتوبر بعيون جنديين من قرية واحدة في الشرقية: <b>حسن</b> المهندس و<b>عبده</b> بتاع الصاعقة.<br>عيش أيام الخداع على الجبهة… لحد الساعة ٢ الضهر يوم ٦ أكتوبر.</p>
+  await panel(`<p class="big">أبطال أكتوبر</p><p style="text-align:center">حرب أكتوبر بعيون جنديين من قرية واحدة في الشرقية: <b>حسن</b> المهندس و<b>عبده</b> بتاع الصاعقة.<br>عيش أيام الخداع على الجبهة… لحد الساعة ٢ الضهر يوم ٦ أكتوبر.</p>
     <div class="grid" style="margin:10px 0"><div class="tile"><b>العصا</b><span>تمشي وتجري</span></div><div class="tile"><b>اسحب الشاشة</b><span>تلف الكاميرا وتصوّب</span></div><div class="tile"><b>الزرار الأصفر</b><span>يظهر لما تقرب من حاجة تتعمل</span></div><div class="tile"><b>زرار الاتنين</b><span>بدّل بين حسن وعبده</span></div></div>
     <div class="row" style="justify-content:center"><button class="btn pri" id="go">${cont?'كمّل الحكاية':'ابدأ الحكاية'}</button>${cont?'<button class="btn" id="ch">الفصول</button>':''}</div>`,(c,close)=>{c.querySelector('#go').onclick=()=>{aInit();sel=1;close()};const ch=c.querySelector('#ch');if(ch)ch.onclick=()=>{aInit();sel=2;close()}});
   if(sel===2){mode='busy';openChapters();return}const i=Math.min(G.unl-1,CHAPS.length-1);if(CHAPS[i].soon){openChapters(true);return}playChapter(i)}
@@ -1136,7 +1136,7 @@ Object.assign(SL,{
   {d:sMap({title:'طابا ١٩٨٩'}),cap:'وآخر حتة، <b>طابا</b>، رجعت بـ<b>التحكيم الدولي</b> ورُفع عليها العلم يوم <b>١٩ مارس ١٩٨٩</b>… من غير ولا رصاصة.'},
   {d:sVillage(),cap:'وعدّت السنين… <b>٥٠ سنة</b>. حسن وعبده بقوا جدود في نفس القرية في الشرقية.'}],
  credits:[{d:sTitle('المجد للشهداء','وتحية لكل اللي عبروا'),cap:'تحية لـ<b>الجيش التاني</b> و<b>الجيش التالت</b>، ولـ<b>الفرق ٢ و٧ و١٦ و١٨ و١٩ مشاة</b>، وللطيارين والمهندسين والمدفعية والدفاع الجوي والبحرية والصاعقة… وللمقاومة الشعبية.',ms:9000},
-  {d:sTitle('العبور ٧٣','شكرًا إنك لعبت — وعرفت'),cap:'<b>العبور ٧٣</b>. حكاية حسن وعبده خلصت… بس حكاية مصر مكمّلة.'}]});
+  {d:sTitle('أبطال أكتوبر','شكرًا إنك لعبت — وعرفت'),cap:'<b>أبطال أكتوبر</b>. حكاية حسن وعبده خلصت… بس حكاية مصر مكمّلة.'}]});
 /* ---------- chapter list ---------- */
 Object.assign(CHAPS[5],{s:'ليلة ٦–٧ أكتوبر',soon:0});Object.assign(CHAPS[6],{s:'٨ أكتوبر',soon:0});Object.assign(CHAPS[7],{s:'ورا خطوط العدو',soon:0});Object.assign(CHAPS[8],{s:'١٦–٢٤ أكتوبر',soon:0});Object.assign(CHAPS[9],{s:'١٩٧٤ – ١٩٨٩ – النهارده',soon:0});
 /* ---------- CH5: BRIDGES ---------- */
@@ -1243,10 +1243,10 @@ async function epilogue(tok){mode='busy';await cine(SL.end,tok);clearWorld();HS=
   CTRL=gH;MATE=gA;gH.hp=100;updWho();canSwitch=false;camYaw=Math.PI;camPitch=.3;
   TASKS=[{l:'روح للأحفاد واحكيلهم'},{l:'زور نصب الشهداء'}];let st=0;setTarget({x:4,z:-6});setObj('<b>بعد ٥٠ سنة:</b> روح للأحفاد واحكيلهم الحكاية');
   await fadeTo(0);mode='play';banner('٦ أكتوبر ٢٠٢٣','٥٠ سنة على العبور',2600);say(soad,'خلّي بالكم من نفسكم يا حجّ… العيال مستنيينكم',3000);
-  ACTF=()=>{if(st===0&&Math.hypot(CTRL.x-4,CTRL.z+6)<4)return{l:'احكي الحكاية',f:async()=>{st=.5;ACTF=null;CTRL.lock=true;CTRL.anim='point';for(const k of kids){k.anim='sit';k.yaw=Math.atan2(CTRL.x-k.x,CTRL.z-k.z)}
+  ACTF=()=>{if(st===0&&Math.hypot(CTRL.x-4,CTRL.z+6)<4)return{l:'احكي الحكاية',f:async()=>{st=.5;CTRL.lock=true;CTRL.anim='point';for(const k of kids){k.anim='sit';k.yaw=Math.atan2(CTRL.x-k.x,CTRL.z-k.z)}
       await talk(kids[0],gH,['يا جدّو احكيلنا عن الحرب!','كنا بناكل قصب قدام العدو عشان يفتكرونا مش ناويين على حاجة','بجد؟! وبعدين؟','وفي العاشر من رمضان… الساعة اتنين الضهر… عدّينا','وأنا اللي طلعت السلم الأول على الساتر!','ده جدّو عبده بيحب يقولها كل سنة هههه']);await talk(kids[1],gA,['وكنتوا خايفين؟','كلنا كنا خايفين يا بنتي… بس كنا عارفين إن الأرض لازم ترجع','وعشان كده إحنا بنزور الشهدا كل سنة']);
       CTRL.lock=false;st=1;setTarget({x:0,z:-55});setObj('<b>زور نصب شهداء أكتوبر</b> مع الأحفاد');for(const k of kids)k.anim='idle'}};
-    if(st===1&&Math.hypot(CTRL.x,CTRL.z+55)<5)return{l:'سلام للشهداء',f:async()=>{st=2;ACTF=null;setTarget(null);for(const c of[gH,gA,...kids]){c.lock=true;c.anim='salute';c.yaw=Math.PI}SFX.chime();say(gH,'السلام عليكم يا رجالة… الأرض رجعت',3600);await wait(3800,tok);say(gA,'وإحنا عمرنا ما ننساكم',3000);await wait(3200,tok);st=3}};return null};
+    if(st===1&&Math.hypot(CTRL.x,CTRL.z+55)<5)return{l:'سلام للشهداء',f:async()=>{st=2;setTarget(null);for(const c of[gH,gA,...kids]){c.lock=true;c.anim='salute';c.yaw=Math.PI}SFX.chime();say(gH,'السلام عليكم يا رجالة… الأرض رجعت',3600);await wait(3800,tok);say(gA,'وإحنا عمرنا ما ننساكم',3000);await wait(3200,tok);st=3}};return null};
   STEPFN=dt=>{for(const k of kids){if(st===1||st===2){const dx=CTRL.x-k.x+(k===kids[0]?2:k===kids[1]?-2:0),dz=CTRL.z-k.z+2.5,d=Math.hypot(dx,dz);if(d>1.2&&st===1){k.yaw=Math.atan2(dx,dz);k.x+=Math.sin(k.yaw)*Math.min(3,d)*dt;k.z+=Math.cos(k.yaw)*Math.min(3,d)*dt;k.anim='walk';k.ph+=dt*6}else if(st===1)k.anim='idle'}}};
   await until(()=>st>=3,tok);STEPFN=null;mode='busy';await cine(SL.credits,tok);for(const c of EXTRA)removeChar(c);EXTRA=[];CTRL=HASSAN;MATE=ABDO;HASSAN.hidden=ABDO.hidden=false;HASSAN.lock=ABDO.lock=false;updWho()}
 CHF.push(async tok=>{await cine(SL.bridge,tok);await bridges(tok);await cine(SL.bridgeEnd,tok)},
