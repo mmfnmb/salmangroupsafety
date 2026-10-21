@@ -42,7 +42,7 @@ button:focus-visible{outline:3px solid var(--gold2);outline-offset:2px}
 #cine .cap b{color:#ffd25a}
 #cine .skip{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);left:12px;background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:12px;padding:8px 14px;font-weight:900}
 #vign{position:fixed;inset:0;pointer-events:none;z-index:3;box-shadow:inset 0 0 120px rgba(200,0,0,0);transition:box-shadow .2s}
-#cross{position:fixed;left:50%;top:46%;width:22px;height:22px;margin:-11px;z-index:4;pointer-events:none;border:2px solid rgba(255,255,255,.85);border-radius:50%}
+#cross{position:fixed;left:50%;top:50%;width:22px;height:22px;margin:-11px;z-index:4;pointer-events:none;border:2px solid rgba(255,255,255,.85);border-radius:50%}
 #cross::after{content:'';position:absolute;left:50%;top:50%;width:4px;height:4px;margin:-2px;background:#fff;border-radius:50%}
 #bGrab.on{background:radial-gradient(circle at 35% 30%,#ffd25a,#e8901a)}
 #bRun{grid-column:2;grid-row:3}
@@ -527,7 +527,7 @@ let _egf=null;function EGF(){if(_egf)return _egf;_egf=ctex(120,80,(x)=>{x.fillSt
 function bunker(x,z,ry=0){const g=new THREE.Group();g.position.set(x,0,z);g.rotation.y=ry;RGROUP.add(g);const cm=M('#a89a7a',.9);const b=new THREE.Mesh(GEO.box,cm);b.scale.set(6,2.2,4);b.position.y=1.1;b.castShadow=b.receiveShadow=true;g.add(b);const t=new THREE.Mesh(GEO.sph,texMat(TEX.sand,1,1));t.scale.set(3.6,1.3,2.6);t.position.y=2.1;g.add(t);const sl=new THREE.Mesh(GEO.box,M('#1a1a14',.9));sl.scale.set(2.6,.35,.1);sl.position.set(0,1.5,2.02);g.add(sl);
   const wide=Math.abs(Math.sin(ry))>.5;addCol(x-(wide?2:3),z-(wide?3:2),x+(wide?2:3),z+(wide?3:2),0,2.6);return g}
 function tower(x,z,y0){const g=new THREE.Group();g.position.set(x,y0,z);RGROUP.add(g);const w=M('#6a5a3a',.85);for(const[a,b]of[[-1,-1],[1,-1],[-1,1],[1,1]]){const l=new THREE.Mesh(GEO.box,w);l.scale.set(.15,4,.15);l.position.set(a,2,b);l.castShadow=true;g.add(l)}const p=new THREE.Mesh(GEO.box,w);p.scale.set(2.6,.2,2.6);p.position.y=4;g.add(p);const r=new THREE.Mesh(GEO.box,M('#7a6a4a',.85));r.scale.set(2.8,.15,2.8);r.position.y=5.8;g.add(r);return g}
-function explode(x,y,z,s=1,sound=true){FX.push({type:'boom',x,y,z,t:0,s,m:null});if(sound){const d=Math.hypot(x-cam.position.x,z-cam.position.z);if(d<160){noise(.9,Math.min(.9,30/(d+10)),220);tone(60,.6,'sine',Math.min(.3,10/(d+10)),30)}}}
+function explode(x,y,z,s=1,sound=true){FX.push({type:'boom',x,y,z,t:0,s,m:null});boomLight(x,y,z,s);if(sound){const d=Math.hypot(x-cam.position.x,z-cam.position.z);if(d<160){noise(.9,Math.min(.9,30/(d+10)),220);tone(60,.6,'sine',Math.min(.3,10/(d+10)),30)}}}
 function tracer(x0,y0,z0,x1,y1,z1,col='#ffd25a'){FX.push({type:'tr',x0,y0,z0,x1,y1,z1,t:0,col})}
 function splash(x,z){FX.push({type:'spl',x,z,t:0})}
 function fxTick(dt){for(let i=FX.length-1;i>=0;i--){const f=FX[i];f.t+=dt;
@@ -535,7 +535,7 @@ function fxTick(dt){for(let i=FX.length-1;i>=0;i--){const f=FX[i];f.t+=dt;
     const k=f.t;f.fire.scale.setScalar(f.s*(.5+k*6)*(k<.3?1:Math.max(0,1-(k-.3)*3)));f.fire.material.opacity=Math.max(0,.95-k*2);for(const s of f.smoke){s.position.y+=dt*2.5*f.s;s.scale.setScalar(f.s*(.6+k*1.6));s.material.opacity=Math.max(0,.7-k*.28)}if(k>2.6){scene.remove(f.m);FX.splice(i,1)}}
   else if(f.type==='tr'){if(!f.m){const d=new THREE.Vector3(f.x1-f.x0,f.y1-f.y0,f.z1-f.z0);const L=d.length();f.m=new THREE.Mesh(GEO.cyl,new THREE.MeshBasicMaterial({color:C(f.col),transparent:true,opacity:.9}));f.m.scale.set(.03,L,.03);f.m.position.set((f.x0+f.x1)/2,(f.y0+f.y1)/2,(f.z0+f.z1)/2);f.m.quaternion.setFromUnitVectors(UPV,d.normalize());scene.add(f.m)}f.m.material.opacity=Math.max(0,.9-f.t*7);if(f.t>.14){scene.remove(f.m);FX.splice(i,1)}}
   else if(f.type==='spl'){if(!f.m){f.m=new THREE.Mesh(GEO.cyl,new THREE.MeshBasicMaterial({color:0xeaf6ff,transparent:true,opacity:.85}));f.m.position.set(f.x,WY,f.z);scene.add(f.m)}const k=f.t;f.m.scale.set(.25+k*.6,Math.max(.01,3*k*(1-k*1.4)),.25+k*.6);f.m.position.y=WY+f.m.scale.y/2;f.m.material.opacity=Math.max(0,.85-k);if(k>.8){scene.remove(f.m);FX.splice(i,1)}}
-  else if(f.type==='water'){if(!f.m){f.m=new THREE.Mesh(GEO.sphL,new THREE.MeshBasicMaterial({color:0xcfefff,transparent:true,opacity:.8}));f.m.scale.setScalar(.18);scene.add(f.m)}f.vy-=12*dt;f.x+=f.vx*dt;f.y+=f.vy*dt;f.z+=f.vz*dt;f.m.position.set(f.x,f.y,f.z);if(f.y<terrain(f.x,f.z)||f.t>2){if(f.onHit)f.onHit(f);scene.remove(f.m);FX.splice(i,1)}}
+  else if(f.type==='water'){if(!f.m){f.m=new THREE.Mesh(GEO.sphL,new THREE.MeshBasicMaterial({color:0xe4f6ff,transparent:true,opacity:.85}));f.m.scale.setScalar(.32);scene.add(f.m)}f.vy-=12*dt;f.x+=f.vx*dt;f.y+=f.vy*dt;f.z+=f.vz*dt;f.m.position.set(f.x,f.y,f.z);if(f.y<terrain(f.x,f.z)||f.t>2){if(f.onHit)f.onHit(f);scene.remove(f.m);FX.splice(i,1)}}
   else if(f.type==='dust'){if(!f.m){f.m=new THREE.Mesh(GEO.sphL,new THREE.MeshStandardMaterial({color:C('#d8b880'),transparent:true,opacity:.7}));f.m.position.set(f.x,f.y,f.z);scene.add(f.m)}f.m.position.y+=dt*1.5;f.m.scale.setScalar(.3+f.t);f.m.material.opacity=Math.max(0,.7-f.t*.6);if(f.t>1.1){scene.remove(f.m);FX.splice(i,1)}}
   else if(f.type==='flash'){if(!f.m){f.m=new THREE.Mesh(GEO.sphL,new THREE.MeshBasicMaterial({color:0xffe08a}));f.m.position.set(f.x,f.y,f.z);f.m.scale.setScalar(.12);scene.add(f.m)}if(f.t>.06){scene.remove(f.m);FX.splice(i,1)}}}}
 function clearFX(){for(const f of FX)if(f.m)scene.remove(f.m);FX=[]}
@@ -563,12 +563,12 @@ function buildFront(){clearWorld();HS=95;TERR=terrain;
   bunker(34,-6,0);bunker(40,6,Math.PI/2);bunker(30,12,0);sandbags(36,0,6,0,2);sandbags(28,-14,5,Math.PI/2,2);
   for(let z=-14;z<=16;z+=3)box(24.5,z,1.2,1.6,.5,M('#b8a070',.95),{col:false});
   FLAG=flagpole(34,1,9);
-  for(let i=0;i<8;i++)dune(rnd(60,200),rnd(-200,200),rnd(20,40),rnd(3,7));
-  LADDERS=[];buildLights()}
+  for(let i=0;i<8;i++)dune(rnd(215,320),rnd(-200,200),rnd(20,40),rnd(3,7));
+  LADDERS=[];buildLights();decorFront()}
 function gstrip(x0,x1,tex){const t=tex.clone();t.needsUpdate=true;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set((x1-x0)/6,110);const g=new THREE.Mesh(new THREE.PlaneGeometry(x1-x0,660),new THREE.MeshStandardMaterial({map:t,roughness:.95}));g.rotation.x=-Math.PI/2;g.position.set((x0+x1)/2,0,0);g.receiveShadow=true;RGROUP.add(g);return g}
 function buildLights(){LIGHT=new THREE.SpotLight(0xfff4d0,0,90,.18,.5,1);LIGHT.position.set(18.5,BTOP+5,14);scene.add(LIGHT,LIGHT.target);LIGHT.visible=false;
   const cone=new THREE.Mesh(new THREE.ConeGeometry(4.5,40,24,1,true),new THREE.MeshBasicMaterial({color:0xfff6d0,transparent:true,opacity:.09,depthWrite:false,side:THREE.DoubleSide,fog:false}));cone.geometry.translate(0,-20,0);cone.geometry.rotateX(-Math.PI/2);cone.visible=false;scene.add(cone);LIGHT.cone=cone}
-function clearWorld(){while(RGROUP.children.length)RGROUP.remove(RGROUP.children[0]);COL=[];WATER=[];GRID.clear();SPOTS=[];ANIMS=[];clearFX();for(const e of ENEMIES)removeChar(e.c);ENEMIES=[];for(const f of FRIENDS)removeChar(f.c);FRIENDS=[];BOATS=[];if(LIGHT){scene.remove(LIGHT,LIGHT.target);if(LIGHT.cone)scene.remove(LIGHT.cone);LIGHT=null}EROS.fill(0);TERR=null;INST={}}
+function clearWorld(){while(RGROUP.children.length)RGROUP.remove(RGROUP.children[0]);COL=[];WATER=[];GRID.clear();SPOTS=[];ANIMS=[];clearFX();for(const e of ENEMIES)removeChar(e.c);ENEMIES=[];for(const f of FRIENDS)removeChar(f.c);FRIENDS=[];BOATS=[];if(LIGHT){scene.remove(LIGHT,LIGHT.target);if(LIGHT.cone)scene.remove(LIGHT.cone);LIGHT=null}EROS.fill(0);TERR=null;INST={};WAVES=[];CLOUDS=[]}
 
 /* ===================== SOLDIERS, CONTROL, COMBAT ===================== */
 const EGY={soldier:true,uni:'#b89d6c',helm:'#56623f',skin:2,hairC:'#1d140c',belt:'#5a4628',pack:'#7a6640'};
@@ -595,14 +595,14 @@ function enemyTick(e,dt){const c=e.c;if(e.state==='down'){e.t=(e.t||0)+dt;if(e.t
   if(e.state==='pow'){c.anim='surrender';c.armed=false;return}
   const tgt=CTRL,dx=tgt.x-c.x,dz=tgt.z-c.z,d=Math.hypot(dx,dz);
   if(e.state==='watch'){c.anim='idle';return}
-  const alive=ENEMIES.filter(x=>x.state==='guard').length;if(e.canSurrender&&alive<=2&&d<16){e.state='pow';say(c,pick(['خلاص… خلاص!','I surrender!']),2500);G_POW++;return}
+  const alive=ENEMIES.filter(x=>x.state==='guard').length;if(e.canSurrender&&alive<=2){e.state='pow';say(c,pick(['خلاص… خلاص!','I surrender!']),2500);G_POW++;return}
   if(d<55){c.yaw=angLerp(c.yaw,Math.atan2(dx,dz),Math.min(1,dt*5));c.anim='aim';e.cd-=dt;const hy=c.pts[1].y+.2,ty=tgt.pts[1].y;
     if(e.cd<=0){e.cd=rnd(1.3,2.6);if(losClear(c.x,hy,c.z,tgt.x,ty,tgt.z)){const miss=Math.random()>(.22+(tgt.spd<1?.12:0)-(d>30?.08:0));const ex=tgt.x+(miss?rnd(-1.5,1.5):0),ez=tgt.z+(miss?rnd(-1.5,1.5):0);tracer(c.x,hy,c.z,ex,ty,ez,'#ff8a5a');noise(.08,Math.min(.4,8/(d+4)),2500);if(!miss)hurt(8+ri(0,4));else if(inWater(ex,ez))splash(ex,ez)}}}
   else c.anim='idle'}
 let G_POW=0,DMGK=.6;
 function hurt(n){if(CTRL.state!=='act'||mode!=='play')return;CTRL.hp-=n*DMGK;hurtT=3;$('#vign').style.boxShadow=`inset 0 0 ${80+(100-CTRL.hp)}px rgba(200,0,0,${.25+(100-CTRL.hp)/200})`;G_shake=.4;tone(140,.12,'square',.08,80);if(CTRL.hp<=0)downed()}
 async function downed(){mode='busy';ragdoll(CTRL,rnd(-2,2),2,rnd(-2,2),99);CTRL.holdRag=true;banner('اتصابت…','الزمايل بيسحبوك لورا',2200);await sleep(2400);await fadeTo(1);CTRL.holdRag=false;CTRL.hp=100;if(CHECK)CHECK();await fadeTo(0);mode='play'}
-function shoot(){aInit();if(!COMBAT||mode!=='play'||CTRL.state!=='act'||fireCD>0)return;fireCD=.17;CTRL.aimT=.8;const r=CTRL.pts[8];FX.push({type:'flash',x:r.x+Math.sin(CTRL.yaw)*.6,y:r.y+.05,z:r.z+Math.cos(CTRL.yaw)*.6,t:0});noise(.09,.35,3000);G_shake=Math.max(G_shake,.08);
+function shoot(){aInit();if(WEAP!=='rifle'){if(COMBAT)fireMissile();return}if(!COMBAT||mode!=='play'||CTRL.state!=='act'||fireCD>0)return;fireCD=.17;CTRL.aimT=.8;const r=CTRL.pts[8];FX.push({type:'flash',x:r.x+Math.sin(CTRL.yaw)*.6,y:r.y+.05,z:r.z+Math.cos(CTRL.yaw)*.6,t:0});noise(.09,.35,3000);G_shake=Math.max(G_shake,.08);
   cam.getWorldDirection(v3a);const o=cam.position;let best=null,bd=.075;for(const e of ENEMIES){if(e.state!=='guard'||e.c.state!=='act')continue;const p=e.c.pts[1];const dx=p.x-o.x,dy=p.y-o.y,dz=p.z-o.z,L=Math.hypot(dx,dy,dz);if(L>80)continue;const ang=Math.acos(clamp((dx*v3a.x+dy*v3a.y+dz*v3a.z)/L,-1,1));if(ang<bd+.6/L){bd=ang;best=e}}
   const ty=best?best.c.pts[1].y:o.y+v3a.y*40,tx=best?best.c.x:o.x+v3a.x*40,tz=best?best.c.z:o.z+v3a.z*40;tracer(r.x,r.y,r.z,tx,ty,tz);
   if(best&&losClear(r.x,r.y,r.z,tx,ty,tz)&&Math.random()<.85){best.hp--;const f=Math.sin(CTRL.yaw),g=Math.cos(CTRL.yaw);if(best.hp<=0){best.state='down';ragdoll(best.c,f*3,2,g*3,99);best.c.holdRag=true;best.c.armed=false;onEnemyDown(best)}else{best.c.emo='surrender';best.c.emoT=.3}}}
@@ -640,7 +640,7 @@ const camPos=new THREE.Vector3(0,5,10),camLook=new THREE.Vector3();let drawFP=fa
 function updateCam(dt){if(camOverride){camOverride(dt);return}let tx,ty,tz;const c=CTRL;if(c.seat){tx=c.seat.x;ty=1.6;tz=c.seat.z}else{const p=c.pts[1];tx=p.x;ty=p.y+.35;tz=p.z}
   const shk=G_shake>0?(Math.random()-.5)*G_shake*.35:0;G_shake=Math.max(0,G_shake-dt*2);
   if(SET.cam==='first'&&c.state==='act'&&!c.seat){const h=c.pts[2];cam.position.set(h.x+Math.sin(c.yaw)*.15,h.y+.06,h.z+Math.cos(c.yaw)*.15);const cp=Math.cos(camPitch);camLook.set(cam.position.x+Math.sin(camYaw)*cp,cam.position.y-Math.sin(camPitch),cam.position.z+Math.cos(camYaw)*cp);cam.lookAt(camLook);drawFP=true}
-  else{drawFP=false;const d=SET.dist*(c.seat?1.7:1)*(COMBAT?.85:1);const cp=Math.cos(camPitch),sp=Math.sin(camPitch);const side=COMBAT?.75:0;const rx=-Math.cos(camYaw),rz=Math.sin(camYaw);let x=tx-Math.sin(camYaw)*d*cp-rx*side,y=ty+d*sp+.3,z=tz-Math.cos(camYaw)*d*cp-rz*side;y=Math.max(y,groundAt(x,z,y+2)+.5,WY+.3);camPos.lerp(new THREE.Vector3(x,y,z),Math.min(1,dt*10));cam.position.copy(camPos);cam.position.x+=shk;cam.position.y+=shk;camLook.set(tx-rx*side,ty,tz-rz*side);cam.lookAt(camLook)}
+  else{drawFP=false;const d=SET.dist*(c.seat?1.7:1)*(COMBAT?.85:1);const cp=Math.cos(camPitch),sp=Math.sin(camPitch);const side=COMBAT?.75:0;const rx=-Math.cos(camYaw),rz=Math.sin(camYaw);let x=tx-Math.sin(camYaw)*d*cp-rx*side,y=ty+d*sp+.3,z=tz-Math.cos(camYaw)*d*cp-rz*side;y=Math.max(y,groundAt(x,z,y+2)+.5,WY+.3);camPos.lerp(new THREE.Vector3(x,y,z),Math.min(1,dt*10));cam.position.copy(camPos);cam.position.x+=shk;cam.position.y+=shk;if(COMBAT)camLook.set(cam.position.x+Math.sin(camYaw)*cp*20,cam.position.y-sp*20,cam.position.z+Math.cos(camYaw)*cp*20);else camLook.set(tx-rx*side,ty,tz-rz*side);cam.lookAt(camLook)}
   const sd=skyU.sunDir.value;sun.position.set(tx+sd.x*90,ty+Math.max(.2,sd.y)*90,tz+sd.z*90);sun.target.position.set(tx,0,tz);sky.position.copy(cam.position)}
 function toggleCam(){SET.cam=SET.cam==='first'?'third':'first';camPitch=SET.cam==='first'?0:.3;toast(SET.cam==='first'?'بعينك':'من ورا',1000);saveAll()}
 /* ---------- bubbles ---------- */
@@ -657,7 +657,7 @@ async function fadeTo(v,ms=500){let f=$('#fade');if(!f){f=document.createElement
 
 /* ===================== CINEMATIC SLIDES ===================== */
 let RUN=0,FAIL=false;const ABORT={abort:1},RETRY={retry:1};
-function until(fn,tok){return new Promise((res,rej)=>{(function f(){if(tok!==RUN)return rej(ABORT);if(FAIL){FAIL=false;return rej(RETRY)}let ok=false;try{ok=fn()}catch(e){return rej(e)}if(ok)return res();requestAnimationFrame(f)})()})}
+function until(fn,tok){return new Promise((res,rej)=>{(function f(){if(tok!==RUN)return rej(ABORT);if(SKIPF){SKIPF=false;return res()}if(FAIL){FAIL=false;return rej(RETRY)}let ok=false;try{ok=fn()}catch(e){return rej(e)}if(ok)return res();requestAnimationFrame(f)})()})}
 function wait(ms,tok){const t=performance.now();return until(()=>performance.now()-t>=ms,tok)}
 const strip=t=>t.replace(/<[^>]+>/g,'');
 async function cine(list,tok){const prev=mode;mode='busy';const el=$('#cine'),cv=$('#ccv'),x=cv.getContext('2d');el.hidden=false;let skip=false,next=false;
@@ -788,12 +788,12 @@ let susFail=true;function addSus(n,msg){if(!susOn)return;SUS=clamp(SUS+n,0,100);
 function showSus(on,fail=true){susOn=on;susFail=fail;SUS=0;$('#susW').hidden=!on}
 function setCombat(on){COMBAT=on;$('#bFire').hidden=!on;$('#cross').hidden=!on;$('#hpW').hidden=!on;if(on){CTRL.armed=MATE.armed=true}}
 function taskHtml(title){if(!TASKS)return title;return `<b>${title}</b><br>`+TASKS.map(t=>`${t.done?'✔':'○'} ${t.l}`).join(' · ')}
-function resetChapter(){camOverride=null;setCombat(false);showSus(false);setObj('');setTarget(null);ACTF=null;STEPFN=null;TASKS=null;actHeld=false;fireHeld=false;canSwitch=true;
+function resetChapter(){extraReset();camOverride=null;setCombat(false);showSus(false);setObj('');setTarget(null);ACTF=null;STEPFN=null;TASKS=null;actHeld=false;fireHeld=false;canSwitch=true;
   if(PILOT){PILOT=null}$('#bBomb').hidden=true;$('#rowL').hidden=$('#rowR').hidden=true;$('#joy').hidden=false;$('#pad').hidden=false;JETS.forEach(j=>scene.remove(j.g));JETS=[];
   if(CARRY){scene.remove(CARRY);CARRY=null}for(const h of[HASSAN,ABDO]){h.lock=false;h.carry=false;h.task=null;h.hidden=false;h.hp=100;h.armed=false}
   if(LIGHT){LIGHT.visible=false;LIGHT.cone.visible=false}$('#vign').style.boxShadow='none'}
 async function playChapter(i){RUN++;const tok=RUN;CH=i;resetChapter();$('#chap').textContent=`${ar(i+1)}. ${CHAPS[i].n}`;
-  try{await fadeTo(1,300);await CHF[i](tok);if(tok!==RUN)return;G.unl=Math.max(G.unl,i+2);saveAll();
+  try{await fadeTo(1,300);await CHF[i](tok);if(tok!==RUN)return;G.unl=Math.max(G.unl,i+2);saveAll();await fadeTo(0,200);await lesson(i);if(tok!==RUN)return;
     if(i+1<CHAPS.length&&!CHAPS[i+1].soon)playChapter(i+1);else{mode='busy';await fadeTo(0,200);openChapters(true)}}
   catch(e){if(e===ABORT)return;console.error(e)}}
 async function phase(fn,tok){for(;;){try{FAIL=false;await fn(tok);return}catch(e){if(e!==RETRY)throw e;mode='busy';banner('العدو شك!','الخداع لازم يفضل محكم… نعيد تاني',2600);SFX.bad();await wait(2600,tok);await fadeTo(1);mode='play'}}}
@@ -839,7 +839,7 @@ async function dayPhase(d,tok){const D=DAYS[d];for(const e of ENEMIES)removeChar
   const sp=SPOTS.find(s=>s.id==='iftar');if(sp)sp.label='اتغدى مع الكتيبة';
   const obs=spawnEnemy(OBS.x,OBS.z);obs.state='watch';obs.c.y=BTOP+4.3;obs.c.yaw=-Math.PI/2;
   TASKS=D.tasks.map(([id,l])=>({id,l,done:false}));TASKS.title=D.title;setObj(taskHtml(D.title));showSus(true);SUS=10;
-  await fadeTo(0);mode='play';banner(D.date,D.title,2600);if(d===0){await wait(800,tok);await talk(HASSAN,ABDO,['النهارده ولا كأننا في حرب يا عبده','فاهم… ناكل ونهزر ونعوم، وعينهم علينا','بالظبط. وبالليل الشغل بجد'])}
+  await fadeTo(0);mode='play';banner(D.date,D.title,2600);if(d===0){talk(HASSAN,ABDO,['النهارده ولا كأننا في حرب يا عبده','فاهم… ناكل ونهزر ونعوم، وعينهم علينا','بالظبط. وبالليل الشغل بجد'])}
   ACTF=()=>{for(const t of TASKS){if(t.done||t.busy)continue;if(t.id==='ball'){if(Math.hypot(CTRL.x+36,CTRL.z+26)<5)return{l:'العب كورة',f:()=>doTask(t,tok)};continue}const s=nearSpot(SPOTFOR[t.id]);if(s)return{l:t.l,f:()=>doTask(t,tok)}}return null};
   STEPFN=dt=>{ST=Math.min(17,ST+dt*.02);const t=TASKS.find(t=>!t.done&&!t.busy);if(t&&!BALLFN){const s=t.id==='ball'?{x:-36,z:-26}:SPOTS.find(s=>s.id===SPOTFOR[t.id]);setTarget(s?{x:s.x,z:s.z}:null)}
     if(CTRL.anim==='run'&&CTRL.x>-24)addSus(dt*14,'اهدى! متجريش جنب القنال… إحنا المفروض في إجازة');if(Math.hypot(CTRL.x-PIT.x,CTRL.z-PIT.z)<5)addSus(dt*30,'متقربش من المخبأ بالنهار!');addSus(-dt*1.2);setObj(taskHtml(D.title))};
@@ -877,15 +877,15 @@ const CHF=[
  async tok=>{await cine(SL.cross,tok);await crossing(tok)},
  async tok=>{await cine(SL.barlev,tok);await barlev(tok);await cine(SL.win,tok)}];
 /* ---------- JETS (cosmetic) ---------- */
-function makeJet(){const g=new THREE.Group();const m=M('#7a8088',.45,.5),dk=M('#3a4048',.5,.4);
+function makeJet(en){const g=new THREE.Group();const m=M(en?'#8a8a76':'#7a8088',.45,.5),dk=M('#3a4048',.5,.4);
   const f=new THREE.Mesh(GEO.cyl,m);f.scale.set(.55,7,.55);f.rotation.z=Math.PI/2;g.add(f);const n=new THREE.Mesh(new THREE.ConeGeometry(.55,2,12),m);n.rotation.z=-Math.PI/2;n.position.x=4.5;g.add(n);
   const wg=new THREE.Shape();wg.moveTo(1.5,0);wg.lineTo(-2.6,3.4);wg.lineTo(-2.6,-3.4);wg.closePath();const w=new THREE.Mesh(new THREE.ShapeGeometry(wg),new THREE.MeshStandardMaterial({color:C('#6a7078'),side:THREE.DoubleSide,roughness:.5,metalness:.4}));w.rotation.x=-Math.PI/2;g.add(w);
   const tf=new THREE.Shape();tf.moveTo(-1.6,0);tf.lineTo(-3.4,2);tf.lineTo(-3.5,0);tf.closePath();const t=new THREE.Mesh(new THREE.ShapeGeometry(tf),new THREE.MeshStandardMaterial({color:C('#6a7078'),side:THREE.DoubleSide}));g.add(t);
   const cp=new THREE.Mesh(GEO.sph,M('#2a4a6a',.1,.6));cp.scale.set(1,.4,.35);cp.position.set(2.2,.45,0);g.add(cp);
-  for(const s of[-1,1]){const r=new THREE.Mesh(new THREE.CircleGeometry(.6,16),new THREE.MeshBasicMaterial({map:roundel(),side:THREE.DoubleSide}));r.rotation.x=-Math.PI/2;r.position.set(-1.2,.02,s*1.8);g.add(r)}
+  if(!en)for(const s of[-1,1]){const r=new THREE.Mesh(new THREE.CircleGeometry(.6,16),new THREE.MeshBasicMaterial({map:roundel(),side:THREE.DoubleSide}));r.rotation.x=-Math.PI/2;r.position.set(-1.2,.02,s*1.8);g.add(r)}
   const ex=new THREE.Mesh(GEO.sphL,new THREE.MeshBasicMaterial({color:0xffa040}));ex.scale.set(.3,.3,.3);ex.position.x=-3.6;g.add(ex);g.traverse(o=>{if(o.isMesh)o.castShadow=true});scene.add(g);return g}
 let _rnd=null;function roundel(){if(_rnd)return _rnd;_rnd=ctex(64,64,x=>{x.fillStyle='#ce1126';x.beginPath();x.arc(32,32,31,0,7);x.fill();x.fillStyle='#fff';x.beginPath();x.arc(32,32,21,0,7);x.fill();x.fillStyle='#111';x.beginPath();x.arc(32,32,11,0,7);x.fill()});return _rnd}
-function jetFly(x,y,z,vx,vz){const g=makeJet();g.position.set(x,y,z);g.rotation.y=Math.atan2(-vz,vx);JETS.push({g,vx,vz,t:0});SFX.whoosh();tone(110,1.6,'sawtooth',.04,60)}
+function jetFly(x,y,z,vx,vz,en){const g=makeJet(en);g.position.set(x,y,z);g.rotation.y=Math.atan2(-vz,vx);JETS.push({g,vx,vz,t:0});SFX.whoosh();tone(110,1.6,'sawtooth',.04,60)}
 function jetsTick(dt){for(let i=JETS.length-1;i>=0;i--){const j=JETS[i];j.t+=dt;j.g.position.x+=j.vx*dt;j.g.position.z+=j.vz*dt;if(j.t>14){scene.remove(j.g);JETS.splice(i,1)}}}
 /* ---------- ground view of the strike ---------- */
 async function groundStrike(tok){mode='busy';setClock(null,14);placeHero(HASSAN,-16.5,-1,Math.PI/2);placeHero(ABDO,-16.5,1.5,Math.PI/2);HASSAN.armed=ABDO.armed=true;await fadeTo(0);
@@ -909,7 +909,7 @@ async function pilotMission(tok){mode='busy';await fadeTo(1,300);clearWorld();HS
   for(const h of[HASSAN,ABDO])h.hidden=true;
   const P={x:-260,y:22,z:0,yaw:0,roll:0,sp:62,bombs:0,g:makeJet(),cd:0};PILOT=P;JETS=JETS.filter(j=>j.g!==P.g);
   const wing=[makeJet(),makeJet()];setClock(null,14);showSus(true,false);SUS=0;$('#susW span').textContent='الرادار';$('#bBomb').hidden=false;$('#bFire').hidden=true;$('#bCam').hidden=true;$('#bSwitch').hidden=true;$('#bRun').hidden=true;$('#bJump').hidden=true;
-  let left=3;const upd=()=>setObj(`<b>اضرب الأهداف:</b> ${TG.map(t=>(t.hit?'✔ ':'○ ')+t.n).join(' · ')}<br><span style="opacity:.85">خليك واطي! ودوس القنبلة فوق الهدف</span>`);upd();
+  let left=3;const upd=()=>setObj(`<b>اضرب الأهداف:</b> ${TG.map(t=>(t.hit?'✔ ':'○ ')+t.n).join(' · ')}<br><span style="opacity:.85">خليك واطي! ولما الدايرة الحمرا تبقى على الهدف دوس القنبلة</span>`);upd();
   P.drop=()=>{if(P.cd>0||mode!=='play')return;P.cd=.6;const b={x:P.x,y:P.y-1,z:P.z,vx:Math.cos(P.yaw)*P.sp,vz:-Math.sin(P.yaw)*P.sp,vy:0,m:new THREE.Mesh(GEO.cyl,M('#2a2a2a',.5,.4))};b.m.scale.set(.25,1.4,.25);b.m.rotation.z=Math.PI/2;scene.add(b.m);(P.bl||(P.bl=[])).push(b);SFX.whoosh()};
   camOverride=dt=>{const fx=Math.cos(P.yaw),fz=-Math.sin(P.yaw);const tx=P.x-fx*16,tz=P.z-fz*16;camPos.lerp(new THREE.Vector3(tx,P.y+4.5,tz),Math.min(1,dt*6));cam.position.copy(camPos);camLook.set(P.x+fx*20,P.y+.5,P.z+fz*20);cam.lookAt(camLook);
     const sd=skyU.sunDir.value;sun.position.set(P.x+sd.x*90,Math.max(.2,sd.y)*90,P.z+sd.z*90);sun.target.position.set(P.x,0,P.z);sky.position.copy(cam.position)};
@@ -917,15 +917,15 @@ async function pilotMission(tok){mode='busy';await fadeTo(1,300);clearWorld();HS
   STEPFN=dt=>{const iv=inputVec();P.cd-=dt;P.yaw-=iv.x*1.05*dt;P.roll=lerp(P.roll,iv.x*.8,dt*4);P.y=clamp(P.y-iv.y*22*dt,6,120);const fx=Math.cos(P.yaw),fz=-Math.sin(P.yaw);P.x+=fx*P.sp*dt;P.z+=fz*P.sp*dt;
     if(Math.abs(P.z)>700){P.yaw=angLerp(P.yaw,P.z>0?-Math.PI/2*-1:Math.PI/2*-1,dt)}
     P.g.position.set(P.x,P.y,P.z);P.g.rotation.set(0,0,0);P.g.rotateY(P.yaw);P.g.rotateX(P.roll);
-    wing.forEach((w,i)=>{const s=i?1:-1;w.position.set(P.x-fx*14+fz*s*12,P.y+2,P.z-fz*14-fx*s*12);w.rotation.copy(P.g.rotation)});
-    engine(true,P.sp/6);if(SUS>=100){SUS=0;P.x=-60;P.y=20;P.yaw=0;banner('الرادار شافك!','ارجع وادخل تاني… واطي',2200);SFX.bad()}if(P.x>60&&P.y>48)addSus(dt*30,'عالي قوي! الرادار هيشوفك… انزل واطي');else addSus(-dt*6);
+    wing.forEach((w,i)=>{const s=i?1:-1;w.position.set(P.x-fx*3+fz*s*20,P.y+4,P.z-fz*3-fx*s*20);w.rotation.copy(P.g.rotation)});
+    engine(true,P.sp/6);{const tf=Math.sqrt(2*P.y/20);if(!AIM){AIM=new THREE.Mesh(new THREE.RingGeometry(5,6.5,32),new THREE.MeshBasicMaterial({color:0xff4020,transparent:true,opacity:.85,side:THREE.DoubleSide,depthWrite:false,fog:false}));AIM.rotation.x=-Math.PI/2;scene.add(AIM)}AIM.visible=true;AIM.position.set(P.x+Math.cos(P.yaw)*P.sp*tf*.92,.4,P.z-Math.sin(P.yaw)*P.sp*tf*.92)}if(SUS>=100){SUS=0;P.x=-60;P.y=20;P.yaw=0;banner('الرادار شافك!','ارجع وادخل تاني… واطي',2200);SFX.bad()}if(P.x>60&&P.y>48)addSus(dt*30,'عالي قوي! الرادار هيشوفك… انزل واطي');else addSus(-dt*6);
     if(P.x>60&&Math.random()<dt*1.5)explode(P.x+rnd(30,90)*fx+rnd(-20,20),P.y+rnd(6,24),P.z+rnd(30,90)*fz+rnd(-20,20),1.2,false);
     for(let i=(P.bl||[]).length-1;i>=0;i--){const b=P.bl[i];b.vy-=20*dt;b.x+=b.vx*dt*.92;b.z+=b.vz*dt*.92;b.y+=b.vy*dt;b.m.position.set(b.x,b.y,b.z);if(b.y<=.3){scene.remove(b.m);P.bl.splice(i,1);explode(b.x,1,b.z,4);G_shake=.3;
-        for(const t of TG){if(!t.hit&&Math.hypot(t.x-b.x,t.z-b.z)<(t.n==='المطار'?40:16)){t.hit=true;left--;t.g.traverse(o=>{if(o.isMesh&&o.material&&o.material.color){o.material=o.material.clone();o.material.color.multiplyScalar(.25)}});for(let k=0;k<4;k++)setTimeout(()=>explode(t.x+rnd(-8,8),3,t.z+rnd(-8,8),5),k*300);banner('إصابة مباشرة!',t.n,1800);SFX.win();upd()}}}}
+        for(const t of TG){if(!t.hit&&Math.hypot(t.x-b.x,t.z-b.z)<(t.n==='المطار'?40:24)){t.hit=true;left--;t.g.traverse(o=>{if(o.isMesh&&o.material&&o.material.color){o.material=o.material.clone();o.material.color.multiplyScalar(.25)}});for(let k=0;k<4;k++)setTimeout(()=>explode(t.x+rnd(-8,8),3,t.z+rnd(-8,8),5),k*300);banner('إصابة مباشرة!',t.n,1800);SFX.win();upd()}}}}
     const rd=TG[1];if(!rd.hit&&rd.g.userData.dish)rd.g.userData.dish.rotation.z+=dt;
     if(!phaseHome){const nt=TG.find(t=>!t.hit);if(nt)setTarget({x:nt.x,z:nt.z,y:0});else{phaseHome=true;setTarget({x:-150,z:0,y:0});setObj('<b>المهمة تمت! ارجع على القاعدة غرب القنال</b>');toast('ارجع غرب',2000)}}else if(P.x<-80)done=true};
   await fadeTo(0);mode='play';banner('اطير!','العصا: يمين وشمال · لفوق ولتحت',2400);
-  try{await until(()=>done,tok)}finally{engine(false,0);STEPFN=null;setTarget(null);P.g&&scene.remove(P.g);wing.forEach(w=>scene.remove(w));(P.bl||[]).forEach(b=>scene.remove(b.m));PILOT=null;camOverride=null;$('#susW span').textContent='شك العدو';for(const id of['bCam','bSwitch','bRun','bJump'])$('#'+id).hidden=false;$('#bBomb').hidden=true;for(const h of[HASSAN,ABDO])h.hidden=false;showSus(false)}
+  try{await until(()=>done,tok)}finally{if(AIM)AIM.visible=false;engine(false,0);STEPFN=null;setTarget(null);P.g&&scene.remove(P.g);wing.forEach(w=>scene.remove(w));(P.bl||[]).forEach(b=>scene.remove(b.m));PILOT=null;camOverride=null;$('#susW span').textContent='شك العدو';for(const id of['bCam','bSwitch','bRun','bJump'])$('#'+id).hidden=false;$('#bBomb').hidden=true;for(const h of[HASSAN,ABDO])h.hidden=false;showSus(false)}
   banner('الضربة نجحت!','المطارات والرادارات اتشلّت',2600);await wait(2600,tok);mode='busy';await fadeTo(1);buildFront();await fadeTo(0)}
 /* ---------- CROSSING ---------- */
 function seatIn(b,c,ox,oz){c.lock=true;c.seatB={b,ox,oz};c.anim='row'}
@@ -959,9 +959,10 @@ async function barlev(tok){buildFront();setClock('٦ أكتوبر ١٩٧٣',14.6
   // A: commando climbs
   CTRL=ABDO;MATE=HASSAN;updWho();canSwitch=false;placeHero(ABDO,12.8,-4,Math.PI/2);placeHero(HASSAN,12.8,-1.5,Math.PI/2);camYaw=Math.PI/2;camPitch=.15;ABDO.armed=HASSAN.armed=true;
   setObj('<b>عبده (صاعقة):</b> اطلع السلم لفوق الساتر');setTarget({x:18,z:-4,y:BTOP});await fadeTo(0);mode='play';await talk(ABDO,HASSAN,['أنا طالع الأول يا حسن','خلي بالك من نفسك يا عبده','متقلقش… أنا صاعقة']);
-  await until(()=>CTRL.y>BTOP-1&&CTRL.x>16.5,tok);setTarget(null);spawnAll();setCombat(true);let downs=0;onEnemyDown=()=>{downs++};
+  ACTF=()=>{const l=LADDERS.find(l=>Math.abs(CTRL.z-l.z)<1.6&&CTRL.x<15.5&&CTRL.x>10.5);return l&&!CTRL.lock?{l:'اطلع السلم',f:async()=>{CTRL.lock=true;CTRL.anim='climb';for(let k=0;k<=40;k++){CTRL.x=lerp(12.6,17.4,k/40);CTRL.z=l.z;CTRL.y=terrain(CTRL.x,l.z)+.05;CTRL.yaw=Math.PI/2;CTRL.anim='climb';await sleep(60)}CTRL.lock=false}}:null};
+  await until(()=>CTRL.y>BTOP-1&&CTRL.x>16.5,tok);ACTF=null;setTarget(null);if(CTRL.x<16.5){placeHero(CTRL,17.6,-4,Math.PI/2)}spawnAll();setCombat(true);let downs=0;onEnemyDown=()=>{downs++};
   CHECK=()=>{placeHero(CTRL,17.6,-4,Math.PI/2);placeHero(MATE,17.6,-2,Math.PI/2)};banner('النقطة الحصينة!','اضرب نار — وأي حد يستسلم يتعامل كأسير',2600);
-  STEPFN=dt=>{const g=ENEMIES.filter(e=>e.state==='guard').length;setObj(`<b>اقتحم النقطة الحصينة</b> · فاضل <b>${ar(g)}</b>`);$('#hp').style.width=Math.max(0,CTRL.hp)+'%';if(fireHeld)shoot();if(CTRL.hp<100&&hurtT<=0)CTRL.hp=Math.min(100,CTRL.hp+dt*3)};
+  STEPFN=dt=>{if((STEPFN.ct=(STEPFN.ct||0)+dt)>75)for(const e of ENEMIES)if(e.state==='guard')e.state='pow';const g=ENEMIES.filter(e=>e.state==='guard').length;setObj(`<b>اقتحم النقطة الحصينة</b> · فاضل <b>${ar(g)}</b>`);$('#hp').style.width=Math.max(0,CTRL.hp)+'%';if(fireHeld)shoot();if(CTRL.hp<100&&hurtT<=0)CTRL.hp=Math.min(100,CTRL.hp+dt*3)};
   await until(()=>ENEMIES.every(e=>e.state!=='guard'),tok);STEPFN=null;setCombat(false);SFX.win();
   const pows=ENEMIES.filter(e=>e.state==='pow');banner('النقطة سقطت!',pows.length?`${ar(pows.length)} أسرى`:'',2400);if(pows.length)say(ABDO,'الأسرى ليهم حقهم… محدش يلمسهم',2600);await wait(2600,tok);
   // B: engineer opens the sand wall with water
@@ -970,7 +971,7 @@ async function barlev(tok){buildFront();setClock('٦ أكتوبر ١٩٧٣',14.6
   const gapP=()=>{let s=0;for(let z=5;z<=13;z++)s+=eroAt(z);return s/9};let sprayT=0,bermT=0;
   ACTF=()=>({l:'اضرب مية',hold:true});HASSAN.lock=true;
   STEPFN=dt=>{const c=HASSAN;c.x=8.2;c.z=9;c.y=WY+.25;c.yaw=camYaw;c.anim='pump';bermT-=dt;
-    if(actHeld){sprayT+=dt;cam.getWorldDirection(v3a);for(let i=0;i<3;i++){const sp=24+rnd(-1,1);FX.push({type:'water',x:9.3,y:WY+1.1,z:9,vx:v3a.x*sp+rnd(-.4,.4),vy:v3a.y*sp+5+rnd(-.4,.4),vz:v3a.z*sp+rnd(-.4,.4)+Math.sin(TIME*1.6)*3.2,t:0,onHit:f=>{if(f.x>BX0-.5&&f.x<24){for(let dz=-3;dz<=3;dz++){const ii=Math.round(f.z+150)+dz;if(ii>=0&&ii<=300)EROS[ii]=Math.min(1,EROS[ii]+.0016*Math.exp(-dz*dz/4))}bermDirty=true;if(Math.random()<.05)FX.push({type:'dust',x:f.x,y:f.y+.3,z:f.z,t:0})}}})}if(Math.random()<dt*8)noise(.1,.08,1800,.6,'bandpass')}
+    if(actHeld){sprayT+=dt;cam.getWorldDirection(v3a);for(let i=0;i<3;i++){const sp=24+rnd(-1,1);FX.push({type:'water',x:9.3,y:WY+1.1,z:9,vx:v3a.x*sp+rnd(-.4,.4),vy:v3a.y*sp+5+rnd(-.4,.4),vz:v3a.z*sp+rnd(-.4,.4)+Math.sin(TIME*1.6)*3.2,t:0,onHit:f=>{if(f.x>BX0-.5&&f.x<24){for(let dz=-3;dz<=3;dz++){const ii=Math.round(f.z+150)+dz;if(ii>=0&&ii<=300)EROS[ii]=Math.min(1,EROS[ii]+.0016*Math.min(3,dt*60)*Math.exp(-dz*dz/4))}bermDirty=true;if(Math.random()<.05)FX.push({type:'dust',x:f.x,y:f.y+.3,z:f.z,t:0})}}})}if(Math.random()<dt*8)noise(.1,.08,1800,.6,'bandpass')}
     if(bermDirty&&bermT<=0){updBerm();bermT=.18}setObj(`<b>افتح الساتر بالمية</b> · <b>${ar(Math.min(100,Math.round(gapP()/.8*100)))}٪</b>`)};
   await until(()=>gapP()>=.8,tok);STEPFN=null;ACTF=null;actHeld=false;HASSAN.lock=false;ABDO.lock=false;updBerm();SFX.win();banner('الساتر اتفتح!','الطريق مفتوح للعربيات والدبابات',2600);
   say(ABDO,'عاش يا باشمهندس!',2200);await wait(2600,tok);
@@ -1001,7 +1002,7 @@ function tick(dt){TIME+=dt;susMsgT-=dt;fireCD-=dt;waterU.time.value=TIME;if(hurt
   updateSky(ST);waterU.sunDir.value.copy(skyU.sunDir.value);waterU.skyc.value.copy(skyU.hor.value);waterU.fogc.value.copy(scene.fog.color);waterU.fogf.value=scene.fog.far;waterU.fogn.value=scene.fog.near;
   if(mode==='play'){if(!PILOT){updatePlayer(dt);mateTick(dt)}for(const f of FRIENDS)friendTick(f,dt);for(const e of ENEMIES)enemyTick(e,dt);if(STEPFN)STEPFN(dt);if(BALLFN)BALLFN(dt);if(fireHeld&&COMBAT)shoot();carryTick()}
   if(mode!=='panel'){acc+=dt;let st=0;while(acc>=STEP&&st<3){for(const c of CHARS)if(!c.hidden)simChar(c,STEP);acc-=STEP;st++}if(st>=3)acc=0}
-  fxTick(dt);jetsTick(dt);
+  fxTick(dt);jetsTick(dt);decoTick(dt);
   for(const c of CHARS)drawChar(c,c===CTRL&&drawFP);
   updateCam(dt);updBubbles(dt);updTarget();updHud(dt);updAct(dt);
   if(SET.fps){fpsN++;fpsT+=dt;if(fpsT>.5){$('#fps').textContent=Math.round(fpsN/fpsT)+' FPS';fpsN=0;fpsT=0}}
@@ -1015,7 +1016,7 @@ $('#bRun').onclick=()=>{runToggle=!runToggle;$('#bRun').classList.toggle('on',ru
 $('#bChaps').onclick=()=>{aInit();if(mode==='busy')return;openChapters()};$('#bHeroes').onclick=()=>{aInit();if(mode==='busy')return;openHeroes()};$('#bMenu').onclick=()=>{aInit();if(mode==='busy')return;openSettings()};
 /* ---------- panels ---------- */
 async function openChapters(end){let chosen=false;
-  await panel(`<button class="x" aria-label="اقفل">✕</button><h2>${end?'خلص الجزء الأول!':'الفصول'}</h2>${end?'<p>العلم اترفع على أرض سينا… والحكاية مكمّلة في الجزء الجاي: الكباري، صد الدبابات، الصاعقة، والثغرة والسويس.</p>':''}
+  await panel(`<button class="x" aria-label="اقفل">✕</button><h2>${end?'خلصت الحكاية كلها!':'الفصول'}</h2>${end?'<p>من الخداع للعبور… للكباري والدبابات والصاعقة والسويس… لحد ما سينا رجعت. تقدر تعيد أي فصل، وتفتح «موسوعة أكتوبر» من زرار النجمة فوق.</p>':''}
    <div class="grid">${CHAPS.map((c,i)=>{const lk=c.soon||i>=G.unl;return`<button class="tile ${lk?'lock':''} ${i===CH&&!end?'on':''}" data-i="${i}" ${lk?'disabled':''}><b>${ar(i+1)}. ${c.n}</b><span>${c.soon?'قريبًا':i>=G.unl?'مقفول — كمّل الحكاية':c.s}</span></button>`}).join('')}</div>`,
    (c,close)=>{c.querySelectorAll('.tile[data-i]').forEach(b=>b.onclick=()=>{aInit();SFX.click();chosen=true;close();playChapter(+b.dataset.i)})});
   if(!chosen&&mode==='busy'){mode='play';await fadeTo(0)}}
@@ -1046,8 +1047,8 @@ function openSettings(){const seg=(k,opts)=>`<div class="seg" data-k="${k}">${op
    <label>الصوت</label><input type="range" min="0" max="1" step=".05" data-r="sfx" value="${SET.sfx}">
    <label>حجم الزراير</label><input type="range" min="48" max="76" step="2" data-r="bs" value="${SET.bs}">
    <label>عداد الفريمات</label>${seg('fps',[[true,'اظهر'],[false,'اخفي']])}</div>
-   <div class="row" style="margin-top:14px"><button class="btn red" id="reset">ابدأ الحكاية من الأول</button></div>`,(c,close)=>{
-    c.querySelectorAll('.seg').forEach(s=>s.querySelectorAll('button').forEach(b=>b.onclick=()=>{SFX.click();let v=b.dataset.v;if(v==='true')v=true;else if(v==='false')v=false;SET[s.dataset.k]=v;s.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));if(s.dataset.k==='cam')camPitch=v==='first'?0:.3;applyQuality();saveAll()}));
+   <div class="row" style="margin-top:14px"><button class="btn pri" id="skp">تخطّي المهمة الحالية</button><button class="btn" id="rst">أعد الفصل</button><button class="btn red" id="reset">ابدأ الحكاية من الأول</button></div>`,(c,close)=>{
+    c.querySelector('#skp').onclick=()=>{close();skipTask()};c.querySelector('#rst').onclick=()=>{close();if(CH>=0)playChapter(CH)};c.querySelectorAll('.seg').forEach(s=>s.querySelectorAll('button').forEach(b=>b.onclick=()=>{SFX.click();let v=b.dataset.v;if(v==='true')v=true;else if(v==='false')v=false;SET[s.dataset.k]=v;s.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));if(s.dataset.k==='cam')camPitch=v==='first'?0:.3;applyQuality();saveAll()}));
     c.querySelectorAll('input[data-r]').forEach(r=>r.oninput=()=>{SET[r.dataset.r]=+r.value;if(r.dataset.r==='bs')applyQuality();saveAll()});
     c.querySelector('#reset').onclick=()=>{if(!confirm('هتمسح التقدم وتبدأ من البداية؟'))return;G.unl=1;saveAll();close();playChapter(0)}})}
 /* ---------- boot ---------- */
@@ -1059,6 +1060,237 @@ async function boot(){const had=loadAll();buildTextures();applyQuality();scene.f
     <div class="row" style="justify-content:center"><button class="btn pri" id="go">${cont?'كمّل الحكاية':'ابدأ الحكاية'}</button>${cont?'<button class="btn" id="ch">الفصول</button>':''}</div>`,(c,close)=>{c.querySelector('#go').onclick=()=>{aInit();sel=1;close()};const ch=c.querySelector('#ch');if(ch)ch.onclick=()=>{aInit();sel=2;close()}});
   if(sel===2){mode='busy';openChapters();return}const i=Math.min(G.unl-1,CHAPS.length-1);if(CHAPS[i].soon){openChapters(true);return}playChapter(i)}
 window.__oboor={get mode(){return mode},get CH(){return CH},get ST(){return ST},get SUS(){return SUS},get CTRL(){return CTRL},get HASSAN(){return HASSAN},get ABDO(){return ABDO},get ENEMIES(){return ENEMIES},get FRIENDS(){return FRIENDS},get TASKS(){return TASKS},get PILOT(){return PILOT},get BOATS(){return BOATS},get FLAG(){return FLAG},get G(){return G},EROS,playChapter,set actHeld(v){actHeld=v},get ACT(){return ACTF&&ACTF()},pressAct,shoot,get RUN(){return RUN},set SUSV(v){SUS=v},gapP:()=>{let s=0;for(let z=5;z<=13;z++)s+=eroAt(z);return s/9},cam,setPos:(x,z)=>{placeHero(CTRL,x,z,CTRL.yaw)},get camYaw(){return camYaw},set camYaw(v){camYaw=v},set camPitch(v){camPitch=v}};
+
+/* ===================== MORE CHAPTERS, LESSONS, POLISH ===================== */
+let SKIPF=false,objStill=0,lastObjTxt='',WEAP='rifle',TANKS=[],MISS=[],EXTRA=[],WAVES=[],CLOUDS=[],boomL=null,boomT=0,mslCD=0,AIM=null;
+/* ---------- reset hooks ---------- */
+function extraReset(){WEAP='rifle';for(const t of TANKS)if(t.g.parent)t.g.parent.remove(t.g);TANKS=[];for(const m of MISS)scene.remove(m.m);MISS=[];
+  for(const c of EXTRA)removeChar(c);EXTRA=[];if(HASSAN){CTRL=HASSAN;MATE=ABDO;HASSAN.hidden=false;ABDO.hidden=false;ABDO.lock=false;updWho()}if(AIM){AIM.visible=false}$('#susW span').textContent='شك العدو'}
+/* ---------- polish: decor, waving flags, clouds, explosion light ---------- */
+function cloudTex(){return ctex(128,64,x=>{for(let i=0;i<14;i++){const g=x.createRadialGradient(20+i*7,32+Math.sin(i)*6,2,20+i*7,32+Math.sin(i)*6,20);g.addColorStop(0,'rgba(255,255,255,.55)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,128,64)}})}
+let _ctx=null,_patch=null;function addClouds(n=14){if(!_ctx)_ctx=cloudTex();for(let i=0;i<n;i++){const s=new THREE.Sprite(new THREE.SpriteMaterial({map:_ctx,transparent:true,depthWrite:false,fog:false,opacity:.8}));s.scale.set(rnd(40,90),rnd(14,24),1);s.position.set(rnd(-300,300),rnd(55,90),rnd(-300,300));RGROUP.add(s);CLOUDS.push(s)}}
+function wavingFlag(x,z,h=6){cyl(x,z,.06,h,M('#cfcfcf',.3,.6),{col:false});const fl=new THREE.Mesh(new THREE.PlaneGeometry(1.6,1.05,10,4),new THREE.MeshStandardMaterial({map:EGF(),side:THREE.DoubleSide,roughness:.7}));fl.position.set(x+.82,h-.6,z);fl.castShadow=true;RGROUP.add(fl);fl.userData.base=fl.geometry.attributes.position.array.slice();WAVES.push(fl);return fl}
+function decorFront(){CLOUDS=[];WAVES=[];addClouds();
+  for(let i=0;i<170;i++){const x=rnd(-90,-14),z=rnd(-90,90);if(Math.hypot(x+36,z+26)<9)continue;const s=rnd(.25,.6);inst('bush',GEO.sphL,M('#7d8a4a',.95),x,.04,z,s,s*rnd(.35,.6),s*rnd(.8,1.2),rnd(0,6))}
+  if(!_patch)_patch=ctex(128,128,x=>{const g=x.createRadialGradient(64,64,4,64,64,62);g.addColorStop(0,'rgba(120,90,50,.35)');g.addColorStop(1,'rgba(120,90,50,0)');x.fillStyle=g;x.fillRect(0,0,128,128)});
+  for(let i=0;i<40;i++){const side=i%2?rnd(-100,-14):rnd(28,140);const p=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({map:_patch,transparent:true,depthWrite:false}));p.rotation.x=-Math.PI/2;p.rotation.z=rnd(0,6);const s=rnd(6,18);p.scale.set(s,s*rnd(.5,1),1);p.position.set(side,.03,rnd(-110,110));RGROUP.add(p)}
+  for(let i=0;i<40;i++)inst('rock',GEO.sphL,M('#a8916a',.95),rnd(30,160),.1,rnd(-120,120),rnd(.3,1.2),rnd(.2,.6),rnd(.3,1.1),rnd(0,6));
+  for(let z=-60;z<=60;z+=3)inst('wire',GEO.cyl,M('#5a5a50',.6,.5),23,BTOP*.55,z,.05,1.4,.05,0,null,.4);
+  wavingFlag(-33,-20,7);wavingFlag(-47,8,7);wavingFlag(-18,30,6);
+  for(let i=0;i<6;i++)mountain(rnd(260,320),rnd(-250,250),rnd(30,60),rnd(25,50),'#c09a6a');
+  flushInst()}
+function boomLight(x,y,z,s){if(!boomL){boomL=new THREE.PointLight(0xffa040,0,60,2);scene.add(boomL)}boomL.position.set(x,y+2,z);boomL.intensity=3+s*2;boomT=.35}
+function decoTick(dt){if(boomT>0){boomT-=dt;boomL.intensity=Math.max(0,boomL.intensity-dt*14)}else if(boomL)boomL.intensity=0;
+  for(const f of WAVES){const p=f.geometry.attributes.position,b=f.userData.base;for(let i=0;i<p.count;i++){const x=b[i*3];p.setZ(i,Math.sin(TIME*4+x*3)*.12*(x+.8))}p.needsUpdate=true}
+  for(const c of CLOUDS){c.position.x+=dt*1.5;if(c.position.x>320)c.position.x=-320}
+  if(mslCD>0)mslCD-=dt;missileTick(dt);tankTick(dt);
+  // stuck helper
+  const o=$('#obj');const t=o.hidden?'':o.textContent.replace(/[٠-٩0-9٪%]/g,'');if(mode==='play'&&t){if(t===lastObjTxt){objStill+=dt;if(objStill>75){objStill=0;toast('لو حاسس إنك اتزنقت: افتح الترس فوق واختار «تخطّي المهمة»',4200)}}else{objStill=0;lastObjTxt=t}}else objStill=0}
+/* ---------- tanks ---------- */
+function makeTank(egy){const g=new THREE.Group();const body=M(egy?'#b9a06e':'#6b6f58',.8),dk=M('#26261f',.9);
+  const add=(geo,m,x,y,z,sx,sy,sz,par=g)=>{const o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);o.castShadow=o.receiveShadow=true;par.add(o);return o};
+  add(GEO.box,dk,0,.55,1.35,6.4,1.0,.75);add(GEO.box,dk,0,.55,-1.35,6.4,1.0,.75);
+  for(let i=-2;i<=2;i++)for(const s of[-1.75,1.75]){const w=add(GEO.cyl,M('#3a3a30',.8),i*1.25,.5,s,.42,.12,.42);w.rotation.x=Math.PI/2}
+  add(GEO.box,body,0,1.2,0,6,.8,2.7);add(GEO.box,body,2.6,1.0,0,1.2,.6,2.6).rotation.z=-.35;
+  const tur=new THREE.Group();tur.position.set(-.3,1.65,0);g.add(tur);add(GEO.sph,body,0,.1,0,1.55,.62,1.35,tur);const bar=add(GEO.cyl,body,2.5,.2,0,.12,3.6,.12,tur);bar.rotation.z=Math.PI/2;add(GEO.cyl,dk,.2,.75,.45,.25,.2,.25,tur);
+  if(egy){const f=new THREE.Mesh(new THREE.PlaneGeometry(.9,.6),new THREE.MeshBasicMaterial({map:EGF(),side:THREE.DoubleSide}));f.position.set(-1.4,1.9,0);f.rotation.y=Math.PI/2;tur.add(f)}
+  g.userData.tur=tur;RGROUP.add(g);return g}
+function spawnTank(x,z,egy,o){const g=makeTank(egy);const t=Object.assign({g,x,z,yaw:egy?0:Math.PI,sp:rnd(2.4,3.4),hp:1,dead:false,cd:rnd(3,6),egy,smk:0},o||{});g.position.set(x,0,z);g.rotation.y=t.yaw;TANKS.push(t);return t}
+function killTank(t){if(t.dead)return;t.dead=true;explode(t.x,1.5,t.z,3.5);G_shake=Math.max(G_shake,.4);t.g.traverse(o=>{if(o.isMesh&&o.material&&o.material.color){o.material=o.material.clone();o.material.color.multiplyScalar(.3)}});t.g.userData.tur.rotation.z=.25;if(t.onKill)t.onKill(t)}
+function tankTick(dt){for(const t of TANKS){if(t.dead){t.smk-=dt;if(t.smk<=0&&TANKS.length<40){t.smk=.5;FX.push({type:'dust',x:t.x+rnd(-.6,.6),y:2.4,z:t.z+rnd(-.6,.6),t:0})}continue}
+    if(t.drive&&mode==='play')t.drive(t,dt);t.g.position.set(t.x,t.y||0,t.z);t.g.rotation.y=t.yaw;
+    if(t.aimAt){const a=Math.atan2(-(t.aimAt.z-t.z),t.aimAt.x-t.x)-t.yaw;t.g.userData.tur.rotation.y=angLerp(t.g.userData.tur.rotation.y,angWrap(a),dt*2)}}}
+/* ---------- missiles (guided ATGM / RPG) ---------- */
+function fireMissile(){if(mslCD>0||mode!=='play'||CTRL.state!=='act')return;if(WEAP==='atgm'&&MISS.some(m=>m.guided))return;mslCD=WEAP==='atgm'?1.2:1.6;CTRL.aimT=1;
+  cam.getWorldDirection(v3a);const h=CTRL.pts[8];const m=new THREE.Mesh(GEO.cyl,M('#3a4a2a',.5,.4));m.scale.set(.09,.7,.09);scene.add(m);
+  const d=new THREE.Vector3(v3a.x,v3a.y+.02,v3a.z).normalize();MISS.push({m,x:h.x+d.x*.8,y:h.y+.25,z:h.z+d.z*.8,d,guided:WEAP==='atgm',sp:WEAP==='atgm'?26:40,t:0,tr:0});SFX.whoosh();noise(.3,.3,700);toast(WEAP==='atgm'?'وجّه الصاروخ بالكاميرا لحد الدبابة':'',WEAP==='atgm'?1400:1)}
+const _mv=new THREE.Vector3(),_mt=new THREE.Vector3();
+function missileTick(dt){for(let i=MISS.length-1;i>=0;i--){const s=MISS[i];s.t+=dt;
+    if(s.guided){cam.getWorldDirection(_mv);const L=Math.hypot(s.x-cam.position.x,s.y-cam.position.y,s.z-cam.position.z)+8;_mt.set(cam.position.x+_mv.x*L-s.x,cam.position.y+_mv.y*L-s.y,cam.position.z+_mv.z*L-s.z).normalize();s.d.lerp(_mt,Math.min(1,dt*3.2)).normalize()}
+    else s.d.y-=dt*.02;
+    s.x+=s.d.x*s.sp*dt;s.y+=s.d.y*s.sp*dt;s.z+=s.d.z*s.sp*dt;s.m.position.set(s.x,s.y,s.z);s.m.quaternion.setFromUnitVectors(UPV,s.d);s.tr-=dt;if(s.tr<=0){s.tr=.04;FX.push({type:'dust',x:s.x,y:s.y,z:s.z,t:.5})}
+    let hit=null;for(const t of TANKS){if(t.dead||t.egy)continue;if(Math.hypot(t.x-s.x,t.z-s.z)<3&&s.y<(t.y||0)+3.2){hit=t;break}}
+    const gy=TERR?TERR(s.x,s.z):0;if(hit||s.y<gy+.05||s.t>7){scene.remove(s.m);MISS.splice(i,1);if(hit){killTank(hit);banner('إصابة!','',900);SFX.win()}else explode(s.x,Math.max(gy,s.y),s.z,1.4)}}}
+/* ---------- skip / restart helpers ---------- */
+function skipTask(){SKIPF=true;toast('اتخطّينا المهمة دي',1600)}
+/* ---------- extra slide content ---------- */
+SL.win[2]={d:sTitle('ولسه الحكاية مكمّلة…','الكباري · صد الدبابات · الصاعقة · الثغرة والسويس'),cap:'حكاية <b>حسن وعبده</b> مكمّلة… يلا على <b>الكباري</b>.'};
+Object.assign(SL,{
+ bridge:[{d:sFront({sky:'night',boats:true}),cap:'ليلة <b>٦ على ٧ أكتوبر</b>. المهندسين لازم يبنوا <b>الكباري</b> على القنال عشان الدبابات تعدّي… والطيران بتاع العدو بيضرب.'},
+  {d:sPortrait('اللواء أحمد حمدي','من قادة سلاح المهندسين\nاستشهد ١٤ أكتوبر ١٩٧٣ وهو على الكوبري',{cap:'peak'}),cap:'اللواء <b>أحمد حمدي</b> كان بنفسه في المية مع العساكر بيبنوا الكباري… واستشهد يوم <b>١٤ أكتوبر</b> وهو بيصلّح كوبري. واتسمّى على اسمه <b>نفق الشهيد أحمد حمدي</b> تحت القنال.'}],
+ bridgeEnd:[{d:sFront({sky:'dusk',flag:true,gap:true}),cap:'الكباري اتركّبت… و<b>الدبابات المصرية</b> عدّت على سينا. و<b>حائط الصواريخ</b> بتاع الدفاع الجوي كان حامي السما فوق العساكر.'}],
+ tanks:[{d:sFront({booms:true,sky:'day'}),cap:'<b>٨ أكتوبر ١٩٧٣</b>. العدو عمل هجوم مضاد بالدبابات عشان يرجّعنا للقنال… والمشاة المصريين كانوا مستنيينه.'},
+  {d:sPortrait('محمد عبد العاطي','«صائد الدبابات»\nمن أبطال الصواريخ المضادة للدبابات',{cap:'peak'}),cap:'<b>محمد عبد العاطي</b> اتلقّب بـ<b>صائد الدبابات</b>… كان بيوجّه صاروخ <b>المالوتكا</b> بإيده لحد ما يخبط في الدبابة.'}],
+ tanksEnd:[{d:sFront({booms:true,sky:'dusk'}),cap:'الهجوم المضاد اتكسر. ويوم <b>٨ أكتوبر</b> اتأسر قائد لواء مدرّع من العدو اسمه <b>عساف ياجوري</b> في قطاع الفرقة التانية مشاة.'}],
+ commando:[{d:sPortrait('العميد إبراهيم الرفاعي','قائد المجموعة ٣٩ قتال — الصاعقة\nاستشهد ١٩ أكتوبر ١٩٧٣',{cap:'peak'}),cap:'العميد <b>إبراهيم الرفاعي</b> وأبطال <b>المجموعة ٣٩ قتال</b> عملوا عمليات ورا خطوط العدو من أيام الاستنزاف… وعبده انضم ليهم في مهمة الليلة.'},
+  {d:sFront({sky:'night',light:true}),cap:'المهمة: تتسلل لـ<b>مخزن وقود وذخيرة</b> للعدو، تحط العبوات، وترجع للهليكوبتر… <b>من غير ما حد يشوفك</b>.'}],
+ commandoEnd:[{d:sFront({sky:'night',booms:true}),cap:'المخزن طار… والمجموعة رجعت سالمة. العميد <b>إبراهيم الرفاعي</b> استشهد يوم <b>١٩ أكتوبر</b> وهو بيقاتل في الثغرة.'}],
+ gap:[{d:sMap({title:'الثغرة'}),cap:'يوم <b>١٦ أكتوبر</b> قوات من العدو عدّت لغرب القنال عند <b>الدفرسوار</b>، في المسافة بين <b>الجيش الثاني</b> و<b>الجيش الثالث</b>… ودي اللي اتسمّت <b>الثغرة</b>.'},
+  {d:sFront({booms:true,sky:'dusk',sepia:.2}),cap:'وكان فيه معارك صعبة جدًا زي معركة <b>المزرعة الصينية</b>. ويوم <b>٢٢ أكتوبر</b> صدر قرار مجلس الأمن بوقف إطلاق النار… بس العدو حاول يدخل <b>السويس</b>.'},
+  {d:sPortrait('الشيخ حافظ سلامة','قائد المقاومة الشعبية في السويس',{suit:'civ',cap:'turban',beard:true}),cap:'<b>٢٤ أكتوبر</b>: أهل <b>السويس</b> والمقاومة الشعبية مع الجيش وقفوا في وش الدبابات. والشيخ <b>حافظ سلامة</b> كان بيشجّع الناس من <b>مسجد الشهداء</b>.'}],
+ gapEnd:[{d:sTitle('السويس صمدت','٢٤ أكتوبر — العيد القومي للسويس'),cap:'الدبابات اتصدّت في <b>ميدان الأربعين</b>… و<b>السويس ما سلّمتش</b>. ومن يومها <b>٢٤ أكتوبر</b> هو العيد القومي للسويس.'}],
+ end:[{d:sTitle('بعد الحرب','من النار… للأرض'),cap:'بعد الحرب بدأت المفاوضات عند <b>الكيلو ١٠١</b>، وبعدها اتفاقيات <b>فض الاشتباك</b> سنة <b>١٩٧٤</b>.'},
+  {d:sMap({arrows:true,title:'سينا رجعت'}),cap:'سنة <b>١٩٧٩</b> اتوقّعت معاهدة السلام… ويوم <b>٢٥ أبريل ١٩٨٢</b> رجعت سينا، وبقى اليوم ده <b>عيد تحرير سيناء</b>.'},
+  {d:sMap({title:'طابا ١٩٨٩'}),cap:'وآخر حتة، <b>طابا</b>، رجعت بـ<b>التحكيم الدولي</b> ورُفع عليها العلم يوم <b>١٩ مارس ١٩٨٩</b>… من غير ولا رصاصة.'},
+  {d:sVillage(),cap:'وعدّت السنين… <b>٥٠ سنة</b>. حسن وعبده بقوا جدود في نفس القرية في الشرقية.'}],
+ credits:[{d:sTitle('المجد للشهداء','وتحية لكل اللي عبروا'),cap:'تحية لـ<b>الجيش التاني</b> و<b>الجيش التالت</b>، ولـ<b>الفرق ٢ و٧ و١٦ و١٨ و١٩ مشاة</b>، وللطيارين والمهندسين والمدفعية والدفاع الجوي والبحرية والصاعقة… وللمقاومة الشعبية.',ms:9000},
+  {d:sTitle('العبور ٧٣','شكرًا إنك لعبت — وعرفت'),cap:'<b>العبور ٧٣</b>. حكاية حسن وعبده خلصت… بس حكاية مصر مكمّلة.'}]});
+/* ---------- chapter list ---------- */
+Object.assign(CHAPS[5],{s:'ليلة ٦–٧ أكتوبر',soon:0});Object.assign(CHAPS[6],{s:'٨ أكتوبر',soon:0});Object.assign(CHAPS[7],{s:'ورا خطوط العدو',soon:0});Object.assign(CHAPS[8],{s:'١٦–٢٤ أكتوبر',soon:0});Object.assign(CHAPS[9],{s:'١٩٧٤ – ١٩٨٩ – النهارده',soon:0});
+/* ---------- CH5: BRIDGES ---------- */
+async function bridges(tok){mode='busy';buildFront();setClock('ليلة ٦–٧ أكتوبر ١٩٧٣',20.6);for(let z=0;z<=18;z++){const i=Math.round(z+150);EROS[i]=Math.max(EROS[i],z>=5&&z<=13?.95:z>=3&&z<=15?.5:0)}updBerm();
+  const BZ=9,SEG=2.4,N=10;const built=[];const seg=()=>{const g=new THREE.Group();const d=new THREE.Mesh(GEO.box,M('#4a5040',.7,.3));d.scale.set(SEG-.05,.35,4.4);d.castShadow=d.receiveShadow=true;g.add(d);for(const s of[-1.6,1.6]){const f=new THREE.Mesh(GEO.cyl,M('#3a3e34',.6,.4));f.scale.set(.5,SEG-.1,.5);f.rotation.z=Math.PI/2;f.position.set(0,-.35,s);g.add(f)}RGROUP.add(g);return g};
+  const tipX=()=>-12+built.length*SEG;let mv=null,amp=6,raidT=12,raid=0,fails=0;
+  const newSeg=()=>{const g=seg();const tug=boatMesh('#46463a');tug.rotation.y=Math.PI/2;tug.scale.setScalar(.6);g.add(tug);tug.position.set(0,-.1,-3.2);mv={g,tug,ph:rnd(0,6)};amp=rnd(4.5,6)};
+  placeHero(HASSAN,-13,BZ,Math.PI/2);placeHero(ABDO,-14,BZ+1.6,Math.PI/2);HASSAN.lock=true;HASSAN.anim='pump';camYaw=Math.PI/2+.3;camPitch=.5;canSwitch=false;
+  for(let i=0;i<4;i++){const f=spawnFriend(-14.5-i*1.4,BZ+3+i*1.2,'idle');f.anim='point';f.chat=false}
+  setObj('<b>ركّب الكوبري:</b> استنى القطعة تيجي قدّامك بالظبط ودوس <b>ثبّت</b>');newSeg();await fadeTo(0);mode='play';banner('الكباري','قطعة ورا قطعة لحد الضفة التانية',2400);say(HASSAN,'يلا يا رجالة… عايزين الكوبري يخلص قبل الفجر',2600);
+  ACTF=()=>mv?{l:'ثبّت',f:()=>{const z=BZ+Math.sin(mv.ph)*amp;if(raid>0){toast('استنى الغارة تعدّي!',1200);return}if(Math.abs(z-BZ)<.8){mv.g.remove(mv.tug);const x=tipX()+SEG/2;mv.g.position.set(x,WY+.15,BZ);addCol(x-SEG/2,BZ-2.2,x+SEG/2,BZ+2.2,-2,WY+.33);built.push(mv.g);mv=null;SFX.thud();SFX.coin();floatTxt('+ قطعة',x,1,BZ);
+      placeHero(HASSAN,tipX()-.7,BZ,Math.PI/2);HASSAN.y=WY+.33;HASSAN.lock=true;HASSAN.anim='pump';if(built.length<N)setTimeout(()=>{if(tok===RUN)newSeg()},700)}else{fails++;SFX.bad();toast(Math.sin(mv.ph)*amp>0?'بدري! استنى شوية':'اتأخرت! القطعة عدّت',1200);G_shake=.15}}}:null;
+  STEPFN=dt=>{if(mv){mv.ph+=dt*1.2;amp=Math.max(1.6,amp-dt*.25);const z=BZ+Math.sin(mv.ph)*amp*(raid>0?1.4:1);mv.g.position.set(tipX()+SEG/2,WY+.1+Math.sin(TIME*2)*.05,z);mv.g.rotation.y=Math.sin(mv.ph*.7)*.08}
+    for(const b of built)b.position.y=WY+.15+Math.sin(TIME*1.5+b.position.x)*.02;HASSAN.y=WY+.33;
+    raidT-=dt;if(raidT<=0&&raid<=0){raid=4.5;raidT=rnd(16,22);banner('غارة!','طيارات العدو فوق الكوبري',1600);for(let i=0;i<2;i++)jetFly(200+i*14,26+i*3,BZ-30+i*8,-75,1,true);say(ABDO,'حائط الصواريخ هيتعامل معاهم!',2400)}
+    if(raid>0){raid-=dt;if(Math.random()<dt*3){const x=rnd(-12,12),z=BZ+rnd(-14,14);if(Math.abs(z-BZ)>3){splash(x,z);explode(x,WY,z,1.6)}}if(Math.random()<dt*2){tracer(-60,0,BZ+rnd(-40,40),rnd(-20,40),rnd(30,45),BZ+rnd(-30,30),'#ffe0a0');explode(rnd(-10,30),rnd(32,44),BZ+rnd(-30,30),1.3,false)}}
+    $('#obj').innerHTML=`<b>ركّب الكوبري:</b> القطع <b>${ar(built.length)}/${ar(N)}</b> · استنى القطعة تبقى قدّامك ودوس <b>ثبّت</b>`};
+  await until(()=>built.length>=N,tok);STEPFN=null;ACTF=null;if(mv){scene.remove(mv.g);RGROUP.remove(mv.g);mv=null}while(built.length<N){const g=seg();const x=tipX()+SEG/2;g.position.set(x,WY+.15,BZ);built.push(g)}
+  SFX.win();banner('الكوبري خلص!','الدبابات جاية',2200);HASSAN.lock=false;say(HASSAN,'الله أكبر! الكوبري جاهز',2400);await wait(2000,tok);
+  mode='busy';const tk=[];for(let i=0;i<3;i++){const t=spawnTank(-40-i*14,BZ,true);t.drive=null;tk.push(t)}let ct=0;
+  camOverride=dt=>{ct+=dt;for(const t of tk){t.x+=dt*4.2;t.y=t.x>-12.5&&t.x<12.5?WY+.35:Math.max(0,terrain(t.x,BZ));t.g.position.set(t.x,t.y,t.z);t.g.rotation.y=0}cam.position.set(-6,4.5,BZ-11);camLook.set(tk[0].x,1,BZ);cam.lookAt(camLook);sky.position.copy(cam.position)};
+  await wait(9000,tok);camOverride=null;mode='play'}
+/* ---------- CH6: TANK REPULSE ---------- */
+async function tankRepulse(tok){mode='busy';buildFront();setClock('٨ أكتوبر ١٩٧٣',10.5);for(let z=0;z<=18;z++)EROS[Math.round(z+150)]=z>=5&&z<=13?.95:0;updBerm();
+  const FX0=48;sandbags(FX0+1.6,0,6,Math.PI/2,2);sandbags(FX0,-2.6,4,0,2);sandbags(FX0,2.6,4,0,2);for(let i=0;i<4;i++){const f=spawnFriend(FX0-1,-10+i*6.5,'idle');f.anim='aim';f.chat=false;f.c.armed=true}
+  placeHero(ABDO,FX0,0,Math.PI/2);placeHero(HASSAN,FX0-.5,-6,Math.PI/2);CTRL=ABDO;MATE=HASSAN;updWho();canSwitch=false;HASSAN.lock=true;HASSAN.anim='aim';HASSAN.armed=true;ABDO.armed=true;
+  WEAP='atgm';setCombat(true);camYaw=Math.PI/2;camPitch=0;let kills=0;const NEED=8;CHECK=()=>{placeHero(CTRL,FX0,0,Math.PI/2)};
+  const drive=(t,dt)=>{t.x-=t.sp*dt;t.z+=Math.sin(TIME*.3+t.ph)*dt*.6;t.aimAt=CTRL;t.cd-=dt;if(t.cd<=0&&t.x<170){t.cd=rnd(4,7);const ox=rnd(-9,9),oz=rnd(-9,9);explode(CTRL.x+ox+4,.5,CTRL.z+oz,1.6);noise(.3,.4,300);if(Math.hypot(ox+4,oz)<4)hurt(12)}
+    if(t.x<64){t.x=rnd(170,200);t.z=rnd(-40,40);toast('دبابة قرّبت قوي ورجعت! ركّز',1400)}};
+  const spawnW=()=>{const t=spawnTank(rnd(150,200),rnd(-40,40),false,{drive,ph:rnd(0,6),onKill:()=>{kills++;if(kills<NEED)setTimeout(()=>{if(tok===RUN&&TANKS.filter(x=>!x.dead).length<3)spawnW()},2500)}});return t};
+  for(let i=0;i<3;i++)spawnW();setObj('<b>عبده (المالوتكا):</b> دوس <b>نار</b>، ووجّه الصاروخ بسحب الشاشة لحد الدبابة');
+  await fadeTo(0);mode='play';banner('صد الدبابات','٨ أكتوبر',2200);say(ABDO,'جايين… سيبهم يقربوا',2400);
+  STEPFN=dt=>{$('#obj').innerHTML=`<b>دمّر دبابات الهجوم المضاد:</b> <b>${ar(kills)}/${ar(NEED)}</b> · وجّه الصاروخ بالكاميرا`;if(CTRL.hp<100&&hurtT<=0)CTRL.hp=Math.min(100,CTRL.hp+dt*4)};
+  await until(()=>kills>=NEED,tok);STEPFN=null;for(const t of TANKS)if(!t.dead){t.drive=(t,dt)=>{t.x+=dt*5;t.yaw=0}}SFX.win();banner('الهجوم اتكسر!','الدبابات الباقية بترجع',2600);say(ABDO,'رجعوا! الله أكبر!',2400);await wait(3200,tok);setCombat(false);WEAP='rifle';HASSAN.lock=false;mode='busy'}
+/* ---------- CH7: COMMANDO RAID ---------- */
+async function commando(tok){mode='busy';clearWorld();HS=600;setClock('ليلة ١٨ أكتوبر ١٩٧٣',23);addClouds(8);
+  {const t=TEX.sand.clone();t.needsUpdate=true;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(90,90);const g=new THREE.Mesh(new THREE.PlaneGeometry(1200,1200),new THREE.MeshStandardMaterial({map:t,roughness:.95}));g.rotation.x=-Math.PI/2;g.receiveShadow=true;RGROUP.add(g)}
+  for(let i=0;i<40;i++){const x=rnd(30,320),z=rnd(-200,200);if(Math.abs(x-130)<40&&Math.abs(z)<40)continue;dune(x,z,rnd(10,30),rnd(2,6))}
+  const TG=[];const tgt=(n,x,z,build)=>{build();TG.push({n,x,z,done:false})};
+  tgt('خزان الوقود',128,-14,()=>{for(let i=0;i<2;i++)cyl(124+i*7,-18,2.4,3.6,M('#7a7a6a',.5,.4))});
+  tgt('مخزن الذخيرة',140,10,()=>{for(let i=0;i<6;i++)crate(136+(i%3)*1.6,8+Math.floor(i/3)*1.6,1.4);netCover(138,9,8,6)});
+  tgt('برج الاتصالات',116,16,()=>{box(116,16,1.2,1.2,12,M('#5a5a50',.5,.5),{col:true});box(116,16,3,3,.3,M('#5a5a50',.5,.5),{y:12,col:false})});
+  bunker(150,-4,0);sandbags(110,-2,6,Math.PI/2,2);for(let z=-36;z<=36;z+=4){box(104,z,.15,.15,1.6,M('#6a5a3a',.8),{col:false})}
+  const L=[];for(const[x,z]of[[112,-10],[132,0],[146,18],[120,24]]){const lt=new THREE.PointLight(0xffd890,.9,16,2);lt.position.set(x,4,z);RGROUP.add(lt);L.push(lt);box(x,z,.2,.2,4,M('#4a4a40',.5),{col:false})}
+  const P=[[[108,-30],[108,30]],[[120,-6],[150,-6],[150,22],[120,22]],[[132,-26],[156,-26]],[[160,30],[160,-30]]];
+  const pats=P.map(r=>{const e=spawnEnemy(r[0][0],r[0][1]);e.state='watch';e.c.armed=true;e.route=r;e.wi=1;e.wait=0;const cone=new THREE.Mesh(new THREE.ConeGeometry(3.2,9,18,1,true),new THREE.MeshBasicMaterial({color:0xfff2b0,transparent:true,opacity:.12,depthWrite:false,side:THREE.DoubleSide}));cone.geometry.translate(0,-4.5,0);cone.geometry.rotateX(-Math.PI/2);RGROUP.add(cone);e.cone=cone;return e});
+  const heli=new THREE.Group();{const b=new THREE.Mesh(GEO.sph,M('#5a6448',.7));b.scale.set(4.5,1.6,1.6);b.position.y=2;heli.add(b);const tl=new THREE.Mesh(GEO.box,M('#5a6448',.7));tl.scale.set(6,.5,.5);tl.position.set(-6,2.4,0);heli.add(tl);const r=new THREE.Mesh(GEO.box,M('#2a2a2a',.6));r.scale.set(16,.08,.4);r.position.y=4;heli.add(r);heli.userData.r=r;heli.position.set(40,0,0);RGROUP.add(heli)}
+  for(let i=0;i<3;i++){const f=spawnFriend(44,-4+i*3,'idle');f.chat=false;f.c.armed=true;f.anim='aim'}const ref=spawnFriend(42,4,'idle',{name:'العميد إبراهيم الرفاعي',lines:['بهدوء يا رجالة']});ref.c.armed=true;
+  placeHero(ABDO,46,0,Math.PI/2);CTRL=ABDO;MATE=HASSAN;HASSAN.hidden=true;HASSAN.lock=true;updWho();canSwitch=false;ABDO.armed=true;
+  showSus(true);$('#susW span').textContent='انكشاف';let planted=0,hold=0,cur=null,back=false,done=false;
+  setObj('<b>المجموعة ٣٩ قتال:</b> اتسلل وحط العبوات في ٣ أهداف — ابعد عن نور الكشافات وورا الحراس');await fadeTo(0);mode='play';banner('الصاعقة','ورا خطوط العدو',2400);await talk(ref.c,ABDO,['بص يا بطل: ٣ أهداف. الحرس بيلفّوا بكشافات','حاضر يا فندم','امشي متجريش، الجري بيعمل صوت. ربنا معاك']);
+  ACTF=()=>{if(back)return null;cur=TG.find(t=>!t.done&&Math.hypot(CTRL.x-t.x,CTRL.z-t.z)<4);return cur?{l:'حط العبوة',hold:true}:null};
+  STEPFN=dt=>{heli.userData.r.rotation.y+=dt*(back?14:3);
+    for(const e of pats){const c=e.c;if(e.state!=='watch')continue;const w=e.route[e.wi];const dx=w[0]-c.x,dz=w[1]-c.z,d=Math.hypot(dx,dz);if(e.wait>0){e.wait-=dt;c.anim='idle';c.yaw+=Math.sin(TIME*1.3)*dt*.8}else if(d<.5){e.wi=(e.wi+1)%e.route.length;e.wait=rnd(1.5,3)}else{c.yaw=angLerp(c.yaw,Math.atan2(dx,dz),Math.min(1,dt*4));c.x+=Math.sin(c.yaw)*1.5*dt;c.z+=Math.cos(c.yaw)*1.5*dt;c.anim='walk';c.ph+=1.5*dt*2.5}c.y=0;
+      e.cone.position.set(c.x,1.6,c.z);e.cone.rotation.set(0,0,0);e.cone.lookAt(c.x+Math.sin(c.yaw)*6,0,c.z+Math.cos(c.yaw)*6);
+      const px=CTRL.x-c.x,pz=CTRL.z-c.z,pd=Math.hypot(px,pz);const ang=Math.abs(angWrap(Math.atan2(px,pz)-c.yaw));
+      if((pd<9.5&&ang<.5)||(pd<4.5&&CTRL.anim==='run')||pd<1.8){addSus(dt*75,'الحارس شافك! ابعد بسرعة');if(c.talkT<=0)say(c,'?!',900)}}
+    addSus(-dt*6);
+    if(actHeld&&cur&&!cur.done){hold+=dt;CTRL.lock=true;CTRL.anim='harvest';if(hold>=2.2){cur.done=true;planted++;hold=0;SFX.click();floatTxt('اتحطت',cur.x,1.5,cur.z);CTRL.lock=false;if(planted>=3){back=true;setTarget({x:40,z:0});toast('ارجع للهليكوبتر بسرعة!',2200);say(ABDO,'العبوات اتحطت… يلا!',2000)}}}else{hold=0;if(CTRL.lock&&!back)CTRL.lock=false}
+    if(!back){const n=TG.find(t=>!t.done);if(n)setTarget({x:n.x,z:n.z})}else if(Math.hypot(CTRL.x-40,CTRL.z)<6)done=true;
+    $('#obj').innerHTML=back?'<b>ارجع للهليكوبتر</b>':`<b>حط العبوات:</b> ${TG.map(t=>(t.done?'✔ ':'○ ')+t.n).join(' · ')}${hold>0?` — ${ar(Math.round(hold/2.2*100))}٪`:''}`};
+  let tries=0;await phase(async t=>{SUS=0;if(tries++){placeHero(ABDO,46,0,Math.PI/2);await fadeTo(0);mode='play'}await until(()=>done,t)},tok);
+  STEPFN=null;ACTF=null;setTarget(null);showSus(false);mode='busy';let ht=0;
+  camOverride=dt=>{ht+=dt;heli.position.y=Math.min(18,ht*3);heli.userData.r.rotation.y+=dt*16;cam.position.set(40-ht*2,heli.position.y+5,-14);camLook.set(130,2,0);cam.lookAt(camLook);sky.position.copy(cam.position)};
+  ABDO.hidden=true;for(const f of FRIENDS)f.c.hidden=true;await wait(2500,tok);for(let i=0;i<10;i++){const tg=TG[i%3];explode(tg.x+rnd(-4,4),2,tg.z+rnd(-4,4),5+rnd(0,2));G_shake=.5;await wait(260,tok)}
+  banner('المهمة نجحت!','',2400);await wait(3000,tok);camOverride=null;ABDO.hidden=false;HASSAN.hidden=false;HASSAN.lock=false}
+/* ---------- CH8: SUEZ ---------- */
+async function suez(tok){mode='busy';clearWorld();HS=300;setClock('السويس · ٢٤ أكتوبر ١٩٧٣',9.5);addClouds(8);
+  {const t=TEX.sand.clone();t.needsUpdate=true;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(60,60);const g=new THREE.Mesh(new THREE.PlaneGeometry(800,800),new THREE.MeshStandardMaterial({map:t,roughness:.95}));g.rotation.x=-Math.PI/2;g.receiveShadow=true;RGROUP.add(g)}
+  plane(40,0,260,13,texMat(TEX.asphalt||TEX.road,40,2,.9),.02);
+  const walls=['#e8d2a8','#d9b98a','#f0e0c0','#c9a27a','#e6c89a','#d8c4a4'];let bi=0;
+  for(const s of[-1,1])for(let x=-70;x<170;x+=rnd(9,13)){if(Math.abs(x)<10||(s<0&&x>-33&&x<-13))continue;const w=rnd(8,11),h=rnd(8,17),d=10;const zc=s*(7.5+d/2);const tex=facTex(walls[bi++%walls.length],pick(['#3a6a8a','#6a4a2a','#2f5f4f']),pick(['arch','shut','win']));const m=new THREE.MeshStandardMaterial({map:tex.clone(),roughness:.9});m.map.needsUpdate=true;m.map.wrapS=m.map.wrapT=THREE.RepeatWrapping;m.map.repeat.set(Math.round(w/4),Math.round(h/4));box(x,zc,w,d,h,m)}
+  cyl(0,0,6,.35,M('#c8b48a',.9),{col:false});inst('grs',GEO.sph,M('#5a8a3a',.9),0,.4,0,5.4,.3,5.4);flushInst();wavingFlag(0,0,8);
+  const sg=new THREE.Mesh(new THREE.PlaneGeometry(6,1.5),new THREE.MeshBasicMaterial({map:signTex('ميدان الأربعين','#1f6a3a'),transparent:true}));sg.position.set(-9,4.5,6.9);sg.rotation.y=Math.PI;RGROUP.add(sg);
+  box(-24,-19,10,10,7,M('#efe6d2',.8));{const dm=new THREE.Mesh(new THREE.SphereGeometry(3.6,20,12,0,Math.PI*2,0,Math.PI/2),M('#3a8a6a',.5,.2));dm.position.set(-24,7,-19);dm.castShadow=true;RGROUP.add(dm)}cyl(-18,-14,.8,16,M('#efe6d2',.8));cyl(-18,-14,1.1,.6,M('#d8cfb8',.8),{y:12,col:false});
+  const msg=new THREE.Mesh(new THREE.PlaneGeometry(6,1.2),new THREE.MeshBasicMaterial({map:signTex('مسجد الشهداء','#2a5a4a'),transparent:true}));msg.position.set(-24,5.6,-13.9);RGROUP.add(msg);
+  for(const z of[-5,-2,1,4])sandbags(-38,z,4,Math.PI/2,3);
+  const mkCiv=(x,z,o={})=>{const{look:lk,...rest}=o;const c=makeChar(Object.assign({skin:ri(1,3),outfit:'galabeya',shirt:pick(['#d8d0c0','#9a8a6a','#5a6a7a']),pants:'#3a3a48',hair:'short',hairC:'#1a1410',hat:'none',shoe:'#2a1d14'},lk||{}),Object.assign({x,z,y:0,yaw:Math.PI/2,voiceP:.9},rest));snapChar(c);EXTRA.push(c);return c};
+  const sheikh=mkCiv(-24,-12.6,{name:'الشيخ حافظ سلامة',look:{shirt:'#f2efe6',hat:'taqiya',mus:true,hairC:'#e8e8e8',skin:2},yaw:0});
+  const res=[mkCiv(-40,-7,{name:'المقاومة'}),mkCiv(-40,7,{name:'المقاومة'})];for(const c of res){c.armed=true;c.anim='aim'}
+  for(let i=0;i<3;i++){const f=spawnFriend(-41,-4.5+i*4.5,'idle');f.anim='aim';f.chat=false;f.c.armed=true}
+  placeHero(HASSAN,-39.8,-1.5,Math.PI/2);placeHero(ABDO,-39.8,1.5,Math.PI/2);CTRL=HASSAN;MATE=ABDO;updWho();HASSAN.armed=ABDO.armed=true;WEAP='rpg';setCombat(true);camYaw=Math.PI/2;camPitch=0;
+  CHECK=()=>{placeHero(CTRL,-39.8,0,Math.PI/2)};let kills=0;const NEED=6;
+  const drive=(t,dt)=>{if(t.x>t.stop)t.x-=t.sp*dt;t.aimAt={x:-36,z:0};t.cd-=dt;if(t.cd<=0&&t.x<120){t.cd=rnd(4,7);if(Math.random()<.5){const s=pick([-1,1]);explode(t.x-rnd(10,30),rnd(4,10),s*7.6,2)}else{const ox=rnd(-6,6);explode(-33+rnd(0,5),.6,ox,1.6);if(Math.abs(ox)<2.5)hurt(12)}noise(.3,.4,300)}};
+  const spawnS=()=>spawnTank(rnd(140,170),pick([-2.5,2.5]),false,{drive,stop:rnd(-5,25),sp:rnd(3,4),onKill:()=>{kills++;if(kills<NEED)setTimeout(()=>{if(tok===RUN&&TANKS.filter(x=>!x.dead).length<2)spawnS()},3000)}});
+  spawnS();spawnS();setObj('<b>حسن (آر بي جي):</b> صوّب على الدبابات ودوس <b>نار</b>');await fadeTo(0);mode='play';banner('السويس','٢٤ أكتوبر ١٩٧٣',2400);
+  let callT=2;STEPFN=dt=>{callT-=dt;if(callT<=0){callT=rnd(9,14);say(sheikh,pick(['الله أكبر! السويس مش هتسلّم!','اثبتوا يا ولاد… الله معانا','حيّ على الجهاد']),3000);speakTxt('الله أكبر',.85,true)}
+    $('#obj').innerHTML=`<b>دافع عن السويس:</b> الدبابات <b>${ar(kills)}/${ar(NEED)}</b>`;if(CTRL.hp<100&&hurtT<=0)CTRL.hp=Math.min(100,CTRL.hp+dt*4)};
+  await until(()=>kills>=NEED,tok);STEPFN=null;for(const t of TANKS)if(!t.dead){t.drive=(t,dt)=>{t.x+=dt*6;t.yaw=0}}SFX.win();banner('السويس صمدت!','الدبابات بترجع',2800);say(sheikh,'الله أكبر… الله أكبر!',3000);
+  for(const c of[...res,HASSAN,ABDO]){c.lock=true;c.anim='wave'}await wait(4000,tok);for(const c of[HASSAN,ABDO])c.lock=false;setCombat(false);WEAP='rifle';mode='busy'}
+/* ---------- CH9: EPILOGUE ---------- */
+async function epilogue(tok){mode='busy';await cine(SL.end,tok);clearWorld();HS=200;setClock('الشرقية · ٦ أكتوبر ٢٠٢٣',16.6);addClouds(10);
+  {const t=TEX.grass.clone();t.needsUpdate=true;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(70,70);const g=new THREE.Mesh(new THREE.PlaneGeometry(600,600),new THREE.MeshStandardMaterial({map:t,roughness:.95}));g.rotation.x=-Math.PI/2;g.receiveShadow=true;RGROUP.add(g)}
+  plane(0,0,6,200,M('#b89a6a',.95),.02);for(let i=0;i<30;i++){const x=pick([-1,1])*rnd(14,60),z=rnd(-90,90);palm(x,z)}
+  for(let i=0;i<8;i++){const s=i%2?1:-1;const z=-40+Math.floor(i/2)*22;box(s*10,z,8,9,rnd(5,8),texMat(facTex(pick(['#c9a27a','#b88a5a','#d8b88a']),'#5a3a1a','shut'),2,2))}
+  // memorial
+  box(0,-58,6,6,1,M('#d8d0c0',.6));{const ob=new THREE.Mesh(new THREE.CylinderGeometry(.3,1.6,9,4),M('#e8e2d4',.5));ob.position.set(0,5.5,-58);ob.rotation.y=Math.PI/4;ob.castShadow=true;RGROUP.add(ob)}wavingFlag(3.6,-58,7);
+  const ms=new THREE.Mesh(new THREE.PlaneGeometry(5,1.1),new THREE.MeshBasicMaterial({map:signTex('شهداء أكتوبر','#5a3a1a'),transparent:true}));ms.position.set(0,1.6,-54.9);RGROUP.add(ms);
+  HASSAN.hidden=ABDO.hidden=true;HASSAN.lock=ABDO.lock=true;
+  const civ=(look,x,z,o={})=>{const{look:lk,...rest}=o;const c=makeChar(Object.assign({skin:2,outfit:'galabeya',shirt:'#e8e2d0',pants:'#444',hair:'short',hairC:'#dcdcdc',hat:'none',shoe:'#2a1d14'},look,lk||{}),Object.assign({x,z,y:0,yaw:0},rest));snapChar(c);EXTRA.push(c);return c};
+  const gH=civ({skin:1,shirt:'#e8e2d0'},0,20,{name:'جدّو حسن',role:'مهندس سابق',voiceP:.8});const gA=civ({skin:3,shirt:'#c8d0d8',mus:true},1.5,21,{name:'جدّو عبده',role:'صاعقة سابق',voiceP:.7});
+  const soad=civ({skin:2,outfit:'abaya',shirt:'#5a3a5a',hair:'hijab',hairC:'#2a2a3a'},-6,28,{name:'تيتة سعاد',voiceP:1.2});soad.anim='sit';
+  const kids=[civ({skin:1,outfit:'tshirt',shirt:'#2f7fbf',pants:'#2a3a5a',hairC:'#1d140c'},3,-6,{name:'يوسف'}),civ({skin:2,outfit:'tshirt',shirt:'#d8432e',pants:'#3a3a48',hairC:'#1d140c'},5,-5,{name:'مريم',look:{hair:'long'}}),civ({skin:3,outfit:'ahly',pants:'#20242c',hairC:'#120c08'},4,-8,{name:'عمر'})];
+  CTRL=gH;MATE=gA;gH.hp=100;updWho();canSwitch=false;camYaw=Math.PI;camPitch=.3;
+  TASKS=[{l:'روح للأحفاد واحكيلهم'},{l:'زور نصب الشهداء'}];let st=0;setTarget({x:4,z:-6});setObj('<b>بعد ٥٠ سنة:</b> روح للأحفاد واحكيلهم الحكاية');
+  await fadeTo(0);mode='play';banner('٦ أكتوبر ٢٠٢٣','٥٠ سنة على العبور',2600);say(soad,'خلّي بالكم من نفسكم يا حجّ… العيال مستنيينكم',3000);
+  ACTF=()=>{if(st===0&&Math.hypot(CTRL.x-4,CTRL.z+6)<4)return{l:'احكي الحكاية',f:async()=>{st=.5;ACTF=null;CTRL.lock=true;CTRL.anim='point';for(const k of kids){k.anim='sit';k.yaw=Math.atan2(CTRL.x-k.x,CTRL.z-k.z)}
+      await talk(kids[0],gH,['يا جدّو احكيلنا عن الحرب!','كنا بناكل قصب قدام العدو عشان يفتكرونا مش ناويين على حاجة','بجد؟! وبعدين؟','وفي العاشر من رمضان… الساعة اتنين الضهر… عدّينا','وأنا اللي طلعت السلم الأول على الساتر!','ده جدّو عبده بيحب يقولها كل سنة هههه']);await talk(kids[1],gA,['وكنتوا خايفين؟','كلنا كنا خايفين يا بنتي… بس كنا عارفين إن الأرض لازم ترجع','وعشان كده إحنا بنزور الشهدا كل سنة']);
+      CTRL.lock=false;st=1;setTarget({x:0,z:-55});setObj('<b>زور نصب شهداء أكتوبر</b> مع الأحفاد');for(const k of kids)k.anim='idle'}};
+    if(st===1&&Math.hypot(CTRL.x,CTRL.z+55)<5)return{l:'سلام للشهداء',f:async()=>{st=2;ACTF=null;setTarget(null);for(const c of[gH,gA,...kids]){c.lock=true;c.anim='salute';c.yaw=Math.PI}SFX.chime();say(gH,'السلام عليكم يا رجالة… الأرض رجعت',3600);await wait(3800,tok);say(gA,'وإحنا عمرنا ما ننساكم',3000);await wait(3200,tok);st=3}};return null};
+  STEPFN=dt=>{for(const k of kids){if(st===1||st===2){const dx=CTRL.x-k.x+(k===kids[0]?2:k===kids[1]?-2:0),dz=CTRL.z-k.z+2.5,d=Math.hypot(dx,dz);if(d>1.2&&st===1){k.yaw=Math.atan2(dx,dz);k.x+=Math.sin(k.yaw)*Math.min(3,d)*dt;k.z+=Math.cos(k.yaw)*Math.min(3,d)*dt;k.anim='walk';k.ph+=dt*6}else if(st===1)k.anim='idle'}}};
+  await until(()=>st>=3,tok);STEPFN=null;mode='busy';await cine(SL.credits,tok);for(const c of EXTRA)removeChar(c);EXTRA=[];CTRL=HASSAN;MATE=ABDO;HASSAN.hidden=ABDO.hidden=false;HASSAN.lock=ABDO.lock=false;updWho()}
+CHF.push(async tok=>{await cine(SL.bridge,tok);await bridges(tok);await cine(SL.bridgeEnd,tok)},
+ async tok=>{await cine(SL.tanks,tok);await tankRepulse(tok);await cine(SL.tanksEnd,tok)},
+ async tok=>{await cine(SL.commando,tok);await commando(tok);await cine(SL.commandoEnd,tok)},
+ async tok=>{await cine(SL.gap,tok);await suez(tok);await cine(SL.gapEnd,tok)},
+ async tok=>{await epilogue(tok)});
+/* ===================== EDUCATION: lessons, quiz, encyclopedia ===================== */
+const LESS=[
+ {f:['حرب يونيو ١٩٦٧ (النكسة) خلّت العدو يحتل سينا كلها لحد القنال.','حرب الاستنزاف من ١٩٦٧ لـ١٩٧٠: اشتباكات وإغارات طول الوقت على الجبهة.','الفريق عبد المنعم رياض استشهد ٩ مارس ١٩٦٩، واليوم ده بقى «يوم الشهيد».','الرئيس السادات تولّى الحكم بعد وفاة عبد الناصر سنة ١٩٧٠.'],
+  q:[['إمتى استشهد الفريق عبد المنعم رياض؟',['٦ أكتوبر ١٩٧٣','٩ مارس ١٩٦٩','٢٥ أبريل ١٩٨٢'],1],['اسم الحرب اللي كانت بين ١٩٦٧ و١٩٧٠؟',['حرب الاستنزاف','حرب الخليج','الحرب العالمية'],0],['مين كان رئيس مصر في حرب أكتوبر؟',['جمال عبد الناصر','محمد أنور السادات','محمد نجيب'],1]]},
+ {f:['«الخداع الاستراتيجي»: الجبهة كانت بتبان هادية عشان العدو ما يتوقعش الهجوم.','خطة العبور اسمها «المآذن العالية»، وحطها الفريق سعد الدين الشاذلي.','«كشكول الجمسي»: اللواء الجمسي حدد فيه أنسب ميعاد: ٦ أكتوبر، ١٠ رمضان.','فكرة فتح الساتر بمضخات المية كانت من الضابط المهندس باقي زكي يوسف.','اسم العملية كان «بدر».'],
+  q:[['مين صاحب فكرة فتح الساتر الترابي بالمية؟',['باقي زكي يوسف','أحمد حمدي','إبراهيم الرفاعي'],0],['اسم خطة العبور كان إيه؟',['المآذن العالية','عاصفة الصحرا','النصر السريع'],0],['حرب أكتوبر بدأت في أنهي يوم رمضان؟',['أول رمضان','١٠ رمضان','٢٧ رمضان'],1]]},
+ {f:['الضربة الجوية بدأت الساعة ٢ الضهر يوم ٦ أكتوبر ١٩٧٣.','حوالي ٢٢٠ طيارة عدّت القنال في نفس اللحظة.','الطيارين طاروا على ارتفاع واطي جدًا عشان الرادار ما يشوفهمش.','قائد القوات الجوية كان اللواء طيار محمد حسني مبارك.','بعدها حوالي ٢٠٠٠ مدفع ضربوا مرة واحدة.'],
+  q:[['الضربة الجوية بدأت الساعة كام؟',['٢ الضهر','٦ الصبح','١٢ بالليل'],0],['ليه الطيارات طارت واطي؟',['عشان الرادار ما يشوفهاش','عشان توفّر بنزين','عشان الجو حر'],0],['كام طيارة تقريبًا شاركت في الضربة الأولى؟',['٢٠','٢٢٠','٢٠٠٠'],1]]},
+ {f:['العبور بدأ حوالي الساعة ٢:٢٠ بالقوارب المطاط.','العساكر كانوا بيهتفوا «الله أكبر» وهما بيعدّوا.','العبور حصل على طول القنال من بورسعيد للسويس في نفس الوقت.','الجيش الثاني الميداني عبر في الشمال، والجيش الثالث الميداني عبر في الجنوب.'],
+  q:[['العساكر عبروا القنال في الأول بإيه؟',['قوارب مطاط','دبابات','طيارات'],0],['الجيش اللي عبر في الجنوب ناحية السويس؟',['الجيش التاني','الجيش التالت','الحرس الجمهوري'],1],['الهتاف المشهور وقت العبور؟',['الله أكبر','يلا بينا','تحيا الصحرا'],0]]},
+ {f:['خط بارليف اتسمّى على اسم رئيس أركان العدو «حاييم بارليف».','الساتر الترابي كان عالي جدًا، بيوصل لحوالي ٢٠ متر في أماكن كتير.','مضخات المية فتحت عشرات الفتحات في الساتر في ساعات.','المشاة طلعوا الساتر بالسلالم الخشب والحبال قبل ما الفتحات تخلص.'],
+  q:[['الساتر الترابي اتفتح بإيه؟',['بمضخات المية','بالمتفجرات بس','بالجرافات بس'],0],['خط بارليف اتسمّى على اسم مين؟',['قائد عند العدو','نهر','مدينة'],0],['المشاة طلعوا الساتر في الأول إزاي؟',['بالسلالم','بالطيارة','بالأسانسير'],0]]},
+ {f:['المهندسين بنوا الكباري بالليل تحت ضرب الطيران.','الكباري كانت قطع بتطفو بتتركّب جنب بعض.','«حائط الصواريخ» بتاع الدفاع الجوي (قائده اللواء محمد علي فهمي) حمى السما.','اللواء أحمد حمدي استشهد ١٤ أكتوبر، واتسمّى على اسمه نفق تحت القنال.'],
+  q:[['مين قائد الدفاع الجوي؟',['محمد علي فهمي','سعد الشاذلي','فؤاد ذكري'],0],['النفق اللي تحت القنال اتسمّى على اسم مين؟',['أحمد حمدي','عبد المنعم رياض','باقي زكي يوسف'],0],['ليه الكباري اتبنت؟',['عشان الدبابات تعدّي','عشان الصيد','عشان السباحة'],0]]},
+ {f:['يوم ٨ أكتوبر العدو عمل هجوم مضاد كبير بالدبابات واتصد.','صاروخ «المالوتكا» المضاد للدبابات كان العسكري بيوجّهه بنفسه.','محمد عبد العاطي اتلقّب بـ«صائد الدبابات».','قائد لواء مدرّع من العدو اسمه «عساف ياجوري» اتأسر يوم ٨ أكتوبر.'],
+  q:[['مين اتلقّب بصائد الدبابات؟',['محمد عبد العاطي','أحمد إسماعيل علي','حسني مبارك'],0],['الصاروخ المضاد للدبابات في اللعبة اسمه؟',['المالوتكا','سام ٦','ميج ٢١'],0],['مين اتأسر يوم ٨ أكتوبر؟',['عساف ياجوري','حاييم بارليف','موشيه ديان'],0]]},
+ {f:['المجموعة ٣٩ قتال كانت من أشهر مجموعات الصاعقة المصرية.','قائدها العميد إبراهيم الرفاعي، واستشهد ١٩ أكتوبر ١٩٧٣.','الصاعقة كانت بتعمل إغارات ورا خطوط العدو بالليل.','قائد قوات الصاعقة في الحرب كان اللواء نبيل شكري.'],
+  q:[['مين قائد المجموعة ٣٩ قتال؟',['إبراهيم الرفاعي','سعد مأمون','عبد المنعم واصل'],0],['الصاعقة بتعمل عملياتها غالبًا إمتى؟',['بالليل','الضهر','وقت الفطار'],0],['الرفاعي استشهد إمتى؟',['١٩ أكتوبر ١٩٧٣','٦ أكتوبر ١٩٧٣','١٩٦٧'],0]]},
+ {f:['«الثغرة»: قوات من العدو عدّت لغرب القنال عند الدفرسوار يوم ١٦ أكتوبر.','معركة «المزرعة الصينية» كانت من أصعب معارك الحرب.','وقف إطلاق النار صدر بقرار مجلس الأمن يوم ٢٢ أكتوبر.','أهل السويس والمقاومة الشعبية مع الجيش صدّوا الهجوم يوم ٢٤ أكتوبر، وبقى العيد القومي للسويس.','الشيخ حافظ سلامة قاد المقاومة الشعبية من مسجد الشهداء.'],
+  q:[['العيد القومي للسويس يوم كام؟',['٢٤ أكتوبر','٦ أكتوبر','٢٥ أبريل'],0],['الثغرة كانت عند أنهي منطقة؟',['الدفرسوار','أسوان','مرسى مطروح'],0],['مين قاد المقاومة الشعبية في السويس؟',['الشيخ حافظ سلامة','باقي زكي يوسف','محمد عبد العاطي'],0]]},
+ {f:['مفاوضات الكيلو ١٠١ بدأت بعد الحرب.','معاهدة السلام اتوقّعت سنة ١٩٧٩.','سينا رجعت ٢٥ أبريل ١٩٨٢ — عيد تحرير سيناء.','طابا رجعت بالتحكيم الدولي ١٩ مارس ١٩٨٩.'],
+  q:[['عيد تحرير سيناء يوم كام؟',['٢٥ أبريل','٦ أكتوبر','٢٣ يوليو'],0],['طابا رجعت إزاي؟',['بالتحكيم الدولي','بالحرب','بالشراء'],0],['معاهدة السلام اتوقّعت سنة كام؟',['١٩٧٩','١٩٦٧','٢٠٠٠'],0]]}];
+async function lesson(i){const L=LESS[i];if(!L)return;G.stars=G.stars||{};let qi=0,score=0;const prevMode=mode;
+  await panel(`<h2>اعرف أكتر</h2><p class="muted">${ar(i+1)}. ${CHAPS[i].n}</p><ul style="line-height:1.9;margin:6px 0 10px;padding-inline-start:18px">${L.f.map(f=>`<li>${f}</li>`).join('')}</ul><div id="qz"></div><div class="row" style="justify-content:center;margin-top:10px"><button class="btn pri" id="qgo">اختبر نفسك (٣ أسئلة)</button><button class="btn" id="qno">كمّل من غير اختبار</button></div>`,(c,close)=>{
+    const box=c.querySelector('#qz'),go=c.querySelector('#qgo'),no=c.querySelector('#qno');no.onclick=()=>{SFX.click();close()};
+    const show=()=>{if(qi>=L.q.length){G.stars[i]=Math.max(G.stars[i]||0,score);saveAll();box.innerHTML=`<p class="big">${'★'.repeat(score)}${'☆'.repeat(3-score)}</p><p style="text-align:center">${score===3?'ممتاز! إنت فاهم الحكاية':score===2?'شاطر! قربت':'معلش، اقرا المعلومات تاني وهتجيبها'}</p>`;go.textContent='كمّل الحكاية';go.onclick=()=>{SFX.click();close()};go.hidden=false;no.hidden=true;return}
+      const [q,a,k]=L.q[qi];box.innerHTML=`<h3>${ar(qi+1)}. ${q}</h3><div class="grid">${a.map((x,j)=>`<button class="tile" data-j="${j}"><b>${x}</b></button>`).join('')}</div>`;go.hidden=true;
+      box.querySelectorAll('.tile').forEach(b=>b.onclick=()=>{const ok=+b.dataset.j===k;if(ok){score++;SFX.coin();b.style.background='#9fdc8a'}else{SFX.bad();b.style.background='#f0a090';box.querySelector(`[data-j="${k}"]`).style.background='#9fdc8a'}box.querySelectorAll('.tile').forEach(x=>x.disabled=true);setTimeout(()=>{qi++;show()},1100)})};
+    go.onclick=()=>{SFX.click();show()}});mode=prevMode}
+const UNITS=[['الجيش الثاني الميداني','شمال القنال — قائده اللواء سعد مأمون، وبعده اللواء عبد المنعم خليل.'],['الفرقة ١٨ مشاة','الجيش التاني — القنطرة — العميد فؤاد عزيز غالي.'],['الفرقة ٢ مشاة','الجيش التاني — الفردان/الإسماعيلية — العميد حسن أبو سعدة.'],['الفرقة ١٦ مشاة','الجيش التاني — جنوب الإسماعيلية — العميد عبد رب النبي حافظ.'],['الجيش الثالث الميداني','جنوب القنال ناحية السويس — قائده اللواء عبد المنعم واصل.'],['الفرقة ٧ مشاة','الجيش التالت — العميد أحمد بدوي.'],['الفرقة ١٩ مشاة','الجيش التالت — العميد يوسف عفيفي.'],['القوات الجوية','اللواء طيار محمد حسني مبارك — الضربة الجوية الأولى.'],['قوات الدفاع الجوي','اللواء محمد علي فهمي — «حائط الصواريخ».'],['القوات البحرية','اللواء فؤاد ذكري — إغلاق باب المندب قدام سفن العدو.'],['سلاح المهندسين','فتح الساتر بالمية وبناء الكباري تحت النار.'],['المدفعية','اللواء محمد سعيد الماحي — حوالي ٢٠٠٠ مدفع في الضربة الأولى.'],['قوات الصاعقة','اللواء نبيل شكري — ومنها المجموعة ٣٩ قتال بقيادة إبراهيم الرفاعي.'],['المقاومة الشعبية في السويس','الشيخ حافظ سلامة وأهل السويس مع الجيش.']];
+const WEAPS=[['القوارب المطاط','أول وسيلة للعبور، كل قارب شايل عساكر بيجدّفوا.'],['السلالم الخشب والحبال','المشاة طلعوا بيها الساتر العالي.'],['مضخات المية','فتحت فتحات في الساتر الرملي.'],['الكباري العايمة','قطع بتتركّب جنب بعض عشان الدبابات تعدّي.'],['المالوتكا','صاروخ مضاد للدبابات بيتوجّه بالسلك.'],['آر بي جي','سلاح مضاد للدبابات قصير المدى.'],['ميج ٢١ وسوخوي ٧','من طيارات الضربة الجوية.'],['سام ٢ وسام ٣ وسام ٦','صواريخ الدفاع الجوي («حائط الصواريخ»).']];
+const TL=[['يونيو ١٩٦٧','النكسة واحتلال سينا'],['١٩٦٧–١٩٧٠','حرب الاستنزاف'],['٩ مارس ١٩٦٩','استشهاد عبد المنعم رياض — يوم الشهيد'],['٦ أكتوبر ١٩٧٣ — ٢:٠٠','الضربة الجوية والمدفعية'],['٦ أكتوبر — ٢:٢٠','العبور واقتحام خط بارليف'],['٨ أكتوبر','صد الهجوم المضاد'],['١٤ أكتوبر','استشهاد أحمد حمدي'],['١٦ أكتوبر','الثغرة عند الدفرسوار'],['١٩ أكتوبر','استشهاد إبراهيم الرفاعي'],['٢٢ أكتوبر','قرار وقف إطلاق النار'],['٢٤ أكتوبر','صمود السويس'],['١٩٧٩','معاهدة السلام'],['٢٥ أبريل ١٩٨٢','عيد تحرير سيناء'],['١٩ مارس ١٩٨٩','عودة طابا']];
+function openBook(tab='ours'){const tile=(a,b,lk)=>`<div class="tile ${lk?'lock':''}"><b>${a}</b><span>${b}</span></div>`;
+  const ours=`<div class="grid">${tile('حسن','مهندس في سلاح المهندسين، من قرية في الشرقية. هادي وبيحسبها. فتح الساتر بالمية وبنى الكوبري.')}${tile('عبده','من الصاعقة، صاحب حسن من وهم عيال. دمه خفيف، وأول واحد يطلع السلم. خطيبته سعاد.')}</div><p class="muted">النجوم: ${ar(Object.values(G.stars||{}).reduce((a,b)=>a+b,0))} من ${ar(30)}</p>`;
+  const tabs=[['ours','حسن وعبده'],['real','القادة'],['units','الجيوش والفرق'],['weap','الأسلحة'],['tl','التواريخ']];
+  const body=tab==='ours'?ours:tab==='real'?`<div class="grid">${REAL.map(r=>tile(r[0],r[1])).join('')}</div>`:tab==='units'?`<div class="grid">${UNITS.map(r=>tile(r[0],r[1])).join('')}</div>`:tab==='weap'?`<div class="grid">${WEAPS.map(r=>tile(r[0],r[1])).join('')}</div>`:`<div class="grid">${TL.map(r=>tile(r[0],r[1])).join('')}</div>`;
+  panel(`<button class="x" aria-label="اقفل">✕</button><h2>موسوعة أكتوبر</h2><div class="tabs">${tabs.map(([k,n])=>`<button class="tab ${k===tab?'on':''}" data-t="${k}">${n}</button>`).join('')}</div>${body}`,(c,close)=>{c.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{SFX.click();close();setTimeout(()=>openBook(b.dataset.t),30)})})}
+$('#bHeroes').onclick=()=>{aInit();if(mode==='busy')return;openBook()};
+window.__oboor.skip=skipTask;window.__oboor.M=()=>MISS;window.__oboor.W=()=>WEAP;window.__oboor.T=()=>TANKS;window.__oboor.ET=()=>ENEMIES;
 boot();
 })();
 </script>
