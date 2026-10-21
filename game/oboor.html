@@ -117,6 +117,7 @@ input[type=range]{width:100%;accent-color:var(--gold)}
   <div class="pill" id="who">…</div>
   <div class="pill" id="susW" hidden><span>شك العدو</span><div class="bar"><i id="sus"></i></div></div>
   <div class="pill" id="hpW" hidden><span>الصحة</span><div class="bar"><i id="hp" style="background:#5ac85a"></i></div></div>
+  <button class="pill" id="bSkip" hidden style="pointer-events:auto;border:none;background:#f2a516;color:#3a2408;cursor:pointer">اتزنقت؟ تخطّى</button>
   <div class="grow"></div>
   <button class="ib" id="bHeroes" aria-label="الأبطال"><svg viewBox="0 0 24 24" width="60%" height="60%" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 2l3 6.3 7 1-5 4.8 1.2 6.9L12 17.8 5.8 21l1.2-6.9-5-4.8 7-1z"/></svg></button>
   <button class="ib" id="bChaps" aria-label="الفصول"><svg viewBox="0 0 24 24" width="60%" height="60%" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 5h16M4 12h16M4 19h16"/></svg></button>
@@ -657,7 +658,7 @@ async function fadeTo(v,ms=500){let f=$('#fade');if(!f){f=document.createElement
 
 /* ===================== CINEMATIC SLIDES ===================== */
 let RUN=0,FAIL=false;const ABORT={abort:1},RETRY={retry:1};
-function until(fn,tok){return new Promise((res,rej)=>{(function f(){if(tok!==RUN)return rej(ABORT);if(SKIPF){SKIPF=false;return res()}if(FAIL){FAIL=false;return rej(RETRY)}let ok=false;try{ok=fn()}catch(e){return rej(e)}if(ok)return res();requestAnimationFrame(f)})()})}
+function until(fn,tok){return new Promise((res,rej)=>{(function f(){if(tok!==RUN)return rej(ABORT);if(SKIPF){SKIPF=false;return res()}if(FAIL)return rej(RETRY);let ok=false;try{ok=fn()}catch(e){return rej(e)}if(ok)return res();requestAnimationFrame(f)})()})}
 function wait(ms,tok){const t=performance.now();return until(()=>performance.now()-t>=ms,tok)}
 const strip=t=>t.replace(/<[^>]+>/g,'');
 async function cine(list,tok){const prev=mode;mode='busy';const el=$('#cine'),cv=$('#ccv'),x=cv.getContext('2d');el.hidden=false;let skip=false,next=false;
@@ -796,7 +797,7 @@ async function playChapter(i){RUN++;const tok=RUN;CH=i;resetChapter();$('#chap')
   try{await fadeTo(1,300);await CHF[i](tok);if(tok!==RUN)return;G.unl=Math.max(G.unl,i+2);saveAll();await fadeTo(0,200);await lesson(i);if(tok!==RUN)return;
     if(i+1<CHAPS.length&&!CHAPS[i+1].soon)playChapter(i+1);else{mode='busy';await fadeTo(0,200);openChapters(true)}}
   catch(e){if(e===ABORT)return;console.error(e)}}
-async function phase(fn,tok){for(;;){try{FAIL=false;await fn(tok);return}catch(e){if(e!==RETRY)throw e;mode='busy';banner('العدو شك!','الخداع لازم يفضل محكم… نعيد تاني',2600);SFX.bad();await wait(2600,tok);await fadeTo(1);mode='play'}}}
+async function phase(fn,tok){for(;;){try{FAIL=false;await fn(tok);return}catch(e){if(e!==RETRY)throw e;FAIL=false;for(const h of[HASSAN,ABDO]){h.lock=false;h.task=null}mode='busy';banner('العدو شك!','الخداع لازم يفضل محكم… نعيد تاني',2600);SFX.bad();await wait(2600,tok);await fadeTo(1);mode='play'}}}
 /* ---------- crowds ---------- */
 function campCrowd(night){for(const f of FRIENDS)removeChar(f.c);FRIENDS=[];
   if(night){spawnFriend(-36,-4,'sit');spawnFriend(-41,6,'sit');return}
@@ -825,10 +826,10 @@ function radioTune(){if(!AC)return;const n=[0,3,5,7,5,3,0,-2,0,3,5,3];n.forEach(
 let BALL=null,BALLFN=null;
 async function ballGame(tok){if(!BALL){BALL={m:new THREE.Mesh(GEO.sph,M('#f4f4f4',.5)),x:-36,z:-26,vx:0,vz:0,y:.22};BALL.m.scale.setScalar(.22);BALL.m.castShadow=true;scene.add(BALL.m)}
   BALL.x=-36;BALL.z=-26;BALL.vx=BALL.vz=0;CTRL.x=-33;CTRL.z=-26;CTRL.yaw=-Math.PI/2;camYaw=-Math.PI/2;snapChar(CTRL);toast('اشوط الكورة في الجون اللي على الشمال',2600);setTarget({x:-44,z:-26});
-  let goal=false;BALLFN=dt=>{const b=BALL;const d=Math.hypot(CTRL.x-b.x,CTRL.z-b.z);if(d<.7&&CTRL.spd>.5){const k=CTRL.spd>4?9:6;b.vx=Math.sin(CTRL.yaw)*k;b.vz=Math.cos(CTRL.yaw)*k;SFX.thud()}
+  let goal=false;BALLFN=dt=>{const b=BALL;const d=Math.hypot(CTRL.x-b.x,CTRL.z-b.z);if(d<.7&&CTRL.spd>.5){const k=CTRL.spd>4?9:6;b.vx=Math.sin(CTRL.yaw)*k;b.vz=Math.cos(CTRL.yaw)*k;if(b.vx<0){const tz=(-26-b.z)/Math.max(1,(b.x+44));b.vz=lerp(b.vz,-b.vx*tz*-1*-1,.6)}SFX.thud()}
     const md=Math.hypot(MATE.x-b.x,MATE.z-b.z);if(md<.7){b.vx=-4;b.vz=rnd(-2,2)}
     b.x+=b.vx*dt;b.z+=b.vz*dt;b.vx*=1-dt*.9;b.vz*=1-dt*.9;if(b.z<-34||b.z>-18){b.vz*=-.7;b.z=clamp(b.z,-34,-18)}if(b.x>-27){b.vx*=-.7;b.x=-27}
-    if(b.x<-44){if(Math.abs(b.z+26)<1.6){goal=true}else{b.x=-43.5;b.vx*=-.6}}b.m.position.set(b.x,.22,b.z);b.m.rotation.z-=b.vx*dt*4;b.m.rotation.x+=b.vz*dt*4};
+    if(b.x<-44){if(Math.abs(b.z+26)<2.4){goal=true}else{b.x=-43.5;b.vx*=-.6}}b.m.position.set(b.x,.22,b.z);b.m.rotation.z-=b.vx*dt*4;b.m.rotation.x+=b.vz*dt*4};
   try{await until(()=>goal,tok)}finally{BALLFN=null}setTarget(null);SFX.win();banner('جوووون!','',1600);say(MATE,'جووون! العدو بيتفرج علينا وإحنا بنلعب ههههه');BALL.x=-36;BALL.z=-26;BALL.m.position.set(-36,.22,-26)}
 /* ---------- DAY ---------- */
 const DAYS=[{date:'٢٤ سبتمبر ١٩٧٣',title:'يوم عادي قدام العدو',tasks:[['cane','كُل قصب على الشط'],['radio','شغّل الراديو'],['letter','اكتب جواب']]},
@@ -1085,7 +1086,7 @@ function decoTick(dt){if(boomT>0){boomT-=dt;boomL.intensity=Math.max(0,boomL.int
   for(const c of CLOUDS){c.position.x+=dt*1.5;if(c.position.x>320)c.position.x=-320}
   if(mslCD>0)mslCD-=dt;missileTick(dt);tankTick(dt);
   // stuck helper
-  const o=$('#obj');const t=o.hidden?'':o.textContent.replace(/[٠-٩0-9٪%]/g,'');if(mode==='play'&&t){if(t===lastObjTxt){objStill+=dt;if(objStill>75){objStill=0;toast('لو حاسس إنك اتزنقت: افتح الترس فوق واختار «تخطّي المهمة»',4200)}}else{objStill=0;lastObjTxt=t}}else objStill=0}
+  const o=$('#obj');const t=o.hidden?'':o.textContent.replace(/[٠-٩0-9٪%]/g,'');if(mode==='play'&&t){if(t===lastObjTxt){objStill+=dt;if(objStill>35&&$('#bSkip').hidden){$('#bSkip').hidden=false;toast('لو مش عارف تكمّل، دوس «اتزنقت؟ تخطّى» فوق',3500)}}else{objStill=0;$('#bSkip').hidden=true;lastObjTxt=t}}else objStill=0}
 /* ---------- tanks ---------- */
 function makeTank(egy){const g=new THREE.Group();const body=M(egy?'#b9a06e':'#6b6f58',.8),dk=M('#26261f',.9);
   const add=(geo,m,x,y,z,sx,sy,sz,par=g)=>{const o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);o.castShadow=o.receiveShadow=true;par.add(o);return o};
@@ -1112,7 +1113,8 @@ function missileTick(dt){for(let i=MISS.length-1;i>=0;i--){const s=MISS[i];s.t+=
     let hit=null;for(const t of TANKS){if(t.dead||t.egy)continue;if(Math.hypot(t.x-s.x,t.z-s.z)<3&&s.y<(t.y||0)+3.2){hit=t;break}}
     const gy=TERR?TERR(s.x,s.z):0;if(hit||s.y<gy+.05||s.t>7){scene.remove(s.m);MISS.splice(i,1);if(hit){killTank(hit);banner('إصابة!','',900);SFX.win()}else explode(s.x,Math.max(gy,s.y),s.z,1.4)}}}
 /* ---------- skip / restart helpers ---------- */
-function skipTask(){SKIPF=true;toast('اتخطّينا المهمة دي',1600)}
+function skipTask(){SKIPF=true;objStill=0;$('#bSkip').hidden=true;for(const h of[HASSAN,ABDO])if(h&&!h.seatB)h.lock=false;toast('اتخطّينا المهمة دي',1600)}
+$('#bSkip').onclick=()=>{aInit();SFX.click();skipTask()};
 /* ---------- extra slide content ---------- */
 SL.win[2]={d:sTitle('ولسه الحكاية مكمّلة…','الكباري · صد الدبابات · الصاعقة · الثغرة والسويس'),cap:'حكاية <b>حسن وعبده</b> مكمّلة… يلا على <b>الكباري</b>.'};
 Object.assign(SL,{
