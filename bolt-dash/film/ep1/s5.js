@@ -52,8 +52,8 @@ export function shots(A) {
   shot(6, () => { judges(); }, (t, dt, T) => {
     const hitT = 2.3;
     if (t < hitT) { const z = COURSE.start - t * 4.2; straw.at(X, 0, z, PI).play('Run', 1.3); say('candidate', 'Wheee!'); }
-    else { const u = t - hitT; if (!straw.hit) { straw.hit = 1; straw.play('HitReact'); fx.burst(V(X, 1.2, straw.p.z), 0xffd23f, 14, 6); } straw.at(X + u * 5.5, Math.max(0, 1.4 + u * 5 - u * u * 9), straw.p.z + u * 0.8, PI); straw.m.rotation.z = Math.min(u * 6, 1.5); if (u > 0.9) straw.play('Death'); say(null); }
-    const fz = straw.hit ? -1.2 : straw.p.z; camTo(V(X + 6.5, 3.0, fz - 1.2), V(X + (straw.hit ? 1.5 : 0), 0.9, fz - 1.2), 6);
+    else { const u = t - hitT; if (!straw.hit) { straw.hit = 1; straw.play('HitReact'); fx.burst(V(X, 1.2, straw.p.z), 0xffd23f, 14, 6); } straw.at(X + u * 3.2, Math.max(0, 1.4 + u * 5 - u * u * 9), -1.0 - u * 0.6, PI); straw.m.rotation.z = Math.min(u * 6, 1.5); if (u > 0.9) straw.play('Death'); say(null); }
+    const fz = straw.hit ? -1.2 : straw.p.z; camTo(V(X + 9, 3.2, fz - 3.5), V(X + (straw.hit ? 2.5 : 0), 0.9, fz - 1), 6);
   });
   // 6. Yellow winces
   shot(3, () => { judges(); Y.play('No'); }, (t) => { closeUp(Y, { ang: -0.2, dist: 1.8, k: 99 }); say('yellow', 'Ouch.'); });
@@ -98,7 +98,7 @@ export function shots(A) {
   shot(4, () => { Br.at(X, 2, -30, PI).play('Idle'); fans(1); }, (t) => { closeUp(Br, { ang: 0.2, dist: 2.2, h: 1.2, k: 99 }); });
   shot(4, () => { Br.at(X, 2, -30, PI).play('Idle'); fans(1); }, (t) => { fixed([16, 7, -6], [0, 1, -12]); });
   // 17. Blue whispers to Yellow
-  shot(5, () => { judges(); B.m.rotation.y = -PI * 0.45; Y.m.rotation.y = PI * 0.6; }, (t) => { overShoulder(Y, B, { side: -1, k: 99 }); say('blue', "He's strong... really strong."); });
+  shot(5, () => { judges(); B.m.rotation.y = -PI * 0.45; Y.m.rotation.y = PI * 0.6; }, (t) => { camTo(V(-3.2, 1.5, 6.3), V(-5.0, 1.05, 9.0), 99); say('blue', "He's strong... really strong."); });
   // 18. Brown walks past them and nods
   shot(6, () => { judges(); Vi.at(-3.2, 0, 10.6, PI * 0.8); Mi.at(-2.2, 0, 11.4, PI * 0.8); }, (t) => {
     const k = ease(t / 5.2); Br.at(lerp(4, -9, k), 0, lerp(6.5, 12.5, k), -PI / 2 - 0.4).play(k < 1 ? 'Walk' : 'Idle');
@@ -109,9 +109,9 @@ export function shots(A) {
   shot(6, () => { B.at(-4.4, 0, 9.5, PI * 0.75); Y.at(-5.6, 0, 8.8, PI * 0.75); Vi.at(-3.2, 0, 10.4, PI * 0.75); Mi.at(-2.1, 0, 11.2, PI * 0.75).play('Wave'); },
     (t) => { frameGroup([Y, B, Vi, Mi], { side: -1, h: 1.2, dist: 0.85, k: 99 }); say(t < 3 ? 'minto' : 'vio', t < 3 ? 'Pfff. We are stronger.' : 'Statistically... no.'); });
   // 20. quick cuts: Orange's team full of energy; Red yelling at his
-  shot(5, () => { A.orange.at(-14, 0, 14, 0.4).play('Wave'); oTeam.forEach((a, i) => a.at(-15.8 + i * 1.6, 0, 15.6, 0.3).play(i === 1 ? 'Yes' : 'Wave')); },
+  shot(5, () => { A.orange.at(-14.2, 0, 17.4, 0.2).play('Wave'); oTeam.forEach((a, i) => a.at(-15.8 + i * 1.6, 0, 15.6, 0.3).play(i === 1 ? 'Yes' : 'Wave')); },
     (t) => { frameGroup([oTeam[0], A.orange, oTeam[1], oTeam[2]], { side: 1, h: 1.2, dist: 0.85, k: 99 }); say('orange', 'Team Flarix is ON FIRE!'); });
-  shot(5, () => { A.red.at(-14, 0, -4, PI / 2).play('Punch'); rTeam.forEach((a, i) => a.at(-11.6, 0, -5.6 + i * 1.6, -PI / 2).play('Duck')); },
-    (t) => { if (t > 2.4 && t < 2.5) A.red.replay('No'); frameGroup([A.red, ...rTeam], { side: -1, h: 1.1, dist: 0.9, k: 99 }); say('red', 'Faster! Are you SLEEPING?!'); });
+  shot(5, () => { A.red.at(14, 0, -8, PI / 2).play('Punch'); rTeam.forEach((a, i) => a.at(16.6, 0, -9.6 + i * 1.6, -PI / 2).play('Duck')); },
+    (t) => { if (t > 2.4 && t < 2.5) A.red.replay('No'); camTo(V(13.6, 1.5, -12.6), V(15.3, 1.0, -8.2), 99); say('red', 'Faster! Are you SLEEPING?!'); });
   return S;
 }

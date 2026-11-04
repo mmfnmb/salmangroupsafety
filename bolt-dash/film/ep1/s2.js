@@ -1,13 +1,14 @@
 // Episode 1, scene 2: "The remote" — sofa fight over the TV, a chase round the coffee table, the remote flies and lands on the news.
-import { hideAll, fixed, frameGroup, closeUp, chase, overShoulder, say, puffs, fx, V, PI, ease, lerp, clamp, put, useSet } from '../lib.js';
+import { hideAll, fixed, frameGroup, closeUp, chase, orbit, overShoulder, say, puffs, fx, V, PI, ease, lerp, clamp, put, useSet } from '../lib.js';
 import { HOUSE } from '../sets/house.js';
 
 const SEAT = { y: 0.42, z: -0.05 }; // sofa seat (world); seated cast face -z towards the TV
 const YX = 0.55, BX = -0.55; // where each one sits
-const C = { x: 0.3, z: -3.2 }, R = 2.3; // chase circle round the coffee table
+const C = { x: 0.3, z: -3.6 }, R = 1.85; // chase circle round the coffee table
 const CHANNELS = [0xff7a2f, 0x2a9d4b, 0xff4f9a, 0x3d8bff, 0xffd23f];
 
-const stand = (a) => { a.m.rotation.x = 0; a.m.rotation.z = 0; };
+// standing up again: clear any tilt and release a held sitting pose
+const stand = (a) => { a.m.rotation.x = 0; a.m.rotation.z = 0; const d = a.acts.Duck; if (d.timeScale === 0) { d.stop(); d.timeScale = 1; if (a.cur === d) { a.cur = null; a.play('Idle', 1, 0.01); } } };
 // a seated pose: the crouch from 'Duck' held halfway
 function sit(a, x, ry = PI) {
   stand(a); a.at(x, SEAT.y, SEAT.z, ry).show();
@@ -81,7 +82,7 @@ export function shots(A) {
       const th = 0.4 + (3.6 + t) * 1.1; runCircle(Y, th); runCircle(B, th - 1.2 + t * 0.06);
       inHand(Y, remote());
       if (t > 3.2) say('Yellow', 'Hahaha! Too slow!');
-      chase(Y, { back: 3.8, side: -1.8, h: 2.2, ahead: 2 });
+      orbit([C.x, 0, C.z], t, { r: 6.2, h: 4.2, speed: 0.18, from: 0.6 });
     } },
     // 8. Blue dives... Yellow sidesteps, Blue slides along the rug
     { dur: 5, set: 'house_int', time: 'interior', setup() { hideAll(); B.show(); Y.show(); this.d = null; say('Blue', 'HYAAAA!'); }, upd(t) {
@@ -93,7 +94,7 @@ export function shots(A) {
       const bx = bc.x + dx / l * (k * 4.2), bz = bc.z + dz / l * (k * 4.2);
       stand(B); B.at(bx, Math.sin(k * PI) * 0.7, bz, Math.atan2(dx, dz)); B.play(t < 1.3 ? 'Jump_Idle' : 'HitReact', 1);
       if (t < 1.3) B.m.rotation.x = 0.9 * Math.sin(k * PI); else { B.m.rotation.x = PI / 2 * 0.85; B.at(bx, 0.25, bz); if (!this.d) { this.d = 1; fx.dust(V(bx, 0.1, bz), 16, 0xf3ecdf, 3); } }
-      frameGroup([B, Y], { side: 1, h: 1.6, dist: 1.0, look: 0.6 });
+      fixed([C.x + 0.5, 4.6, 2.6], [C.x, 0.4, C.z]);
     } },
     // 9. ...and the remote goes flying
     { dur: 4, set: 'house_int', time: 'interior', setup() { hideAll(); B.show(); Y.show(); say('Yellow', 'Oops!'); }, upd(t) {
@@ -102,7 +103,7 @@ export function shots(A) {
       const o = remote(), k = clamp(t / 2.4, 0, 1), from = V(yc.x + 1.2, 0.9, yc.z), to = V(0.1, SEAT.y + 0.32, SEAT.z);
       o.position.set(lerp(from.x, to.x, k), lerp(from.y, to.y, k) + Math.sin(k * PI) * 2.0, lerp(from.z, to.z, k)); o.rotation.set(k * 9, k * 6, 0); o.visible = true;
       if (t > 1.2) say('Blue', 'NOOO!');
-      fixed([3.2, 2.6, 1.2], [lerp(from.x, to.x, k * 0.8), 1.2, lerp(from.z, to.z, k * 0.8)]);
+      fixed([-3.0, 2.3, -3.8], [lerp(from.x, to.x, 0.5), 1.4, lerp(from.z, to.z, 0.5)]);
     } },
     // 10. it lands on the cushion... click
     { dur: 3, set: 'house_int', time: 'interior', setup() { hideAll(); say(null); this.f = 0; }, upd(t) {
@@ -110,20 +111,19 @@ export function shots(A) {
       o.position.set(0.1, SEAT.y + 0.32 + b, SEAT.z); o.rotation.set(0, 0.4, 0); o.visible = true;
       if (t > 0.5) { screen(0xffffff); if (!this.f) { this.f = 1; fx.burst(V(0.1, SEAT.y + 0.5, SEAT.z), 0xffffff, 8, 2, 0.6); } }
       if (t > 0.75) screen(0x1f3a8f);
-      fixed([0.9, 1.4, 1.3], [0.1, SEAT.y + 0.3, SEAT.z]);
+      fixed([0.7, 1.35, -2.0], [0.1, SEAT.y + 0.35, SEAT.z]);
     } },
     // 11. the news comes on: both freeze and turn
-    { dur: 5, set: 'house_int', time: 'interior', setup() { hideAll(); stand(B); stand(Y); B.at(-0.6, 0, -2.0, 0).show(); Y.at(1.4, 0, -1.9, 0).show(); say('TV', 'BREAKING NEWS!'); }, upd(t) {
+    { dur: 5, set: 'house_int', time: 'interior', setup() { hideAll(); stand(B); stand(Y); B.at(-0.6, 0, -2.0, 0).show().replay('Idle'); Y.at(1.4, 0, -1.9, 0).show().replay('Idle'); say('TV', 'BREAKING NEWS!'); }, upd(t) {
       screen(Math.floor(t * 3) % 2 ? 0x1f3a8f : 0x2b4fb8);
       const k = ease((t - 0.8) / 0.8); B.m.rotation.y = lerp(0, PI, k); Y.m.rotation.y = lerp(0, PI, ease((t - 1.1) / 0.8));
-      B.play('Idle'); Y.play('Idle');
       frameGroup([B, Y], { side: -1, h: 1.3, dist: 0.8, look: 1.0 });
     } },
     // 12. over their shoulders: the TV glowing
     { dur: 6, set: 'house_int', time: 'interior', setup() { hideAll(); stand(B); stand(Y); B.at(-0.6, 0, -2.0, PI).show().play('Idle'); Y.at(1.4, 0, -1.9, PI).show().play('Idle'); say('Blue', 'Wait... what is this?'); }, upd(t) {
       screen(Math.floor(t * 3) % 2 ? 0x1f3a8f : 0x2b4fb8);
       if (t > 3) say('Yellow', 'Turn it up! TURN IT UP!');
-      const k = ease(t / 6); fixed([lerp(0.4, 0.3, k), lerp(2.5, 2.0, k), lerp(1.6, -0.2, k)], [0.1, 1.3, -7.0]);
+      const k = ease(t / 6); fixed([lerp(0.4, 0.3, k), lerp(3.4, 2.9, k), lerp(3.2, 1.8, k)], [0.1, 1.2, -7.0]);
     } },
     // 13. close on the screen
     { dur: 5, set: 'house_int', time: 'interior', setup() { hideAll(); stand(B); stand(Y); B.at(-0.6, 0, -2.0, PI).show(); Y.at(1.4, 0, -1.9, PI).show(); say('TV', 'This is huge, folks. Stay with us...'); }, upd(t) {
@@ -134,7 +134,7 @@ export function shots(A) {
     { dur: 5, set: 'house_int', time: 'interior', setup() { hideAll(); stand(B); stand(Y); B.at(-0.6, 0, -2.0, PI).show().play('Idle'); Y.at(1.4, 0, -1.9, PI).show().play('Idle'); say(null); }, upd(t) {
       screen(Math.floor(t * 3) % 2 ? 0x1f3a8f : 0x2b4fb8);
       if (t > 2.5) { say('Blue', '...!'); B.play('Yes', 1); Y.play('Yes', 1); }
-      fixed([0.4, 1.5, -4.6], [0.4, 1.0, -1.9]);
+      fixed([-3.0, 1.6, -3.6], [0.4, 1.0, -1.95]);
     } },
   ];
 }

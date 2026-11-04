@@ -86,11 +86,12 @@ SETS.stadium = (root) => {
 
   // the stage and the league crown
   const { x: sx, z: sz } = STAD.stage;
-  put(root, 'f/mini-block', sx, 0, sz, [14, 2.4, 8]);
-  put(root, 'f/mini-stairs', sx, 0, sz + 5, [6, 2.4, 2], PI);
+  const tint = (o, c) => { o.traverse((m) => { if (m.isMesh) { m.material = m.material.clone(); m.material.color.setHex(c); } }); return o; };
+  tint(put(root, 'f/mini-block', sx, 0, sz, [14, 2.4, 8]), 0x8a7ad8);
+  tint(put(root, 'f/mini-stairs', sx, 0, sz + 5, [6, 2.4, 2], PI), 0x8a7ad8);
   for (const [dx, dz] of [[-6.5, -3.5], [6.5, -3.5], [-6.5, 3.5], [6.5, 3.5]]) put(root, 'f/mini-column', sx + dx, 1.2, sz + dz, [1.6, 4.5, 1.6]);
   put(root, 'f/mini-statue', sx - 4, 1.2, sz - 2, 2.2); put(root, 'f/mini-statue', sx + 4, 1.2, sz - 2, 2.2);
-  put(root, 'f/mini-block', sx, 1.2, sz - 1, [2.4, 4, 2.4]);
+  tint(put(root, 'f/mini-block', sx, 1.2, sz - 1, [2.4, 4, 2.4]), 0x6a5ac8);
   const crown = put(root, 'acc/Crown', sx, 4.4, sz - 1, 5.5);
   crown.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.emissive = new THREE.Color(0xffb000); o.material.emissiveIntensity = 0.55; o.material.metalness = 0.9; o.material.roughness = 0.2; } });
   crown.userData.update = (T) => { crown.rotation.y = T * 0.8; crown.position.y = 4.4 + Math.sin(T * 1.6) * 0.25; };

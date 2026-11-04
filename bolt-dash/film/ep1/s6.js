@@ -56,7 +56,7 @@ function ensureFlags(root) {
     });
   }
   chute = place('k/detail-parasol-a', 0, -50, 0, 10, 0, root);
-  chute.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.color.setHex(0xffc21a); o.material.metalness = 0.15; o.material.roughness = 0.45; o.material.emissive = new THREE.Color(0x8a5a00); o.material.emissiveIntensity = 0.6; } });
+  chute.traverse((o) => { if (o.isMesh) o.material = new THREE.MeshStandardMaterial({ color: 0xffc21a, metalness: 0.35, roughness: 0.35, emissive: 0x7a4a00, emissiveIntensity: 0.55, side: THREE.DoubleSide }); });
 }
 function followFlags() {
   for (const t of teams) t.m.forEach((a, i) => {
@@ -113,7 +113,10 @@ export function shots(A) {
   const goldAt = (sc) => {
     // Gold's parachute drop: high up at 61.5 s, lands in front of the stage at 69 s
     const k = clamp((sc - 61.5) / 7.5, 0, 1), y = lerp(42, 0, 1 - Math.pow(1 - k, 2.2));
-    A.gold.at(Math.sin(sc * 0.9) * (1 - k) * 2.5, y, -2, 0);
+    // after landing he strolls up to Splashvolt's line to taunt Blue
+    const w = clamp((sc - 73.5) / 5.5, 0, 1);
+    A.gold.at(lerp(Math.sin(sc * 0.9) * (1 - k) * 2.5, -4.6, ease(w)), y, lerp(-2, 3.4, ease(w)), w > 0 && w < 1 ? Math.atan2(-4.6, 5.4) : w >= 1 ? Math.atan2(-7.5 + 4.6, 6 - 3.4) : 0);
+    if (w > 0 && w < 1) A.gold.play('Walk');
     if (chute) {
       const up = Math.max(0, sc - 69.2); // after landing the chute floats away
       chute.position.set(A.gold.p.x, y + 0.85 + up * up * 2.2, A.gold.p.z + up * 2); chute.rotation.set(0, sc * 0.4, Math.sin(sc * 2.1) * 0.14 * (1 - k * 0.6));
@@ -174,7 +177,7 @@ export function shots(A) {
   });
   shot(3.5, () => say('Announcer', '...the golden one... AUREX!!'), (t, sc) => {
     const k = goldAt(sc); A.gold.play(k < 1 ? 'Jump_Idle' : 'Jump_Land');
-    camTo(V(7, 2.2, 6), V(A.gold.p.x, A.gold.p.y + 1.6, A.gold.p.z), 4);
+    camTo(V(4, 1.6 + A.gold.p.y * 0.5, 5), V(A.gold.p.x, A.gold.p.y + 1.6, A.gold.p.z), 4);
     if (k >= 1 && sc < 69.5) for (let i = 0; i < 6; i++) puffs.emit({ pos: V(A.gold.p.x + Math.cos(i) * 0.6, 0.15, A.gold.p.z + Math.sin(i) * 0.6), vel: V(Math.cos(i) * 3, 0.8, Math.sin(i) * 3), life: 0.6, size: 0.3, color: 0xffe08a });
   });
   // 13. Gold shows off as his team jogs in behind him
@@ -210,8 +213,8 @@ export function shots(A) {
   // 18. the crown, fireworks, everyone cheering
   shot(6, () => { STAD.cheer.left = STAD.cheer.right = STAD.cheer.ends = 1.6; say('Announcer', 'LET THE LEAGUE... BEGIN!'); }, (t, sc, T) => {
     goldAt(sc); for (const tt of teams) tt.m.forEach((a) => a && a.play(((sc * 3) | 0) % 2 ? 'Yes' : 'Wave'));
-    const c = STAD.crown?.getWorldPosition(V()) || V(0, 4, -17), a = 0.8 + t * 0.18, r = 7 + t * 1.6;
-    camTo(V(c.x + Math.sin(a) * r, c.y + 1 + t * 1.8, c.z + Math.cos(a) * r), c, 3);
+    const c = STAD.crown?.getWorldPosition(V()) || V(0, 4, -17), a = 0.8 + t * 0.18, r = 9 + t * 1.4;
+    camTo(V(c.x + Math.sin(a) * r, c.y + 2.5 + t * 1.2, c.z + Math.cos(a) * r), c, 3);
     fireworks(T, 3.5);
     if (((T * 24) | 0) % 18 === 0) for (let i = 0; i < 40; i++) confetti.emit({ pos: V(c.x + ((i * 37) % 17 - 8), c.y + 8, c.z + ((i * 53) % 13 - 6)), vel: V(((i * 7) % 5 - 2), -1, ((i * 11) % 5 - 2)), life: 2.4, size: 1, g: 2, drag: 0.6, color: COLS[i % COLS.length], spin: 6 });
   });
