@@ -1,6 +1,6 @@
 // "The Rivalry": the intro film. Built from the game's own models and maps, rendered frame by frame to a video.
 // Run film/film.html through film/render.cjs to produce media/intro.mp4.
-import { THREE, M, G, V, PI, rand, scene, camera, renderer, renderScene, puffs, confetti, fx, sun, SkeletonUtils, place, loadAssets, save, applyQuality, resize, sea } from '../src/core.js';
+import { THREE, M, G, V, PI, rand, clamp, scene, camera, renderer, renderScene, puffs, confetti, fx, sun, SkeletonUtils, place, loadAssets, save, applyQuality, resize, sea } from '../src/core.js';
 import { computeBoneFix, dress, skinFx, updateGold, teamFlag } from '../src/cosmetics.js';
 import { MODES } from '../src/modes.js';
 import '../src/sports.js';
@@ -84,6 +84,7 @@ function drawCards(T) {
     ctx.fillStyle = '#ffd23f'; ctx.fillText('BOLT DASH', 0, 0); ctx.restore();
     ctx.direction = 'ltr'; ctx.font = '800 36px Nunito'; ctx.fillStyle = '#fff'; ctx.lineWidth = 8; ctx.strokeStyle = '#21124a';
     ctx.strokeText(cap.sub || '', W / 2, H / 2 + 80); ctx.fillText(cap.sub || '', W / 2, H / 2 + 80);
+    ctx.font = '400 30px Lilita'; ctx.fillStyle = '#ffd23f'; ctx.strokeText('THE MOVIE · COMING SOON', W / 2, H / 2 + 128); ctx.fillText('THE MOVIE · COMING SOON', W / 2, H / 2 + 128);
   }
 }
 function roundRect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
@@ -94,6 +95,42 @@ let A; // actors
 const SHOTS = [];
 const shot = (dur, setup, upd) => SHOTS.push({ dur, setup, upd });
 const RUN = 9;
+
+// ---- running the course like a real player: hop the spinning arms as they pass, jump the saws / traps / spike blocks,
+// bounce over the gap, spring up to the finish deck, and smash through a breakable door (never a steel one)
+const ARCS = [[-63.5, -80.5, 5], [-99.6, -102.4, 2], [-107.6, -110.4, 2], [-114.8, -117.2, 1.3], [-127.2, -130.8, 2.4], [-134.6, -137.6, 2.3]];
+function baseY(z) { if (z <= -166) return 3; if (z < -158) { const k = (-158 - z) / 8; return 3 * k + Math.sin(k * PI) * 4.5; } return 0; }
+function courseY(x, z) {
+  let y = baseY(z);
+  for (const [a, b, h] of ARCS) if (z < a && z > b) y += Math.sin(((a - z) / (a - b)) * PI) * h;
+  for (const sw of G.level?.sweepers || []) {
+    const rx = x - sw.x, rz = z - sw.z; if (Math.hypot(rx, rz) > sw.len + 0.5) continue;
+    const a = sw.ang || 0, c = Math.cos(a), sn = Math.sin(a);
+    let perp = Math.abs(-rx * sn - rz * c); if (sw.body.shapes.length > 1) perp = Math.min(perp, Math.abs(rx * c - rz * sn));
+    y += 1.7 * Math.cos(Math.min(1, perp / 1.25) * PI / 2);
+  }
+  return y;
+}
+// steer towards a breakable crate before each door row
+function laneX(x, z) {
+  const L = G.level; if (!L?.doorRows) return x;
+  for (const row of L.doorRows) {
+    if (z > row.z + 7 || z < row.z - 2) continue;
+    const open = L.crates.filter((c) => Math.abs(c.z - row.z) < 0.5); if (!open.length) continue;
+    const cx = open.reduce((a, c) => (Math.abs(c.x - x) < Math.abs(a.x - x) ? c : a)).x;
+    const k = clamp((row.z + 7 - z) / 4, 0, 1) * clamp((z - row.z + 2) / 1.5, 0, 1);
+    return x + (cx - x) * k;
+  }
+  return x;
+}
+function runAt(a, x, z, speed = 1.3, shift = 0) {
+  const lx = shift ? x + shift : laneX(x, z), y = courseY(lx, z), air = y > baseY(z) + 0.25;
+  a.at(lx, y, z, PI); a.play(air ? 'Jump_Idle' : 'Run', speed); a.grounded = !air;
+  const L = G.level; if (L) for (const c of L.crates) if (!c.broken && Math.abs(c.z - z) < 1.1 && Math.abs(c.x - lx) < 1.5) { L.breakCrate(c.body); a.play('Punch', 1.8); }
+  return lx;
+}
+// two runners holding hands share one lane through the doors
+const pairShift = (x, z) => laneX(x, z) - x;
 
 // 1. start line: the camera drops in from the sky
 shot(5, () => {
@@ -116,12 +153,12 @@ shot(2.4, () => { A.ref.play('Wave'); }, (t) => {
 // 3. off they go
 shot(3.6, () => { for (const a of [A.blue, A.gold, A.yel, A.p1, A.p2]) a.play('Run', 1.3); cap = null; }, (t) => {
   const z = 9 - t * RUN;
-  A.blue.at(-1.5, 0, z, PI); A.gold.at(1.5, 0, z - 0.3, PI); A.yel.at(-4.5, 0, z + 1.6, PI); A.p1.at(4.5, 0, z + 1.2, PI); A.p2.at(0, 0, z + 2.6, PI);
+  runAt(A.blue, -1.5, z); runAt(A.gold, 1.5, z - 0.3); runAt(A.yel, -4.5, z + 1.6); runAt(A.p1, 4.5, z + 1.2); runAt(A.p2, 0, z + 2.6);
   cam(V(9, 3.2, z - 2 + t * 0.5), V(0, 1, z - 2));
 });
 // 4. gold laughs and shoves blue over the rail
 shot(3.6, () => { A.gold.play('Yes', 1.4); caption('Gold starts showing off…'); A.p1.show(false); A.p2.show(false); A.yel.show(false); }, (t) => {
-  const z = 9 - 3.6 * RUN - t * 3;
+  const z = 9 - 3.6 * RUN; // the clear strip between the two spinning arms
   if (t < 1) { A.gold.at(lerp(1.5, -0.2, ease(t)), 0, z, PI); A.blue.at(-1.5, 0, z, PI); A.gold.face(-1.5, z); }
   else if (t < 1.25) { if (!A.gold.pushed) { A.gold.pushed = 1; A.gold.play('Punch', 1.6); } }
   else {
@@ -140,10 +177,10 @@ shot(2.6, () => { A.blue.flying = 0; A.blue.m.rotation.set(0, PI, 0); A.blue.pla
 // 6. yellow grabs blue's hand: full sprint
 shot(4.6, () => { A.blue.landed = 0; A.blue.play('Run', 1.7); A.yel.play('Run', 1.7); caption('His yellow buddy grabs his hand… GO!'); }, (t) => {
   const z = -44 - t * 17;
-  A.blue.at(-0.5, 0, z, PI); A.yel.at(-1.4, 0, z, PI);
-  A.gold.show(true).at(3, 0, -112 - t * 7, PI); A.gold.play('Run', 1.2);
+  const sh = pairShift(-0.95, z); runAt(A.blue, -0.5, z, 1.7, sh || 1e-9); runAt(A.yel, -1.4, z, 1.7, sh || 1e-9);
+  A.gold.show(true); runAt(A.gold, 3, -112 - t * 7, 1.2);
   if (Math.random() < 0.6) puffs.emit({ pos: V(rand(-2, 1), rand(0.2, 1.5), z + rand(0.5, 2)), vel: V(0, 0, 25), life: 0.25, size: 0.08, color: 0xffffff });
-  cam(V(-4.5, 1.8, z - 4), V(-0.8, 1.1, z + 1));
+  const yb = A.blue.m.position.y; cam(V(-4.5, 1.8 + yb * 0.85, z - 4), V(-0.8, 1.1 + yb, z + 1));
 });
 // 7. photo finish: blue and yellow beat gold
 shot(4.2, () => { A.blue.play('Run', 1.7); A.yel.play('Run', 1.7); A.gold.play('Run', 1.4); }, (t) => {
@@ -237,7 +274,7 @@ shot(4.2, () => { A.blue.leap = A.blue.bonk = A.blue.drop = 0; crown.position.se
 // 14. and it starts all over again
 shot(4.6, () => { useSet('race2'); A.blue.splash = 0; for (const a of Object.values(A)) a.show(false); A.blue.show(true).at(-1.2, 0, 9, PI); A.gold.show(true).at(1.2, 0, 9, PI); A.ref.show(true).at(6, 0, 5, -PI / 2); A.blue.m.rotation.set(0, PI, 0); A.gold.m.rotation.set(0, PI, 0); A.blue.play('Idle'); A.gold.play('Idle'); caption('The next day…'); }, (t) => {
   if (t < 1.6) { A.blue.face(1.2, 9); A.gold.face(-1.2, 9); if (t > 0.6) { A.blue.play('No'); A.gold.play('No'); } }
-  else { if (!A.ref.blew) { A.ref.blew = 1; A.ref.play('Wave'); caption('BEEEEP!'); } if (t > 2.3) { A.blue.play('Run', 1.4); A.gold.play('Run', 1.4); const z = 9 - (t - 2.3) * 9; A.blue.at(-1.2, 0, z, PI); A.gold.at(1.2, 0, z, PI); caption('The rivalry never ends!'); } }
+  else { if (!A.ref.blew) { A.ref.blew = 1; A.ref.play('Wave'); caption('BEEEEP!'); } if (t > 2.3) { const z = 9 - (t - 2.3) * 9; runAt(A.blue, -1.2, z, 1.4); runAt(A.gold, 1.2, z, 1.4); caption('The rivalry never ends!'); } }
   cam(V(0, 2.4, 15), V(0, 1.2, 6));
 });
 shot(4.4, () => { A.ref.blew = 0; for (const a of Object.values(A)) a.show(false); }, (t) => {
@@ -248,6 +285,8 @@ shot(4.4, () => { A.ref.blew = 0; for (const a of Object.values(A)) a.show(false
 let si = -1, st = 0;
 export const total = SHOTS.reduce((a, s) => a + s.dur, 0);
 export async function init() {
+  // same 'random' choices in every render worker, so the frames match up
+  let seed = 1234567; Math.random = () => ((seed = (seed * 1103515245 + 12345) >>> 0) / 4294967296);
   save.quality = 'high'; save.muted = true;
   await loadAssets(() => {}); computeBoneFix();
   renderer.setPixelRatio(1); renderer.setSize(W, H, false); camera.aspect = W / H; camera.fov = 50; camera.updateProjectionMatrix();
@@ -263,6 +302,7 @@ export function frame(n, render = true) {
   let acc = 0, idx = 0; for (; idx < SHOTS.length; idx++) { if (T < acc + SHOTS[idx].dur) break; acc += SHOTS[idx].dur; }
   idx = Math.min(idx, SHOTS.length - 1);
   if (idx !== si) { si = idx; SHOTS[idx].setup(); }
+  for (const sw of G.level?.sweepers || []) { sw.ang = sw.w * T; sw.body.quaternion.setFromEuler(0, sw.ang, 0); }
   st = T - acc; SHOTS[idx].upd(st);
   for (const a of Object.values(A)) a.tick(dt);
   G.level?.update(dt, T, false);
