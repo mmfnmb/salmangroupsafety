@@ -30,9 +30,9 @@ export function shots(A) {
     camTo(V(3.2, 0.7, z + 3.4), V(0, y + 1.3, z), 99);
   });
   // 7. over the followers' shoulders
-  shot(5, () => { pose(); G.at(0, 0, -7.2, 0); }, (t, dt, T) => { tremble(T); overShoulder(A.slate, G, { side: 1, k: 99 }); say('gold', 'You three.'); });
+  shot(5, () => { pose(); G.at(0, 0, -7.2, 0); }, (t, dt, T) => { tremble(T); camTo(V(3.4, 1.5, -3.2), V(0.2, 1.1, -7.2), 99); say('gold', 'You three.'); });
   // 8. he points at them: low close-up
-  shot(5, () => { pose(); G.at(0, 0, -7.2, 0).play('Punch', 0.6); }, (t, dt, T) => { tremble(T); camTo(V(1.6, 0.55, -4.2), V(0, 1.2, -7.2), 99); if (t > 0.8) say('gold', 'You are my team.'); });
+  shot(5, () => { pose(); G.at(0, 0, -7.2, 0).play('Punch', 0.6); }, (t, dt, T) => { tremble(T); camTo(V(-3.6, 0.5, -4.6), V(0, 1.3, -7.2), 99); if (t > 0.8) say('gold', 'You are my team.'); });
   // 9. quick close-ups of each follower
   const fc = (i) => shot(2.2, () => { pose(); G.at(0, 0, -7.2, 0); }, (t, dt, T) => { tremble(T, 1.6); closeUp(F[i], { ang: 0.4 * (i - 1), dist: 1.6, h: 1.1, k: 99 }); say(null); });
   fc(0); fc(1); fc(2);

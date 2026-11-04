@@ -3,7 +3,10 @@
 import { SETS, put, THREE, M, V, PI } from '../lib.js';
 
 export const FS = 3.2; // furniture scale
-const bright = (c, e = 0.25) => { const m = new THREE.MeshStandardMaterial({ color: c, roughness: 0.6, emissive: c, emissiveIntensity: e }); return m; };
+// recolour a placed model (the kit's whites glare under the studio lights)
+const tint = (o, hex, rough = 0.8) => { o.traverse((m) => { if (m.isMesh) { m.material = m.material.clone(); m.material.color.setHex(hex); m.material.roughness = rough; } }); return o; };
+const floor = (root, x, z, hex) => tint(put(root, 'f/f-floorFull', x, 0, z, FS), hex);
+const wall = (root, name, x, z, ry, hex) => tint(put(root, 'f/' + name, x, 0, z, FS, ry), hex);
 
 // a flat in-world screen showing a canvas drawing (allowed: it's a graphic, not a model)
 function screen(root, w, h, draw, x, y, z, ry = 0) {
@@ -35,16 +38,16 @@ const gamesArt = (g, w, h) => {
 // ---------------------------------------------------------------- the news studio
 SETS.studio = (root) => {
   // floor and back wall
-  for (let x = -4; x < 4; x++) for (let z = -2; z < 3; z++) put(root, 'f/f-floorFull', x * FS, 0, z * FS, FS);
-  for (let x = -4; x < 4; x++) put(root, 'f/f-wall', x * FS, 0, -2 * FS, FS);
-  for (const sx of [-1, 1]) for (let z = -2; z < 2; z++) put(root, 'f/f-wall', sx * 4 * FS, 0, z * FS + (sx > 0 ? FS : 0), FS, sx > 0 ? PI / 2 : -PI / 2);
+  for (let x = -4; x < 4; x++) for (let z = -2; z < 3; z++) floor(root, x * FS, z * FS, (x + z) % 2 ? 0x2b2350 : 0x352b66);
+  for (let x = -4; x < 4; x++) wall(root, 'f-wall', x * FS, -2 * FS, 0, 0x4a3a8c);
+  for (const sx of [-1, 1]) for (let z = -2; z < 2; z++) wall(root, 'f-wall', sx * 4 * FS, z * FS + (sx > 0 ? FS : 0), sx > 0 ? PI / 2 : -PI / 2, 0x4a3a8c);
   // big screens on the back wall
   screen(root, 9, 3.6, leagueArt('PARTY GAMES', 'LEAGUE · BREAKING NEWS', '#7b4dff', '#ff4f9a'), 0, 2.6, -2 * FS + 0.2);
   screen(root, 4.2, 2.6, gamesArt, -8, 2.3, -2 * FS + 0.2);
   screen(root, 4.2, 2.6, leagueArt('LIVE', 'Channel BOLT', '#ff4f9a', '#ffd23f'), 8, 2.3, -2 * FS + 0.2);
   // the anchor desk (kitchen bar units, 3 wide) on a rug, studio lights and plants
   put(root, 'f/f-rugRectangle', -3.2, 0.02, 2.4, FS * 1.2);
-  for (let i = 0; i < 3; i++) put(root, 'f/f-kitchenBar', -2.1 + i * 0.43 * FS, 0, 0.35, FS);
+  for (let i = 0; i < 3; i++) tint(put(root, 'f/f-kitchenBar', -2.1 + i * 0.43 * FS, 0, 0.35, [FS, FS * 0.62, FS]), i === 1 ? 0xff4f9a : 0xffd23f, 0.5);
   for (const x of [-9, 9]) { put(root, 'f/f-lampRoundFloor', x, 0, 2, FS * 1.4); put(root, 'f/f-pottedPlant', x * 0.8, 0, -4.6, FS); }
   for (const x of [-6, 6]) put(root, 'f/f-speaker', x, 0, -3.5, FS * 1.5);
   // the interview chairs (for scene 7)
@@ -54,36 +57,34 @@ SETS.studio = (root) => {
   const crown = put(root, 'acc/Crown', 6.5, 3.6, 0.5, 2.2);
   crown.userData.update = (T) => { crown.rotation.y = T * 1.2; crown.position.y = 3.6 + Math.sin(T * 2) * 0.08; };
   // studio key light
-  const key = new THREE.PointLight(0xfff2e0, 18, 30); key.position.set(0, 7, 8); root.add(key);
+  const key = new THREE.PointLight(0xfff2e0, 3, 30); key.position.set(0, 7, 8); root.add(key);
 };
 
 // ---------------------------------------------------------------- commercials stage: a bright cyclorama with props
 SETS.adstage = (root) => {
   const bg = screen(root, 30, 14, (g, w, h) => { const gr = g.createRadialGradient(w / 2, h / 2, 10, w / 2, h / 2, w * 0.6); gr.addColorStop(0, '#fff3b0'); gr.addColorStop(0.5, '#ffb347'); gr.addColorStop(1, '#ff4f9a'); g.fillStyle = gr; g.fillRect(0, 0, w, h); g.globalAlpha = 0.25; g.fillStyle = '#fff'; for (let a = 0; a < 24; a++) { g.beginPath(); g.moveTo(w / 2, h / 2); g.arc(w / 2, h / 2, w, a * PI / 12, a * PI / 12 + PI / 24); g.fill(); } }, 0, 6, -5);
   bg.userData.base = true;
-  for (let x = -4; x < 4; x++) for (let z = -2; z < 2; z++) put(root, 'f/f-floorFull', x * FS, 0, z * FS + 2, FS);
+  for (let x = -4; x < 4; x++) for (let z = -2; z < 2; z++) floor(root, x * FS, z * FS + 2, (x + z) % 2 ? 0xff9a3d : 0xffb85c);
   put(root, 'f/f-rugRound', -2.4, 0.02, 2.6, FS * 1.4);
   for (const x of [-7, 7]) { put(root, 'f/f-speaker', x, 0, -2.5, FS * 1.8); put(root, 'f/mini-banner', x * 0.75, 0, -3.5, 1.6); }
-  const key = new THREE.PointLight(0xffffff, 14, 26); key.position.set(0, 6, 7); root.add(key);
 };
 // the black-hole commercial: a dark, starry stage
 SETS.adstage_void = (root) => {
   screen(root, 30, 14, (g, w, h) => { const gr = g.createRadialGradient(w / 2, h / 2, 10, w / 2, h / 2, w * 0.6); gr.addColorStop(0, '#5a2aff'); gr.addColorStop(0.4, '#1b0a40'); gr.addColorStop(1, '#05030c'); g.fillStyle = gr; g.fillRect(0, 0, w, h); for (let i = 0; i < 260; i++) { g.fillStyle = `rgba(255,255,255,${Math.random()})`; g.fillRect(Math.random() * w, Math.random() * h, 2, 2); } }, 0, 6, -5);
-  for (let x = -4; x < 4; x++) for (let z = -2; z < 2; z++) put(root, 'f/f-floorFull', x * FS, 0, z * FS + 2, FS);
+  for (let x = -4; x < 4; x++) for (let z = -2; z < 2; z++) floor(root, x * FS, z * FS + 2, (x + z) % 2 ? 0x140a30 : 0x1d1040);
   put(root, 'f/mini-column', 0, 0, -1.2, 1.2);
-  const glow = new THREE.PointLight(0x8a4cff, 25, 18); glow.position.set(0, 3, 3); root.add(glow);
+  const glow = new THREE.PointLight(0x8a4cff, 6, 18); glow.position.set(0, 3, 3); root.add(glow);
 };
 
 // ---------------------------------------------------------------- the sofa corner at home, watching TV (blue + yellow sit here)
 // sofa seat centre ≈ (0, z -0.85), TV in front at z +5.5 facing the sofa
 export const SOFA = { left: [-0.75, -0.8], right: [0.75, -0.8], seatY: 0.42, tv: [0, 1.9, 5.5] };
 function sofaCorner(root, night) {
-  for (let x = -3; x < 3; x++) for (let z = -1; z < 3; z++) put(root, 'f/f-floorFull', x * FS, 0, z * FS, FS);
-  for (let x = -3; x < 3; x++) put(root, 'f/f-wall' + (x === 1 ? 'Window' : ''), x * FS, 0, -1 * FS - 0.4, FS);
-  put(root, 'f/f-wallCorner', -3 * FS, 0, -1 * FS - 0.4, FS, PI / 2);
-  for (let z = -1; z < 2; z++) put(root, 'f/f-wall', -3 * FS, 0, z * FS - 0.4 + FS, FS, PI / 2);
+  for (let x = -3; x < 3; x++) for (let z = -1; z < 3; z++) floor(root, x * FS, z * FS, 0xb9824f);
+  for (let x = -3; x < 3; x++) wall(root, 'f-wall' + (x === 1 ? 'Window' : ''), x * FS, -1 * FS - 0.4, 0, 0x9fd3e8);
+  for (let z = -1; z < 2; z++) wall(root, 'f-wall', -3 * FS, z * FS - 0.4 + FS, PI / 2, 0x9fd3e8);
   put(root, 'f/f-rugRectangle', -2.6, 0.02, 3.2, FS * 1.1);
-  put(root, 'f/f-loungeSofa', -1.57, 0, -0.3, FS);
+  tint(put(root, 'f/f-loungeSofa', 1.57, 0, -1.61, FS, PI), 0xff6f91, 0.9);
   put(root, 'f/f-tableCoffee', -1.1, 0, 2.2, FS);
   put(root, 'f/f-lampRoundFloor', -3.6, 0, -1.2, FS);
   put(root, 'f/f-sideTable', 2.0, 0, -0.5, FS); put(root, 'f/f-lampSquareTable', 2.3, 0.85, -1.0, FS);
@@ -91,9 +92,9 @@ function sofaCorner(root, night) {
   // the TV on its cabinet, facing the sofa
   put(root, 'f/f-cabinetTelevision', 1.2, 0, 5.9, FS, PI);
   put(root, 'f/f-televisionModern', 0, 0.95, 5.6, FS, PI);
-  const tvGlow = new THREE.PointLight(night ? 0x7fb0ff : 0xbfd8ff, night ? 10 : 4, 12); tvGlow.position.set(0, 2, 4.4); root.add(tvGlow);
-  tvGlow.userData.update = (T) => { tvGlow.intensity = (night ? 10 : 4) * (0.85 + 0.15 * Math.sin(T * 9) * Math.sin(T * 3.3)); };
-  if (night) { const lamp = new THREE.PointLight(0xffc27a, 6, 9); lamp.position.set(-3.4, 2.6, -0.6); root.add(lamp); }
+  const tvGlow = new THREE.PointLight(night ? 0x7fb0ff : 0xbfd8ff, night ? 4 : 1.5, 12); tvGlow.position.set(0, 2, 4.4); root.add(tvGlow);
+  tvGlow.userData.update = (T) => { tvGlow.intensity = (night ? 4 : 1.5) * (0.85 + 0.15 * Math.sin(T * 9) * Math.sin(T * 3.3)); };
+  if (night) { const lamp = new THREE.PointLight(0xffc27a, 3, 9); lamp.position.set(-3.4, 2.6, -0.6); root.add(lamp); }
 }
 SETS.sofa_day = (root) => sofaCorner(root, false);
 SETS.sofa_night = (root) => sofaCorner(root, true);
