@@ -412,7 +412,14 @@ const puck = {
     const v = this.ball.velocity; if (v.y > 1.2) v.y = 1.2;
     if (r.ai) r.ai.goalPick = Math.floor(Math.random() * 3);
   },
-  update(dt) { ballClassic.update.call(this, dt); if (Math.abs(this.ball.position.x) > PX + 1 || Math.abs(this.ball.position.z) > PZ + 3) this.resetBall(); },
+  update(dt) {
+    // the puck glides just above the ice: no floor friction, only a little drag, and it still bounces off the boards
+    const b = this.ball, v = b.velocity;
+    b.force.y += b.mass * 30; b.position.y = 0.16; v.y = 0;
+    const k = Math.max(0, 1 - 0.35 * dt); v.x *= k; v.z *= k;
+    ballClassic.update.call(this, dt);
+    if (Math.abs(b.position.x) > PX + 1 || Math.abs(b.position.z) > PZ + 3) this.resetBall();
+  },
 };
 
 Object.assign(MODES, { golf, volley, football, puck });

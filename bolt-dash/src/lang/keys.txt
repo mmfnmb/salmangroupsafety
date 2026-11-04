@@ -385,3 +385,32 @@ Build your own Race, Survival or Ball map and publish it
 Play maps made by other players
 Pick a map type to build. Finish your map yourself, then publish it for 1500 coins. You get 5 coins every time someone plays it.
 All
+Goalkeeper
+Defender
+Midfielder
+Pick your position
+You play as {x}
+{x} wants {y} too! Spinning…
+You got {x}!
+{x} got it. You play {y}
+Bolt Golf
+Golf
+Hit your own ball to the hole. Water sends it back with a 1-stroke penalty. Hold to charge your swing, let go to hit
+Golf club
+Splash! +1 stroke
+In the hole! {n} strokes
+Volley Bash
+Volley
+Two teams and a net. Hit the ball over and don't let it land on your side. Hold to charge, let go in the green for a perfect spike
+Out!
+Point for Red!
+Point for Blue!
+Bolt Football
+Football
+Real football: the ball sticks to your feet. Dive to pass, hold Hit to shoot, and dive into the player with the ball to tackle
+Your feet
+Tackle!
+Puck Rush
+Puck
+Slap the metal puck into any of the other team's small goals. Side goals are worth 1, the guarded middle goal is worth 3
+Attacker

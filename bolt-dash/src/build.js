@@ -61,6 +61,24 @@ export function getMap(type = editor.type) {
   return save.maps[type];
 }
 
+// a walking route over the map's cells from the start to the finish (steps over 1-cell gaps too), for the bots
+export function findPath(map) {
+  const key = (c, r) => c + ',' + r, walk = new Set(), holes = new Set();
+  for (const it of map.items) if (it.t === 'goalRed' || it.t === 'goalBlue') for (let dc = -1; dc <= 1; dc++) for (let dr = -1; dr <= 1; dr++) holes.add(key(it.c + dc, it.r + dr));
+  for (const it of map.items) if (!holes.has(key(it.c, it.r)) && !['wall', 'spike', 'trap', 'saw', 'cannon'].includes(it.t)) walk.add(key(it.c, it.r));
+  const s = map.items.find((i) => i.t === 'start'), f = map.items.find((i) => i.t === 'finish');
+  if (!s || !f) return null;
+  const prev = new Map([[key(s.c, s.r), null]]), q = [[s.c, s.r]];
+  const steps = [[0, 1], [0, -1], [1, 0], [-1, 0], [0, 2], [0, -2], [2, 0], [-2, 0]];
+  while (q.length) {
+    const [c, r] = q.shift(); if (c === f.c && r === f.r) break;
+    for (const [dc, dr] of steps) { const k = key(c + dc, r + dr); if (walk.has(k) && !prev.has(k)) { prev.set(k, key(c, r)); q.push([c + dc, r + dr]); } }
+  }
+  if (!prev.has(key(f.c, f.r))) return null;
+  const out = []; for (let k = key(f.c, f.r); k; k = prev.get(k)) { const [c, r] = k.split(',').map(Number); out.unshift({ x: cellX(c), z: cellZ(r) }); }
+  return out;
+}
+
 // builds a real level from a saved map (used by the editor preview and for playing it)
 export function buildFromMap(map, L) {
   const floors = [], raised = [], need = new Set();
@@ -128,6 +146,7 @@ export function customMode(map) {
       // floor cells, for survival bots to wander between
       this.cells = map.items.filter((i) => i.t === 'floor' || i.t === 'raised').map((i) => ({ x: cellX(i.c), z: cellZ(i.r) }));
       if (type === 'survival') this.time = 60;
+      this.path = type === 'race' ? findPath(map) : null;
     },
     spawn(i) { const s = this.info.starts[0] || { x: 0, z: 8 }; return { x: s.x + (i % 3 - 1) * 1.6, y: 0, z: s.z + Math.floor(i / 3) * 1.6 }; },
   };
@@ -149,8 +168,16 @@ export function customMode(map) {
         if (this.info.finishes.some((f) => Math.hypot(r.pos.x - f.x, r.pos.z - f.z) < 2.6)) G.finish(r);
       }
     },
-    onFall(r) { const s = this.info.starts[0] || { x: 0, z: 8 }; r.reset(s.x, 2, s.z); if (r.isPlayer) toast(t('Back to the start')); },
-    target(r) { const f = this.info.finishes[0] || { x: 0, z: -40 }; return { x: f.x + Math.sin(r.i * 2) * 1.5, z: f.z }; },
+    onFall(r) { const s = this.info.starts[0] || { x: 0, z: 8 }; r.reset(s.x, 2, s.z); r.ai && (r.ai.pi = 0); if (r.isPlayer) toast(t('Back to the start')); },
+    target(r) {
+      const f = this.info.finishes[0] || { x: 0, z: -40 }, P = this.path;
+      if (!P) return { x: f.x + Math.sin(r.i * 2) * 1.5, z: f.z };
+      // follow the route: move on to the next point once close to the current one
+      const ai = r.ai; if (ai.pi == null) ai.pi = 0;
+      let best = ai.pi; for (let k = ai.pi; k < Math.min(P.length, ai.pi + 6); k++) if (Math.hypot(P[k].x - r.pos.x, P[k].z - r.pos.z) < 1.6) best = k + 1;
+      ai.pi = Math.min(best, P.length - 1);
+      const w = P[ai.pi]; return { x: w.x, z: w.z, near: 0.3 };
+    },
     progress(r) { const s = this.info.starts[0] || { x: 0, z: 8 }, f = this.info.finishes[0] || { x: 0, z: -40 }; return clamp(1 - Math.hypot(r.pos.x - f.x, r.pos.z - f.z) / this.len, 0, 1); },
   });
 }

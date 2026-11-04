@@ -269,6 +269,19 @@ export function think(r, dt) {
   if (!tgt) { inp.x = inp.z = 0; return; }
   let dx = tgt.x - p.x, dz = tgt.z - p.z; const d = Math.hypot(dx, dz);
   if (d < (tgt.near ?? 0.4) || tgt.stop) { inp.x = inp.z = 0; } else { inp.x = dx / d; inp.z = dz / d; }
+  // a detour is running (after getting stuck): walk sideways / backwards for a moment instead
+  if (ai.detour && ai.detour.t > 0 && !tgt.stop) {
+    ai.detour.t -= dt; inp.x = ai.detour.x; inp.z = ai.detour.z;
+  } else if (d > 1.2 && !tgt.stop && !tgt.push && r.grounded) {
+    // a tall wall ahead that a jump won't clear: steer to whichever side is open
+    const ux = dx / d, uz = dz / d;
+    if (wallAhead(p, ux, uz, 1.7, 1.3)) {
+      for (const a of [0.7, -0.7, 1.3, -1.3]) {
+        const c = Math.cos(a), sn = Math.sin(a), sx = ux * c - uz * sn, sz = ux * sn + uz * c;
+        if (!wallAhead(p, sx, sz, 1.7, 1.6) && groundAt(p.x + sx * 1.6, p.y, p.z + sz * 1.6, 3)) { inp.x = sx; inp.z = sz; break; }
+      }
+    }
+  }
   const k = tgt.speed ?? 1; inp.x *= k; inp.z *= k;
   if (r.grounded && d > 1.2 && !tgt.noJump) {
     const ux = dx / d, uz = dz / d;
@@ -290,7 +303,15 @@ export function think(r, dt) {
   ai.think -= dt;
   if (ai.think < 0) {
     ai.think = 0.7;
-    if (ai.lastP && Math.hypot(ai.lastP.x - p.x, ai.lastP.z - p.z) < 0.5 && d > 1.5) { ai.stuck++; if (Math.random() < 0.7) inp.jump = true; } else ai.stuck = 0;
+    if (ai.lastP && Math.hypot(ai.lastP.x - p.x, ai.lastP.z - p.z) < 0.5 && d > 1.5 && !tgt.stop) {
+      // stuck: 1st try a jump, then a sidestep, then back off and go round; after ~6 s go back to the last checkpoint
+      ai.stuck++;
+      const ux = d ? dx / d : 0, uz = d ? dz / d : 1, side = Math.random() < 0.5 ? 1 : -1;
+      if (ai.stuck === 1) inp.jump = true;
+      else if (ai.stuck < 4) ai.detour = { x: -uz * side * 0.9 + ux * 0.3, z: ux * side * 0.9 + uz * 0.3, t: 0.9 };
+      else if (ai.stuck < 8) { ai.detour = { x: -ux * 0.6 - uz * side * 0.8, z: -uz * 0.6 + ux * side * 0.8, t: 1.1 }; inp.jump = Math.random() < 0.5; }
+      else if (mode.kind === 'race' && mode.onFall) { ai.stuck = 0; mode.onFall(r); }
+    } else ai.stuck = 0;
     ai.lastP = { x: p.x, z: p.z };
   }
   if (tgt.fire) inp.fire = true;

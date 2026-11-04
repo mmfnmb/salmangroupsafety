@@ -667,7 +667,7 @@ function startRound() {
   camPos.set(f[0][0], f[0][1], f[0][2]); camLook.set(f[0][3], f[0][4], f[0][5]);
 }
 // football: pick your position before kick-off; if a teammate wants the same one, a lucky wheel decides
-const ROLES = [['GK', t('Goalkeeper')], ['DEF', t('Defender')], ['MID', t('Midfielder')], ['FWD', t('Forward')]];
+const ROLES = [['GK', t('Goalkeeper')], ['DEF', t('Defender')], ['MID', t('Midfielder')], ['FWD', t('Attacker')]];
 function openRolePick() {
   if (flow.rolePicking) return; flow.rolePicking = true;
   show('intro', false);

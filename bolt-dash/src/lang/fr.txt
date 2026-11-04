@@ -1,0 +1,416 @@
+Sol
+Bloc surélevé
+Barrière
+Flèches de vitesse
+Tapis roulant
+Ressort
+Rebondisseur
+Scie
+Bras tournant
+Bloc à pics
+Piège à pics
+Caisse cassable
+Caisse en acier
+Canon
+Pièce
+Caisse d'arme
+Départ
+Arrivée
+Ta carte
+La carte que tu as construite
+Gel + Poussée
+Retour au départ
+Joueur
+Bleu classique
+Fraise
+Menthe
+Citron
+Raisin
+Orange
+Melon
+Neige
+Minuit
+Lave
+Cristal
+Rare
+Arc-en-ciel
+Lave en fusion
+Légendaire
+Galaxie
+Or radieux
+Trou noir
+Mythique
+Arbitre
+Bolt original
+Exclusif
+Couronne d'or
+Couronne de reine
+Chapeau de fête
+Cupcake
+Donut
+Boîte cadeau
+Lunettes
+Lunettes de soleil
+Gilet en cuir
+Armure de fer
+Armure de ninja
+Armure d'or
+Étoile du héros
+Sac à dos
+Sacoche
+Bouclier en bois
+Bouclier de chevalier
+Club de golf
+Équilibré en tout
+Baguette
+Frappe la plus rapide
+Spatule
+Envoie la balle très haut
+Rouleau à pâtisserie
+Garde la balle au sol
+Corn-dog
+Celui que tu touches reste collé une seconde
+Os
+Fait rebondir la balle très haut
+Poisson
+Celui que tu touches glisse
+Banane
+Celui que tu touches glisse et tourne
+Sucre d'orge
+Donne de l'effet à la balle
+Pagaie
+Plus grande portée
+Poêle
+BONG ! Celui que tu touches a la tête qui tourne
+Marteau
+Repousse tout le monde autour de toi
+Massue
+Frappe la plus forte
+Marteau doré
+Le légendaire
+Couleurs
+Tête
+Visage
+Corps
+Dos
+Battes
+Manche {n} sur {m}
+Ramasse 30 pièces en manches
+Qualifie-toi dans 3 manches
+Plonge 15 fois
+Gagne la couronne dans un Show
+Qualifie-toi dans 20 manches
+Ramasse 300 pièces en manches
+Première qualification
+Première victoire
+Première couronne
+Joue 10 Shows
+Joue à tous les modes
+Plonge 100 fois
+Obtiens un personnage rare
+Qualifie-toi 50 fois
+5 couronnes
+pièces
+Défi terminé
+Succès
+Niveau de saison {n}
+Saison : {x} débloqué
+Saison
+Récompense du jour (jour {n})
+Le Show
+4 manches à la suite. Gagne la dernière pour remporter la couronne
+Équipes
+Carte de joueur à la une
+Fait
+Saison 1
+Niveau {n}
+Saison terminée !
+Récompense du jour
+Prête
+Demain
+Récupérer {n}
+Récupérée aujourd'hui
+Événement de la semaine
+Pièces doublées toute la semaine
+Offres du jour
+Tu as tout
+Reviens chaque jour : la récompense monte jusqu'à 500 le 7e jour.
+Défis
+Aujourd'hui
+Cette semaine
+Succès
+Choisis un mode
+Chargement de l'image…
+Bientôt
+En ligne avec des amis
+Joue avec tes amis grâce à un code de salle
+Roue de la chance
+Tour gratuit aujourd'hui !
+Tour en plus pour 500 pièces
+Tourner gratuitement
+Tourner pour 500
+Utiliser un code
+Tape un code pour gagner ton prix. Certains codes donnent un personnage rare si tu as de la chance.
+Valider
+Paramètres
+Graphismes
+Léger
+Moyen
+Fantastique
+Son
+Activé
+Désactivé
+Vitesse de la caméra
+Lente
+Normale
+Rapide
+Langue
+Revoir la vidéo d'intro
+Ton profil
+Ton nom
+Enregistrer
+Shows joués
+Manches
+Qualifié
+Couronnes
+Niveau
+Pièces gagnées
+Enregistré
+Accessoire
+Rare !
+Jackpot
+Tu as déjà {x}, tu reçois donc {n} pièces
+Bravo ! Tu as gagné {x} ({r})
+Il te faut 500 pièces
+Tu as gagné {x}
+Tu as tout ! Prends 300 pièces
+Tu as gagné {n} pièces
+Ce code n'est pas valide
+Tu as déjà utilisé ce code
+{x} : ton personnage exclusif !
+Boutique
+Garde-robe
+Les offres du jour, nouvelles chaque jour
+Change de couleur, habille-toi et choisis ta batte
+Tu as tout acheté ! Reviens demain pour de nouvelles offres.
+Porté
+Possédé
+Puissance
+Vitesse
+Portée
+Le sol devient doré derrière toi quand tu cours
+Un trou noir tourbillonne autour de toi
+Des étincelles de feu jaillissent de toi
+Des étoiles scintillent autour de toi
+Brillant et transparent comme un diamant
+Ta couleur change sans arrêt
+L'or et le trou noir réunis : le personnage exclusif
+Code uniquement
+Acheter pour {n}
+Il manque {n}
+Tu as acheté {x}
+Cette carte n'existe plus
+Recherche de joueurs
+Astuce : plonge sous les bras tournants
+Astuce : les flèches jaunes te propulsent en avant
+Astuce : dans Hex Drop, ne reste jamais immobile 3 secondes
+Astuce : la poêle étourdit les gens
+Astuce : les caisses en bois se cassent, pas celles en acier
+Trouvés !
+Une carte créée par {x}
+Manche finale
+Manche
+L'équipe gagnante se qualifie
+Les {n} premiers arrivés se qualifient
+Le dernier debout gagne
+Les {n} derniers debout se qualifient
+Qualifié !
+Un peu trop tard
+Éliminé !
+Tu as fini ta carte ! Tu peux la publier maintenant
+Tu as gagné la couronne !
+Tu as gagné !
+Éliminé cette fois
+L'équipe {x} a gagné {a} - {b}
+Rouge
+Bleu
+{n} sur {m} qualifiés
+Toi
+Manche suivante
+Rejouer
+Cadeau de bienvenue : 500 pièces pour la boutique
+Place · tour {n}/{m}
+Place · les {n} premiers passent
+Restants · {n}s
+Restants
+PARTEZ !
+La publication marche quand tu joues depuis le lien publié
+Chargement des cartes…
+Il faut un accès contributeur pour publier
+Ajoute d'abord un départ et une arrivée
+Tu dois d'abord finir ta propre carte (teste-la et atteins l'arrivée)
+Tu as atteint la limite ({n} cartes). Supprimes-en une d'abord
+Il te faut {n} pièces
+Prête à publier
+Les cartes ne chargent pas pour l'instant, réessaie plus tard
+Les cartes des joueurs apparaissent quand tu ouvres le jeu depuis le lien publié
+Pas encore de cartes. Construis et publie la première !
+À la une
+Par {x}
+Jouée {n} fois
+Supprimer
+J'aime
+Retirer des modes principaux
+Promouvoir dans les modes principaux
+Jouer
+Des gens ont joué tes cartes ({n} fois)
+Ça n'a pas marché, réessaie
+Retirée des modes principaux
+La carte fait maintenant partie des modes principaux !
+Supprimée
+Sûr ?
+Donne un nom à la carte
+Carte publiée ! Tu gagnes 5 pièces chaque fois que quelqu'un y joue
+Limite atteinte
+La publication a échoué, réessaie
+Avant
+Droite
+Tout effacer
+Carte d'origine restaurée
+Place d'abord la pièce de départ
+Place d'abord la pièce d'arrivée
+Les modèles n'ont pas pu se charger
+Course d'obstacles (classique)
+Course
+Cours jusqu'au drapeau en passant portes, scies et canons
+Point de contrôle
+Course d'obstacles
+Un circuit sinueux en deux tours : balançoires, coussins rebondissants, marteaux, boulets de démolition, ventilateurs et tremplins
+Tour {n} sur {m}
+Hex Drop
+Les dalles se fissurent la première fois que tu marches dessus et tombent la deuxième. Reste immobile 3 secondes et elles tombent aussi
+RPG + Grenade + Gel + Vol (rare)
+Chasse aux étoiles
+Étoiles
+Deux équipes. Petite étoile 1, grande 3, gemme 5, cristal 10. Si on te touche, tu lâches tes étoiles
+Attraction + Gel
+Tu as lâché {n} étoiles !
+Batte-ballon
+Ballon
+Deux équipes avec des battes : envoie le ballon dans le but adverse. Chaque batte a sa propre puissance
+PARFAIT !
+But pour les Rouges !
+But pour les Bleus !
+Deux équipes avec des battes : envoie le ballon dans la fosse adverse. Maintiens pour charger ta frappe et relâche dans le vert pour une frappe parfaite
+Esquive des canons
+Canons
+Reste sur la plateforme jusqu'à la fin du temps. Les canons tirent de plus en plus vite
+Pistolet volant
+Le sommet
+Grimpe les plateformes jusqu'à la couronne tout en haut
+Pistolet de confusion
+Arène
+Tous contre tous, et les bords tombent peu à peu. Le dernier debout gagne
+Pistolet rapide + Roquette guidée + Bombe collante
+L'arène rétrécit !
+Pistolet de poussée
+Pistolet rapide
+Pistolet de gel
+Pistolet d'attraction
+RPG
+Roquette guidée
+Grenade
+Bombe collante
+Repousse celui qu'il touche
+Plein de tirs qui poussent un peu à chaque fois
+Gèle celui qu'il touche
+Attire vers toi celui qu'il touche
+Tire sur quelqu'un pour l'envoyer en l'air, ou sur le sol pour voler toi-même
+Inverse les commandes de celui qu'il touche
+Casse les sols et les caisses
+Vole tout seul vers le joueur le plus proche
+Lance-la et elle explose après 1,5 seconde
+Laisse une flaque collante qui ralentit les joueurs
+Préparation de l'arène…
+Construire
+Danser
+Saluer
+Oui
+Non
+Coup de poing
+Mode
+Changer
+Acheter
+Mode construction
+Construis ta propre carte avec des pièces et teste-la contre 3 bots. Termine-la toi-même et tu pourras la publier pour tout le monde.
+Commencer à construire
+Nom de la carte
+Publier · 1500
+Cartes des joueurs
+Joue aux cartes des autres. Le créateur gagne 5 pièces chaque fois que quelqu'un y joue.
+Annuler
+Manche 1
+Touche l'écran pour commencer tout de suite
+Place
+Pause
+Plonger
+Sauter
+Frapper
+WASD : courir · Espace : sauter · Maj : plonger · F ou clic : frapper (maintiens pour charger) · Glisser : tourner la caméra
+Fermer
+Passer
+En pause
+Reprendre
+Menu
+Choisis une pièce et touche une case. Glisse pour te déplacer, molette pour zoomer.
+Direction :
+Effacer une pièce
+Carte d'origine
+Tester la carte
+Fosse rouge
+Fosse bleue
+Place du ballon
+Atteins l'arrivée en premier
+Survie
+Reste sur la carte jusqu'à la fin du temps
+Deux équipes envoient un ballon dans la fosse adverse
+Place la fosse rouge
+Place la fosse bleue
+Place le ballon
+Tu dois d'abord gagner sur ta propre carte (teste-la)
+Modifier
+Publier
+Créer
+Construis ta propre carte de Course, Survie ou Ballon et publie-la
+Joue aux cartes créées par d'autres joueurs
+Choisis un type de carte. Termine ta carte toi-même, puis publie-la pour 1500 pièces. Tu gagnes 5 pièces chaque fois que quelqu'un y joue.
+Toutes
+Gardien
+Défenseur
+Milieu
+Choisis ton poste
+Tu joues {x}
+{x} veut aussi {y} ! La roue tourne…
+Tu as eu {x} !
+{x} l'a eu. Tu joues {y}
+Bolt Golf
+Golf
+Frappe ta propre balle jusqu'au trou. L'eau la renvoie avec un coup de pénalité. Maintiens pour charger, relâche pour frapper
+Club de golf
+Plouf ! +1 coup
+Dans le trou ! {n} coups
+Volley Bash
+Volley
+Deux équipes et un filet. Renvoie le ballon de l'autre côté sans le laisser tomber chez toi. Maintiens pour charger, relâche dans le vert pour un smash parfait
+Dehors !
+Point pour les Rouges !
+Point pour les Bleus !
+Bolt Football
+Football
+Du vrai foot : le ballon colle à tes pieds. Plonge pour passer, maintiens Frapper pour tirer, et plonge sur le porteur pour lui prendre le ballon
+Tes pieds
+Tacle !
+Puck Rush
+Palet
+Frappe le palet en métal dans n'importe quel petit but adverse. Ceux des côtés valent 1, celui du milieu, protégé, vaut 3
+Attaquant
