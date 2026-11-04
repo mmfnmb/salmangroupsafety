@@ -41,7 +41,7 @@ export function shots(A) {
       // held at the hands, then slips and falls to the rug
       remote.position.set(h.x + 0.35, Math.max(0.06, SOFA.seatY + 0.75 - k * k * 6), h.z + 0.55 + k * 0.6);
       remote.rotation.z = 0.4 + k * 5; remote.rotation.x = PI / 2 + k * 3;
-      camTo(V(h.x + 0.4, 1.35, h.z + lerp(4.2, 2.0, ease(t / 5))), V(h.x, 1.15, h.z), 3);
+      camTo(V(h.x + 0.4, 1.9, h.z + lerp(3.6, 1.9, ease(t / 5))), V(h.x, 1.0, h.z + 0.3), 3);
       say(null);
     } });
   S.push({ dur: 3.5, setup() { A.blue.mixer.timeScale = 0; }, upd(t) { closeUp(A.blue, { ang: 0, dist: 1.6, h: 1.2 }); } });
