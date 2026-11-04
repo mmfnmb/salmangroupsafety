@@ -9,6 +9,7 @@ const GATE = { x: 0, z: 46 };
 const OFF = [[-1, 0], [1, 0], [-1, 1.8], [1, 1.8]]; // 2x2 block, captain front-left
 
 let teams = null, fansL = [], fansR = [], chute = null, flagRoot = null;
+const noFlag = new Set(); // actors whose flag is hidden (it would block an over-the-shoulder view)
 
 function makeTeams(A) {
   const mk = (look, sc) => { const a = new Actor(look); if (sc) { a.m.scale.setScalar(sc); a.s = sc; } ACTORS.push(a); return a; };
@@ -54,13 +55,13 @@ function ensureFlags(root) {
       return f;
     });
   }
-  chute = place('k/detail-parasol-a', 0, -50, 0, 14, 0, root);
-  chute.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.color.setHex(0xffc21a); o.material.metalness = 0.8; o.material.roughness = 0.25; o.material.emissive = new THREE.Color(0x6a4400); o.material.emissiveIntensity = 0.5; } });
+  chute = place('k/detail-parasol-a', 0, -50, 0, 10, 0, root);
+  chute.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.color.setHex(0xffc21a); o.material.metalness = 0.15; o.material.roughness = 0.45; o.material.emissive = new THREE.Color(0x8a5a00); o.material.emissiveIntensity = 0.6; } });
 }
 function followFlags() {
   for (const t of teams) t.m.forEach((a, i) => {
     const f = t.flags?.[i]; if (!f || !a) return;
-    f.visible = a.m.visible;
+    f.visible = a.m.visible && !noFlag.has(a);
     const ry = a.m.rotation.y, k = a.s / 0.42;
     f.position.set(a.p.x - Math.sin(ry) * 0.32 * k + Math.cos(ry) * 0.12 * k, a.p.y + 0.45 * k, a.p.z - Math.cos(ry) * 0.32 * k - Math.sin(ry) * 0.12 * k);
     f.rotation.set(-0.12, ry, 0);
@@ -107,7 +108,7 @@ export function shots(A) {
   const SH = [];
   let off = 0;
   // shot helper: o = offset (scene time) of the shot start
-  const shot = (dur, setup, upd) => { const o = off; off += dur; SH.push({ dur, set: SET, time: TIME, setup() { hideAll(); setup?.(); }, upd(t, dt, T) { const sc = o + t; if (STAD.screen) ensureFlags(STAD.screen.mesh.parent); placeTeams(sc); placeFans(); fansL.concat(fansR).forEach((a) => a.show(false)); upd(t, sc, T); followFlags(); } }); };
+  const shot = (dur, setup, upd) => { const o = off; off += dur; SH.push({ dur, set: SET, time: TIME, setup() { hideAll(); noFlag.clear(); setup?.(); }, upd(t, dt, T) { const sc = o + t; if (STAD.screen) ensureFlags(STAD.screen.mesh.parent); placeTeams(sc); placeFans(); fansL.concat(fansR).forEach((a) => a.show(false)); upd(t, sc, T); followFlags(); } }); };
   const tm = (n) => teams.find((t) => t.name === n);
   const goldAt = (sc) => {
     // Gold's parachute drop: high up at 61.5 s, lands in front of the stage at 69 s
@@ -115,7 +116,7 @@ export function shots(A) {
     A.gold.at(Math.sin(sc * 0.9) * (1 - k) * 2.5, y, -2, 0);
     if (chute) {
       const up = Math.max(0, sc - 69.2); // after landing the chute floats away
-      chute.position.set(A.gold.p.x, y + 3.15 + up * up * 2.2, A.gold.p.z + up * 2); chute.rotation.set(0, sc * 0.4, Math.sin(sc * 2.1) * 0.14 * (1 - k * 0.6));
+      chute.position.set(A.gold.p.x, y + 0.85 + up * up * 2.2, A.gold.p.z + up * 2); chute.rotation.set(0, sc * 0.4, Math.sin(sc * 2.1) * 0.14 * (1 - k * 0.6));
       chute.visible = sc > 60 && up < 6;
     }
     return k;
@@ -145,7 +146,7 @@ export function shots(A) {
   shot(4.5, () => say('Announcer', 'TIMBROK! Led by the quiet one... BROWN!'), (t, sc) => { leadCam(tm('TIMBROK').m, { dist: 8, side: -2.5 }); });
   shot(3, () => { say('Brown', '...'); }, (t, sc) => { closeUp(A.brown, { ang: 0.3, dist: 3.1, h: 1.3 }); A.brown.play(t > 0.8 && t < 2.2 ? 'Yes' : 'Run', 0.8); });
   // 7. Blue watches Brown go past
-  shot(4, () => say('Blue', "That's Brown... he's strong. Really strong."), (t, sc) => {
+  shot(4, () => { noFlag.add(A.blue); say('Blue', "That's Brown... he's strong. Really strong."); }, (t, sc) => {
     A.blue.faceA(A.brown); A.yellow.faceA(A.brown);
     overShoulder(A.blue, A.brown, { side: 1, k: 4 });
   });
@@ -168,7 +169,7 @@ export function shots(A) {
   // 12. Gold drops from the sky on a golden parachute
   shot(4, () => say('Announcer', 'Falling from the sky...!'), (t, sc) => {
     const k = goldAt(sc); A.gold.play('Jump_Idle');
-    camTo(V(5, A.gold.p.y - 4 + 2, 9), V(A.gold.p.x, A.gold.p.y + 2.5, A.gold.p.z), 4);
+    camTo(V(3.2, Math.max(1.5, A.gold.p.y - 0.6), 5.8), V(A.gold.p.x, A.gold.p.y + 2.2, A.gold.p.z), 4);
     if (Math.floor(sc * 10) % 3 === 0) puffs.emit({ pos: V(A.gold.p.x, A.gold.p.y + 0.8, A.gold.p.z), vel: V(0, -1, 0), life: 0.8, size: 0.18, color: 0xffd23f });
   });
   shot(3.5, () => say('Announcer', '...the golden one... AUREX!!'), (t, sc) => {
@@ -194,7 +195,7 @@ export function shots(A) {
     camTo(V(27, 2.2, 6), V(37, 3.2, 0.5), 4);
   });
   // 16. Gold and Blue, face to face
-  shot(3.6, () => { STAD.cheer.left = 0.5; STAD.cheer.right = 0.3; say('Gold', "Wave to the crowd, Blue. It's the only time you'll ever be on top."); }, (t, sc) => {
+  shot(3.6, () => { STAD.cheer.left = 0.5; STAD.cheer.right = 0.3; noFlag.add(A.blue); say('Gold', "Wave to the crowd, Blue. It's the only time you'll ever be on top."); }, (t, sc) => {
     goldAt(sc); A.gold.faceA(A.blue); A.blue.faceA(A.gold); A.yellow.faceA(A.gold);
     overShoulder(A.blue, A.gold, { side: -1, k: 4 });
   });
@@ -204,12 +205,12 @@ export function shots(A) {
   });
   // 17. the eight games on the giant screen
   shot(5, () => { STAD.cheer.left = STAD.cheer.right = STAD.cheer.ends = 1; STAD.screen?.set('games'); say('Announcer', 'Eight games. Nine teams. Only ONE crown!'); }, (t, sc, T) => {
-    goldAt(sc); fixed([0, 7 + t * 0.4, 10 - t * 0.8], [0, 23, -61]); fireworks(T, 1.5);
+    goldAt(sc); fixed([0, 13 + t * 0.4, -22 - t * 0.8], [0, 23, -61]); fireworks(T, 1.5);
   });
   // 18. the crown, fireworks, everyone cheering
   shot(6, () => { STAD.cheer.left = STAD.cheer.right = STAD.cheer.ends = 1.6; say('Announcer', 'LET THE LEAGUE... BEGIN!'); }, (t, sc, T) => {
     goldAt(sc); for (const tt of teams) tt.m.forEach((a) => a && a.play(((sc * 3) | 0) % 2 ? 'Yes' : 'Wave'));
-    const c = STAD.crown?.getWorldPosition(V()) || V(0, 4, -17), a = 0.8 + t * 0.18, r = 9 + t * 3;
+    const c = STAD.crown?.getWorldPosition(V()) || V(0, 4, -17), a = 0.8 + t * 0.18, r = 7 + t * 1.6;
     camTo(V(c.x + Math.sin(a) * r, c.y + 1 + t * 1.8, c.z + Math.cos(a) * r), c, 3);
     fireworks(T, 3.5);
     if (((T * 24) | 0) % 18 === 0) for (let i = 0; i < 40; i++) confetti.emit({ pos: V(c.x + ((i * 37) % 17 - 8), c.y + 8, c.z + ((i * 53) % 13 - 6)), vel: V(((i * 7) % 5 - 2), -1, ((i * 11) % 5 - 2)), life: 2.4, size: 1, g: 2, drag: 0.6, color: COLS[i % COLS.length], spin: 6 });

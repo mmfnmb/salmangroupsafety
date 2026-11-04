@@ -13,13 +13,12 @@ SETS.tryouts = (root) => {
   L.floor(-26, -3, -15, -36); L.floor(3, 26, -15, -36);
   L.floor(-3, 3, -15, -36, -0.4);
   L.floor(-3, 3, -16, -22, 2); L.floor(-3, 3, -25, -32, 2);
-  L.rails(-3, 3, 8, -15);
   L.sweeper(0, COURSE.arm, 0, 3.6, 1.15);
   L.saw(0, COURSE.saw, 0, 2.6, 1.6, 0, 'x');
   L.spring(COURSE.x, COURSE.spring, 0, 21);
   L.finishGate(COURSE.finish, 2, 6);
   L.model('k/flagCheckers', -3.4, 0, COURSE.start, 2.2); L.model('k/flagCheckers', 3.4, 0, COURSE.start, 2.2, Math.PI);
-  for (const x of [-5.5, 5.5]) L.model(x < 0 ? 'k/bannerTowerRed' : 'k/bannerTowerGreen', x, 0, COURSE.start + 2, 3);
+  for (const x of [-11, 11]) L.model(x < 0 ? 'k/bannerTowerRed' : 'k/bannerTowerGreen', x, 0, COURSE.start + 6, 3);
   // sign-up desk with banners
   const wood = new THREE.MeshStandardMaterial({ color: 0xb8743a, roughness: 0.7 });
   const tb = put(root, 'f/f-table', DESK.x - 0.7, 0, DESK.z + 1.7, [3, 2.8, 4], Math.PI / 2); tb.traverse((o) => { if (o.isMesh) o.material = wood; });

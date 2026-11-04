@@ -47,20 +47,20 @@ export function shots(A) {
     (t) => { frameGroup([A.ref, B, Y], { side: 1, h: 1.1, dist: 0.8, look: 1.0, k: 99 }); say(t < 3 ? 'blue' : 'ref', t < 3 ? 'Team Splashvolt! We are two.' : 'You need four. Find them here.'); });
   // 4. Blue and Yellow at the start, a line of hopefuls
   shot(4, () => { judges(); straw.at(-1, 0, 11, PI); melon.at(-2.5, 0, 12, PI); Vi.at(1.5, 0, 12.4, PI); Mi.at(3.2, 0, 11.6, PI).play('Wave'); },
-    (t) => { camTo(V(-3.6, 1.8, 4.2), V(0.4, 1.0, 11.4), 99); say('blue', 'Okay! Who wants to try?'); });
+    (t) => { camTo(V(-1.6, 1.6, 6.4), V(0.2, 1.0, 11.6), 99); say('blue', 'Okay! Who wants to try?'); });
   // 5. candidate one: runs straight into the spinning arm
   shot(6, () => { judges(); }, (t, dt, T) => {
     const hitT = 2.3;
     if (t < hitT) { const z = COURSE.start - t * 4.2; straw.at(X, 0, z, PI).play('Run', 1.3); say('candidate', 'Wheee!'); }
     else { const u = t - hitT; if (!straw.hit) { straw.hit = 1; straw.play('HitReact'); fx.burst(V(X, 1.2, straw.p.z), 0xffd23f, 14, 6); } straw.at(X + u * 5.5, Math.max(0, 1.4 + u * 5 - u * u * 9), straw.p.z + u * 0.8, PI); straw.m.rotation.z = Math.min(u * 6, 1.5); if (u > 0.9) straw.play('Death'); say(null); }
-    const fz = straw.hit ? -1.2 : straw.p.z; camTo(V(X + 7, 2.2, fz - 1.5), V(X + (straw.hit ? 1.5 : 0), 1, fz - 1.5), 6);
+    const fz = straw.hit ? -1.2 : straw.p.z; camTo(V(X + 6.5, 3.0, fz - 1.2), V(X + (straw.hit ? 1.5 : 0), 0.9, fz - 1.2), 6);
   });
   // 6. Yellow winces
   shot(3, () => { judges(); Y.play('No'); }, (t) => { closeUp(Y, { ang: -0.2, dist: 1.8, k: 99 }); say('yellow', 'Ouch.'); });
   // 7. candidate two: off he goes... the wrong way
   shot(5, () => { judges(); melon.at(X, 0, COURSE.start, PI); }, (t) => {
     const k = clamp((t - 0.8) / 4, 0, 1); melon.at(X + k * 3, 0, COURSE.start + k * 22, 0).play(k > 0 && k < 1 ? 'Run' : 'Idle', 1.3);
-    fixed([-9, 3.4, 4], [0, 1, 12]); if (t > 2) say('candidate', 'Here I gooo!');
+    camTo(V(X - 4.5, 2.4, COURSE.start - 5), V(melon.p.x, 1, melon.p.z), 4); if (t > 2) say('candidate', 'Here I gooo!');
   });
   // 8. Blue
   shot(3, () => { judges(); B.play('No'); }, (t) => { closeUp(B, { ang: 0.25, dist: 1.9, k: 99 }); say('blue', '...Other way!'); });
