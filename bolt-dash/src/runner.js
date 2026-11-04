@@ -1,6 +1,6 @@
 // The character: physics body, movement, status effects, animation, bot brain.
 import { THREE, CANNON, M, G, V, PI, rand, clamp, damp, scene, world, sfx, fx, puffs, SkeletonUtils, G_STATIC, G_RUNNER, G_HAZARD, G_BALL, G_PROJ, matRunner } from './core.js';
-import { dress, paint, holdItem, HAND, ITEM } from './cosmetics.js';
+import { dress, paint, holdItem, HAND, ITEM, skinFx, teamFlag } from './cosmetics.js';
 
 export const RUN = 10.5, AIR_ACC = 30, GROUND_ACC = 80, JUMP_V = 12.2, DIVE_V = 14.5;
 const ray = new CANNON.RaycastResult();
@@ -24,8 +24,8 @@ export class Runner {
     this.model.traverse((o) => { if (o.isMesh) o.castShadow = true; });
     this.root.add(this.model);
     this.equip = { ...equip };
-    if (team) this.equip.skin = team === 'red' ? 'skin-lava' : 'skin-blue';
     dress(this.model, this.equip);
+    if (team) teamFlag(this.model, team);
     this.mixer = new THREE.AnimationMixer(this.model);
     this.actions = {};
     for (const clip of M.Character.animations) { const n = clip.name.split('|').pop(); this.actions[n] = this.mixer.clipAction(clip); }
@@ -163,8 +163,10 @@ export class Runner {
       const dive = this.state === 'dive';
       // zones: speed pads and conveyors
       let zx = 0, zz = 0;
-      if (this.grounded && L) for (const zn of L.zones) {
-        if (Math.abs(b.position.x - zn.x) > zn.hx || Math.abs(b.position.z - zn.z) > zn.hz || Math.abs(b.position.y - zn.y) > 1.2) continue;
+      if (L) for (const zn of L.zones) {
+        if (Math.abs(b.position.x - zn.x) > zn.hx || Math.abs(b.position.z - zn.z) > zn.hz || Math.abs(b.position.y - zn.y) > (zn.type === 'wind' ? 4 : 1.2)) continue;
+        if (zn.type === 'wind') { zx += zn.dir.x * zn.speed; zz += zn.dir.z * zn.speed; continue; }
+        if (!this.grounded) continue;
         if (zn.type === 'speed') { if (this.boostT < 0.2 && this.isPlayer) sfx.tick(); this.boostT = 1.0; this.boostDir = zn.dir; }
         else if (zn.type === 'conveyor') { zx += zn.dir.x * zn.speed; zz += zn.dir.z * zn.speed; }
         else if (zn.type === 'slime') this.slow(0.4);
@@ -187,6 +189,7 @@ export class Runner {
         fx.dust(V(b.position.x, b.position.y + 0.1, b.position.z), 5);
         if (this.isPlayer) sfx.jump();
       }
+      if (inp.dive && G.modeObj?.onDive?.(this)) inp.dive = false;
       if (inp.dive && !dive && !this.dived) {
         this.dived = true; this.state = 'dive'; this.stateT = 0;
         v.x = Math.sin(this.facing) * DIVE_V; v.z = Math.cos(this.facing) * DIVE_V; v.y = Math.max(v.y, 5);
@@ -251,6 +254,7 @@ export class Runner {
       const base = held.key.startsWith('gun:') ? PI / 2 : HAND.r[0];
       held.frame.rotation.x = held.key.startsWith('bat:') ? base + Math.sin(k * PI) * 1.9 : base;
     }
+    if (this.model.userData.fx && !this.out) { const v = this.body.velocity; skinFx(this.model, dt, this.body.position, { moving: Math.hypot(v.x, v.z) > 1.5, grounded: this.grounded, puffs, scene }); }
     this.squash = damp(this.squash, 1, 12, dt);
     const s = 0.42; this.model.scale.set(s / Math.sqrt(this.squash), s * this.squash, s / Math.sqrt(this.squash));
   }
@@ -290,6 +294,7 @@ export function think(r, dt) {
     ai.lastP = { x: p.x, z: p.z };
   }
   if (tgt.fire) inp.fire = true;
+  if (tgt.jump && r.grounded) inp.jump = true;
   if (r.weapon) { ai.aimT -= dt; if (ai.aimT <= 0) { ai.aimT = rand(0.6, 1.6); G.botFire?.(r); } }
   if (tgt.dive && !r.dived && r.grounded && Math.random() < dt * 2) inp.dive = true;
   else if (!r.dived && r.grounded && d > 6 && Math.random() < dt * 0.06) inp.dive = true;

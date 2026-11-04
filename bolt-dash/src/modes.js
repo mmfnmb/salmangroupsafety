@@ -1,16 +1,17 @@
 // Game modes: each builds its map from models and runs its own rules and bot targets.
 import { THREE, CANNON, M, G, V, PI, rand, pick, clamp, world, fx, puffs, sfx, toast, place, instanced, matGround, matBall, G_STATIC, G_RUNNER, G_HAZARD, G_BALL, G_PROJ } from './core.js';
+import { t } from './i18n.js';
 import { Level } from './level.js';
 import { groundAt } from './runner.js';
 import { ITEM, BATS } from './cosmetics.js';
 
 const alive = () => G.runners.filter((r) => !r.out);
-const playerLabel = (r) => (r.isPlayer ? 'إنت' : r.name);
+const playerLabel = (r) => (r.isPlayer ? t('You') : r.name);
 
 // ======================================================================= RACE
-const race = {
-  id: 'race', name: 'سباق العقبات', short: 'سباق', kind: 'race', icon: 'flag',
-  desc: 'اجري لحد العلم وعدّي الأبواب والمناشير والمدافع', weapons: 'التلج + الدفع',
+const sprint = {
+  id: 'sprint', name: t('Obstacle Dash (Classic)'), short: t('Race'), kind: 'race', icon: 'flag',
+  desc: t('Run to the flag past doors, saws and cannons'), weapons: t('Freeze + Push'),
   build() {
     const L = new Level({ killY: -12, pickupPool: [{ id: 'freeze', w: 1 }, { id: 'push', w: 1 }] }); G.level = L;
     const W = 8;
@@ -84,7 +85,7 @@ const race = {
     for (const c of L.checkpoints) if (r.bestZ != null && r.bestZ < c.z + 1) cp = c;
     r.reset(rand(-4, 4), cp.y + 3, cp.z);
     fx.dust(V(r.pos.x, cp.y + 0.2, r.pos.z), 10, 0xffffff, 3);
-    if (r.isPlayer) toast('نقطة الحفظ');
+    if (r.isPlayer) toast(t('Checkpoint'));
   },
   update(dt) {
     for (const r of G.runners) {
@@ -96,15 +97,115 @@ const race = {
   progress(r) { return clamp((14 - r.pos.z) / this.len, 0, 1); },
 };
 
-// ======================================================================= FALL (hex layers)
-const LAYER_COLORS = [0xff7ab8, 0xffd23f, 0x5fe0b0, 0x7fb8ff];
-const fall = {
-  id: 'fall', name: 'الأرض بتقع', short: 'الأرض بتقع', kind: 'survival', icon: 'hex',
-  desc: 'البلاطة بتتشرخ أول مرة وبتقع تاني مرة، ولو وقفت عليها 3 ثواني تقع', weapons: 'آر بي جي + قنبلة + تلج + طيران (نادر)',
+// ======================================================================= RACE: a winding circuit, two laps
+// Loop (clockwise seen from above): down the start straight (-z), left along z=-70 (-x), up x=-80 (+z), back along z=8 (+x).
+const LAPS = 2;
+const race = {
+  id: 'race', name: t('Obstacle Dash'), short: t('Race'), kind: 'race', icon: 'flag', laps: LAPS,
+  desc: t('A winding two-lap circuit: seesaws, bouncy pillows, hammers, wrecking balls, fans and launch pads'), weapons: t('Freeze + Push'),
   build() {
-    const L = new Level({ killY: -32, pickupPool: [{ id: 'rpg', w: 3 }, { id: 'grenade', w: 3 }, { id: 'freeze', w: 3 }, { id: 'fly', w: 1 }] }); G.level = L;
+    const L = new Level({ killY: -14, pickupPool: [{ id: 'freeze', w: 1 }, { id: 'push', w: 1 }] }); G.level = L;
+    // floors (with gaps for the seesaw and the launchpad jump)
+    L.floor(-7, 7, 15, -77);
+    L.floor(-30, -7, -63, -77); L.floor(-87, -44, -63, -77);
+    L.floor(-87, -73, -63, 15);
+    L.floor(-73, -50, 1, 15); L.floor(-40, -7, 1, 15);
+    // rails: outer edges everywhere, inner edges on the straights
+    L.fence(7, 15, 7, -77); L.fence(7, -77, -30, -77); L.fence(-44, -77, -87, -77); L.fence(-87, -77, -87, 15); L.fence(-87, 15, -50, 15); L.fence(-40, 15, 7, 15);
+    L.fence(-7, 1, -7, -63, 0, 'fence-low-straight'); L.fence(-7, -63, -30, -63, 0, 'fence-low-straight'); L.fence(-73, -63, -73, 1, 0, 'fence-low-straight');
+    // start straight
+    for (const x of [-4.5, 0, 4.5]) L.speedPad(x, -6, 0, 0, -1);
+    L.pole(0, -18, 0, 6.6, 1.35);
+    L.pillows(-7, 7, -27, -39);
+    L.pendulum(0, -48, 0, 'z/Obstacle_Hammer', { dir: 'x', amp: 1.0, sp: 1.5, ph: 0 });
+    L.pendulum(0, -57, 0, 'z/Obstacle_Hammer', { dir: 'x', amp: 1.0, sp: 1.5, ph: PI });
+    L.fan(-7, -66, 0, 1, 0, 6, 10, 7);
+    L.speedPad(-2, -70, 0, -1, 0);
+    L.pickup(0, 0, -23);
+    // the long straight going left
+    L.pendulum(-16, -70, 0, 'z/Wrecking_Ball', { dir: 'z', amp: 1.1, sp: 1.7, ph: 0, s: 1.4 });
+    L.pendulum(-24, -70, 0, 'z/Wrecking_Ball', { dir: 'z', amp: 1.1, sp: 1.7, ph: 2, s: 1.4 });
+    L.seesaw(-37, -70, 0, 'x', 14.5);
+    L.roller(-54, -70, 0, 'z', 14, 2.0);
+    L.fan(-62, -63, 0, 0, -1, 6, 13, 8);
+    for (const z of [-66, -70, -74]) L.coin(-49, 1, z);
+    L.pickup(-66, 0, -70);
+    // going back up
+    L.conveyor(-84, -76, -44, -56, 0, 0, -1, 5);
+    L.saw(-80, -34, 0, 4.6, 1.8, 0, 'x'); L.saw(-80, -26, 0, 4.6, 2.1, 2, 'x');
+    for (const x of [-84, -80, -76]) L.trap(x, -16, 0);
+    L.pole(-80, -5, 0, 6.6, -1.4);
+    L.speedPad(-80, 8, 0, 1, 0);
+    // last straight: launchpads over the gap, spike blocks, and home
+    for (const z of [3, 6.3, 9.7, 13]) L.launchpad(-52.6, z, 0, 18, 0, 17);
+    L.spikeBlock(-28, 0, 8, { axis: 'z', amp: 4.5, sp: 1.6 });
+    for (const z of [4.5, 11.5]) L.speedPad(-18, z, 0, 1, 0, 2.6);
+    L.pickup(-30, 0, 4);
+    // the start / finish gate over the start straight
+    L.model('k/flagCheckers', -6.5, 0, 0, 3.2, 0); L.model('k/flagCheckers', 6.5, 0, 0, 3.2, PI);
+    L.model('k/bannerTowerRed', -9, 0, 2, 3); L.model('k/bannerTowerGreen', 9, 0, 2, 3);
+    L.inst('Cube_Question', [-6, -4, -2, 0, 2, 4, 6].map((x) => ({ x, y: 5.8, z: 0, s: 0.9 })));
+    // coins
+    for (let z = -2; z > -16; z -= 3) L.coin(Math.sin(z) * 3, 1, z);
+    for (let x = -12; x > -28; x -= 3.2) L.coin(x, 1, -66 - (x % 2 ? 0 : 6));
+    for (let z = -60; z > -4; z += 4.5) L.coin(-80 + Math.sin(z * 0.3) * 4, 1, z);
+    // scenery: a tower in the middle of the loop and balloons
+    L.model('Tower', -40, -40, -31, 3.4, 0.4);
+    for (let i = 0; i < 10; i++) { const o = L.model('z/Balloon', rand(-70, -10), rand(4, 12), rand(-58, -4), rand(2.5, 4), rand(0, 6)); L.updaters.push((dt, t) => { o.position.y += Math.sin(t + i) * 0.004; }); }
+    L.scenery(70, -120, 40, { towers: [[-130, -30, 3], [50, -60, 3.4], [-40, 70, 3]] });
+    // checkpoints in order around the loop, with the facing to respawn in
+    this.cps = [
+      { x: 0, z: 0, f: PI, line: true }, { x: 0, z: -42, f: PI }, { x: -12, z: -70, f: -PI / 2 }, { x: -58, z: -70, f: -PI / 2 },
+      { x: -80, z: -48, f: 0 }, { x: -80, z: -10, f: 0 }, { x: -66, z: 8, f: PI / 2 }, { x: -24, z: 8, f: PI / 2 },
+    ];
+    // waypoints for bots along the centre line
+    const path = [[0, 8], [0, -70], [-80, -70], [-80, 8], [0, 8]], wp = [];
+    for (let i = 0; i < path.length - 1; i++) { const [ax, az] = path[i], [bx, bz] = path[i + 1], n = Math.ceil(Math.hypot(bx - ax, bz - az) / 5); for (let k = 0; k < n; k++) wp.push({ x: ax + (bx - ax) * k / n, z: az + (bz - az) * k / n, dx: Math.sign(bx - ax), dz: Math.sign(bz - az) }); }
+    this.wp = wp; this.lapLen = 2 * (78 + 80);
+    this.fly = [[-40, 70, 40, -40, 0, -32], [12, 14, -60, 0, 0, -40], [0, 7, 22, 0, 1, 4]];
+  },
+  spawn(i) { const row = Math.floor(i / 5), col = i % 5; return { x: -6 + col * 3 + (row % 2) * 1.5, y: 0, z: 9 - row * 2.2, facing: PI }; },
+  update() {
+    for (const r of G.runners) {
+      if (r.out || r.finished) continue;
+      if (r.lap == null) { r.lap = 0; r.cpi = 0; r.cpCount = 0; }
+      const cp = this.cps[r.cpi], p = r.pos;
+      const hit = cp.line ? Math.abs(p.x - cp.x) < 7.5 && Math.abs(p.z - cp.z) < 1.6 : Math.hypot(p.x - cp.x, p.z - cp.z) < 8;
+      if (hit && p.y > -2) {
+        if (r.cpi === 0 && r.cpCount >= this.cps.length) { r.lap++; r.cpCount = 0; if (r.isPlayer && r.lap < LAPS) G.banner?.(t('Lap {n} of {m}', { n: r.lap + 1, m: LAPS }), true); }
+        if (r.lap >= LAPS) { G.finish(r); continue; }
+        r.lastCp = r.cpi; r.cpi = (r.cpi + 1) % this.cps.length; r.cpCount++;
+      }
+    }
+  },
+  onFall(r) {
+    const cp = this.cps[r.lastCp ?? 0] || this.cps[0];
+    r.reset(cp.x + rand(-3, 3) * (Math.abs(Math.sin(cp.f)) < 0.5 ? 1 : 0), 2, cp.z + rand(-3, 3) * (Math.abs(Math.sin(cp.f)) > 0.5 ? 1 : 0), cp.f);
+    if (r.isPlayer) { toast(t('Checkpoint')); G.faceCam?.(cp.f); }
+  },
+  target(r, dt) {
+    const ai = r.ai, p = r.pos;
+    if (ai.wpi == null) ai.wpi = 0;
+    let w = this.wp[ai.wpi];
+    for (let k = 0; k < 4 && Math.hypot(w.x - p.x, w.z - p.z) < 6; k++) { ai.wpi = (ai.wpi + 1) % this.wp.length; w = this.wp[ai.wpi]; }
+    ai.laneT -= dt; if (ai.laneT < 0) { ai.lane = clamp(ai.lane + rand(-3, 3), -4.5, 4.5); ai.laneT = rand(1.5, 3.5); }
+    const lx = -w.dz * ai.lane, lz = w.dx * ai.lane;
+    // dodge saws and spike blocks near the path
+    for (const s of G.level.saws.concat(G.level.spikes)) { const d = Math.hypot(s.body.position.x - p.x, s.body.position.z - p.z); if (d < 4) return { x: p.x + (p.x - s.body.position.x) * 2 + w.dx * 3, z: p.z + (p.z - s.body.position.z) * 2 + w.dz * 3 }; }
+    return { x: w.x + lx, z: w.z + lz };
+  },
+  progress(r) { return clamp(((r.lap || 0) + (r.cpCount || 0) / this.cps.length) / LAPS, 0, 1); },
+};
+
+// ======================================================================= FALL (hex layers)
+const LAYER_COLORS = [0xff7ab8, 0xffd23f, 0x5fe0b0, 0x7fb8ff, 0xc08bff];
+const fall = {
+  id: 'fall', name: t('Hex Drop'), short: t('Hex Drop'), kind: 'survival', icon: 'hex',
+  desc: t('Tiles crack the first time you step on them and drop the second time. Stand still for 3 seconds and they drop too'), weapons: t('RPG + Grenade + Freeze + Fly (rare)'),
+  build() {
+    const L = new Level({ killY: -39, pickupPool: [{ id: 'rpg', w: 3 }, { id: 'grenade', w: 3 }, { id: 'freeze', w: 3 }, { id: 'fly', w: 1 }] }); G.level = L;
     this.tiles = []; this.layers = [];
-    const R = 5, sx = 2.42, sz = 2.095, ys = [0, -7, -14, -21];
+    const R = 6, sx = 2.42, sz = 2.095, ys = [0, -7, -14, -21, -28];
     ys.forEach((y, li) => {
       const cells = [];
       for (let q = -R; q <= R; q++) for (let r = Math.max(-R, -q - R); r <= Math.min(R, -q + R); r++) cells.push({ x: sx * (q + r / 2), z: sz * r });
@@ -126,10 +227,10 @@ const fall = {
     L.pickups.forEach((p) => { p.respawn = 8; });
     L.onExplode = (c, r) => { for (const t of this.tiles) if (t.state < 2 && Math.hypot(t.x - c.x, t.z - c.z) < r + 0.6 && Math.abs(t.y - c.y) < 2.2) this.drop(t, 0.05); };
     L.scenery(60, -60, 34, { towers: [[-45, -20, 3], [48, 10, 3.4]] });
-    this.fly = [[0, 30, 26, 0, -10, 0], [22, 12, 0, 0, -7, 0], [0, 10, 18, 0, 0, 0]];
+    this.fly = [[0, 34, 30, 0, -12, 0], [26, 12, 0, 0, -8, 0], [0, 10, 20, 0, 0, 0]];
     this.mtx = new THREE.Matrix4(); this.tmp = new THREE.Matrix4();
   },
-  spawn(i, n) { const a = (i / n) * PI * 2; return { x: Math.cos(a) * 7, y: 0.5, z: Math.sin(a) * 7, facing: Math.atan2(-Math.cos(a), -Math.sin(a)) }; },
+  spawn(i, n) { const a = (i / n) * PI * 2; return { x: Math.cos(a) * 8.5, y: 0.5, z: Math.sin(a) * 8.5, facing: Math.atan2(-Math.cos(a), -Math.sin(a)) }; },
   setTile(t, y, s = 2.2) {
     const L = this.layers[t.li];
     this.mtx.compose(V(t.x, y - 1.1, t.z), new THREE.Quaternion(), V(s, s, s));
@@ -195,41 +296,41 @@ const STAR_TYPES = [
   { model: 'k/q_Gem_Pink', s: 0.42, val: 5, w: 12 }, { model: 'k/q_Crystal2', s: 1.4, val: 10, w: 3 },
 ];
 const stars = {
-  id: 'stars', name: 'جمع النجوم', short: 'النجوم', kind: 'team', team: true, icon: 'star',
-  desc: 'فريقين: النجمة الصغيرة بـ1، الكبيرة بـ3، الجوهرة بـ5، والكريستالة بـ10. اللي يتضرب يوقّع نجومه', weapons: 'الشفط + التلج',
+  id: 'stars', name: t('Star Grab'), short: t('Stars'), kind: 'team', team: true, icon: 'star',
+  desc: t('Two teams. Small star 1, big star 3, gem 5, crystal 10. Get hit and you drop your stars'), weapons: t('Pull + Freeze'),
   build() {
     const L = new Level({ killY: -14, pickupPool: [{ id: 'pull', w: 1 }, { id: 'freeze', w: 1 }] }); G.level = L;
-    const H = 17;
+    const H = 21; this.H = H;
     L.floor(-H, H, H, -H); L.fence(-H, H, H, H); L.fence(-H, -H, H, -H); L.fence(-H, H, -H, -H); L.fence(H, H, H, -H);
     L.floor(-4, 4, 4, -4, 2.6); L.floor(-4, 4, 4, -4, 0.6, { shadows: false });
     for (const [x, z] of [[0, 6], [0, -6], [6, 0], [-6, 0]]) L.spring(x, z, 0, 19);
-    for (const [x, z] of [[-12, 12], [12, -12], [12, 12], [-12, -12]]) { L.bouncer(x, z, 0, -Math.sign(x) * 6, -Math.sign(z) * 6, 16); }
+    for (const [x, z] of [[-14, 14], [14, -14], [14, 14], [-14, -14]]) { L.bouncer(x, z, 0, -Math.sign(x) * 6, -Math.sign(z) * 6, 16); }
     L.model('k/bannerTowerRed', -5, 0, H + 0.5, 3.5); L.model('k/bannerTowerRed', 5, 0, H + 0.5, 3.5);
     L.model('k/bannerTowerGreen', -5, 0, -H - 0.5, 3.5, PI); L.model('k/bannerTowerGreen', 5, 0, -H - 0.5, 3.5, PI);
     L.model('k/flag-large-red', -H + 1, 0, H - 1, 4); L.model('k/flag-large-blue', H - 1, 0, -H + 1, 4);
-    for (const [x, z] of [[-9, 0], [9, 0], [0, 10], [0, -10]]) L.pickup(x, 0, z);
-    L.scenery(50, -50, 30, { towers: [[-45, -10, 3], [45, 15, 3]] });
+    for (const [x, z] of [[-11, 0], [11, 0], [0, 12], [0, -12]]) L.pickup(x, 0, z);
+    L.scenery(56, -56, 34, { towers: [[-45, -10, 3], [45, 15, 3]] });
     this.items = []; this.spawnT = 0; this.score = { red: 0, blue: 0 }; this.time = 75;
-    for (let i = 0; i < 12; i++) this.spawnStar();
-    this.fly = [[0, 26, 30, 0, 0, 0], [20, 10, 0, 0, 2, 0], [0, 9, 22, 0, 0, 4]];
+    for (let i = 0; i < 16; i++) this.spawnStar();
+    this.fly = [[0, 30, 36, 0, 0, 0], [24, 10, 0, 0, 2, 0], [0, 9, 26, 0, 0, 4]];
   },
   spawnStar(at, type) {
     const tot = STAR_TYPES.reduce((a, c) => a + c.w, 0); let k = rand(0, tot), ty = STAR_TYPES[0];
     if (type) ty = type; else for (const c of STAR_TYPES) { k -= c.w; if (k <= 0) { ty = c; break; } }
     let x, z, y = 0;
-    if (at) ({ x, z } = at); else if (ty.val === 10) { x = rand(-2.5, 2.5); z = rand(-2.5, 2.5); y = 2.6; } else { x = rand(-15, 15); z = rand(-15, 15); if (Math.abs(x) < 5 && Math.abs(z) < 5) y = 2.6; }
+    if (at) ({ x, z } = at); else if (ty.val === 10) { x = rand(-2.5, 2.5); z = rand(-2.5, 2.5); y = 2.6; } else { x = rand(-this.H + 2, this.H - 2); z = rand(-this.H + 2, this.H - 2); if (Math.abs(x) < 5 && Math.abs(z) < 5) y = 2.6; }
     const o = place(ty.model, x, y + 1, z, ty.s, 0, G.level.root);
     this.items.push({ obj: o, x, y, z, val: ty.val, t: 0 });
   },
-  spawn(i, n) { const team = i % 2 ? 'blue' : 'red', k = Math.floor(i / 2); return { x: -6 + k * 4, y: 0, z: team === 'red' ? 13 : -13, facing: team === 'red' ? PI : 0 }; },
+  spawn(i, n) { const team = i % 2 ? 'blue' : 'red', k = Math.floor(i / 2); return { x: -6 + k * 4, y: 0, z: team === 'red' ? 16 : -16, facing: team === 'red' ? PI : 0 }; },
   teamOf(i) { return i % 2 ? 'blue' : 'red'; },
   onHit(r) { this.dropStars(r); },
   onShot(r, by, id) { if (id === 'freeze') this.dropStars(r); },
   dropStars(r) {
     const lost = Math.floor((r.carry || 0) / 2); if (!lost) return;
     r.carry -= lost; this.score[r.team] = Math.max(0, this.score[r.team] - lost);
-    for (let i = 0; i < Math.min(lost, 6); i++) this.spawnStar({ x: clamp(r.pos.x + rand(-3, 3), -15, 15), z: clamp(r.pos.z + rand(-3, 3), -15, 15) }, STAR_TYPES[lost > 8 && i === 0 ? 1 : 0]);
-    if (r.isPlayer) toast(`وقّعت ${lost} نجمة!`);
+    for (let i = 0; i < Math.min(lost, 6); i++) this.spawnStar({ x: clamp(r.pos.x + rand(-3, 3), -this.H + 2, this.H - 2), z: clamp(r.pos.z + rand(-3, 3), -this.H + 2, this.H - 2) }, STAR_TYPES[lost > 8 && i === 0 ? 1 : 0]);
+    if (r.isPlayer) toast(t('You dropped {n} stars!', { n: lost }));
   },
   update(dt) {
     this.time -= dt; this.spawnT -= dt;
@@ -247,7 +348,7 @@ const stars = {
     }
     if (this.time <= 0) G.endRound();
   },
-  onFall(r) { this.dropStars(r); r.reset(rand(-8, 8), 0, r.team === 'red' ? 13 : -13, r.team === 'red' ? PI : 0); },
+  onFall(r) { this.dropStars(r); r.reset(rand(-8, 8), 0, r.team === 'red' ? 16 : -16, r.team === 'red' ? PI : 0); },
   target(r) {
     const p = r.pos; let best = null, bs = 0;
     for (const s of this.items) { const d = Math.hypot(s.x - p.x, s.z - p.z) + (s.y > p.y + 1 ? 5 : 0); const sc = s.val / (d + 2); if (sc > bs) { bs = sc; best = s; } }
@@ -261,9 +362,9 @@ const stars = {
 };
 
 // ======================================================================= BALL (teams + bats)
-const ball = {
-  id: 'ball', name: 'كورة المضرب', short: 'الكورة', kind: 'team', team: true, bats: true, icon: 'ball',
-  desc: 'فريقين ومعاكم مضارب، دخّلوا الكورة في جول الفريق التاني. كل مضرب ليه قوة', weapons: 'المضارب',
+const ballClassic = {
+  id: 'ballClassic', name: t('Bat Ball'), short: t('Ball'), kind: 'team', team: true, bats: true, icon: 'ball',
+  desc: t('Two teams with bats: knock the ball into the other team\'s goal. Every bat has its own power'), weapons: t('Bats'),
   build() {
     const L = new Level({ killY: -14 }); G.level = L;
     const X = 12, Z = 21;
@@ -283,11 +384,14 @@ const ball = {
     this.ballObj = place('k/ball-green', 0, 1, 0, 26, 0, L.root);
     const b = new CANNON.Body({ mass: 2, material: matBall, linearDamping: 0.35, angularDamping: 0.3, collisionFilterGroup: G_BALL, collisionFilterMask: G_STATIC | G_RUNNER | G_HAZARD | G_BALL });
     b.addShape(new CANNON.Sphere(0.92)); b.userData = { kind: 'bigball' }; world.addBody(b); L.bodies.push(b);
-    this.ball = b; this.score = { red: 0, blue: 0 }; this.time = 100; this.resetT = 0; this.curve = null; this.Z = Z;
+    this.ball = b; this.score = { red: 0, blue: 0 }; this.time = 100; this.resetT = 0; this.curve = null; this.Z = Z; this.X = X; this.GW = 4; this.GH = 3.3;
     this.resetBall();
     this.fly = [[0, 24, 32, 0, 0, 0], [-18, 9, 0, 0, 1, 0], [0, 8, 20, 0, 1, 2]];
   },
-  resetBall() { this.ball.position.set(0, 2, 0); this.ball.velocity.set(0, 0, 0); this.ball.angularVelocity.set(0, 0, 0); this.curve = null; },
+  // where a team must send the ball, and which team scored when the ball is at p (or null)
+  goalOf(team) { return { x: 0, z: team === 'red' ? -this.Z - 1 : this.Z + 1 }; },
+  goalHit(p) { return Math.abs(p.z) > this.Z + 0.6 && Math.abs(p.x) < this.GW && p.y < this.GH ? (p.z > 0 ? 'blue' : 'red') : null; },
+  resetBall() { const o = this.ballSpot || { x: 0, z: 0 }; this.ball.position.set(o.x, 2, o.z); this.ball.velocity.set(0, 0, 0); this.ball.angularVelocity.set(0, 0, 0); this.curve = null; },
   spawn(i) { const team = i % 2 ? 'blue' : 'red', k = Math.floor(i / 2); return { x: -6 + k * 4, y: 0, z: team === 'red' ? 12 : -12, facing: team === 'red' ? PI : 0 }; },
   teamOf(i) { return i % 2 ? 'blue' : 'red'; },
   onFire(r) {
@@ -299,8 +403,10 @@ const ball = {
     if (d < reach + 0.9 && Math.abs(bp.y - r.pos.y - 0.9) < 1.6 && (dx * fx_ + dz * fz) / (d || 1) > 0.2) {
       let pw = 8 + bat.power * 3.3 + (bat.special === 'legend' ? 2 : 0), up = 3;
       if (bat.special === 'lob') up = 10; else if (bat.special === 'ground') { up = 0.5; pw *= 1.12; } else if (bat.special === 'bounce') up = 7;
+      const k = r.isPlayer ? (r.batPower ?? 1) : rand(0.8, 1.15); pw *= k; up *= Math.min(1.25, 0.6 + k * 0.45);
+      if (r.isPlayer && r.batPerfect) { fx.burst(V(bp.x, bp.y + 0.5, bp.z), 0x36e0a8, 26, 9); G.banner?.(t('PERFECT!'), true); }
       let dir = V(dx / (d || 1) * 0.5 + fx_ * 0.5, 0, dz / (d || 1) * 0.5 + fz * 0.5).normalize();
-      if (!r.isPlayer) { const gz = r.team === 'red' ? -this.Z - 1 : this.Z + 1, gd = V(-bp.x, 0, gz - bp.z).normalize(); dir = V(dx / (d || 1), 0, dz / (d || 1)).multiplyScalar(0.35).add(gd.multiplyScalar(0.65)).normalize(); }
+      if (!r.isPlayer) { const g = this.goalOf(r.team, r), gd = V(g.x - bp.x, 0, g.z - bp.z).normalize(); dir = V(dx / (d || 1), 0, dz / (d || 1)).multiplyScalar(0.35).add(gd.multiplyScalar(0.65)).normalize(); }
       this.ball.velocity.set(dir.x * pw, up, dir.z * pw);
       this.curve = bat.special === 'curve' ? { x: -dir.z * (Math.random() < 0.5 ? 1 : -1) * 9, z: dir.x * 9, t: 1 } : null;
       fx.burst(V(bp.x, bp.y, bp.z), 0xffffff, 10, 5); sfx.bat(); if (bat.special === 'stun') sfx.pan();
@@ -325,28 +431,30 @@ const ball = {
     if (this.curve && this.curve.t > 0) { this.curve.t -= dt; b.velocity.x += this.curve.x * dt; b.velocity.z += this.curve.z * dt; }
     this.ballObj.position.set(p.x, p.y, p.z); this.ballObj.quaternion.set(b.quaternion.x, b.quaternion.y, b.quaternion.z, b.quaternion.w);
     if (this.resetT > 0) { this.resetT -= dt; if (this.resetT <= 0) { this.resetBall(); G.runners.forEach((r, i) => { if (!r.out) { const s = this.spawn(G.runners.indexOf(r)); r.reset(s.x, 0, s.z, s.facing); } }); } }
-    else if (Math.abs(p.z) > this.Z + 0.6 && Math.abs(p.x) < 4 && p.y < 3.3) {
-      const scorer = p.z > 0 ? 'blue' : 'red'; this.score[scorer]++; this.resetT = 2.2;
-      sfx.goal(); fx.confetti(V(p.x, p.y + 1, p.z), 120); toast(scorer === 'red' ? 'جول للأحمر!' : 'جول للأزرق!', 2);
-      if (this.score[scorer] >= 3) setTimeout(() => G.endRound(), 1400);
+    else if (this.goalHit(p)) {
+      const scorer = this.goalHit(p); this.score[scorer] += this.lastValue || 1; this.lastValue = 0; this.resetT = 2.2;
+      sfx.goal(); fx.confetti(V(p.x, p.y + 1, p.z), 120); toast(scorer === 'red' ? t('Goal for Red!') : t('Goal for Blue!'), 2);
+      if (this.score[scorer] >= (this.winScore || 3)) setTimeout(() => G.endRound(), 1400);
     }
     if (p.y < -6) this.resetBall();
     if (this.time <= 0) G.endRound();
   },
   onFall(r) { const s = this.spawn(G.runners.indexOf(r)); r.reset(s.x, 0, s.z, s.facing); },
   target(r) {
-    const bp = this.ball.position, p = r.pos, goalZ = r.team === 'red' ? -this.Z : this.Z, ownZ = -goalZ;
+    const bp = this.ball.position, p = r.pos, goal = this.goalOf(r.team, r), own = this.goalOf(r.team === 'red' ? 'blue' : 'red');
     const mates = G.runners.filter((o) => !o.out && o.team === r.team);
     const chaser = mates.reduce((a, c) => (Math.hypot(c.pos.x - bp.x, c.pos.z - bp.z) < Math.hypot(a.pos.x - bp.x, a.pos.z - bp.z) ? c : a));
+    const fit = (q) => this.fit ? this.fit(q) : { x: clamp(q.x, -this.X + 1, this.X - 1), z: clamp(q.z, -this.Z + 0.7, this.Z - 0.7) };
     if (chaser !== r && mates.length > 1) {
-      // one keeper near home, the rest spread out ahead of the ball
-      const others = mates.filter((m) => m !== chaser), k = others.indexOf(r), dirZ = Math.sign(goalZ);
-      if (k === 0) return { x: clamp(bp.x * 0.4, -3, 3), z: ownZ * 0.82, near: 0.8, noJump: true };
-      const side = k % 2 ? 1 : -1;
-      return { x: clamp(bp.x + side * 6, -10, 10), z: clamp(bp.z + dirZ * 5, -18, 18), near: 1, noJump: true };
+      // one keeper in front of home, the rest spread out ahead of the ball
+      const others = mates.filter((m) => m !== chaser), k = others.indexOf(r);
+      const ux = goal.x - own.x, uz = goal.z - own.z, ul = Math.hypot(ux, uz) || 1, fx = ux / ul, fz = uz / ul;
+      if (k === 0) { const kx = bp.x - own.x, kz = bp.z - own.z, kl = Math.hypot(kx, kz) || 1, q = fit({ x: own.x + kx / kl * 3.5 + fx * 2, z: own.z + kz / kl * 3.5 + fz * 2 }); return { x: q.x, z: q.z, near: 0.8, noJump: true }; }
+      const side = k % 2 ? 1 : -1, q = fit({ x: bp.x - fz * side * 6 + fx * 5, z: bp.z + fx * side * 6 + fz * 5 });
+      return { x: q.x, z: q.z, near: 1, noJump: true };
     }
-    const gx = 0 - bp.x, gz = goalZ - bp.z, gl = Math.hypot(gx, gz) || 1;
-    const behind = { x: clamp(bp.x - gx / gl * 1.5, -11, 11), z: clamp(bp.z - gz / gl * 1.5, -20.3, 20.3) };
+    const gx = goal.x - bp.x, gz = goal.z - bp.z, gl = Math.hypot(gx, gz) || 1;
+    const behind = fit({ x: bp.x - gx / gl * 1.5, z: bp.z - gz / gl * 1.5 });
     const d = Math.hypot(behind.x - p.x, behind.z - p.z);
     const ready = d < 1.6 || Math.hypot(bp.x - p.x, bp.z - p.z) < 2.2;
     if (ready) { r.facing = Math.atan2(bp.x - p.x, bp.z - p.z); return { x: bp.x, z: bp.z, near: 0.2, fire: Math.random() < 0.25, noJump: true }; }
@@ -356,30 +464,87 @@ const ball = {
   winners() { return this.score.red === this.score.blue ? (Math.random() < 0.5 ? 'red' : 'blue') : this.score.red > this.score.blue ? 'red' : 'blue'; },
 };
 
+// ======================================================================= BALL: the big stadium
+const ball = {
+  ...ballClassic, id: 'ball',
+  desc: t('Two teams with bats: knock the ball into the other team\'s pit. Hold to charge your swing and let go in the green for a perfect hit'),
+  build() {
+    const L = new Level({ killY: -14 }); G.level = L;
+    // a big pit at each end: knock the ball in and it drops = goal
+    const X = 16, Z = 26, GW = 8, PD = 7;
+    L.floor(-X, X, Z, -Z);
+    for (const s of [1, -1]) {
+      const z0 = s * Z, z1 = s * (Z + PD), zc = (z0 + z1) / 2;
+      L.floor(-X, -GW, Math.max(z0, z1), Math.min(z0, z1)); L.floor(GW, X, Math.max(z0, z1), Math.min(z0, z1));
+      L.floor(-X, X, Math.max(z1, z1 + s * 3), Math.min(z1, z1 + s * 3));
+      L.fence(-X, z0, -GW, z0); L.fence(GW, z0, X, z0);
+      L.fence(-X, z1 + s * 3, X, z1 + s * 3);
+      L.box(0, 2.5, z1 + s * 0.4, GW, 2.5, 0.3);
+      // dig the pit: brick walls down to a floor far below
+      const zlo = Math.min(z0, z1), zhi = Math.max(z0, z1), bricks = [];
+      for (let y = -3; y >= -9; y -= 2) {
+        for (let z = zlo + 1; z < zhi; z += 2) { bricks.push({ x: -GW - 1, y, z }, { x: GW + 1, y, z }); }
+        for (let x = -GW + 1; x < GW; x += 2) { bricks.push({ x, y, z: z0 - s }, { x, y, z: z1 + s }); }
+      }
+      L.inst('Cube_Bricks', bricks);
+      L.box(-GW - 1, -6, zc, 1, 4, PD / 2); L.box(GW + 1, -6, zc, 1, 4, PD / 2);
+      L.floor(-GW, GW, zhi, zlo, -10);
+      L.model('k/fence-rope', 0, 0, z1 + s * 0.4, [(GW * 2) / 0.94, 4.6 / 0.3, 1]);
+      for (const x of [-GW, GW]) L.fence(x, z0, x, z1, 0, 'fence-low-straight');
+      for (const x of [-GW - 0.6, GW + 0.6]) L.model(s > 0 ? 'k/flag-large-red' : 'k/flag-large-blue', x, 0, z0 + s * 0.8, 5);
+      L.model(s > 0 ? 'k/bannerTowerRed' : 'k/bannerTowerGreen', -GW - 5, 0, zc, 3.6); L.model(s > 0 ? 'k/bannerTowerRed' : 'k/bannerTowerGreen', GW + 5, 0, zc, 3.6);
+      L.model(s > 0 ? 'z/Spawn_Red' : 'z/Spawn_Blue', 0, 0.02, s * 14, 5);
+      // glowing motes rising out of the pit in the team colour
+      const col = s > 0 ? 0xff4f6a : 0x4fa8ff; let k = 0;
+      L.updaters.push((dt) => { k -= dt; if (k < 0) { k = 0.12; fx.burst(V(rand(-GW + 1, GW - 1), -1.5, rand(Math.min(z0, z1) + 1, Math.max(z0, z1) - 1)), col, 3, 4); } });
+    }
+    this.PD = PD;
+    for (const sx of [-1, 1]) {
+      for (let z = -Z + 2; z <= Z - 2; z += 3.6) {
+        L.model('z/Barrier_01', sx * (X + 1.4), 0, z, 1, PI / 2);
+      }
+    }
+    L.model('k/trophy', 0, 0, -Z - PD - 8, 6); L.model('k/castle', X + 18, 0, 0, 8, -PI / 2); L.model('k/windmill', -X - 16, 0, 0, 6, PI / 2);
+    L.scenery(80, -80, 40, { towers: [[-60, -20, 3.4], [60, 25, 3.4]] });
+    this.ballObj = place('z/Football', 0, 1, 0, 0.92 / 1.14, 0, L.root);
+    const b = new CANNON.Body({ mass: 2, material: matBall, linearDamping: 0.3, angularDamping: 0.3, collisionFilterGroup: G_BALL, collisionFilterMask: G_STATIC | G_RUNNER | G_HAZARD | G_BALL });
+    b.addShape(new CANNON.Sphere(0.92)); b.userData = { kind: 'bigball' }; world.addBody(b); L.bodies.push(b);
+    this.ball = b; this.score = { red: 0, blue: 0 }; this.time = 120; this.resetT = 0; this.curve = null;
+    this.Z = Z; this.X = X; this.GW = GW; this.GH = 99;
+    this.resetBall();
+    this.fly = [[0, 36, 50, 0, 0, 0], [-26, 12, 0, 0, 1, 0], [0, 9, 26, 0, 1, 4]];
+  },
+  update(dt) { ballClassic.update.call(this, dt); for (const r of G.runners) if (!r.out && r.pos.y < -6) this.onFall(r); },
+  goalOf(team) { return { x: 0, z: team === 'red' ? -this.Z - 3 : this.Z + 3 }; },
+  goalHit(p) { return Math.abs(p.z) > this.Z + 0.4 && Math.abs(p.x) < this.GW && p.y < -1.2 ? (p.z > 0 ? 'blue' : 'red') : null;
+  },
+  spawn(i) { const team = i % 2 ? 'blue' : 'red', k = Math.floor(i / 2); return { x: -10 + (k % 6) * 4, y: 0, z: (team === 'red' ? 1 : -1) * (14 + Math.floor(k / 6) * 3), facing: team === 'red' ? PI : 0 }; },
+};
+
 // ======================================================================= CANNONS (survive)
 const cannons = {
-  id: 'cannons', name: 'تفادي المدافع', short: 'المدافع', kind: 'survival', icon: 'cannon',
-  desc: 'افضل فوق الحلبة لحد ما الوقت يخلص، والمدافع كل شوية بتضرب أسرع', weapons: 'مسدس الطيران',
+  id: 'cannons', name: t('Cannon Dodge'), short: t('Cannons'), kind: 'survival', icon: 'cannon',
+  desc: t('Stay on the platform until time runs out. The cannons fire faster and faster'), weapons: t('Fly Blaster'),
   build() {
     const L = new Level({ killY: -12, pickupPool: [{ id: 'fly', w: 1 }] }); G.level = L;
-    const R = 13, tiles = [];
+    const R = 16, tiles = [];
     for (let x = -R + 1; x < R; x += 2) for (let z = -R + 1; z < R; z += 2) if (Math.hypot(x, z) < R) tiles.push({ x, y: -1, z });
     L.inst('Cube_Grass_Single', tiles);
     const b = new CANNON.Body({ type: CANNON.Body.STATIC, material: matGround, collisionFilterGroup: G_STATIC, collisionFilterMask: G_RUNNER | G_BALL | G_PROJ });
     b.addShape(new CANNON.Cylinder(R - 0.6, R - 0.6, 2, 24)); b.position.set(0, -1, 0); world.addBody(b); L.bodies.push(b);
     for (let k = 0; k < 8; k++) { if (k % 2) continue; const a0 = (k / 8) * PI * 2, a1 = ((k + 1) / 8) * PI * 2; L.fence(Math.cos(a0) * (R - 0.6), Math.sin(a0) * (R - 0.6), Math.cos(a1) * (R - 0.6), Math.sin(a1) * (R - 0.6), 0, 'fence-low-straight'); }
     for (let k = 0; k < 8; k++) {
-      const a = (k / 8) * PI * 2 + PI / 8, x = Math.cos(a) * 18, z = Math.sin(a) * 18;
+      const a = (k / 8) * PI * 2 + PI / 8, x = Math.cos(a) * 21, z = Math.sin(a) * 21;
       L.model('RockPlatforms_Medium', x, -2.6, z, 0.9, rand(0, 6)); L.box(x, -0.5, z, 2, 0.5, 2);
       L.cannon(x, z, 0, -Math.cos(a), -Math.sin(a), rand(2.6, 3.4), rand(0, 2.5), 16);
     }
-    L.sweeper(0, 0, 0, 6.5, 0.7, { cross: true });
+    L.sweeper(0, 0, 0, 8, 0.7, { cross: true });
     for (const [x, z] of [[-7, 0], [7, 0], [0, 7]]) L.pickup(x, 0, z);
     L.pickups.forEach((p) => { p.respawn = 10; });
     L.scenery(60, -60, 34, { towers: [[-40, -20, 3], [45, 10, 3]] });
-    this.time = 60; this.fly = [[0, 28, 26, 0, 0, 0], [20, 8, 6, 0, 1, 0], [0, 9, 17, 0, 1, 0]];
+    this.time = 60; this.fly = [[0, 32, 30, 0, 0, 0], [24, 8, 6, 0, 1, 0], [0, 9, 20, 0, 1, 0]];
   },
-  spawn(i, n) { const a = (i / n) * PI * 2; return { x: Math.cos(a) * 9, y: 0, z: Math.sin(a) * 9, facing: Math.atan2(-Math.cos(a), -Math.sin(a)) }; },
+  spawn(i, n) { const a = (i / n) * PI * 2; return { x: Math.cos(a) * 11, y: 0, z: Math.sin(a) * 11, facing: Math.atan2(-Math.cos(a), -Math.sin(a)) }; },
   update(dt) {
     this.time -= dt;
     const k = 1 - this.time / 60;
@@ -405,14 +570,14 @@ const cannons = {
 
 // ======================================================================= CLIMB
 const climb = {
-  id: 'climb', name: 'القمة', short: 'القمة', kind: 'race', icon: 'crown',
-  desc: 'اطلع على المنصات لحد التاج اللي فوق خالص', weapons: 'مسدس اللخبطة',
+  id: 'climb', name: t('The Summit'), short: t('The Summit'), kind: 'race', icon: 'crown',
+  desc: t('Climb the platforms to the crown at the very top'), weapons: t('Confuse Blaster'),
   build() {
     const L = new Level({ killY: -10, pickupPool: [{ id: 'confuse', w: 1 }] }); G.level = L;
     L.floor(-12, 12, 12, -12); L.model('Tower', 38, -40, -30, 3.2, 0.3);
     L.checkpoint(0, 0, 0);
     this.plats = [];
-    const N = 24;
+    const N = 32;
     for (let i = 0; i < N; i++) {
       const a = i * 0.62 + 0.4, rad = 7.6 + Math.sin(i * 1.7) * 0.8, x = Math.cos(a) * rad, z = Math.sin(a) * rad, y = 1.5 + i * 1.45;
       const kind = i % 7 === 5 ? 'mover' : 'plat';
@@ -444,7 +609,7 @@ const climb = {
     const L = G.level; let cp = L.checkpoints[0];
     for (const c of L.checkpoints) if (c.y <= (this.plats[r.best ?? -1]?.y ?? 0) + 0.1) cp = c;
     r.reset(cp.x + rand(-0.5, 0.5), cp.y + 1, cp.z);
-    if (r.isPlayer) toast('نقطة الحفظ');
+    if (r.isPlayer) toast(t('Checkpoint'));
   },
   target(r) {
     const p = r.pos;
@@ -462,30 +627,30 @@ const climb = {
 
 // ======================================================================= ARENA
 const arena = {
-  id: 'arena', name: 'الحلبة', short: 'الحلبة', kind: 'survival', icon: 'target',
-  desc: 'حلبة صغيرة والكل بيضرب في الكل، وأطرافها بتقع مع الوقت. آخر واحد فوقها يكسب', weapons: 'الرشاش + الصاروخ الموجّه + القنبلة اللزقة',
+  id: 'arena', name: t('Arena'), short: t('Arena'), kind: 'survival', icon: 'target',
+  desc: t('Everyone against everyone, and the edges keep falling away. Last one standing wins'), weapons: t('Rapid Blaster + Homing Rocket + Sticky Bomb'),
   build() {
     const L = new Level({ killY: -12, pickupPool: [{ id: 'rapid', w: 4 }, { id: 'homing', w: 2 }, { id: 'sticky', w: 3 }] }); G.level = L;
     this.cells = [];
-    const R = 9;
+    const R = 11;
     for (let x = -R + 1; x < R; x += 2) for (let z = -R + 1; z < R; z += 2) if (Math.hypot(x, z) < R) this.cells.push({ x, z, ring: Math.hypot(x, z) });
     const { meshes } = L.inst('Cube_Grass_Single', this.cells.map((c) => ({ x: c.x, y: -1, z: c.z })));
     meshes.forEach((m) => { m.frustumCulled = false; });
     this.meshes = meshes;
     this.cells.forEach((c, i) => { c.i = i; c.body = L.box(c.x, -1, c.z, 1, 1, 1); c.state = 0; });
-    for (const [x, z] of [[-5, 0], [5, 0], [0, -5], [0, 5]]) L.pickup(x, 0, z);
+    for (const [x, z] of [[-6, 0], [6, 0], [0, -6], [0, 6], [-4, 4], [4, -4]]) L.pickup(x, 0, z);
     L.pickups.forEach((p) => { p.respawn = 6; });
     L.scenery(60, -60, 30, { towers: [[-40, -20, 3], [40, 20, 3]] });
     this.time = 90; this.shrinkT = 25; this.mtx = new THREE.Matrix4(); this.tmp = new THREE.Matrix4();
-    this.fly = [[0, 22, 22, 0, 0, 0], [14, 6, 4, 0, 1, 0], [0, 7, 14, 0, 1, 0]];
+    this.fly = [[0, 26, 26, 0, 0, 0], [17, 6, 4, 0, 1, 0], [0, 7, 16, 0, 1, 0]];
   },
-  spawn(i, n) { const a = (i / n) * PI * 2; return { x: Math.cos(a) * 6, y: 0, z: Math.sin(a) * 6, facing: Math.atan2(-Math.cos(a), -Math.sin(a)) }; },
+  spawn(i, n) { const a = (i / n) * PI * 2; return { x: Math.cos(a) * 7.5, y: 0, z: Math.sin(a) * 7.5, facing: Math.atan2(-Math.cos(a), -Math.sin(a)) }; },
   update(dt) {
     this.time -= dt; this.shrinkT -= dt;
     if (this.shrinkT <= 0) {
       this.shrinkT = 7;
       const outer = Math.max(...this.cells.filter((c) => c.state === 0).map((c) => c.ring));
-      if (outer > 3) { for (const c of this.cells) if (c.state === 0 && c.ring > outer - 1.6) { c.state = 1; c.t = 1.2; } toast('الحلبة بتصغر!'); }
+      if (outer > 3) { for (const c of this.cells) if (c.state === 0 && c.ring > outer - 1.6) { c.state = 1; c.t = 1.2; } toast(t('The arena is shrinking!')); }
     }
     for (const c of this.cells) {
       if (c.state === 1) { c.t -= dt; this.set(c, Math.sin(G.t * 50) * 0.06); if (c.t <= 0) { c.state = 2; c.v = 0; c.y = 0; G.level.bodies.splice(G.level.bodies.indexOf(c.body), 1); world.removeBody(c.body); } }
@@ -505,5 +670,6 @@ const arena = {
   },
 };
 
-export const MODES = { race, fall, stars, ball, cannons, climb, arena };
+export { ballClassic };
+export const MODES = { race, sprint, ballClassic, fall, stars, ball, cannons, climb, arena };
 export const MODE_LIST = [race, fall, stars, ball, cannons, climb, arena];

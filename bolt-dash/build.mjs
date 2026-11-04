@@ -11,14 +11,22 @@ const res = await build({
 const js = res.outputFiles[0].text.replace(/<\/script/gi, '<\\/script');
 
 const models = {};
-for (const [dir, pre] of [['models', ''], ['models/acc', 'acc/'], ['models/k', 'k/']]) {
+for (const [dir, pre] of [['models', ''], ['models/acc', 'acc/'], ['models/k', 'k/'], ['models/z', 'z/']]) {
   for (const f of readdirSync(dir)) if (f.endsWith('.glb')) models[pre + f.slice(0, -4)] = readFileSync(`${dir}/${f}`).toString('base64');
+}
+
+// translations: every src/lang/<code>.txt must have one line per line of keys.txt
+const keys = readFileSync('src/lang/keys.txt', 'utf8').replace(/\r/g, ''), nk = keys.split('\n').length, langs = {};
+for (const f of readdirSync('src/lang')) if (f.endsWith('.txt') && f !== 'keys.txt') {
+  const t = readFileSync('src/lang/' + f, 'utf8').replace(/\r/g, ''), n = t.split('\n').length;
+  if (n !== nk) { console.error(`src/lang/${f}: ${n} lines but keys.txt has ${nk}`); process.exit(1); }
+  langs[f.slice(0, -4)] = t;
 }
 
 let html = readFileSync('index.html', 'utf8');
 html = html.replace(/<script type="importmap">[\s\S]*?<\/script>\s*/, '');
 html = html.replace(/<script type="module" src="\.\/src\/main\.js"><\/script>/,
-  () => `<script>window.__BD_MODELS=${JSON.stringify(models)};</script>\n<script>${js}</script>`);
+  () => `<script>window.__BD_MODELS=${JSON.stringify(models)};window.__BD_LANG=${JSON.stringify({ keys, langs }).replace(/<\//g, '<\\/')};</script>\n<script>${js}</script>`);
 mkdirSync('dist', { recursive: true });
 writeFileSync('dist/bolt-dash.html', html);
 console.log('dist/bolt-dash.html', (html.length / 1e6).toFixed(2), 'MB');

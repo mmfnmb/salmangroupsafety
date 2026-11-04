@@ -1,23 +1,24 @@
 // Weapons: pickups, projectiles (foam darts, rockets, grenades) and what each one does.
 import { THREE, CANNON, M, G, V, PI, rand, clamp, scene, world, fx, puffs, sfx, toast, G_STATIC, G_HAZARD } from './core.js';
+import { t } from './i18n.js';
 import { holdItem } from './cosmetics.js';
 
 export const WEAPONS = {
-  push: { name: 'مسدس الدفع', model: 'k/blaster-a', proj: 'dart', speed: 44, ammo: 3, cd: 0.45, color: 0xff8a3d, assist: 0.45 },
-  rapid: { name: 'الرشاش', model: 'k/blaster-d', proj: 'dart', speed: 48, ammo: 18, cd: 0.11, color: 0xa070ff, assist: 0.35, small: true },
-  freeze: { name: 'مسدس التلج', model: 'k/blaster-h', proj: 'dart', speed: 44, ammo: 3, cd: 0.5, color: 0x8fe6ff, assist: 0.45 },
-  pull: { name: 'مسدس الشفط', model: 'k/blaster-l', proj: 'dart', speed: 44, ammo: 3, cd: 0.5, color: 0xb070ff, assist: 0.45 },
-  fly: { name: 'مسدس الطيران', model: 'k/blaster-o', proj: 'dart', speed: 44, ammo: 2, cd: 0.6, color: 0x36e0a8, assist: 0.35 },
-  confuse: { name: 'مسدس اللخبطة', model: 'k/blaster-r', proj: 'dart', speed: 44, ammo: 2, cd: 0.6, color: 0xffd23f, assist: 0.45 },
-  rpg: { name: 'آر بي جي', model: 'k/rocketlauncher', proj: 'rocket', speed: 26, ammo: 2, cd: 0.9, radius: 2.0, assist: 0.2 },
-  homing: { name: 'الصاروخ الموجّه', model: 'k/rocketlauncherModern', proj: 'rocket', speed: 16, ammo: 1, cd: 1, radius: 1.7, homing: true, assist: 0.6 },
-  grenade: { name: 'قنبلة', model: 'k/grenade', throw: true, ammo: 2, cd: 0.8, fuse: 1.5, radius: 2.4, len: 0.7 },
-  sticky: { name: 'قنبلة لزقة', model: 'k/grenade-a', throw: true, ammo: 2, cd: 0.8, fuse: 0.9, slime: true, len: 0.7 },
+  push: { name: t('Push Blaster'), model: 'k/blaster-a', proj: 'dart', speed: 44, ammo: 3, cd: 0.45, color: 0xff8a3d, assist: 0.45 },
+  rapid: { name: t('Rapid Blaster'), model: 'k/blaster-d', proj: 'dart', speed: 48, ammo: 18, cd: 0.11, color: 0xa070ff, assist: 0.35, small: true },
+  freeze: { name: t('Freeze Blaster'), model: 'k/blaster-h', proj: 'dart', speed: 44, ammo: 3, cd: 0.5, color: 0x8fe6ff, assist: 0.45 },
+  pull: { name: t('Pull Blaster'), model: 'k/blaster-l', proj: 'dart', speed: 44, ammo: 3, cd: 0.5, color: 0xb070ff, assist: 0.45 },
+  fly: { name: t('Fly Blaster'), model: 'k/blaster-o', proj: 'dart', speed: 44, ammo: 2, cd: 0.6, color: 0x36e0a8, assist: 0.35 },
+  confuse: { name: t('Confuse Blaster'), model: 'k/blaster-r', proj: 'dart', speed: 44, ammo: 2, cd: 0.6, color: 0xffd23f, assist: 0.45 },
+  rpg: { name: t('RPG'), model: 'k/rocketlauncher', proj: 'rocket', speed: 26, ammo: 2, cd: 0.9, radius: 2.0, assist: 0.2 },
+  homing: { name: t('Homing Rocket'), model: 'k/rocketlauncherModern', proj: 'rocket', speed: 16, ammo: 1, cd: 1, radius: 1.7, homing: true, assist: 0.6 },
+  grenade: { name: t('Grenade'), model: 'k/grenade', throw: true, ammo: 2, cd: 0.8, fuse: 1.5, radius: 2.4, len: 0.7 },
+  sticky: { name: t('Sticky Bomb'), model: 'k/grenade-a', throw: true, ammo: 2, cd: 0.8, fuse: 0.9, slime: true, len: 0.7 },
 };
 export const HINT = {
-  push: 'بيزق اللي يتضرب لورا', rapid: 'طلقات كتير بتزق شوية شوية', freeze: 'بيجمّد اللي يتضرب', pull: 'بيشد اللي يتضرب ناحيتك',
-  fly: 'صوّب على حد يطير، أو اضرب تحتك وتطير إنت', confuse: 'بيعكس تحكم اللي يتضرب', rpg: 'بيكسّر الأرض والصناديق', homing: 'بيروح لوحده لأقرب حد',
-  grenade: 'ترميها وتفرقع بعد ثانية ونص', sticky: 'بتعمل بقعة لزقة بتبطّأ',
+  push: t('Knocks whoever it hits backwards'), rapid: t('Lots of shots that push a little each'), freeze: t('Freezes whoever it hits'), pull: t('Pulls whoever it hits towards you'),
+  fly: t('Shoot someone to launch them, or shoot the ground to fly yourself'), confuse: t('Reverses the controls of whoever it hits'), rpg: t('Breaks floors and crates'), homing: t('Flies by itself to the nearest player'),
+  grenade: t('Throw it and it blows up after 1.5 seconds'), sticky: t('Leaves a sticky puddle that slows players'),
 };
 
 const projs = [];

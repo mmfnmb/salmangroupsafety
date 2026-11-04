@@ -3,6 +3,12 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import * as CANNON from 'cannon-es';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 export { THREE, CANNON, SkeletonUtils };
 export const $ = (id) => document.getElementById(id);
@@ -13,7 +19,7 @@ export const damp = (a, b, k, dt) => a + (b - a) * (1 - Math.exp(-k * dt));
 export const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
 export const PI = Math.PI;
 export const IS_TOUCH = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
-document.documentElement.lang = 'ar'; document.documentElement.dir = 'rtl';
+// page language and direction are set by i18n.translateDom()
 
 // shared mutable game state
 export const G = { mode: 'loading', level: null, runners: [], player: null, shake: 0, t: 0, paused: false, aim: V(0, 0, -1) };
@@ -27,12 +33,12 @@ export const save = {
   coins: store.get('coins', 0), wins: store.get('wins', 0), muted: store.get('muted', false),
   owned: store.get('owned', ['skin-blue', 'bat-golf']), equip: store.get('equip', { skin: 'skin-blue', bat: 'bat-golf' }),
   xp: store.get('xp', 0), gift: store.get('gift', false), daily: store.get('daily', null), maps: store.get('maps', null),
-  name: store.get('name', 'بولت'), stats: store.get('stats', { games: 0, rounds: 0, qual: 0, crowns: 0, earned: 0 }),
-  season: store.get('season', []), dailyRew: store.get('dailyRew', { day: '', streak: 0 }), sens: store.get('sens', 1), shadows: store.get('shadows', true),
+  name: store.get('name', 'Bolt'), stats: store.get('stats', { games: 0, rounds: 0, qual: 0, crowns: 0, earned: 0 }),
+  season: store.get('season', []), dailyRew: store.get('dailyRew', { day: '', streak: 0 }), sens: store.get('sens', 1), shadows: store.get('shadows', true), quality: store.get('quality', null),
 };
 if (!save.owned.includes('bat-golf')) save.owned.push('bat-golf');
 if (!save.equip.bat) save.equip.bat = 'bat-golf';
-export const persist = () => { for (const k of ['coins', 'wins', 'owned', 'equip', 'xp', 'gift', 'daily', 'maps', 'muted', 'name', 'stats', 'season', 'dailyRew', 'sens', 'shadows']) store.set(k, save[k]); };
+export const persist = () => { for (const k of ['coins', 'wins', 'owned', 'equip', 'xp', 'gift', 'daily', 'maps', 'muted', 'name', 'stats', 'season', 'dailyRew', 'sens', 'shadows', 'quality']) store.set(k, save[k]); };
 
 // ---------------------------------------------------------------- audio (synth)
 export const sfx = (() => {
@@ -88,44 +94,133 @@ export const sfx = (() => {
 })();
 
 // ---------------------------------------------------------------- renderer / scene
+// quality presets: low (no post effects), med, high
+export const QUALITY = { low: { pr: 1, shadow: 0, bloom: false, extras: false }, med: { pr: 1.5, shadow: 1024, bloom: true, extras: true }, high: { pr: 2, shadow: 2048, bloom: true, extras: true } };
+if (!save.quality) save.quality = IS_TOUCH ? 'med' : 'high';
 export const canvas = $('c');
 export const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(devicePixelRatio, IS_TOUCH ? 1.75 : 2));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.15;
+renderer.toneMappingExposure = 1.1;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 export const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(0xbfe8ff, 70, 190);
-export const camera = new THREE.PerspectiveCamera(62, 1, 0.1, 500);
+scene.fog = new THREE.Fog(0xc9b8ff, 110, 320);
+export const camera = new THREE.PerspectiveCamera(62, 1, 0.1, 900);
+// reflections for shiny materials (gold, crystal, metal)
+{ const pm = new THREE.PMREMGenerator(renderer); scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture; scene.environmentIntensity = 0.3; }
+
+// dreamy sky: gradient, drifting aurora ribbons, twinkling stars and a soft sun halo
+export const skyU = { time: { value: 0 }, sunDir: { value: new THREE.Vector3(0.35, 0.55, -0.75).normalize() } };
 export const sky = (() => {
   const m = new THREE.ShaderMaterial({
-    side: THREE.BackSide, depthWrite: false, fog: false,
-    uniforms: { top: { value: new THREE.Color(0x3fb6ff) }, mid: { value: new THREE.Color(0xa8e4ff) }, bot: { value: new THREE.Color(0xffd9ef) } },
+    side: THREE.BackSide, depthWrite: false, fog: false, uniforms: skyU,
     vertexShader: 'varying vec3 vP; void main(){ vP = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
-    fragmentShader: 'uniform vec3 top; uniform vec3 mid; uniform vec3 bot; varying vec3 vP; void main(){ float h = vP.y; vec3 c = h > 0.0 ? mix(mid, top, smoothstep(0.0, 0.6, h)) : mix(mid, bot, smoothstep(0.0, -0.4, h)); gl_FragColor = vec4(c, 1.0); }',
+    fragmentShader: `uniform float time; uniform vec3 sunDir; varying vec3 vP;
+      float h21(vec2 p){ p = fract(p*vec2(123.34,456.21)); p += dot(p,p+45.32); return fract(p.x*p.y); }
+      void main(){
+        float h = vP.y;
+        vec3 top = vec3(0.22,0.33,0.95), mid = vec3(0.45,0.80,1.0), hor = vec3(1.0,0.78,0.92), low = vec3(0.70,0.55,1.0);
+        vec3 c = h > 0.0 ? mix(mix(hor, mid, smoothstep(0.0,0.18,h)), top, smoothstep(0.18,0.85,h)) : mix(hor, low, smoothstep(0.0,-0.35,h));
+        // aurora ribbons
+        float a = sin(vP.x*3.0 + time*0.15 + sin(vP.z*2.0+time*0.1)*1.5) * 0.5 + 0.5;
+        float band = smoothstep(0.25,0.55,h) * (1.0 - smoothstep(0.55,0.9,h));
+        c += band * a * mix(vec3(0.25,1.0,0.75), vec3(0.85,0.45,1.0), sin(vP.z*2.5+time*0.2)*0.5+0.5) * 0.35;
+        // stars
+        vec2 g = floor(vec2(atan(vP.z, vP.x)*90.0, h*90.0)); float st = step(0.985, h21(g)) * smoothstep(0.35,0.9,h);
+        c += st * (0.6 + 0.4*sin(time*3.0 + h21(g+3.1)*40.0)) * vec3(1.0,0.95,0.85);
+        // sun halo
+        float sd = max(dot(normalize(vP), sunDir), 0.0);
+        c += vec3(1.0,0.85,0.6) * (pow(sd, 400.0)*4.0 + pow(sd, 18.0)*0.45);
+        gl_FragColor = vec4(c, 1.0);
+      }`,
   });
-  const s = new THREE.Mesh(new THREE.SphereGeometry(400, 32, 16), m); s.renderOrder = -1; s.frustumCulled = false; scene.add(s); return s;
+  const s = new THREE.Mesh(new THREE.SphereGeometry(800, 48, 24), m); s.renderOrder = -1; s.frustumCulled = false; scene.add(s); return s;
 })();
-export const hemi = new THREE.HemisphereLight(0xffffff, 0xa0d080, 1.5);
+export const hemi = new THREE.HemisphereLight(0xfff4ff, 0x9fb8ff, 1.2);
 scene.add(hemi);
-export const sun = new THREE.DirectionalLight(0xfff4e0, 2.4);
+export const sun = new THREE.DirectionalLight(0xfff0dc, 2.6);
 sun.castShadow = true;
-sun.shadow.mapSize.set(IS_TOUCH ? 1024 : 2048, IS_TOUCH ? 1024 : 2048);
-Object.assign(sun.shadow.camera, { left: -32, right: 32, top: 32, bottom: -32, near: 1, far: 140 });
+Object.assign(sun.shadow.camera, { left: -34, right: 34, top: 34, bottom: -34, near: 1, far: 150 });
 sun.shadow.bias = -0.0005; sun.shadow.normalBias = 0.03;
 scene.add(sun, sun.target);
-export const sea = new THREE.Mesh(new THREE.PlaneGeometry(1200, 1200), new THREE.MeshStandardMaterial({ color: 0x7fd8ff, roughness: 0.35, metalness: 0.05 }));
-sea.rotation.x = -PI / 2; sea.position.y = -40; scene.add(sea);
+// soft rim light from behind gives characters a glowing outline
+export const rim = new THREE.DirectionalLight(0xb8a0ff, 0.9); rim.position.set(-10, 8, -14); scene.add(rim);
+
+// shimmering sea with rolling waves
+export const seaU = { time: { value: 0 } };
+export const sea = (() => {
+  const g = new THREE.PlaneGeometry(1600, 1600, 160, 160);
+  const m = new THREE.MeshStandardMaterial({ color: 0x6fd6ff, roughness: 0.18, metalness: 0.15, transparent: true, opacity: 0.96 });
+  m.onBeforeCompile = (sh) => {
+    sh.uniforms.time = seaU.time;
+    sh.vertexShader = 'uniform float time;\n' + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+      float w = sin(position.x*0.045 + time*0.9)*0.9 + sin(position.y*0.06 + time*1.3)*0.6 + sin((position.x+position.y)*0.11 + time*2.1)*0.25;
+      transformed.z += w;`);
+    sh.fragmentShader = 'uniform float time;\n' + sh.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+      float sp = sin(vViewPosition.x*0.9 + time*2.0) * sin(vViewPosition.y*1.1 - time*1.7);
+      totalEmissiveRadiance += vec3(0.6,0.9,1.0) * smoothstep(0.93, 1.0, sp) * 0.6;`);
+  };
+  const s = new THREE.Mesh(g, m); s.rotation.x = -PI / 2; s.position.y = -40; s.receiveShadow = false; scene.add(s); return s;
+})();
+
+// floating glow motes around the camera
+export const motes = (() => {
+  const n = 220, g = new THREE.BufferGeometry(), pos = new Float32Array(n * 3), ph = new Float32Array(n);
+  for (let i = 0; i < n; i++) { pos[i * 3] = rand(-40, 40); pos[i * 3 + 1] = rand(-4, 22); pos[i * 3 + 2] = rand(-40, 40); ph[i] = rand(0, 100); }
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('ph', new THREE.BufferAttribute(ph, 1));
+  const m = new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, uniforms: { time: seaU.time, center: { value: new THREE.Vector3() } },
+    vertexShader: `uniform float time; uniform vec3 center; attribute float ph; varying float vA;
+      void main(){ vec3 p = position; p.y += sin(time*0.6+ph)*1.2; p.x += sin(time*0.3+ph*2.0)*1.5;
+        p = center + mod(p - center + 40.0, 80.0) - 40.0;
+        vec4 mv = modelViewMatrix * vec4(p,1.0); gl_PointSize = (14.0 + 10.0*sin(time*2.0+ph)) * (30.0 / -mv.z); vA = 0.5+0.5*sin(time*1.7+ph*3.0);
+        gl_Position = projectionMatrix * mv; }`,
+    fragmentShader: `varying float vA; void main(){ float d = length(gl_PointCoord-0.5); float a = smoothstep(0.5,0.0,d); gl_FragColor = vec4(mix(vec3(1.0,0.85,0.45), vec3(0.75,0.6,1.0), vA), a*0.55*vA); }`,
+  });
+  const p = new THREE.Points(g, m); p.frustumCulled = false; scene.add(p); return p;
+})();
+
+// post effects: bloom and a colour grade (saturation, warmth, vignette)
+export const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+export const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.42, 0.4, 1.0);
+composer.addPass(bloom);
+const grade = new ShaderPass({
+  uniforms: { tDiffuse: { value: null }, sat: { value: 1.15 }, vig: { value: 0.28 } },
+  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+  fragmentShader: `uniform sampler2D tDiffuse; uniform float sat; uniform float vig; varying vec2 vUv;
+    void main(){ vec4 c = texture2D(tDiffuse, vUv); float l = dot(c.rgb, vec3(0.299,0.587,0.114));
+      c.rgb = mix(vec3(l), c.rgb, sat); c.rgb *= vec3(1.04, 1.0, 0.97);
+      float d = distance(vUv, vec2(0.5)); c.rgb *= 1.0 - vig * smoothstep(0.35, 0.85, d);
+      gl_FragColor = c; }`,
+});
+composer.addPass(grade);
+composer.addPass(new OutputPass());
+export function applyQuality() {
+  const q = QUALITY[save.quality] || QUALITY.med;
+  renderer.setPixelRatio(Math.min(devicePixelRatio, q.pr));
+  renderer.shadowMap.enabled = q.shadow > 0; sun.castShadow = q.shadow > 0;
+  if (q.shadow) { sun.shadow.mapSize.set(q.shadow, q.shadow); sun.shadow.map?.dispose(); sun.shadow.map = null; }
+  motes.visible = q.extras;
+  resize();
+}
+export function renderScene(dt = 0) {
+  skyU.time.value += dt; seaU.time.value += dt * (G.paused ? 0 : 1);
+  sky.position.copy(camera.position); motes.material.uniforms.center.value.copy(camera.position);
+  sea.position.x = Math.round(camera.position.x / 50) * 50; sea.position.z = Math.round(camera.position.z / 50) * 50;
+  if ((QUALITY[save.quality] || QUALITY.med).bloom) composer.render(); else renderer.render(scene, camera);
+}
 
 export function resize() {
   const w = innerWidth, h = innerHeight;
-  renderer.setSize(w, h, false);
+  renderer.setSize(w, h, false); composer.setPixelRatio(renderer.getPixelRatio()); composer.setSize(w, h);
+  bloom.resolution.set(w * 0.5, h * 0.5);
   camera.aspect = w / h; camera.fov = w < h ? 74 : 62; camera.updateProjectionMatrix();
 }
-addEventListener('resize', resize); resize();
+addEventListener('resize', resize);
+applyQuality();
 
 // ---------------------------------------------------------------- assets
 const Q = ['Character', 'Bouncer', 'Hazard_Saw', 'Hazard_Cylinder', 'SpikyBall', 'Cannon', 'Cannonball', 'Goal_Flag', 'Coin', 'Star',
@@ -140,7 +235,9 @@ const K = ['fence-straight', 'fence-low-straight', 'fence-rope', 'conveyor-belt'
   'flag-large-red', 'flag-large-blue', 'structure-gate-wide', 'windmill', 'castle', 'bump', 'ramp-large', 'trophy', 'banner', 'bannerTowerRed', 'bannerTowerGreen',
   'flagCheckers', 'banner-red', 'banner-green', 'frying-pan', 'loaf-baguette', 'rollingPin', 'fish', 'corn-dog', 'cooking-spatula', 'candy-cane-red',
   'candy-cane-green', 'present-b-round', 'tool-hammer', 'tool-paddle', 'item-banana', 'q_Club', 'q_Hammer_Double_Golden', 'q_Bone', 'q_Crystal2', 'q_Gem_Pink', 'q_Star_Outline'];
-export const MODEL_NAMES = [...Q, ...A.map((n) => 'acc/' + n), ...K.map((n) => 'k/' + n)];
+const Z = ['Launchpad', 'Seesaw_Base', 'Seesaw_Plank', 'Obstacle_Hammer', 'Fan', 'Fan_Blade', 'Spinning_Walls', 'Obstacle_Pole_Large', 'Obstacle_Pole_Center', 'Obstacle_Pole_Small',
+  'Pillow', 'Wrecking_Ball', 'Barrier_01', 'Football', 'Ring_Hoop', 'Spawn_Red', 'Spawn_Blue', 'Spike_Ball', 'Balloon', 'Torus', 'Step_Large'];
+export const MODEL_NAMES = [...Q, ...A.map((n) => 'acc/' + n), ...K.map((n) => 'k/' + n), 'k/detail-parasol-a', ...Z.map((n) => 'z/' + n)];
 export const M = {};
 export async function loadAssets(onProgress) {
   const loader = new GLTFLoader();

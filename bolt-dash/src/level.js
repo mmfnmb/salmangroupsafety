@@ -149,6 +149,82 @@ export class Level {
     for (const [x, z, s] of opts.towers || [[-50, (z0 + z1) / 2, 3], [55, z1 + 20, 3.4], [-40, z1 - 20, 3.6]]) this.model('Tower', x, -40, z, s, rand(0, 6));
   }
 
+  // ---- party obstacles (zoo gameplay models)
+  // a hammer or wrecking ball swinging from a frame; dir = the swing direction ('x' or 'z')
+  pendulum(x, z, y = 0, model = 'z/Obstacle_Hammer', opts = {}) {
+    const s = opts.s ?? 1.1, len = (model === 'z/Obstacle_Hammer' ? 4.6 : 1.7) * s, py = y + len + 0.9, dir = opts.dir || 'x';
+    const holder = new THREE.Group(); holder.position.set(x, py, z); this.root.add(holder);
+    const o = place(model, 0, 0, 0, s, dir === 'x' ? PI / 2 : 0, holder);
+    // frame: two posts and a bar
+    const span = opts.span ?? 7.4, along = dir === 'x' ? 'z' : 'x';
+    for (const sd of [-1, 1]) { const px = along === 'x' ? x + sd * span : x, pz = along === 'z' ? z + sd * span : z; this.model('z/Obstacle_Pole_Center', px, y, pz, [1.3, (py - y + 0.3) / 4, 1.3]); this.box(px, y + (py - y) / 2, pz, 0.45, (py - y) / 2, 0.45); }
+    this.model('z/Obstacle_Pole_Large', x, py + 0.15, z, [1.2, 1.2, span * 2 / 9.08], along === 'z' ? 0 : PI / 2);
+    const r = (model === 'z/Obstacle_Hammer' ? 1.05 : 1.0) * s;
+    const body = this.kin(new CANNON.Sphere(r), x, py - len, z, 'saw');
+    const pd = { holder, body, x, z, py, len, dir, amp: opts.amp ?? 1.0, sp: opts.sp ?? 1.6, ph: opts.ph ?? rand(0, 6) };
+    this.updaters.push((dt, t) => {
+      const th = pd.amp * Math.sin(t * pd.sp + pd.ph), w = pd.amp * pd.sp * Math.cos(t * pd.sp + pd.ph);
+      const ox = Math.sin(th) * pd.len, oy = -Math.cos(th) * pd.len, vx = Math.cos(th) * pd.len * w, vy = Math.sin(th) * pd.len * w;
+      if (pd.dir === 'x') { pd.body.position.set(pd.x + ox, pd.py + oy, pd.z); pd.body.velocity.set(vx, vy, 0); pd.holder.rotation.set(0, 0, th); }
+      else { pd.body.position.set(pd.x, pd.py + oy, pd.z + ox); pd.body.velocity.set(0, vy, vx); pd.holder.rotation.set(-th, 0, 0); }
+    });
+  }
+  // a big fan that pushes everyone in its wind
+  fan(x, z, y, dx, dz, w = 6, len = 12, strength = 9) {
+    const o = this.model('z/Fan', x, y, z, 2.2, Math.atan2(dx, dz));
+    const blade = place('z/Fan_Blade', 0, 0.75, 0, 1, 0, o); this.spinners.push({ obj: blade, w: 0, spinZ: true });
+    this.updaters.push((dt) => { blade.rotation.z += dt * 14; if (Math.random() < dt * 30) puffs.emit({ pos: V(x + dx * 1.5 + rand(-1, 1) * Math.abs(dz) * w / 2, y + rand(0.3, 2.5), z + dz * 1.5 + rand(-1, 1) * Math.abs(dx) * w / 2), vel: V(dx * 18, 0, dz * 18), life: len / 18, size: 0.07, color: 0xffffff }); });
+    this.zones.push({ type: 'wind', x: x + dx * len / 2, y, z: z + dz * len / 2, hx: Math.abs(dx) ? len / 2 : w / 2, hz: Math.abs(dz) ? len / 2 : w / 2, dir: { x: dx, z: dz }, speed: strength });
+  }
+  // a plank on a hinge that tips under weight
+  seesaw(x, z, y = 0, along = 'z', len = 10) {
+    const sc = len / 8.18, plank = this.model('z/Seesaw_Plank', x, y - 0.4, z, [1.35, 1.3, sc], along === 'z' ? 0 : PI / 2);
+    this.model('z/Seesaw_Base', x, y - 0.85, z, [0.9, 1.4, 1.4], along === 'z' ? 0 : PI / 2);
+    const hx = along === 'z' ? 2.25 : len / 2, hz = along === 'z' ? len / 2 : 2.25;
+    const b = new CANNON.Body({ mass: 4, material: matGround, collisionFilterGroup: G_STATIC, collisionFilterMask: G_RUNNER | G_BALL | G_PROJ, angularDamping: 0.6 });
+    b.addShape(new CANNON.Box(new CANNON.Vec3(hx, 0.3, hz))); b.position.set(x, y - 0.3, z); world.addBody(b); this.bodies.push(b);
+    const anchor = new CANNON.Body({ mass: 0 }); anchor.position.set(x, y - 0.3, z); world.addBody(anchor); this.bodies.push(anchor);
+    const axis = along === 'z' ? new CANNON.Vec3(1, 0, 0) : new CANNON.Vec3(0, 0, 1);
+    const hc = new CANNON.HingeConstraint(b, anchor, { pivotA: new CANNON.Vec3(), axisA: axis, pivotB: new CANNON.Vec3(), axisB: axis }); world.addConstraint(hc);
+    this.constraints = this.constraints || []; this.constraints.push(hc);
+    const e = new CANNON.Vec3();
+    this.updaters.push(() => {
+      b.quaternion.toEuler(e); const a = along === 'z' ? e.x : e.z;
+      const lim = 0.42, k = Math.abs(a) > lim ? 40 : 6; // springs back to level, hard stop past ~24 degrees
+      if (along === 'z') b.angularVelocity.x -= a * k * 0.016; else b.angularVelocity.z -= a * k * 0.016;
+      b.position.set(x, y - 0.3, z); b.velocity.set(0, 0, 0);
+      plank.quaternion.set(b.quaternion.x, b.quaternion.y, b.quaternion.z, b.quaternion.w); if (along !== 'z') plank.rotateY(PI / 2);
+      plank.position.set(x, y - 0.4, z);
+    });
+  }
+  pillows(x0, x1, z0, z1, y = 0) {
+    for (let x = Math.min(x0, x1) + 1; x < Math.max(x0, x1); x += 2) for (let z = Math.min(z0, z1) + 1; z < Math.max(z0, z1); z += 2) {
+      const o = this.model('z/Pillow', x, y + 0.05, z, [1.6, 1.2, 1.6], rand(0, 6));
+      const lo = { x, z, y, r: 0.95, vy: 13.5, t: 0, onUse() { lo.t = 0.3; } }; this.launchers.push(lo);
+      this.updaters.push((dt) => { lo.t = Math.max(0, lo.t - dt); o.scale.y = 1.2 * (1 - Math.sin(lo.t * 10) * lo.t * 1.2); });
+    }
+  }
+  launchpad(x, z, y = 0, fx_ = 0, fz = 0, vy = 22) {
+    const o = this.model('z/Launchpad', x, y - 0.8, z, 1.4);
+    const lo = { x, z, y, r: 1.3, vy, fx: fx_ || null, fz, lock: 1.4, onUse() { lo.t = 0.3; }, t: 0 }; if (!fx_ && !fz) lo.fx = null;
+    this.launchers.push(lo); this.updaters.push((dt) => { lo.t = Math.max(0, lo.t - dt); o.scale.y = 1.4 * (1 + Math.sin(lo.t * 20) * lo.t); });
+  }
+  // a long bar spinning low over the floor: jump it like a skipping rope
+  pole(x, z, y = 0, len = 6.6, w = 1.3) {
+    const pillar = this.model('z/Obstacle_Pole_Center', x, y, z, [1.4, 0.32, 1.4]);
+    const arm = new THREE.Group(); arm.position.set(x, y + 0.75, z); this.root.add(arm);
+    place('z/Obstacle_Pole_Large', 0, 0, 0, [1, 1, len * 2 / 9.08], PI / 2, arm);
+    const body = this.kin(new CANNON.Box(new CANNON.Vec3(len, 0.35, 0.4)), x, y + 0.75, z, 'sweeper', { w, cx: x, cz: z });
+    body.angularVelocity.set(0, w, 0);
+    this.sweepers.push({ arm, body, w, x, y: y + 0.75, z, len, pillar });
+  }
+  // a finned roller across the track
+  roller(x, z, y = 0, along = 'x', len = 14, w = 2.2) {
+    const o = this.model('z/Spinning_Walls', x, y + 0.95, z, [len / 6, 1.1, 1.1], along === 'x' ? 0 : PI / 2);
+    const body = this.kin(new CANNON.Box(new CANNON.Vec3(along === 'x' ? len / 2 : 0.9, 0.9, along === 'x' ? 0.9 : len / 2)), x, y + 0.95, z, 'saw');
+    this.updaters.push((dt) => { if (along === 'x') o.rotation.x += w * dt; else o.rotation.z += w * dt; });
+  }
+
   // ---- explosions break crates and push people; modes may also break floor tiles
   explode(c, r, power = 13) {
     fx.boom(c, r); sfx.boom(); if (G.player && G.player.pos.distanceTo?.(c) < 25) G.shake = 0.5;
@@ -197,7 +273,7 @@ export class Level {
       if (tr.up) for (const r of G.runners) if (!r.out && r.state !== 'tumble' && r.hitCool <= 0 && Math.abs(r.pos.x - tr.x) < 1.5 && Math.abs(r.pos.z - tr.z) < 1.5 && Math.abs(r.pos.y - tr.y) < 0.8) r.tumble(V(rand(-2, 2), 11, rand(-2, 2)));
     }
     for (const c of this.coins) if (!c.taken) { c.obj.rotation.y += dt * 3; c.obj.position.y = c.base + Math.sin(t * 3 + c.z) * 0.12; }
-    for (const s of this.spinners) s.obj.rotation.y += s.w * dt;
+    for (const s of this.spinners) if (!s.spinZ) s.obj.rotation.y += s.w * dt;
     for (const p of this.pickups) {
       if (!p.on) { p.t -= dt; if (p.t <= 0) { p.on = true; p.obj.visible = true; fx.burst(V(p.x, p.y + 1, p.z), 0xffffff, 8, 3); } continue; }
       p.obj.rotation.y += dt * 2; p.obj.position.y = p.y + 0.4 + Math.sin(t * 2.5 + p.x) * 0.2;
@@ -225,6 +301,7 @@ export class Level {
     if (G.player && Math.hypot(G.player.pos.x - c.x, G.player.pos.z - c.z) < 26) sfx.boom();
   }
   dispose() {
+    for (const c of this.constraints || []) world.removeConstraint(c);
     for (const b of this.bodies) world.removeBody(b);
     for (const b of this.balls) world.removeBody(b.body);
     this.root.removeFromParent();

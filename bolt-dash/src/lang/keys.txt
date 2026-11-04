@@ -1,0 +1,387 @@
+Floor
+Raised block
+Fence
+Speed arrows
+Conveyor
+Spring
+Bouncer
+Saw
+Spinning arm
+Spike block
+Spike trap
+Breakable crate
+Steel crate
+Cannon
+Coin
+Weapon crate
+Start
+Finish
+Your map
+The map you built
+Freeze + Push
+Back to the start
+Player
+Classic Blue
+Strawberry
+Mint
+Lemon
+Grape
+Orange
+Melon
+Snow
+Midnight
+Lava
+Crystal
+Rare
+Rainbow
+Molten Lava
+Legendary
+Galaxy
+Radiant Gold
+Black Hole
+Mythic
+Referee
+Original Bolt
+Exclusive
+Gold Crown
+Queen's Crown
+Party Hat
+Cupcake
+Donut
+Gift Box
+Glasses
+Sunglasses
+Leather Vest
+Iron Armor
+Ninja Armor
+Gold Armor
+Hero Star
+Backpack
+Side Bag
+Wooden Shield
+Knight Shield
+Golf Club
+Balanced at everything
+Baguette
+Fastest swing
+Spatula
+Lobs the ball up high
+Rolling Pin
+Keeps the ball on the ground
+Corn Dog
+Whoever you hit gets stuck for a second
+Bone
+Makes the ball bounce high
+Fish
+Whoever you hit slips
+Banana
+Whoever you hit slips and spins
+Candy Cane
+Curves the ball
+Paddle
+Longest reach
+Frying Pan
+BONG! Whoever you hit gets dizzy
+Hammer
+Smashes everyone around you away
+Club
+Strongest hit
+Golden Hammer
+The legendary one
+Colors
+Head
+Face
+Body
+Back
+Bats
+Round {n} of {m}
+Collect 30 coins in rounds
+Qualify in 3 rounds
+Dive 15 times
+Win the crown in a Show
+Qualify in 20 rounds
+Collect 300 coins in rounds
+First qualification
+First win
+First crown
+Play 10 Shows
+Play every mode
+Dive 100 times
+Get a rare character
+Qualify 50 times
+5 crowns
+coins
+Challenge complete
+Achievement
+Season level {n}
+Season: unlocked {x}
+Season
+Daily reward (day {n})
+The Show
+4 rounds in a row. Win the last one to take the crown
+Teams
+Featured player map
+Done
+Season 1
+Level {n}
+Season complete!
+Daily reward
+Ready
+Tomorrow
+Claim {n}
+Claimed today
+Event of the week
+Double coins all week
+Today's shop deals
+You own everything
+Come back every day: the reward grows to 500 on day 7.
+Challenges
+Today
+This week
+Achievements
+Choose a mode
+Loading picture…
+Coming soon
+Online with friends
+Play with your friends using a room code
+Lucky Wheel
+Free spin today!
+Extra spin for 500 coins
+Spin free
+Spin for 500
+Redeem code
+Type a code to get your prize. Some codes give a rare character if you are lucky.
+Redeem
+Settings
+Graphics
+Light
+Medium
+Fantasy
+Sound
+On
+Off
+Camera speed
+Slow
+Normal
+Fast
+Language
+Watch the intro film again
+Your profile
+Your name
+Save
+Shows played
+Rounds
+Qualified
+Crowns
+Level
+Coins earned
+Saved
+Accessory
+Rare!
+Jackpot
+You already have {x}, so you got {n} coins instead
+Congrats! You won {x} ({r})
+You need 500 coins
+You won {x}
+You have everything! Take 300 coins
+You won {n} coins
+That code is not valid
+You already used this code
+{x}: your exclusive character!
+Shop
+Wardrobe
+Today's deals, new every day
+Change your colour, dress up and pick your bat
+You bought everything! Come back tomorrow for new deals.
+Wearing
+Owned
+Power
+Speed
+Reach
+The ground turns gold behind you as you run
+A black hole swirls around you
+Fire sparks fly off you
+Stars twinkle around you
+Shiny and clear like a diamond
+Your colour never stops changing
+Gold and black hole together: the exclusive character
+Code only
+Buy for {n}
+Need {n} more
+You bought {x}
+That map no longer exists
+Finding players
+Tip: dive under spinning arms
+Tip: yellow speed arrows launch you forward
+Tip: in Hex Drop, never stand still for 3 seconds
+Tip: the frying pan makes people dizzy
+Tip: wooden crates break, steel ones don't
+Found them!
+A map made by {x}
+Final round
+Round
+The winning team qualifies
+First {n} to finish qualify
+Last one standing wins
+Last {n} standing qualify
+Qualified!
+A bit too late
+Eliminated!
+You finished your map! You can publish it now
+You won the crown!
+You won!
+Out this time
+{x} team won {a} - {b}
+Red
+Blue
+{n} of {m} qualified
+You
+Next round
+Play again
+Starter gift: 500 coins for the shop
+Place · lap {n}/{m}
+Place · top {n} qualify
+Left · {n}s
+Left
+GO!
+Publishing works when you play from the published link
+Loading maps…
+You need contributor access to publish
+Add a start and a finish first
+You must finish your own map first (test it and reach the finish)
+You reached the limit ({n} maps). Delete one first
+You need {n} coins
+Ready to publish
+Maps won't load right now, try again in a bit
+Player maps show up when you open the game from the published link
+No maps yet. Build and publish the first one!
+Featured
+By {x}
+Played {n} times
+Delete
+Like
+Remove from main modes
+Promote to main modes
+Play
+People played your maps ({n} times)
+That didn't work, try again
+Removed from main modes
+The map is now one of the main modes!
+Deleted
+Sure?
+Type a name for the map
+Map published! You get 5 coins every time someone plays it
+Limit reached
+Publishing failed, try again
+Forward
+Right
+Clear all
+Original map restored
+Place the start piece first
+Place the finish piece first
+The models failed to load
+Obstacle Dash (Classic)
+Race
+Run to the flag past doors, saws and cannons
+Checkpoint
+Obstacle Dash
+A winding two-lap circuit: seesaws, bouncy pillows, hammers, wrecking balls, fans and launch pads
+Lap {n} of {m}
+Hex Drop
+Tiles crack the first time you step on them and drop the second time. Stand still for 3 seconds and they drop too
+RPG + Grenade + Freeze + Fly (rare)
+Star Grab
+Stars
+Two teams. Small star 1, big star 3, gem 5, crystal 10. Get hit and you drop your stars
+Pull + Freeze
+You dropped {n} stars!
+Bat Ball
+Ball
+Two teams with bats: knock the ball into the other team's goal. Every bat has its own power
+PERFECT!
+Goal for Red!
+Goal for Blue!
+Two teams with bats: knock the ball into the other team's pit. Hold to charge your swing and let go in the green for a perfect hit
+Cannon Dodge
+Cannons
+Stay on the platform until time runs out. The cannons fire faster and faster
+Fly Blaster
+The Summit
+Climb the platforms to the crown at the very top
+Confuse Blaster
+Arena
+Everyone against everyone, and the edges keep falling away. Last one standing wins
+Rapid Blaster + Homing Rocket + Sticky Bomb
+The arena is shrinking!
+Push Blaster
+Rapid Blaster
+Freeze Blaster
+Pull Blaster
+RPG
+Homing Rocket
+Grenade
+Sticky Bomb
+Knocks whoever it hits backwards
+Lots of shots that push a little each
+Freezes whoever it hits
+Pulls whoever it hits towards you
+Shoot someone to launch them, or shoot the ground to fly yourself
+Reverses the controls of whoever it hits
+Breaks floors and crates
+Flies by itself to the nearest player
+Throw it and it blows up after 1.5 seconds
+Leaves a sticky puddle that slows players
+Getting the arena ready…
+Build
+Dance
+Wave
+Yes
+No
+Punch
+Mode
+Change
+Buy
+Build mode
+Build your own map from pieces and test it against 3 bots. Finish it yourself and you can publish it for everyone.
+Start building
+Map name
+Publish · 1500
+Player maps
+Play other people's maps. The creator gets 5 coins every time someone plays.
+Cancel
+Round 1
+Tap the screen to start right away
+Place
+Pause
+Dive
+Jump
+Hit
+WASD: run · Space: jump · Shift: dive · F or click: hit (hold to charge) · Drag: turn the camera
+Close
+Skip
+Paused
+Resume
+Menu
+Pick a piece and tap a square. Drag to move around, mouse wheel to zoom.
+Direction:
+Erase piece
+Original map
+Test map
+Red pit
+Blue pit
+Ball spot
+Reach the finish line first
+Survival
+Stay on the map until time runs out
+Two teams knock a ball into the other pit
+Place the red pit
+Place the blue pit
+Place the ball spot
+You must win your own map first (test it)
+Edit
+Publish
+Create
+Build your own Race, Survival or Ball map and publish it
+Play maps made by other players
+Pick a map type to build. Finish your map yourself, then publish it for 1500 coins. You get 5 coins every time someone plays it.
+All
