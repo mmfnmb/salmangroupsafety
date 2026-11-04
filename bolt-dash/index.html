@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Bolt Dash</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lalezar&family=Cairo:wght@600;800&display=swap">
+<style>
+/* Layout: full-screen 3D canvas, game UI floats on top in chunky candy panels */
+:root{
+  --sky:#5fcfff; --pink:#ff4f9a; --pink-d:#c42a6e; --sun:#ffd23f; --sun-d:#e09a00;
+  --mint:#36e0a8; --mint-d:#169a70; --ink:#21124a; --ink-2:#3a2a73; --paper:#ffffff; --veil:rgba(33,18,74,.55);
+  --display:"Lalezar","Cairo",system-ui,sans-serif; --body:"Cairo",system-ui,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0;overflow:hidden;background:var(--sky);color:var(--ink);font-family:var(--body);user-select:none;-webkit-user-select:none;touch-action:none}
+canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
+.layer{position:fixed;inset:0;pointer-events:none;
+  padding:max(12px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(12px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.layer > *{pointer-events:auto}
+button{font-family:var(--display);border:0;cursor:pointer;color:var(--ink)}
+button:focus-visible{outline:3px solid var(--paper);outline-offset:3px}
+svg.i{width:1.3em;height:1.3em;display:block;flex:none}
+
+/* chunky pill */
+.pill{display:inline-flex;align-items:center;gap:8px;background:var(--paper);border-radius:999px;padding:6px 14px 6px 10px;font-family:var(--display);font-size:20px;box-shadow:0 4px 0 rgba(33,18,74,.25)}
+.pill .dot{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--sun);color:var(--ink)}
+
+/* ---------- loading ---------- */
+#loading{display:grid;place-items:center;background:radial-gradient(circle at 50% 35%,#8fe0ff,var(--sky) 60%,#3fa9e8);z-index:20}
+#loading .box{display:grid;justify-items:center;gap:18px}
+.logo{font-family:var(--display);line-height:.9;text-align:center;color:var(--paper);letter-spacing:1px;
+  text-shadow:0 5px 0 var(--pink-d),0 9px 0 var(--ink);font-size:clamp(54px,13vw,104px);transform:rotate(-4deg)}
+.logo span{display:block;color:var(--sun)}
+.bar{width:min(320px,70vw);height:18px;border-radius:999px;background:rgba(255,255,255,.45);overflow:hidden;box-shadow:inset 0 3px 0 rgba(0,0,0,.08)}
+.bar i{display:block;height:100%;width:0;background:var(--pink);border-radius:999px;transition:width .2s}
+#loading p{margin:0;font-weight:800;color:var(--ink)}
+
+/* ---------- menu ---------- */
+#menu{display:flex;flex-direction:column;justify-content:space-between;pointer-events:none}
+#menu .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+#menu .brand{font-family:var(--display);font-size:clamp(30px,6vw,44px);color:var(--paper);line-height:1;text-shadow:0 3px 0 var(--pink-d),0 6px 0 var(--ink);transform:rotate(-3deg);direction:ltr}
+#menu .brand span{color:var(--sun)}
+.tabs{display:flex;gap:8px;background:rgba(33,18,74,.35);padding:6px;border-radius:22px;backdrop-filter:blur(6px)}
+.tab{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 14px 6px;border-radius:16px;background:transparent;color:var(--paper);font-size:17px;min-width:70px}
+.tab svg.i{width:26px;height:26px}
+.tab[aria-selected="true"]{background:var(--paper);color:var(--ink);box-shadow:0 4px 0 rgba(0,0,0,.2)}
+.stats{display:flex;gap:8px}
+#menu .bottom{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.modecard{background:var(--paper);border-radius:22px;padding:12px 16px;box-shadow:0 6px 0 rgba(33,18,74,.25);min-width:0;max-width:340px}
+.modecard small{display:block;font-weight:800;color:var(--pink);font-size:13px;letter-spacing:.3px}
+.modecard b{display:block;font-family:var(--display);font-size:28px;font-weight:400;line-height:1.15}
+.modecard p{margin:2px 0 0;font-size:13.5px;color:var(--ink-2);font-weight:600}
+.modes{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.modes button{font-family:var(--body);font-weight:800;font-size:12.5px;padding:5px 10px;border-radius:999px;background:#efeaff;color:var(--ink-2)}
+.modes button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.modes button[disabled]{opacity:.45;cursor:default}
+.play{font-size:44px;padding:10px 46px 14px;border-radius:26px;background:var(--sun);box-shadow:0 8px 0 var(--sun-d),0 14px 18px rgba(0,0,0,.2);display:flex;align-items:center;gap:12px;transition:transform .08s}
+.play:active{transform:translateY(5px);box-shadow:0 3px 0 var(--sun-d)}
+.play svg.i{width:38px;height:38px}
+.panel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,calc(100% - 32px));background:var(--paper);border-radius:26px;padding:22px;box-shadow:0 10px 0 rgba(33,18,74,.25);text-align:center}
+.panel h2{font-family:var(--display);font-weight:400;font-size:34px;margin:0 0 4px;color:var(--ink)}
+.panel p{margin:0 0 12px;font-weight:600;color:var(--ink-2);line-height:1.6}
+.panel .chip{display:inline-block;background:var(--pink);color:var(--paper);border-radius:999px;padding:3px 12px;font-weight:800;font-size:13px}
+
+/* ---------- HUD ---------- */
+#hud{display:flex;flex-direction:column;justify-content:space-between}
+#hud .row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.place{font-family:var(--display);background:var(--ink);color:var(--paper);border-radius:18px;padding:4px 16px 2px;font-size:30px;line-height:1.2;box-shadow:0 4px 0 rgba(0,0,0,.25);text-align:center}
+.place small{display:block;font-family:var(--body);font-weight:800;font-size:11.5px;color:var(--sun)}
+.iconbtn{width:48px;height:48px;border-radius:16px;background:var(--paper);display:grid;place-items:center;box-shadow:0 4px 0 rgba(33,18,74,.25)}
+.progress{position:relative;height:12px;width:min(520px,60vw);margin:8px auto 0;border-radius:999px;background:rgba(255,255,255,.55)}
+.progress i{position:absolute;top:50%;width:12px;height:12px;border-radius:50%;transform:translate(50%,-50%);background:var(--ink-2);border:2px solid var(--paper)}
+.progress i.me{width:20px;height:20px;background:var(--pink);z-index:2}
+.progress b{position:absolute;left:-6px;top:50%;transform:translateY(-50%);width:6px;height:22px;background:var(--ink);border-radius:3px}
+#big{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);font-family:var(--display);font-size:clamp(70px,18vw,150px);color:var(--paper);text-shadow:0 6px 0 var(--pink-d),0 12px 0 var(--ink);pointer-events:none;white-space:nowrap}
+#toast{position:fixed;left:50%;top:22%;transform:translateX(-50%);font-family:var(--display);font-size:28px;color:var(--ink);background:var(--sun);padding:4px 18px 2px;border-radius:14px;box-shadow:0 4px 0 var(--sun-d);pointer-events:none;white-space:nowrap}
+.touch{position:fixed;inset:auto 0 0 0;height:46%;pointer-events:none}
+.touch > *{pointer-events:auto}
+#stick{position:absolute;left:max(24px,env(safe-area-inset-left,0px));bottom:max(24px,env(safe-area-inset-bottom,0px));width:150px;height:150px;border-radius:50%;background:rgba(255,255,255,.28);border:3px solid rgba(255,255,255,.6)}
+#knob{position:absolute;left:50%;top:50%;width:64px;height:64px;margin:-32px;border-radius:50%;background:var(--paper);box-shadow:0 4px 0 rgba(33,18,74,.25)}
+.act{position:absolute;border-radius:50%;background:var(--paper);display:grid;place-items:center;box-shadow:0 6px 0 rgba(33,18,74,.3);font-size:15px}
+#bJump{right:max(28px,env(safe-area-inset-right,0px));bottom:max(36px,env(safe-area-inset-bottom,0px));width:96px;height:96px;background:var(--sun)}
+#bDive{right:max(136px,calc(env(safe-area-inset-right,0px) + 112px));bottom:max(26px,env(safe-area-inset-bottom,0px));width:70px;height:70px;background:var(--mint)}
+.act svg.i{width:40px;height:40px}
+#bDive svg.i{width:30px;height:30px}
+.act.on{transform:translateY(4px);box-shadow:0 2px 0 rgba(33,18,74,.3)}
+.keys{position:fixed;left:50%;bottom:max(14px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--veil);color:var(--paper);border-radius:12px;padding:5px 12px;font-weight:700;font-size:13px;white-space:nowrap;pointer-events:none}
+
+/* ---------- overlays ---------- */
+.veil{display:grid;place-items:center;background:var(--veil);z-index:10}
+.card{width:min(400px,100%);background:var(--paper);border-radius:28px;padding:22px 20px;text-align:center;box-shadow:0 10px 0 rgba(0,0,0,.25);display:grid;gap:12px}
+.card h2{font-family:var(--display);font-weight:400;margin:0;font-size:46px;line-height:1.1}
+.card h2.win{color:var(--mint-d)} .card h2.lose{color:var(--pink-d)}
+.card .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.btn{font-size:24px;padding:8px 22px 10px;border-radius:18px;background:var(--sun);box-shadow:0 6px 0 var(--sun-d)}
+.btn.alt{background:#ece6ff;box-shadow:0 6px 0 #c4b8f0}
+.btn:active{transform:translateY(4px);box-shadow:0 2px 0 var(--sun-d)}
+.btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+@media (max-width:600px){
+  .tab{min-width:56px;padding:6px 8px 4px;font-size:14px}
+  .tab svg.i{width:22px;height:22px}
+  .play{font-size:36px;padding:8px 34px 12px}
+  .modecard b{font-size:23px}
+  #menu .bottom{flex-direction:column;align-items:stretch}
+  #menu .bottom .play{justify-content:center}
+  .modecard{max-width:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5Z" fill="currentColor"/></symbol>
+  <symbol id="i-build" viewBox="0 0 24 24"><path d="M3 21h18M5 21V10h6v11M13 21V4h6v17M7.5 13.5h1M7.5 16.5h1M15.5 7.5h1M15.5 10.5h1M15.5 13.5h1" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></symbol>
+  <symbol id="i-hanger" viewBox="0 0 24 24"><path d="M12 7.5a2.2 2.2 0 1 1 2.2-2.2c0 1.2-2.2 1.6-2.2 3.2l9 5.8a1.3 1.3 0 0 1-.7 2.4H3.7a1.3 1.3 0 0 1-.7-2.4L12 8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="i-bag" viewBox="0 0 24 24"><path d="M5 8h14l-1 12.2a1 1 0 0 1-1 .8H7a1 1 0 0 1-1-.8L5 8Z M9 10V6.5a3 3 0 0 1 6 0V10" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none"/></symbol>
+  <symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M12 7.5v9M9.5 10h4a1.6 1.6 0 0 1 0 3.2h-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></symbol>
+  <symbol id="i-crown" viewBox="0 0 24 24"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5L3 8Z" fill="currentColor"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1.5" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1.5" fill="currentColor"/></symbol>
+  <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></symbol>
+  <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M16 9.5l5 5M21 9.5l-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 4l7 8h-4.5v8h-5v-8H5l7-8Z" fill="currentColor"/></symbol>
+  <symbol id="i-dive" viewBox="0 0 24 24"><path d="M4 16l9-9M8 7h5v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M4 20h16" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></symbol>
+  <symbol id="i-friends" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2" fill="currentColor"/><circle cx="17" cy="9" r="2.5" fill="currentColor"/><path d="M3 19c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5ZM15.5 13.6c3 0 5.5 1.8 5.5 4.9h-4" fill="currentColor"/></symbol>
+</svg>
+
+<!-- loading -->
+<div id="loading" class="layer">
+  <div class="box">
+    <div class="logo">BOLT<span>DASH</span></div>
+    <div class="bar"><i id="loadbar"></i></div>
+    <p id="loadtxt">بنجهز الملعب…</p>
+  </div>
+</div>
+
+<!-- main menu -->
+<div id="menu" class="layer" hidden>
+  <div class="top">
+    <div class="brand">BOLT <span>DASH</span></div>
+    <nav class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="play" aria-selected="true"><svg class="i"><use href="#i-play"/></svg>العب</button>
+      <button class="tab" role="tab" data-tab="build" aria-selected="false"><svg class="i"><use href="#i-build"/></svg>ابني</button>
+      <button class="tab" role="tab" data-tab="wardrobe" aria-selected="false"><svg class="i"><use href="#i-hanger"/></svg>الخزانة</button>
+      <button class="tab" role="tab" data-tab="shop" aria-selected="false"><svg class="i"><use href="#i-bag"/></svg>الشوب</button>
+    </nav>
+    <div class="stats">
+      <div class="pill"><span class="dot"><svg class="i"><use href="#i-coin"/></svg></span><span id="mCoins">0</span></div>
+      <div class="pill"><span class="dot" style="background:var(--pink);color:var(--paper)"><svg class="i"><use href="#i-crown"/></svg></span><span id="mWins">0</span></div>
+      <button class="iconbtn" id="mSound" aria-label="الصوت"><svg class="i"><use href="#i-sound"/></svg></button>
+    </div>
+  </div>
+
+  <div id="tabPanel" class="panel" hidden></div>
+
+  <div class="bottom" id="playBottom">
+    <div class="modecard">
+      <small>المود المختار</small>
+      <b id="modeName">سباق العقبات</b>
+      <p id="modeDesc">٨ لاعبين · أول ٦ يوصلوا للعلم يتأهلوا</p>
+      <div class="modes" id="modes">
+        <button aria-pressed="true" data-mode="race">سباق العقبات</button>
+        <button disabled>الأرض بتقع</button>
+        <button disabled>جمع النجوم</button>
+        <button disabled>تفادي المدافع</button>
+        <button disabled>القمة</button>
+        <button disabled><svg class="i" style="display:inline;width:14px;height:14px;vertical-align:-2px"><use href="#i-friends"/></svg> مع أصحابك</button>
+      </div>
+    </div>
+    <button class="play" id="playBtn"><svg class="i"><use href="#i-play"/></svg>العب</button>
+  </div>
+</div>
+
+<!-- in-race HUD -->
+<div id="hud" class="layer" hidden>
+  <div class="row">
+    <div class="place"><small>ترتيبك</small><span id="hPlace">1</span>/<span id="hTotal">8</span></div>
+    <div style="flex:1;min-width:0">
+      <div class="progress" id="prog"><b></b></div>
+    </div>
+    <div style="display:grid;gap:8px;justify-items:end">
+      <button class="iconbtn" id="hPause" aria-label="إيقاف مؤقت"><svg class="i"><use href="#i-pause"/></svg></button>
+      <div class="pill"><span class="dot"><svg class="i"><use href="#i-coin"/></svg></span><span id="hCoins">0</span></div>
+    </div>
+  </div>
+  <div class="touch" id="touch" hidden>
+    <div id="stick"><div id="knob"></div></div>
+    <button class="act" id="bDive" aria-label="غطس"><svg class="i"><use href="#i-dive"/></svg></button>
+    <button class="act" id="bJump" aria-label="نط"><svg class="i"><use href="#i-up"/></svg></button>
+  </div>
+  <div class="keys" id="keys">WASD / الأسهم: جري · Space: نط · Shift: غطس · اسحب بالماوس: لف الكاميرا</div>
+</div>
+<div id="big" hidden></div>
+<div id="toast" hidden></div>
+
+<!-- pause -->
+<div id="pause" class="layer veil" hidden>
+  <div class="card">
+    <h2>استراحة</h2>
+    <div class="btns">
+      <button class="btn" id="pResume">كمّل</button>
+      <button class="btn alt" id="pQuit">القائمة</button>
+    </div>
+  </div>
+</div>
+
+<!-- results -->
+<div id="result" class="layer veil" hidden>
+  <div class="card">
+    <h2 id="rTitle" class="win">اتأهلت!</h2>
+    <div class="meta">
+      <div class="pill"><span class="dot" style="background:var(--pink);color:var(--paper)"><svg class="i"><use href="#i-crown"/></svg></span><span id="rPlace">#1</span></div>
+      <div class="pill"><span class="dot"><svg class="i"><use href="#i-coin"/></svg></span>+<span id="rCoins">0</span></div>
+    </div>
+    <div class="btns">
+      <button class="btn" id="rAgain">العب تاني</button>
+      <button class="btn alt" id="rMenu">القائمة</button>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{"imports":{
+  "three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+  "cannon-es":"https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js"
+}}
+</script>
+<script type="module" src="./game.js"></script>
+</body>
+</html>
