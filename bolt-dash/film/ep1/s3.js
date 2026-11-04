@@ -103,7 +103,7 @@ export function shots(A) {
       A.blue.at(SOFA.left[0], 0.6 + hb, SOFA.left[1], Math.sin(T * 2) * 0.4); A.yellow.at(SOFA.right[0], 0.6 + hy, SOFA.right[1], -Math.sin(T * 2) * 0.4);
       A.blue.play(hb > 0.3 ? 'Jump_Idle' : 'Yes'); A.yellow.play(hy > 0.3 ? 'Jump_Idle' : 'Yes');
       if (Math.floor(T * 5.2 / PI) !== Math.floor((T - dt) * 5.2 / PI)) puffs.emit({ pos: V(0, 0.8, -0.8), vel: V(0, 2, 1), life: 0.6, size: 0.3, color: 0xffffff });
-      frameGroup([A.blue, A.yellow], { side: 1, h: 1.6, dist: 1.25, look: 1.6, ang: Math.sin(t * 0.4) * 0.25 });
+      frameGroup([A.blue, A.yellow], { side: 1, h: 2.2, dist: 1.7, look: 1.5, ang: Math.sin(t * 0.4) * 0.2 });
       say(t < 3.5 ? 'Blue' : 'Yellow', t < 3.5 ? 'WE ARE IN!' : 'LET\'S GOOOO!');
     } });
   return S;

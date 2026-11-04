@@ -50,8 +50,6 @@ SETS.studio = (root) => {
   for (let i = 0; i < 3; i++) tint(put(root, 'f/f-kitchenBar', -2.1 + i * 0.43 * FS, 0, 0.35, [FS, FS * 0.62, FS]), i === 1 ? 0xff4f9a : 0xffd23f, 0.5);
   for (const x of [-9, 9]) { put(root, 'f/f-lampRoundFloor', x, 0, 2, FS * 1.4); put(root, 'f/f-pottedPlant', x * 0.8, 0, -4.6, FS); }
   for (const x of [-6, 6]) put(root, 'f/f-speaker', x, 0, -3.5, FS * 1.5);
-  // the interview chairs (for scene 7)
-  put(root, 'f/f-loungeChair', 4.2, 0, 3.6, FS, -PI / 2);
   // the crown on a column, slowly spinning, on the right
   put(root, 'f/mini-column', 6.5, 0, 0.5, 1.6);
   const crown = put(root, 'acc/Crown', 6.5, 3.6, 0.5, 2.2);
@@ -94,6 +92,14 @@ function sofaCorner(root, night) {
   put(root, 'f/f-televisionModern', 0, 0.95, 5.6, FS, PI);
   const tvGlow = new THREE.PointLight(night ? 0x7fb0ff : 0xbfd8ff, night ? 4 : 1.5, 12); tvGlow.position.set(0, 2, 4.4); root.add(tvGlow);
   tvGlow.userData.update = (T) => { tvGlow.intensity = (night ? 4 : 1.5) * (0.85 + 0.15 * Math.sin(T * 9) * Math.sin(T * 3.3)); };
+  if (night) {
+    // night outside: a dark starry backdrop all around (an effect, not a prop)
+    const cv = document.createElement('canvas'); cv.width = 1024; cv.height = 512; const g = cv.getContext('2d');
+    const gr = g.createLinearGradient(0, 0, 0, 512); gr.addColorStop(0, '#05061a'); gr.addColorStop(0.6, '#141a4a'); gr.addColorStop(1, '#2a2a6a'); g.fillStyle = gr; g.fillRect(0, 0, 1024, 512);
+    for (let i = 0; i < 500; i++) { g.fillStyle = `rgba(255,255,255,${0.3 + 0.7 * ((i * 37) % 100) / 100})`; g.fillRect((i * 733) % 1024, ((i * 389) % 300), 2, 2); }
+    const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(45, 32, 16), new THREE.MeshBasicMaterial({ map: tex, side: THREE.BackSide, fog: false, toneMapped: false })); root.add(dome);
+  }
   if (night) { const lamp = new THREE.PointLight(0xffc27a, 3, 9); lamp.position.set(-3.4, 2.6, -0.6); root.add(lamp); }
 }
 SETS.sofa_day = (root) => sofaCorner(root, false);

@@ -27,7 +27,7 @@ function runCourse(a, t, T, speed, { spin = false, x = X } = {}) {
 
 export function shots(A) {
   const extra = (look) => { const a = new Actor(look); ACTORS.push(a); return a; };
-  const straw = extra({ skin: 'skin-straw', head: 'h-party' }), melon = extra({ skin: 'skin-melon' });
+  const straw = extra({ skin: 'skin-straw', head: 'h-cone' }), melon = extra({ skin: 'skin-melon' });
   const oTeam = [extra({ skin: 'skin-grape' }), extra({ skin: 'skin-snow' }), extra({ skin: 'skin-lemon' })];
   const rTeam = [extra({ skin: 'skin-night' }), extra({ skin: 'skin-mint' }), extra({ skin: 'skin-straw' })];
   const B = A.blue, Y = A.yellow, Vi = A.vio, Mi = A.minto, Br = A.brown;
@@ -90,10 +90,10 @@ export function shots(A) {
     camTo(V(Br.p.x + 2.2, 0.55, Br.p.z - 3.2), V(Br.p.x, 1.4, Br.p.z), 6); if (t > 2.6) say('minto', "Who's that?");
   });
   // 15. Brown's run: fast and perfect; the crowd goes wild
-  shot(8, () => { judges(); Vi.at(-3.2, 0, 10.4, PI * 0.8); Mi.at(-2.4, 0, 11.2, PI * 0.8); fans(1); }, (t, dt, T) => {
+  shot(4.2, () => { judges(); Vi.at(-3.2, 0, 10.4, PI * 0.8); Mi.at(-2.4, 0, 11.2, PI * 0.8); fans(1); }, (t, dt, T) => {
     const z = runCourse(Br, t, T, 5.4); track(Br, { side: -1, dist: 6.5, h: 2.0, lead: 1.6 }); say(null);
   });
-  shot(5, () => { fans(1); }, (t, dt, T) => { const z = runCourse(Br, t + 8, T, 5.4); chase(Br, { back: 5.2, side: 2.4, h: 3.2, ahead: 2.5 }); });
+  shot(3.8, () => { fans(1); }, (t, dt, T) => { const z = runCourse(Br, t + 4.2, T, 5.4); chase(Br, { back: 5.2, side: 2.4, h: 3.2, ahead: 2.5 }); });
   // 16. he lands at the finish, calm; wide on the cheering crowd
   shot(4, () => { Br.at(X, 2, -30, PI).play('Idle'); fans(1); }, (t) => { closeUp(Br, { ang: 0.2, dist: 2.2, h: 1.2, k: 99 }); });
   shot(4, () => { Br.at(X, 2, -30, PI).play('Idle'); fans(1); }, (t) => { fixed([16, 7, -6], [0, 1, -12]); });
