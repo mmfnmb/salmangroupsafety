@@ -84,7 +84,7 @@ function sofaCorner(root, night) {
   for (let x = -3; x < 3; x++) wall(root, 'f-wall' + (x === 1 ? 'Window' : ''), x * FS, -1 * FS - 0.4, 0, 0x9fd3e8);
   for (let z = -1; z < 2; z++) wall(root, 'f-wall', -3 * FS, z * FS - 0.4 + FS, PI / 2, 0x9fd3e8);
   put(root, 'f/f-rugRectangle', -2.6, 0.02, 3.2, FS * 1.1);
-  tint(put(root, 'f/f-loungeSofa', 1.57, 0, -1.61, FS, PI), 0xff6f91, 0.9);
+  tint(put(root, 'f/f-loungeSofa', -1.57, 0, -0.3, FS), 0xff6f91, 0.9);
   put(root, 'f/f-tableCoffee', -1.1, 0, 2.2, FS);
   put(root, 'f/f-lampRoundFloor', -3.6, 0, -1.2, FS);
   put(root, 'f/f-sideTable', 2.0, 0, -0.5, FS); put(root, 'f/f-lampSquareTable', 2.3, 0.85, -1.0, FS);
