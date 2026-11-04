@@ -3,6 +3,7 @@
 import { THREE, M, G, V, PI, rand, scene, camera, renderer, renderScene, puffs, confetti, fx, sun, SkeletonUtils, place, loadAssets, save, applyQuality, resize, sea } from '../src/core.js';
 import { computeBoneFix, dress, skinFx, updateGold, teamFlag } from '../src/cosmetics.js';
 import { MODES } from '../src/modes.js';
+import '../src/sports.js';
 
 const W = 960, H = 540, FPS = 24, LW = 1280; // overlay is laid out at 1280x720 and scaled down
 const ease = (t) => { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); };
@@ -42,7 +43,7 @@ function useSet(name) {
   if (name === 'race') MODES.sprint.build();
   const flags = name === 'ball' ? { blue: 'blue', yel: 'blue', gold: 'red', keeper: 'red', p1: 'red', p2: 'blue' } : {};
   for (const k in A) teamFlag(A[k].m, flags[k] || null);
-  if (name === 'ball') { MODES.ballClassic.build(); MODES.ballClassic.ballObj.visible = false; ball = place('z/Football', 0, 0.8, 0, 0.75); }
+  if (name === 'ball') { MODES.football.build(); MODES.football.b.obj.visible = false; ball = place('z/Football', 0, 0.4, 0, 0.35); }
   if (name === 'fall') { MODES.fall.build(); crown = place('acc/Crown', 0, 1.6, 0, 2.2); }
   if (name === 'race2') MODES.sprint.build();
 }
@@ -158,14 +159,14 @@ shot(2.2, () => { useSet('ball'); A.blue.won = A.gold.lost = 0; for (const a of 
 shot(5.2, () => {
   A.blue.show(true).at(0, 0, -11.5, PI); A.blue.play('Idle'); A.keeper.show(true).at(0, 0, -20.4, 0); A.keeper.play('Idle');
   A.gold.show(true).at(4, 0, -9, PI + 0.4); A.gold.play('Yes'); A.yel.show(true).at(-4, 0, -8, PI - 0.3);
-  ball.position.set(0, 0.85, -13.5); cap = { text: '2|0|89:12', sub: 'PENALTY!', style: 'score' };
+  ball.position.set(0, 0.4, -13.5); cap = { text: '2|0|89:12', sub: 'PENALTY!', style: 'score' };
 }, (t) => {
   if (t < 1.4) cam(V(0, 2.2, -6), V(0, 1, -16));
   else {
     if (!A.blue.kicked) { A.blue.kicked = 1; A.blue.play('Run', 1.5); }
     const u = t - 1.4;
     if (u < 0.5) A.blue.at(0, 0, -11.5 - u * 3, PI);
-    else { if (!A.blue.shot) { A.blue.shot = 1; A.blue.play('Punch', 1.5); A.keeper.play('Jump'); } const v = Math.min(1, (u - 0.5) / 0.55); ball.position.set(lerp(0, -3, v), lerp(0.85, 1.6, v), lerp(-13.5, -22.6, v)); ball.rotation.x -= 0.4; A.keeper.at(lerp(0, 3.4, ease((u - 0.5) / 0.6)), Math.sin(Math.min(1, (u - 0.5) / 0.6) * PI) * 1.2, -20.4, 0); A.keeper.m.rotation.z = -Math.min(1, (u - 0.5) / 0.6) * 1.3; }
+    else { if (!A.blue.shot) { A.blue.shot = 1; A.blue.play('Punch', 1.5); A.keeper.play('Jump'); } const v = Math.min(1, (u - 0.5) / 0.55); ball.position.set(lerp(0, -3, v), lerp(0.4, 1.6, v), lerp(-13.5, -22.6, v)); ball.rotation.x -= 0.4; A.keeper.at(lerp(0, 3.4, ease((u - 0.5) / 0.6)), Math.sin(Math.min(1, (u - 0.5) / 0.6) * PI) * 1.2, -20.4, 0); A.keeper.m.rotation.z = -Math.min(1, (u - 0.5) / 0.6) * 1.3; }
     if (u > 1.1 && !A.blue.g1) { A.blue.g1 = 1; fx.confetti(V(-3, 2, -22), 160); cap = { text: '2|1|89:40', sub: 'GOOOAL!', style: 'score' }; A.blue.play('Yes'); }
     cam(V(2.5, 2.4, -8.5), V(-0.8, 1.2, -18));
   }
@@ -173,15 +174,15 @@ shot(5.2, () => {
 // 10. the dribble: past gold, past the keeper, a soft tap in
 shot(6, () => {
   A.blue.kicked = A.blue.shot = 0; A.keeper.m.rotation.z = 0; A.keeper.at(0, 0, -20.4, 0); A.keeper.play('Idle');
-  A.blue.at(0, 0, 4, PI); A.blue.play('Run', 1.5); ball.position.set(0, 0.85, 2.6); A.gold.at(-1, 0, -6, 0); A.gold.play('Run', 1.4);
+  A.blue.at(0, 0, 4, PI); A.blue.play('Run', 1.5); ball.position.set(0, 0.4, 2.6); A.gold.at(-1, 0, -6, 0); A.gold.play('Run', 1.4);
 }, (t) => {
   const z = 4 - t * 4.2, sway = Math.sin(t * 4) * 1.6;
-  A.blue.at(sway, 0, z, PI + Math.cos(t * 4) * 0.3); ball.position.set(sway + Math.sin(t * 4 + 0.6) * 0.5, 0.85, z - 1.3); ball.rotation.x -= 0.25;
+  A.blue.at(sway, 0, z, PI + Math.cos(t * 4) * 0.3); ball.position.set(sway + Math.sin(t * 4 + 0.6) * 0.5, 0.4, z - 1.3); ball.rotation.x -= 0.25;
   if (t > 1.3 && t < 2.4) { A.gold.at(lerp(-1, sway + 0.3, ease((t - 1.3) / 0.6)), 0, -6, 0); if (t > 1.8 && !A.gold.dove) { A.gold.dove = 1; A.gold.play('Jump_Idle'); } A.gold.m.rotation.x = t > 1.8 ? 1.3 : 0; }
   if (t > 1.8 && t < 2.5) A.blue.m.position.y = Math.sin((t - 1.8) / 0.7 * PI) * 1.4;
   if (t > 3.2 && !A.keeper.dove) { A.keeper.dove = 1; A.keeper.play('Jump'); }
   if (t > 3.2) { const k = ease((t - 3.2) / 0.6); A.keeper.at(lerp(0, -4, k), Math.sin(Math.min(1, (t - 3.2) / 0.6) * PI) * 1.4, -20.4, 0); A.keeper.m.rotation.z = k * 1.3; }
-  if (t > 4.4) { const v = Math.min(1, (t - 4.4) / 1.2); ball.position.set(lerp(sway, 0.6, v), 0.85, lerp(z - 1.3, -22.2, v)); }
+  if (t > 4.4) { const v = Math.min(1, (t - 4.4) / 1.2); ball.position.set(lerp(sway, 0.6, v), 0.4, lerp(z - 1.3, -22.2, v)); }
   if (t > 5.4 && !A.blue.g2) { A.blue.g2 = 1; fx.confetti(V(0.6, 2, -22), 160); cap = { text: '2|2|90:05', sub: 'Past the keeper… easy finish!', style: 'score' }; A.blue.play('Wave'); }
   else if (!A.blue.g2) cap = { text: '2|1|89:58', sub: t < 3 ? 'Skips past Gold…' : '…and fakes the keeper!', style: 'score' };
   cam(V(6 + t * 0.3, 3.2, z + 5.5), V(sway * 0.5, 1, z - 3));
@@ -189,9 +190,9 @@ shot(6, () => {
 // 11. the header
 shot(5, () => {
   A.gold.dove = A.keeper.dove = 0; A.gold.m.rotation.x = 0; A.keeper.m.rotation.z = 0; A.keeper.at(0, 0, -20.4, 0); A.keeper.play('Idle');
-  A.yel.show(true).at(-9, 0, -14, PI / 2); A.yel.play('Punch'); A.blue.at(0.5, 0, -10, PI); A.blue.play('Run', 1.3); ball.position.set(-8.6, 0.85, -14.5);
+  A.yel.show(true).at(-9, 0, -14, PI / 2); A.yel.play('Punch'); A.blue.at(0.5, 0, -10, PI); A.blue.play('Run', 1.3); ball.position.set(-8.6, 0.4, -14.5);
 }, (t) => {
-  if (t < 1.6) { const v = t / 1.6; ball.position.set(lerp(-8.6, 0.3, v), 0.85 + Math.sin(v * PI) * 6 + v * 1.4, lerp(-14.5, -15.5, v)); A.blue.at(0.4, 0, lerp(-10, -14.8, ease(v)), PI); }
+  if (t < 1.6) { const v = t / 1.6; ball.position.set(lerp(-8.6, 0.3, v), 0.4 + Math.sin(v * PI) * 6 + v * 1.4, lerp(-14.5, -15.5, v)); A.blue.at(0.4, 0, lerp(-10, -14.8, ease(v)), PI); }
   else if (t < 2.1) { if (!A.blue.jumped) { A.blue.jumped = 1; A.blue.play('Jump', 1.2); } const u = (t - 1.6) / 0.5; A.blue.at(0.4, Math.sin(u * PI * 0.5) * 1.5, -15.2, PI); ball.position.set(0.3, 2.3 + (1 - u) * 1.4, -15.5); }
   else { const v = Math.min(1, (t - 2.1) / 0.5); ball.position.set(lerp(0.3, 2.6, v), lerp(2.3, 2.6, v), lerp(-15.5, -22.4, v)); A.blue.at(0.4, Math.max(0, 1.5 - (t - 2.1) * 4), -15.2, PI); A.keeper.at(lerp(0, -2, ease(v)), 0, -20.4, 0); }
   if (t > 2.6 && !A.blue.g3) { A.blue.g3 = 1; fx.confetti(V(2.6, 2, -22), 220); A.blue.play('Yes'); A.yel.play('Wave'); A.gold.play('No'); }
