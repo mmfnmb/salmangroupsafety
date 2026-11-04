@@ -27,10 +27,12 @@ export const save = {
   coins: store.get('coins', 0), wins: store.get('wins', 0), muted: store.get('muted', false),
   owned: store.get('owned', ['skin-blue', 'bat-golf']), equip: store.get('equip', { skin: 'skin-blue', bat: 'bat-golf' }),
   xp: store.get('xp', 0), gift: store.get('gift', false), daily: store.get('daily', null), maps: store.get('maps', null),
+  name: store.get('name', 'بولت'), stats: store.get('stats', { games: 0, rounds: 0, qual: 0, crowns: 0, earned: 0 }),
+  season: store.get('season', []), dailyRew: store.get('dailyRew', { day: '', streak: 0 }), sens: store.get('sens', 1), shadows: store.get('shadows', true),
 };
 if (!save.owned.includes('bat-golf')) save.owned.push('bat-golf');
 if (!save.equip.bat) save.equip.bat = 'bat-golf';
-export const persist = () => { for (const k of ['coins', 'wins', 'owned', 'equip', 'xp', 'gift', 'daily', 'maps', 'muted']) store.set(k, save[k]); };
+export const persist = () => { for (const k of ['coins', 'wins', 'owned', 'equip', 'xp', 'gift', 'daily', 'maps', 'muted', 'name', 'stats', 'season', 'dailyRew', 'sens', 'shadows']) store.set(k, save[k]); };
 
 // ---------------------------------------------------------------- audio (synth)
 export const sfx = (() => {

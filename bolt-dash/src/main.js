@@ -3,7 +3,7 @@ import { THREE, CANNON, M, G, V, PI, rand, pick, clamp, damp, $, IS_TOUCH, store
 import { ITEMS, ITEM, CATS, SKINS, BATS, THUMB, computeBoneFix, dress, randomEquip, makeThumbs, holdItem } from './cosmetics.js';
 import { Runner, think } from './runner.js';
 import { MODES, MODE_LIST } from './modes.js';
-import { WEAPONS, fire, botFire, updateProjectiles, updatePickups, tickWeapons, clearProjectiles, dropWeapon } from './weapons.js';
+import { WEAPONS, giveWeapon, fire, botFire, updateProjectiles, updatePickups, tickWeapons, clearProjectiles, dropWeapon } from './weapons.js';
 import { editor, customMode, getMap, PIECES } from './build.js';
 
 const NAMES = ['زيزو', 'نور', 'حمو', 'لولو', 'تيتو', 'ميدو', 'كوكو', 'دودو', 'بيبو', 'رورو', 'سوسو', 'فوفا', 'شيكو', 'بسبوسة', 'كراملة', 'زعتر', 'فلفل', 'سمسم'];
@@ -92,7 +92,8 @@ function readPlayerInput(r) {
 G.onFire = (r) => {
   if (G.modeObj?.onFire) return G.modeObj.onFire(r);
   if (!r.weapon) return;
-  fire(r, r.isPlayer ? G.aim.clone() : V(Math.sin(r.facing), 0, Math.cos(r.facing)));
+  if (r.isPlayer) fire(r, (G.aimPoint || V(r.pos.x + Math.sin(r.facing) * 10, r.pos.y + 1, r.pos.z + Math.cos(r.facing) * 10)).clone().sub(V(r.pos.x, r.pos.y + 1.1, r.pos.z)), G.lock);
+  else fire(r, V(Math.sin(r.facing), 0, Math.cos(r.facing)));
 };
 G.botFire = (r) => botFire(r);
 
@@ -370,7 +371,7 @@ function showResult(won, last, qualified, earned) {
   $('rCoins').textContent = earned;
   $('rNext').textContent = won && !last ? 'الجولة الجاية' : 'العب تاني';
   $('rNext').dataset.next = won && !last ? 'next' : 'again';
-  show('result', true); show('hud', false);
+  show('result', true); show('hud', false); show('xhair', false);
   if (crown || (won && last)) { sfx.win(); fx.confetti(V(G.player.pos.x, G.player.pos.y + 2, G.player.pos.z), 200); }
 }
 $('rNext').addEventListener('click', () => {
@@ -382,7 +383,7 @@ $('rMenu').addEventListener('click', () => { sfx.click(); toMenu(); });
 function toMenu() {
   cleanupRound(); editor.close();
   flow.state = 'menu'; lobby.view = 'play'; lobby.root.visible = true;
-  for (const id of ['hud', 'result', 'pause', 'big', 'mm', 'intro', 'bui', 'banner']) show(id, false);
+  for (const id of ['hud', 'result', 'pause', 'big', 'mm', 'intro', 'bui', 'banner', 'xhair']) show(id, false);
   show('menu', true); setTab('play'); refreshMenu(); fadeTo('Wave');
   const g = lobby.root.position; camPos.set(g.x, g.y + 3, g.z + 9); camLook.set(g.x, g.y + 1.3, g.z);
   if (!save.gift) { save.gift = true; save.coins += 300; persist(); refreshMenu(); setTimeout(() => toast('هدية البداية: 300 عملة للشوب'), 700); }
@@ -420,6 +421,7 @@ function updateHud() {
   show('wChip', !!w);
   if (w) { $('wName').textContent = WEAPONS[w.id].name; $('wAmmo').textContent = '×' + w.ammo; }
   if (!md.bats && IS_TOUCH) $('bFire').hidden = !w;
+  if (!w && lockMark) lockMark.visible = false;
 }
 
 // ---------------------------------------------------------------- camera during play
@@ -430,9 +432,13 @@ function playCam(dt) {
   if (!tgt) return;
   const p = tgt.pos, dist = narrow ? 4.6 : 3.9;
   const py = Math.max(p.y, (G.level?.killY ?? -20) + 4);
+  // over-the-shoulder view while holding a weapon, so the crosshair isn't blocked by your own head
+  const aiming = tgt === G.player && !!G.player.weapon && !tgt.out;
+  flow.sh = damp(flow.sh || 0, aiming ? 1 : 0, 8, dt);
+  const right = V(Math.cos(ctl.yaw), 0, -Math.sin(ctl.yaw)).multiplyScalar(flow.sh * (narrow ? 0.7 : 0.9));
   const h = Math.sin(ctl.pitch) * dist + 1.15, flat = Math.cos(ctl.pitch) * dist;
-  const look = V(p.x, py + 1.2, p.z);
-  let want = V(p.x + Math.sin(ctl.yaw) * flat, py + h, p.z + Math.cos(ctl.yaw) * flat);
+  const look = V(p.x, py + 1.2 + flow.sh * 0.35, p.z).add(right);
+  let want = V(p.x + Math.sin(ctl.yaw) * flat, py + h, p.z + Math.cos(ctl.yaw) * flat).add(right);
   // keep the camera out of walls and floors: pull it in front of whatever is in the way
   camRay.reset();
   world.raycastClosest(new CANNON.Vec3(look.x, look.y, look.z), new CANNON.Vec3(want.x, want.y, want.z), { collisionFilterMask: 1 | 4, skipBackfaces: true }, camRay);
@@ -443,7 +449,36 @@ function playCam(dt) {
   if (G.shake > 0) { camera.position.x += rand(-1, 1) * G.shake * 0.35; camera.position.y += rand(-1, 1) * G.shake * 0.35; G.shake = Math.max(0, G.shake - dt * 1.6); }
   camera.lookAt(camLook);
   G.aim.copy(camLook).sub(camPos).normalize();
+  updateAim(aiming, dist);
   sun.position.set(p.x + 12, p.y + 32, p.z + 14); sun.target.position.set(p.x, p.y, p.z - 6);
+}
+// crosshair: what the screen centre points at, plus a soft lock on the nearest rival near it
+const aimRay = new CANNON.RaycastResult();
+let lockMark = null;
+function updateAim(aiming, dist) {
+  const fwd = V(); camera.getWorldDirection(fwd);
+  G.lock = null;
+  if (aiming) {
+    const cone = IS_TOUCH ? 0.5 : 0.3; let best = cone;
+    for (const f of G.runners) {
+      if (f === G.player || f.out || f.finished || (G.player.team && f.team === G.player.team)) continue;
+      const v = V(f.pos.x, f.pos.y + 0.9, f.pos.z).sub(camera.position), d = v.length();
+      if (d < 2 || d > 34) continue;
+      const a = v.normalize().angleTo(fwd); if (a < best) { best = a; G.lock = f; }
+    }
+  }
+  const from = camera.position.clone().addScaledVector(fwd, dist + 0.6), to = camera.position.clone().addScaledVector(fwd, 70);
+  aimRay.reset(); world.raycastClosest(new CANNON.Vec3(from.x, from.y, from.z), new CANNON.Vec3(to.x, to.y, to.z), { collisionFilterMask: 1 | 4, skipBackfaces: true }, aimRay);
+  G.aimPoint = aimRay.hasHit ? V(aimRay.hitPointWorld.x, aimRay.hitPointWorld.y, aimRay.hitPointWorld.z) : to;
+  if (G.lock) G.aimPoint = V(G.lock.pos.x, G.lock.pos.y + 0.9, G.lock.pos.z);
+  const xh = $('xhair'); xh.hidden = !aiming; xh.classList.toggle('lock', !!G.lock);
+  if (!lockMark) {
+    lockMark = new THREE.Group(); const a = M.Arrow.scene.clone(); a.rotation.set(PI / 2, 0, -PI / 2, 'ZYX'); a.scale.setScalar(0.3);
+    a.traverse((o) => { if (o.isMesh) { o.castShadow = false; o.material = o.material.clone(); o.material.color.set(0xffd23f); o.material.emissive = new THREE.Color(0xffb000); o.material.emissiveIntensity = 0.6; } });
+    lockMark.add(a); scene.add(lockMark);
+  }
+  lockMark.visible = !!G.lock;
+  if (G.lock) { lockMark.position.set(G.lock.pos.x, G.lock.pos.y + 2.4 + Math.sin(G.t * 8) * 0.12, G.lock.pos.z); lockMark.rotation.y += 0.15; }
 }
 function flyCam(dt) {
   const f = G.modeObj.fly || [[0, 20, 20, 0, 0, 0]], T = 3.8;
@@ -552,5 +587,5 @@ function frame() {
   show('loading', false);
   toMenu();
   frame();
-  window.__boltdash = { G, flow, ctl, MODES, camera, renderer, scene, startRound, startMatchmaking, toMenu, openBuild, editor, sim(sec, hook) { for (let i = 0; i < sec * 60; i++) { hook && hook(i / 60); if (flow.state === 'fly') { flow.flyT = 99; flyCam(1 / 60); } if (flow.state === 'count' || flow.state === 'play') stepRound(1 / 60); } } };
+  window.__boltdash = { G, flow, ctl, MODES, camera, renderer, scene, giveWeapon, startRound, startMatchmaking, toMenu, openBuild, editor, sim(sec, hook) { for (let i = 0; i < sec * 60; i++) { hook && hook(i / 60); if (flow.state === 'fly') { flow.flyT = 99; flyCam(1 / 60); } if (flow.state === 'count' || flow.state === 'play') { stepRound(1 / 60); playCam(1 / 60); } } } };
 })();

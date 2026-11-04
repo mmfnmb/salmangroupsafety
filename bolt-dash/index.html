@@ -165,6 +165,9 @@ img{max-width:100%}
 .progress i{position:absolute;top:50%;width:12px;height:12px;border-radius:50%;transform:translate(50%,-50%);background:var(--ink-2);border:2px solid var(--paper)}
 .progress i.me{width:20px;height:20px;background:var(--pink);z-index:2}
 .progress b{position:absolute;left:-6px;top:50%;transform:translateY(-50%);width:6px;height:22px;background:var(--ink);border-radius:3px}
+ #xhair{position:fixed;left:50%;top:50%;width:46px;height:46px;margin:-23px;border-radius:50%;border:3px solid rgba(255,255,255,.95);box-shadow:0 0 0 2px rgba(33,18,74,.45);pointer-events:none;transition:transform .12s,border-color .12s}
+#xhair i{position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px;border-radius:50%;background:var(--paper);box-shadow:0 0 0 2px rgba(33,18,74,.45)}
+#xhair.lock{border-color:var(--pink);transform:scale(.8)} #xhair.lock i{background:var(--pink)}
 .wchip{position:fixed;left:50%;bottom:max(18px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:flex;align-items:center;gap:8px;background:var(--grape);color:var(--paper);font-family:var(--display);font-size:20px;padding:4px 16px 2px;border-radius:14px;box-shadow:0 4px 0 var(--grape-d);pointer-events:none;white-space:nowrap}
 .wchip em{font-style:normal;color:var(--sun)}
 #big{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);font-family:var(--display);font-size:clamp(70px,18vw,150px);color:var(--paper);text-shadow:0 6px 0 var(--pink-d),0 12px 0 var(--ink);pointer-events:none;white-space:nowrap}
@@ -342,6 +345,7 @@ img{max-width:100%}
       <div class="pill"><span class="dot"><svg class="i"><use href="#i-coin"/></svg></span><span id="hCoins">0</span></div>
     </div>
   </div>
+  <div id="xhair" hidden><i></i></div>
   <div class="wchip" id="wChip" hidden><span id="wName"></span><em id="wAmmo"></em></div>
   <div class="touch" id="touch" hidden>
     <div id="stick"><div id="knob"></div></div>

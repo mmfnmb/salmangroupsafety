@@ -38,11 +38,14 @@ export function assist(r, dir, cone, range = 28) {
   }
   return best;
 }
-export function fire(r, aim) {
+export function fire(r, aim, lock) {
   const wp = r.weapon; if (!wp || wp.cd > 0) return;
   const w = WEAPONS[wp.id]; wp.cd = w.cd; wp.ammo--;
   let dir = aim.clone().normalize();
-  const hit = w.assist ? assist(r, dir, w.assist) : null;
+  // the player aims with the crosshair (and its lock); bots get a little help instead
+  let hit = null;
+  if (r.isPlayer) { if (lock && !lock.out) hit = { foe: lock, dir: V(lock.pos.x - r.pos.x, lock.pos.y + 0.9 - (r.pos.y + 1.1), lock.pos.z - r.pos.z) }; }
+  else if (w.assist) hit = assist(r, dir, w.assist);
   if (hit) dir = hit.dir.normalize();
   r.facing = Math.atan2(dir.x, dir.z);
   const o = V(r.pos.x + dir.x * 0.7, r.pos.y + 1.1, r.pos.z + dir.z * 0.7);
