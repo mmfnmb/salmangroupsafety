@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><base href="/"><title>Bolt Dash episode</title>
+<style>
+@font-face{font-family:Lilita;src:url(/node_modules/@fontsource/lilita-one/files/lilita-one-latin-400-normal.woff2) format('woff2')}
+@font-face{font-family:Nunito;font-weight:800;src:url(/node_modules/@fontsource/nunito/files/nunito-latin-800-normal.woff2) format('woff2')}
+body{margin:0;background:#000}canvas{width:960px;height:540px}
+</style></head><body>
+<canvas id="c"></canvas><div id="toast" hidden></div><div id="loadtxt"></div>
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/","cannon-es":"/node_modules/cannon-es/dist/cannon-es.js"}}</script>
+<script type="module">const ep = new URLSearchParams(location.search).get('ep') || '1'; import(`/film/ep${ep}.js`).then(async (F) => { window.F = F; await F.init(); window.ready = true; }).catch((e) => { document.body.textContent = 'ERR ' + e.message; console.error(e); });</script>
+</body></html>
