@@ -94,8 +94,8 @@ export function shots(A) {
   S.push({ dur: 4, set: 'sofa_day', time: 'interior',
     setup() { hideAll(); sit(A.blue, 'L').play('Idle'); sit(A.yellow, 'R').play('Idle'); },
     upd(t) { sofaCam(A, 3); if (t > 1.2) { A.blue.face(A.yellow.p.x, A.yellow.p.z); A.yellow.face(A.blue.p.x, A.blue.p.z); } say(null); } });
-  S.push({ dur: 2.5, upd() { closeUp(A.blue, { ang: 0.9, dist: 2 }); } });
-  S.push({ dur: 2.5, upd() { closeUp(A.yellow, { ang: -0.9, dist: 2 }); } });
+  S.push({ dur: 2.5, upd() { closeUp(A.blue, { ang: -0.9, dist: 2 }); } });
+  S.push({ dur: 2.5, upd() { closeUp(A.yellow, { ang: 0.9, dist: 2 }); } });
   S.push({ dur: 7, setup() { A.blue.at(SOFA.left[0], 0.6, SOFA.left[1], 0); A.yellow.at(SOFA.right[0], 0.6, SOFA.right[1], 0); },
     upd(t, dt, T) {
       // bouncing on the sofa cushions

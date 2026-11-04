@@ -78,11 +78,11 @@ SETS.adstage_void = (root) => {
 // sofa seat centre ≈ (0, z -0.85), TV in front at z +5.5 facing the sofa
 export const SOFA = { left: [-0.75, -0.8], right: [0.75, -0.8], seatY: 0.42, tv: [0, 1.9, 5.5] };
 function sofaCorner(root, night) {
-  for (let x = -3; x < 3; x++) for (let z = -1; z < 3; z++) floor(root, x * FS, z * FS, 0xb9824f);
-  for (let x = -3; x < 3; x++) wall(root, 'f-wall' + (x === 1 ? 'Window' : ''), x * FS, -1 * FS - 0.4, 0, 0x9fd3e8);
-  for (let z = -1; z < 2; z++) wall(root, 'f-wall', -3 * FS, z * FS - 0.4 + FS, PI / 2, 0x9fd3e8);
+  for (let x = -3; x < 3; x++) for (let z = -1; z < 3; z++) floor(root, x * FS, z * FS, night ? 0x5a3c26 : 0xb9824f);
+  for (let x = -3; x < 3; x++) wall(root, 'f-wall' + (x === 1 ? 'Window' : ''), x * FS, -1 * FS - 0.4, 0, night ? 0x2c3766 : 0x9fd3e8);
+  for (let z = -1; z < 2; z++) wall(root, 'f-wall', -3 * FS, z * FS - 0.4 + FS, PI / 2, night ? 0x2c3766 : 0x9fd3e8);
   put(root, 'f/f-rugRectangle', -2.6, 0.02, 3.2, FS * 1.1);
-  tint(put(root, 'f/f-loungeSofa', -1.57, 0, -0.3, FS), 0xff6f91, 0.9);
+  tint(put(root, 'f/f-loungeSofa', -1.57, 0, -0.3, FS), night ? 0xb0405e : 0xff6f91, 0.9);
   put(root, 'f/f-tableCoffee', -1.1, 0, 2.2, FS);
   put(root, 'f/f-lampRoundFloor', -3.6, 0, -1.2, FS);
   put(root, 'f/f-sideTable', 2.0, 0, -0.5, FS); put(root, 'f/f-lampSquareTable', 2.3, 0.85, -1.0, FS);

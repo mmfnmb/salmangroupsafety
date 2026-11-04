@@ -44,7 +44,7 @@ export function shots(A) {
     // 4. the radio alarm goes off
     { dur: 4, set: 'house_int', time: 'interior', setup() { hideAll(); lie(B); B.show(); last = -1; say('Radio', 'BEEP! BEEP! BEEP!'); }, upd(t) {
       if (every(t, 0.28)) fx.burst(RADIO.clone(), [0xffd23f, 0xff4f9a][Math.floor(t / 0.28) % 2], 8, 2.5, 0.8);
-      fixed([-4.6, 1.9, -4.4], [-6.1, 1.1, -6.9]);
+      fixed([-3.6, 2.2, -3.2], [-6.4, 1.1, -6.3]);
     } },
     // 5. Blue flails, still half asleep
     { dur: 4, set: 'house_int', time: 'interior', setup() { hideAll(); lie(B); B.show().replay('No', 1.4); last = -1; say('Blue', 'Five more minutes...'); }, upd(t) {
@@ -76,7 +76,7 @@ export function shots(A) {
     { dur: 5, set: 'house_int', time: 'interior', setup() { hideAll(); stand(B); B.show(); stand(Y); Y.at(COUNTER.x, 0, COUNTER.z, 0).show().play('Duck'); say('Blue', 'Is something BURNING?!'); }, upd(t, dt) {
       smoke(1, dt);
       B.move(t, 0.3, 4.6, [-6.0, -4.4], [4.4, -4.4], { run: true, speed: 1.5 });
-      track(B, { side: 1, dist: 6.2, h: 2.0, lead: 1.4 });
+      track(B, { side: -1, dist: 6.2, h: 2.0, lead: 1.4 });
     } },
     // 10. into the smoke
     { dur: 5, set: 'house_int', time: 'interior', setup() { hideAll(); stand(B); stand(Y); B.at(4.3, 0, -4.4, PI / 2).show().replay('Duck', 1); Y.at(COUNTER.x, 0, COUNTER.z, 0).show(); say('Yellow', 'It\'s... extra crispy!'); }, upd(t, dt) {
@@ -89,7 +89,7 @@ export function shots(A) {
     { dur: 5, set: 'house_int', time: 'interior', setup() { hideAll(); stand(B); stand(Y); B.at(4.3, 0, -4.4, PI / 2).show().replay('Yes', 1.2); Y.at(COUNTER.x, 0, COUNTER.z, -PI / 2).show().replay('Wave', 1.2); say('Blue', 'Extra crispy. Again.'); }, upd(t, dt) {
       smoke(0.5 - t / 10, dt);
       if (t > 2.5) { say('Yellow', 'Hahaha!'); Y.replay('Yes', 1.5); B.play('Wave', 1); }
-      if (t < 2.5) closeUp(B, { ang: 0.5, dist: 2.3 }); else closeUp(Y, { ang: -0.4, dist: 2.3 });
+      frameGroup([B, Y], { side: 1, h: 1.25, dist: 0.65, look: 1.0 });
     } },
     // 12. breakfast anyway: burnt toast at the table
     { dur: 6, set: 'house_int', time: 'interior', setup() {
@@ -100,17 +100,17 @@ export function shots(A) {
       if (t > 0.6 && t < 0.7) B.replay('Punch', 0.8);
       if (t > 1.2 && t < 1.3) puffs.emit({ pos: V(TABLE.x - 0.35, 1.3, TABLE.z - 0.6), vel: V(0, 0.4, 0.4), life: 0.8, size: 0.15, color: 0x1a1210 });
       if (t > 3) { say('Yellow', 'Chef\'s special!'); if (t < 3.1) Y.replay('Yes', 1.2); }
-      frameGroup([B, Y], { side: -1, h: 1.6, dist: 0.85, look: 0.9 });
+      frameGroup([B, Y], { side: 1, h: 1.6, dist: 0.85, look: 0.9 });
     } },
     // 13. wide: the two of them laughing in the morning light
     { dur: 5, set: 'house_int', time: 'interior', setup() { hideAll(); stand(B); stand(Y); B.at(TABLE.x - 0.4, 0, TABLE.z - 1.25, 0).show().replay('Yes', 1); Y.at(TABLE.x + 0.4, 0, TABLE.z + 1.25, PI).show().replay('Wave', 1); burntToast(); say('Yellow', 'Best breakfast ever!'); }, upd(t) {
-      const k = ease(t / 5); fixed([lerp(2.6, 1.6, k), lerp(3.4, 4.2, k), lerp(3.6, 4.6, k)], [6.2, 0.9, -2.8]);
+      const k = ease(t / 5); fixed([lerp(3.6, 3.0, k), lerp(2.6, 3.2, k), lerp(1.0, 2.0, k)], [6.6, 0.9, -2.6]);
     } },
     // 14. Blue heads for the sofa: TV time
     { dur: 6, set: 'house_int', time: 'interior', setup() { hideAll(); stand(B); stand(Y); B.show(); Y.show(); say('Blue', 'Okay. My turn. TV!'); }, upd(t) {
       B.move(t, 0.4, 4.2, [TABLE.x - 0.6, TABLE.z - 1.0], [1.6, -1.6], { run: true, speed: 1.3 });
       Y.move(t, 1.2, 5.5, [TABLE.x + 0.4, TABLE.z + 1.0], [2.8, -1.0], { run: false });
-      frameGroup([B, Y], { side: 1, h: 2.2, dist: 1.1, look: 0.8 });
+      frameGroup([B, Y], { side: 1, h: 2.0, dist: 0.9, look: 0.8 });
     } },
     // 15. outside: smoke still drifting out of the kitchen window
     { dur: 5, set: 'house_ext', time: 'morning', setup() { hideAll(); }, upd(t, dt) {

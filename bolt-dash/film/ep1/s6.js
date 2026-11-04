@@ -4,7 +4,7 @@
 import { Actor, ACTORS, hideAll, say, THREE, M, V, PI, clamp, lerp, ease, puffs, confetti, place, camTo, frameGroup, closeUp, track, orbit, fixed, overShoulder } from '../lib.js';
 import { STAD } from '../sets/stadium.js';
 
-const SET = 'stadium', TIME = 'sunset';
+const SET = 'stadium', TIME = 'day';
 const GATE = { x: 0, z: 46 };
 const OFF = [[-1, 0], [1, 0], [-1, 1.8], [1, 1.8]]; // 2x2 block, captain front-left
 
@@ -31,6 +31,17 @@ function makeTeams(A) {
   return T;
 }
 
+// the flag model's cloth is red in its texture: swap red texels for the team colour (pole stays as it is)
+function recolor(mat, col) {
+  const m = mat.clone(); m.userData.team = col;
+  m.onBeforeCompile = (sh) => {
+    sh.uniforms.uTeam = { value: col };
+    sh.fragmentShader = 'uniform vec3 uTeam;\n' + sh.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
+      { vec3 c = diffuseColor.rgb; float red = c.r - max(c.g, c.b); if (red > 0.12) diffuseColor.rgb = uTeam * (0.45 + 0.75 * c.r); }`);
+  };
+  m.customProgramCacheKey = () => 'team' + col.getHexString();
+  return m;
+}
 // a coloured flag on a pole behind each runner (kept in the stadium set, following the actor)
 function ensureFlags(root) {
   if (flagRoot === root) return; flagRoot = root;
@@ -38,8 +49,8 @@ function ensureFlags(root) {
     const col = new THREE.Color(t.col);
     t.flags = t.m.map((a) => {
       if (!a) return null;
-      const f = place('k/flag-large-red', 0, 0, 0, 1.75 * (a.s / 0.42), 0, root);
-      f.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); if (o.material.color.r > 0.5 && o.material.color.g < 0.5) o.material.color.copy(col); } });
+      const f = place('k/flag-large-red', 0, 0, 0, 1.15 * (a.s / 0.42), 0, root);
+      f.traverse((o) => { if (o.isMesh) o.material = recolor(o.material, col); });
       return f;
     });
   }
@@ -121,7 +132,7 @@ export function shots(A) {
     camTo(V(-27.5, 2.4, 3.5 - t * 0.6), V(-37, 2.6, -1.5), 4);
   });
   // 3. Splashvolt out of the tunnel
-  shot(5, () => say('Announcer', 'From Azuria... SPLASHVOLT!'), (t, sc) => { leadCam(tm('SPLASHVOLT').m, { dist: 8.5, side: 2.8 }); });
+  shot(5, () => say('Announcer', 'From Azuria... SPLASHVOLT!'), (t, sc) => { leadCam(tm('SPLASHVOLT').m, { dist: 6.5, side: 2.4 }); });
   // 4. alongside Blue
   shot(4, () => say('Blue', "Yellow! Look at all these people!"), (t, sc) => { track(A.blue, { side: 1, dist: 5.2, h: 1.7 }); A.blue.play('Run', 1.05); });
   // 5. Yellow jumping, Vio shy, Minto crazy
@@ -132,7 +143,7 @@ export function shots(A) {
   });
   // 6. Timbrok: Brown, calm
   shot(4.5, () => say('Announcer', 'TIMBROK! Led by the quiet one... BROWN!'), (t, sc) => { leadCam(tm('TIMBROK').m, { dist: 8, side: -2.5 }); });
-  shot(3, () => { say('Brown', '...'); }, (t, sc) => { closeUp(A.brown, { ang: 0.3, dist: 2.3 }); A.brown.play(t > 0.8 && t < 2.2 ? 'Yes' : 'Run', 0.8); });
+  shot(3, () => { say('Brown', '...'); }, (t, sc) => { closeUp(A.brown, { ang: 0.3, dist: 3.1, h: 1.3 }); A.brown.play(t > 0.8 && t < 2.2 ? 'Yes' : 'Run', 0.8); });
   // 7. Blue watches Brown go past
   shot(4, () => say('Blue', "That's Brown... he's strong. Really strong."), (t, sc) => {
     A.blue.faceA(A.brown); A.yellow.faceA(A.brown);

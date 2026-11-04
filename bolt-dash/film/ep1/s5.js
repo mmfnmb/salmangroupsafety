@@ -33,7 +33,7 @@ export function shots(A) {
   const B = A.blue, Y = A.yellow, Vi = A.vio, Mi = A.minto, Br = A.brown;
   // Blue and Yellow stand beside the start, watching; the candidates wait behind them
   const judges = () => { B.at(-4.4, 0, 9.5, PI * 0.8).play('Idle'); Y.at(-5.6, 0, 8.6, PI * 0.8).play('Idle'); };
-  const fans = (k) => { const r = useSet('tryouts'); if (r.userData.fans) r.userData.fans.userData.cheer = k; };
+  const fans = (k) => { const r = useSet('tryouts'); if (r.userData.fans) r.userData.fans.userData.cheer = k; for (const a of r.userData.queue || []) a.show(true); };
   const S = [];
   const shot = (dur, setup, upd) => S.push({ set: 'tryouts', time: 'day', dur, setup() { hideAll(); fans(0); setup?.(); }, upd(t, dt, T) { spinArms(T); upd(t, dt, T); } });
 
@@ -47,13 +47,13 @@ export function shots(A) {
     (t) => { frameGroup([A.ref, B, Y], { side: 1, h: 1.1, dist: 0.8, look: 1.0, k: 99 }); say(t < 3 ? 'blue' : 'ref', t < 3 ? 'Team Splashvolt! We are two.' : 'You need four. Find them here.'); });
   // 4. Blue and Yellow at the start, a line of hopefuls
   shot(4, () => { judges(); straw.at(-1, 0, 11, PI); melon.at(-2.5, 0, 12, PI); Vi.at(1.5, 0, 12.4, PI); Mi.at(3.2, 0, 11.6, PI).play('Wave'); },
-    (t) => { frameGroup([Y, B, straw, melon, Vi, Mi], { side: -1, h: 1.6, dist: 0.85, k: 99 }); say('blue', 'Okay! Who wants to try?'); });
+    (t) => { camTo(V(-3.6, 1.8, 4.2), V(0.4, 1.0, 11.4), 99); say('blue', 'Okay! Who wants to try?'); });
   // 5. candidate one: runs straight into the spinning arm
   shot(6, () => { judges(); }, (t, dt, T) => {
     const hitT = 2.3;
     if (t < hitT) { const z = COURSE.start - t * 4.2; straw.at(X, 0, z, PI).play('Run', 1.3); say('candidate', 'Wheee!'); }
     else { const u = t - hitT; if (!straw.hit) { straw.hit = 1; straw.play('HitReact'); fx.burst(V(X, 1.2, straw.p.z), 0xffd23f, 14, 6); } straw.at(X + u * 5.5, Math.max(0, 1.4 + u * 5 - u * u * 9), straw.p.z + u * 0.8, PI); straw.m.rotation.z = Math.min(u * 6, 1.5); if (u > 0.9) straw.play('Death'); say(null); }
-    track(straw.hit ? { p: V(X + 1.5, 0, -2), m: { rotation: { y: PI } } } : straw, { side: -1, dist: 7, h: 2.2, lead: 1.5, k: 6 });
+    const fz = straw.hit ? -1.2 : straw.p.z; camTo(V(X + 7, 2.2, fz - 1.5), V(X + (straw.hit ? 1.5 : 0), 1, fz - 1.5), 6);
   });
   // 6. Yellow winces
   shot(3, () => { judges(); Y.play('No'); }, (t) => { closeUp(Y, { ang: -0.2, dist: 1.8, k: 99 }); say('yellow', 'Ouch.'); });
@@ -65,7 +65,7 @@ export function shots(A) {
   // 8. Blue
   shot(3, () => { judges(); B.play('No'); }, (t) => { closeUp(B, { ang: 0.25, dist: 1.9, k: 99 }); say('blue', '...Other way!'); });
   // 9. Vio steps up, shy
-  shot(4, () => { judges(); Vi.at(X, 0, COURSE.start + 0.3, PI); }, (t) => { closeUp(Vi, { ang: 0.3, dist: 2.0, k: 99 }); say('vio', 'I... I timed the arm. Every few seconds.'); });
+  shot(4, () => { judges(); Vi.at(X, 0, COURSE.start + 0.3, PI); }, (t) => { closeUp(Vi, { ang: 0.6, dist: 2.0, k: 99 }); say('vio', 'I... I timed the arm. Every few seconds.'); });
   // 10. Vio's run: careful and clean, the camera running alongside
   shot(10, () => { judges(); }, (t, dt, T) => {
     const z = runCourse(Vi, t, T, 4.1);
@@ -75,15 +75,15 @@ export function shots(A) {
   // 11. Blue and Yellow impressed
   shot(4, () => { judges(); B.play('Yes'); Y.play('Wave'); }, (t) => { frameGroup([Y, B], { side: -1, h: 1.2, dist: 0.8, k: 99 }); say('yellow', 'Clean! Every single jump!'); });
   // 12. Minto: loud, spinning in the air
-  shot(4, () => { judges(); Mi.at(X, 0, COURSE.start + 0.3, PI).play('Wave'); }, (t) => { closeUp(Mi, { ang: -0.3, dist: 2.0, k: 99 }); say('minto', 'My turn! Watch THIS!'); });
+  shot(4, () => { judges(); Mi.at(X, 0, COURSE.start + 0.3, PI).play('Wave'); }, (t) => { closeUp(Mi, { ang: 0.6, dist: 2.0, k: 99 }); say('minto', 'My turn! Watch THIS!'); });
   shot(10, () => { judges(); }, (t, dt, T) => {
     const z = runCourse(Mi, t, T, 5.2, { spin: true });
-    if (z > COURSE.spring) track(Mi, { side: 1, dist: 6.4, h: 2.2, lead: 1.4 }); else chase(Mi, { back: 5, side: -2.2, h: 3.0, ahead: 2 });
+    if (z > COURSE.spring) track(Mi, { side: -1, dist: 6.4, h: 2.2, lead: 1.4 }); else chase(Mi, { back: 5, side: 2.2, h: 3.0, ahead: 2 });
     say(null); if (z <= -30) say('minto', 'TA-DAAA!');
   });
   // 13. they're in
   shot(6, () => { B.at(0.6, 2, -28, 0).play('Yes'); Y.at(-0.8, 2, -28.6, 0.3).play('Wave'); Vi.at(1.8, 2, -29.8, PI * 0.9); Mi.at(-1.6, 2, -30, PI).play('Yes'); },
-    (t) => { frameGroup([Mi, Y, B, Vi], { side: 1, h: 1.3, dist: 0.85, look: 2.9, k: 99 }); say(t < 3 ? 'blue' : 'yellow', t < 3 ? "You're both in!" : 'Splashvolt is complete!'); });
+    (t) => { frameGroup([Mi, Y, B, Vi], { side: 1, h: 1.0, dist: 0.85, look: 1.0, k: 99 }); say(t < 3 ? 'blue' : 'yellow', t < 3 ? "You're both in!" : 'Splashvolt is complete!'); });
   // 14. murmurs: Brown walks to the start; low and slow
   shot(5, () => { judges(); Vi.at(-3.2, 0, 10.4, PI * 0.8); Mi.at(-2.4, 0, 11.2, PI * 0.8); }, (t) => {
     const k = ease(t / 4.4); Br.at(lerp(-8, X, k), 0, lerp(18, COURSE.start + 0.2, k), lerp(-PI * 0.3, PI, k)).play(k < 1 ? 'Walk' : 'Idle');
