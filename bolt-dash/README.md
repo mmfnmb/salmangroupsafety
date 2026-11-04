@@ -16,6 +16,7 @@
 ## التشغيل محلياً
 ```
 cd bolt-dash
+npm install && npm run build   # يطلع dist/bolt-dash.html ملف واحد فيه كل حاجة
 python3 -m http.server 8000
 # افتح http://localhost:8000
 ```

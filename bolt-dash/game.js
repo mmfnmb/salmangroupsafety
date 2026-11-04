@@ -112,7 +112,9 @@ addEventListener('resize', resize); resize();
 // ---------------------------------------------------------------- assets
 const MODEL_NAMES = ['Character', 'Bouncer', 'Hazard_Saw', 'Hazard_Cylinder', 'SpikyBall', 'Cannon', 'Cannonball', 'Goal_Flag', 'Coin', 'Star',
   'Cube_Grass_Single', 'Cube_Bricks', 'Cube_Crate', 'Cube_Question', 'Cloud_1', 'Cloud_2', 'Cloud_3', 'Tree', 'Tree_Fruit', 'Bush', 'Rock_1', 'Rock_2',
-  'RockPlatforms_Medium', 'Arrow', 'Tower', 'Plant_Large', 'Fence_Middle', 'Hazard_SpikeTrap'];
+  'RockPlatforms_Medium', 'Arrow', 'Tower', 'Plant_Large', 'Fence_Middle', 'Hazard_SpikeTrap',
+  ...['Crown', 'Crown2', 'ice-cream', 'cupcake', 'donut-sprinkles', 'present-a-cube', 'aid-glasses', 'aid-sunglasses', 'Armor_Leather', 'Armor_Metal',
+    'Armor_Golden', 'Armor_Black', 'StarBadge', 'Backpack', 'Bag', 'Shield_Round', 'Shield_Heater'].map((n) => 'acc/' + n)];
 const M = {};
 async function loadAssets(onProgress) {
   const loader = new GLTFLoader();
@@ -120,8 +122,8 @@ async function loadAssets(onProgress) {
   const finish = (n, g) => { g.scene.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); M[n] = g; done++; onProgress(done / MODEL_NAMES.length); };
   // hosts that can't serve .glb get one JSON bundle of base64 models instead
   const bundleUrl = document.querySelector('meta[name="bolt-bundle"]')?.content;
-  if (bundleUrl) {
-    const bundle = await (await fetch(bundleUrl)).json();
+  if (window.__BD_MODELS || bundleUrl) {
+    const bundle = window.__BD_MODELS || await (await fetch(bundleUrl)).json();
     await Promise.all(MODEL_NAMES.map((n) => {
       const bin = Uint8Array.from(atob(bundle[n]), (c) => c.charCodeAt(0)).buffer;
       return new Promise((res, rej) => loader.parse(bin, './', (g) => { finish(n, g); res(); }, rej));
@@ -342,18 +344,16 @@ function buildCourse() {
 }
 
 // ---------------------------------------------------------------- runners
-const TINTS = [null, 0xff4f9a, 0xffb020, 0x22c98a, 0x9b5cff, 0xff6a3d, 0x2fd3e6, 0xe8e8f0];
 const RUN = 9, AIR_ACC = 28, GROUND_ACC = 70, JUMP_V = 11.5, DIVE_V = 13;
 
 class Runner {
-  constructor(i, isPlayer) {
+  constructor(i, isPlayer, equip) {
     this.i = i; this.isPlayer = isPlayer;
     this.root = new THREE.Group(); scene.add(this.root);
     this.model = SkeletonUtils.clone(M.Character.scene);
     this.model.scale.setScalar(0.42);
     this.root.add(this.model);
-    const tint = TINTS[i % TINTS.length];
-    if (tint) this.model.traverse((o) => { if (o.isMesh && o.material?.name === 'Main') { o.material = o.material.clone(); o.material.color.setHex(tint).convertSRGBToLinear(); } });
+    dress(this.model, equip || {});
     this.mixer = new THREE.AnimationMixer(this.model);
     this.actions = {};
     for (const clip of M.Character.animations) { const n = clip.name.split('|').pop(); this.actions[n] = this.mixer.clipAction(clip); }
@@ -494,7 +494,7 @@ class Runner {
         inp.dive = false; this.dived = true; this.state = 'dive'; this.stateT = 0;
         v.x = Math.sin(this.facing) * DIVE_V; v.z = Math.cos(this.facing) * DIVE_V; v.y = Math.max(v.y, 5);
         this.play('Jump_Idle', 0.08);
-        if (this.isPlayer) sfx.dive();
+        if (this.isPlayer) { sfx.dive(); track('dive'); }
       }
       inp.dive = false;
       if (dive && this.stateT > 0.25 && this.grounded) {
@@ -639,49 +639,281 @@ function readPlayerInput(r) {
   if (ctl.dive) { r.input.dive = true; ctl.dive = false; }
 }
 
+// ---------------------------------------------------------------- cosmetics (colors + accessories)
+const SLOTS = ['head', 'face', 'body', 'back'];
+const SKINS = [
+  { id: 'skin-blue', name: 'الأزرق الأصلي', price: 0 },
+  { id: 'skin-straw', name: 'فراولة', price: 60, colors: { Main: 0xff4f9a, Main2: 0xffd3e6, Main_Light: 0xffd9a8 } },
+  { id: 'skin-mint', name: 'نعناع', price: 60, colors: { Main: 0x1fc98e, Main2: 0xd2fbea } },
+  { id: 'skin-lemon', name: 'ليمون', price: 60, colors: { Main: 0xffcc1f, Main2: 0xfff6cf, Main_Light: 0xff9f43 } },
+  { id: 'skin-grape', name: 'عنب', price: 80, colors: { Main: 0x8a5cff, Main2: 0xe6dbff } },
+  { id: 'skin-orange', name: 'برتقانة', price: 80, colors: { Main: 0xff7a2f, Main2: 0xffe1cb } },
+  { id: 'skin-melon', name: 'بطيخ', price: 120, colors: { Main: 0x2a9d4b, Main2: 0xff5f7a, Main_Light: 0xffe3a3 } },
+  { id: 'skin-snow', name: 'تلج', price: 150, colors: { Main: 0xf2f6ff, Main2: 0xbfe6ff, Main_Light: 0x8ccfff } },
+  { id: 'skin-night', name: 'ليل', price: 180, colors: { Main: 0x262c62, Main2: 0x5867c4, Main_Light: 0xffd23f } },
+  { id: 'skin-lava', name: 'حمم', price: 220, colors: { Main: 0xd8261c, Main2: 0xff9a3d, Main_Light: 0xffc94a } },
+  { id: 'skin-gold', name: 'ذهبي', price: 400, colors: { Main: 0xe3a812, Main2: 0xfff0a8, Main_Light: 0xfff6d6 } },
+].map((s) => ({ ...s, slot: 'skin' }));
+const PI = Math.PI;
+// offsets are in the character's own units, measured from the Head / Torso bones
+const ACCS = [
+  { id: 'h-crown', slot: 'head', name: 'تاج ذهبي', price: 150, model: 'Crown', bone: 'Head', s: 0.95, p: [0, 1.3, 0] },
+  { id: 'h-queen', slot: 'head', name: 'تاج الملكة', price: 200, model: 'Crown2', bone: 'Head', s: 0.95, p: [0, 1.3, 0] },
+  { id: 'h-cone', slot: 'head', name: 'قبعة الحفلة', price: 80, model: 'ice-cream', bone: 'Head', s: 2.0, p: [0, 2.15, 0], r: [PI, 0, 0] },
+  { id: 'h-cupcake', slot: 'head', name: 'كب كيك', price: 100, model: 'cupcake', bone: 'Head', s: 2.0, p: [0, 1.2, 0] },
+  { id: 'h-donut', slot: 'head', name: 'دونات', price: 90, model: 'donut-sprinkles', bone: 'Head', s: 2.8, p: [0, 1.26, 0] },
+  { id: 'h-gift', slot: 'head', name: 'هدية', price: 120, model: 'present-a-cube', bone: 'Head', s: 1.4, p: [0, 1.2, 0] },
+  { id: 'f-glasses', slot: 'face', name: 'نضارة', price: 60, model: 'aid-glasses', bone: 'Head', s: 4.2, p: [0, 0.3, 0.95] },
+  { id: 'f-sun', slot: 'face', name: 'نضارة شمس', price: 90, model: 'aid-sunglasses', bone: 'Head', s: 4.2, p: [0, 0.3, 0.95] },
+  { id: 'b-vest', slot: 'body', name: 'صديري جلد', price: 120, model: 'Armor_Leather', bone: 'Torso', s: 1.45, p: [0, 0.15, 0.05] },
+  { id: 'b-iron', slot: 'body', name: 'درع حديد', price: 160, model: 'Armor_Metal', bone: 'Torso', s: 1.0, p: [0, 0.15, 0.05] },
+  { id: 'b-ninja', slot: 'body', name: 'درع النينجا', price: 250, model: 'Armor_Black', bone: 'Torso', s: 0.95, p: [0, 0.15, 0.05] },
+  { id: 'b-gold', slot: 'body', name: 'درع ذهبي', price: 350, model: 'Armor_Golden', bone: 'Torso', s: 0.95, p: [0, 0.15, 0.05] },
+  { id: 'b-star', slot: 'body', name: 'نجمة البطل', price: 70, model: 'StarBadge', bone: 'Torso', s: 0.35, p: [0, 0.2, 0.55] },
+  { id: 'k-pack', slot: 'back', name: 'شنطة رحلات', price: 100, model: 'Backpack', bone: 'Torso', s: 1.0, p: [0, 0.1, -0.6] },
+  { id: 'k-bag', slot: 'back', name: 'شنطة جنب', price: 70, model: 'Bag', bone: 'Torso', s: 0.8, p: [0.65, -0.1, 0] },
+  { id: 'k-wood', slot: 'back', name: 'درع خشب', price: 130, model: 'Shield_Round', bone: 'Torso', s: 0.6, p: [0, 0.15, -0.65], r: [0, PI, 0] },
+  { id: 'k-knight', slot: 'back', name: 'درع الفارس', price: 180, model: 'Shield_Heater', bone: 'Torso', s: 0.5, p: [0, 0.1, -0.62], r: [0, PI, 0] },
+];
+const ITEMS = [...SKINS, ...ACCS];
+const ITEM = Object.fromEntries(ITEMS.map((i) => [i.id, i]));
+const CATS = [['skin', 'الألوان'], ['head', 'الراس'], ['face', 'الوش'], ['body', 'الجسم'], ['back', 'الضهر']];
+
+save.owned = store.get('owned', ['skin-blue']);
+save.equip = store.get('equip', { skin: 'skin-blue' });
+save.xp = store.get('xp', 0);
+save.gift = store.get('gift', false);
+const persist = () => { for (const k of ['coins', 'wins', 'owned', 'equip', 'xp', 'gift', 'daily']) store.set(k, save[k]); };
+
+const BONE_FIX = {};
+function computeBoneFix() {
+  const m = SkeletonUtils.clone(M.Character.scene);
+  const mx = new THREE.AnimationMixer(m);
+  mx.clipAction(M.Character.animations.find((a) => a.name.endsWith('|Idle'))).play(); mx.update(0.3);
+  m.updateMatrixWorld(true);
+  m.traverse((o) => {
+    if (!o.isBone || !['Head', 'Torso'].includes(o.name)) return;
+    const s = 1 / o.getWorldScale(new THREE.Vector3()).x;
+    const q = o.getWorldQuaternion(new THREE.Quaternion()).invert();
+    BONE_FIX[o.name] = { s, q };
+  });
+}
+function dress(model, equip) {
+  const u = model.userData;
+  if (!u.mats) {
+    u.mats = {}; u.bones = {}; u.acc = {};
+    model.traverse((o) => {
+      if (o.isBone) u.bones[o.name] = o;
+      if (o.isMesh && o.material) {
+        const n = o.material.name;
+        if (!u.mats[n]) u.mats[n] = { mat: o.material.clone(), base: o.material.color.clone() };
+        o.material = u.mats[n].mat;
+      }
+    });
+  }
+  const skin = ITEM[equip.skin] || ITEM['skin-blue'];
+  for (const [n, rec] of Object.entries(u.mats)) { const c = skin.colors?.[n]; if (c != null) rec.mat.color.setHex(c); else rec.mat.color.copy(rec.base); }
+  for (const slot of SLOTS) {
+    const id = equip[slot] || null;
+    if (u.acc[slot]?.id === id) continue;
+    if (u.acc[slot]) { u.acc[slot].obj.removeFromParent(); delete u.acc[slot]; }
+    if (!id || !ITEM[id]) continue;
+    const it = ITEM[id], fix = BONE_FIX[it.bone], bone = u.bones[it.bone];
+    if (!fix || !bone) continue;
+    const holder = new THREE.Group(); holder.scale.setScalar(fix.s); holder.quaternion.copy(fix.q);
+    const o = M['acc/' + it.model].scene.clone();
+    o.scale.setScalar(it.s); o.position.set(...it.p); if (it.r) o.rotation.set(...it.r);
+    o.traverse((x) => { if (x.isMesh) { x.castShadow = true; } });
+    holder.add(o); bone.add(holder);
+    u.acc[slot] = { id, obj: holder };
+  }
+}
+function randomEquip() {
+  const pick = (a) => a[Math.floor(Math.random() * a.length)];
+  const e = { skin: pick(SKINS.slice(1)).id };
+  for (const slot of SLOTS) if (Math.random() < 0.4) e[slot] = pick(ACCS.filter((a) => a.slot === slot)).id;
+  return e;
+}
+
+// thumbnails rendered once from the real 3D models
+const THUMB = {};
+function makeThumbs() {
+  const size = 160, rt = new THREE.WebGLRenderTarget(size, size, { samples: 4 });
+  rt.texture.colorSpace = THREE.SRGBColorSpace;
+  const ts = new THREE.Scene();
+  ts.add(new THREE.HemisphereLight(0xffffff, 0x8899bb, 2.4));
+  const dl = new THREE.DirectionalLight(0xffffff, 2.2); dl.position.set(2, 3, 4); ts.add(dl);
+  const cam = new THREE.PerspectiveCamera(30, 1, 0.01, 100);
+  const px = new Uint8Array(size * size * 4), cv = document.createElement('canvas'); cv.width = cv.height = size;
+  const ctx = cv.getContext('2d'), img = ctx.createImageData(size, size);
+  const shoot = (obj, look, dist, h) => {
+    ts.add(obj);
+    cam.position.set(look.x + dist * 0.45, look.y + h, look.z + dist); cam.lookAt(look);
+    renderer.setRenderTarget(rt); renderer.setClearColor(0x000000, 0); renderer.clear(); renderer.render(ts, cam); renderer.setRenderTarget(null);
+    renderer.readRenderTargetPixels(rt, 0, 0, size, size, px);
+    for (let y = 0; y < size; y++) img.data.set(px.subarray((size - 1 - y) * size * 4, (size - y) * size * 4), y * size * 4);
+    ctx.putImageData(img, 0, 0); ts.remove(obj);
+    return cv.toDataURL('image/png');
+  };
+  const prevTM = renderer.toneMapping;
+  for (const it of ITEMS) {
+    if (it.slot === 'skin') {
+      const m = SkeletonUtils.clone(M.Character.scene); dress(m, { skin: it.id });
+      const mx = new THREE.AnimationMixer(m); mx.clipAction(M.Character.animations.find((a) => a.name.endsWith('|Idle'))).play(); mx.update(0.3);
+      m.rotation.y = -0.35; THUMB[it.id] = shoot(m, V(0, 2.1, 0), 6.2, 0.6);
+    } else {
+      const o = M['acc/' + it.model].scene.clone(); if (it.r) o.rotation.set(...it.r);
+      o.rotation.y += it.slot === 'back' ? PI + 0.5 : -0.5;
+      const box = new THREE.Box3().setFromObject(o), c = box.getCenter(V()), r = box.getSize(V()).length();
+      THUMB[it.id] = shoot(o, c, r * 1.55, r * 0.35);
+    }
+  }
+  renderer.toneMapping = prevTM; renderer.setClearColor(0x000000, 1);
+  rt.dispose();
+}
+
+// ---------------------------------------------------------------- progress: level + daily challenges
+const today = () => new Date().toISOString().slice(0, 10);
+function freshDaily() {
+  return { day: today(), list: [
+    { k: 'coins', text: 'اجمع 25 عملة', goal: 25, prog: 0, rew: 60 },
+    { k: 'qualify', text: 'اتأهل في سباقين', goal: 2, prog: 0, rew: 80 },
+    { k: 'dive', text: 'اغطس 10 مرات', goal: 10, prog: 0, rew: 50 },
+  ] };
+}
+save.daily = store.get('daily', null);
+if (!save.daily || save.daily.day !== today()) save.daily = freshDaily();
+function track(k, n = 1) {
+  if (save.daily.day !== today()) save.daily = freshDaily();
+  for (const c of save.daily.list) if (c.k === k && c.prog < c.goal) {
+    c.prog = Math.min(c.goal, c.prog + n);
+    if (c.prog >= c.goal) { save.coins += c.rew; toast(`خلصت تحدي: +${c.rew} عملة`); sfx.coin(); }
+  }
+  persist();
+}
+const levelOf = (xp) => ({ lvl: 1 + Math.floor(xp / 120), cur: xp % 120, need: 120 });
+
 // ---------------------------------------------------------------- UI helpers
 let toastT = 0;
-function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; toastT = 1.4; }
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; toastT = 1.8; }
 const arabicNum = (n) => String(n);
-function refreshMenuStats() { $('mCoins').textContent = arabicNum(save.coins); $('mWins').textContent = arabicNum(save.wins); $('mSound').innerHTML = `<svg class="i"><use href="#i-${save.muted ? 'mute' : 'sound'}"/></svg>`; }
-const TAB_TEXT = {
-  build: ['مود البناء', 'هتحط منصات ونطاطات ومناشير ومدافع على شبكة، وتجرب الماب بتاعك وتحفظه.'],
-  wardrobe: ['الخزانة', 'هتغيّر لون شخصيتك وتلبسها قبعات ونضارات وشنط، وكل حاجة هتظهر قدامك 3D وهي بتلف.'],
-  shop: ['الشوب', 'حاجات جديدة كل يوم بتشتريها بالعملات اللي بتجمعها من السباقات.'],
-};
-document.querySelectorAll('.tab').forEach((b) => b.addEventListener('click', () => {
-  sfx.click();
-  document.querySelectorAll('.tab').forEach((x) => x.setAttribute('aria-selected', String(x === b)));
-  const k = b.dataset.tab, panel = $('tabPanel');
-  if (k === 'play') { panel.hidden = true; $('playBottom').hidden = false; return; }
-  const [h, p] = TAB_TEXT[k];
-  panel.innerHTML = `<span class="chip">في التحديث الجاي</span><h2>${h}</h2><p>${p}</p><p style="margin:0">العملات اللي معاك دلوقتي: <b>${arabicNum(save.coins)}</b></p>`;
-  panel.hidden = false; $('playBottom').hidden = true;
-}));
+const coinSvg = '<svg class="i"><use href="#i-coin"/></svg>';
+function refreshMenuStats() {
+  $('mCoins').textContent = save.coins; $('mWins').textContent = save.wins;
+  $('mSound').innerHTML = `<svg class="i"><use href="#i-${save.muted ? 'mute' : 'sound'}"/></svg>`;
+  const L = levelOf(save.xp);
+  $('pLvl').textContent = L.lvl; $('pXp').style.width = (L.cur / L.need * 100) + '%'; $('pXpTxt').textContent = `${L.cur} / ${L.need} خبرة`;
+  $('chal').innerHTML = save.daily.list.map((c) => `<div><span>${c.text}</span>${c.prog >= c.goal ? '<span class="rew done">تم</span>' : `<span class="rew">+${c.rew} ${coinSvg}</span>`}<div class="bar"><i style="width:${c.prog / c.goal * 100}%"></i></div></div>`).join('');
+  const ms = 86400000 - (Date.now() % 86400000); $('chalReset').textContent = `بيتجددوا بعد ${Math.floor(ms / 3600000)} س`;
+}
+
+// locker + shop share one panel
+const locker = { mode: 'wardrobe', cat: 'skin', preview: null };
+function dealsToday() {
+  const seed = [...today()].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
+  const pool = ITEMS.filter((i) => !save.owned.includes(i.id));
+  let x = seed; const rnd = () => (x = (x * 1103515245 + 12345) >>> 0) / 4294967296;
+  return pool.map((i) => [rnd(), i]).sort((a, b) => a[0] - b[0]).slice(0, 6).map((p) => p[1]);
+}
+function renderLocker() {
+  const isShop = locker.mode === 'shop';
+  $('lkTitle').textContent = isShop ? 'الشوب' : 'الخزانة';
+  $('lkSub').textContent = isShop ? 'عروض النهارده، بتتغير كل يوم' : 'غيّر لونك والبس اللي يعجبك';
+  $('cats').hidden = isShop;
+  $('cats').innerHTML = CATS.map(([k, n]) => `<button data-cat="${k}" aria-pressed="${k === locker.cat}">${n}</button>`).join('');
+  const list = isShop ? dealsToday() : ITEMS.filter((i) => i.slot === locker.cat);
+  const g = $('grid');
+  if (!list.length) { g.innerHTML = '<p style="grid-column:1/-1;text-align:center;font-weight:700;color:var(--ink-2)">اشتريت كل حاجة! استنى عروض بكرة.</p>'; }
+  else g.innerHTML = list.map((it) => {
+    const owned = save.owned.includes(it.id), on = save.equip[it.slot] === it.id;
+    const tag = on ? '<span class="tag on">لابسه</span>' : owned ? '<span class="tag own">عندك</span>' : `<span class="tag">${coinSvg}${it.price}</span>`;
+    return `<button class="item${on ? ' on' : ''}${locker.preview === it.id ? ' sel' : ''}" data-id="${it.id}"><img alt="" src="${THUMB[it.id] || ''}"><span>${it.name}</span>${tag}</button>`;
+  }).join('');
+  const p = locker.preview && ITEM[locker.preview];
+  $('buybar').hidden = !p;
+  if (p) {
+    $('buyName').textContent = p.name;
+    const can = save.coins >= p.price;
+    $('buyBtn').disabled = !can; $('buyBtn').innerHTML = can ? `اشتري بـ ${p.price}` : `محتاج ${p.price - save.coins} كمان`;
+  }
+}
+function heroEquip() { const e = { ...save.equip }; if (locker.preview) { const p = ITEM[locker.preview]; e[p.slot] = p.id; } dress(stage.hero, e); }
+$('cats').addEventListener('click', (e) => { const b = e.target.closest('[data-cat]'); if (!b) return; sfx.click(); locker.cat = b.dataset.cat; locker.preview = null; heroEquip(); renderLocker(); });
+$('grid').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-id]'); if (!b) return;
+  const it = ITEM[b.dataset.id]; sfx.click();
+  if (save.owned.includes(it.id)) {
+    locker.preview = null;
+    if (it.slot !== 'skin' && save.equip[it.slot] === it.id) delete save.equip[it.slot]; else save.equip[it.slot] = it.id;
+    persist();
+  } else locker.preview = locker.preview === it.id ? null : it.id;
+  heroEquip(); renderLocker(); heroWave();
+});
+$('buyBtn').addEventListener('click', () => {
+  const it = ITEM[locker.preview]; if (!it || save.coins < it.price) return;
+  save.coins -= it.price; save.owned.push(it.id); save.equip[it.slot] = it.id; locker.preview = null; persist();
+  sfx.coin(); toast(`اشتريت ${it.name}`); fx.confetti(V(stage.root.position.x, 3, stage.root.position.z), 60);
+  heroEquip(); renderLocker(); refreshMenuStats(); heroWave();
+});
+function setTab(k) {
+  document.querySelectorAll('.tab').forEach((x) => x.setAttribute('aria-selected', String(x.dataset.tab === k)));
+  $('vPlay').hidden = k !== 'play'; $('vLocker').hidden = !(k === 'wardrobe' || k === 'shop'); $('vBuild').hidden = k !== 'build';
+  $('modes').hidden = true;
+  locker.preview = null;
+  if (k === 'wardrobe' || k === 'shop') { locker.mode = k; renderLocker(); }
+  stage.view = (k === 'wardrobe' || k === 'shop') ? 'locker' : 'play';
+  if (stage.hero) heroEquip();
+}
+document.querySelectorAll('.tab').forEach((b) => b.addEventListener('click', () => { sfx.click(); setTab(b.dataset.tab); }));
+$('modeBtn').addEventListener('click', () => { sfx.click(); $('modes').hidden = !$('modes').hidden; });
+$('modes').addEventListener('click', (e) => { if (e.target.closest('[data-mode]')) { $('modes').hidden = true; sfx.click(); } });
 $('mSound').addEventListener('click', () => { save.muted = !save.muted; store.set('muted', save.muted); refreshMenuStats(); sfx.click(); });
 
-// ---------------------------------------------------------------- menu stage
-const stage = { root: new THREE.Group(), hero: null, mixer: null, t: 0 };
+// ---------------------------------------------------------------- menu stage (lobby)
+const stage = { root: new THREE.Group(), hero: null, mixer: null, t: 0, view: 'play', friends: [], floaters: [] };
 function buildStage() {
   const g = stage.root; g.position.set(0, 0, 60); scene.add(g);
-  place('RockPlatforms_Medium', 0, -2.75, 0, 1.0, 0.4, g);
-  instanced('Bush', [{ x: -2.4, y: -0.1, z: -1.2, s: 0.5 }, { x: 2.6, y: -0.15, z: -0.8, s: 0.45 }], g);
-  place('Tree_Fruit', -7, -3, -6, 1.1, 0, g); place('Tree', 7.5, -3, -7, 1.2, 1, g);
-  place('Coin', 2.2, 2.6, -1, 0.5, 0, g).userData.spin = 1.5;
-  place('Star', -2.1, 2.9, -1, 0.5, 0, g).userData.spin = -1.2;
-  place('Cloud_2', -6, 6, -10, 1.8, 0, g); place('Cloud_3', 6, 7.5, -12, 1.8, 0, g);
-  stage.hero = SkeletonUtils.clone(M.Character.scene); stage.hero.scale.setScalar(0.5); stage.hero.position.y = 0.05; g.add(stage.hero);
-  stage.mixer = new THREE.AnimationMixer(stage.hero);
+  place('RockPlatforms_Medium', 0, -2.2, 0, 0.8, 0.4, g);
   const clip = (n) => M.Character.animations.find((a) => a.name.endsWith('|' + n));
+  // hero
+  stage.hero = SkeletonUtils.clone(M.Character.scene); stage.hero.scale.setScalar(0.5); stage.hero.position.y = 0.05; g.add(stage.hero);
+  stage.hero.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+  dress(stage.hero, save.equip);
+  stage.mixer = new THREE.AnimationMixer(stage.hero);
   stage.idle = stage.mixer.clipAction(clip('Idle')); stage.wave = stage.mixer.clipAction(clip('Wave'));
   stage.wave.setLoop(THREE.LoopOnce, 1); stage.idle.play();
   stage.mixer.addEventListener('finished', () => { stage.wave.fadeOut(0.3); stage.idle.reset().fadeIn(0.3).play(); });
+  // friends in the lobby, each with a random look
+  for (const [x, z, ry, an] of [[-3.6, -3.6, 0.35, 'Yes'], [3.8, -3.4, -0.35, 'Wave'], [-6.8, -6.5, 0.5, 'Idle'], [7.0, -6.8, -0.5, 'Yes']]) {
+    place('RockPlatforms_Medium', x, -2.0, z, 0.55, rand(0, 6), g);
+    const f = SkeletonUtils.clone(M.Character.scene); f.scale.setScalar(0.42); f.position.set(x, -0.42, z); f.rotation.y = ry; g.add(f);
+    f.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+    dress(f, randomEquip());
+    const mx = new THREE.AnimationMixer(f); const a = mx.clipAction(clip(an)); a.play(); mx.update(rand(0, 2));
+    stage.friends.push({ obj: f, mixer: mx, t: rand(2, 5), an });
+  }
+  // floating blocks, coins and stars
+  for (let k = 0; k < 9; k++) {
+    const name = ['Cube_Question', 'Coin', 'Star'][k % 3];
+    const a = (k / 9) * PI * 2, rr = rand(4.5, 9);
+    const o = place(name, Math.cos(a) * rr, rand(1.8, 5.5), -Math.abs(Math.sin(a)) * rr - 2, name === 'Cube_Question' ? 0.45 : 0.5, rand(0, 6), g);
+    stage.floaters.push({ obj: o, base: o.position.y, ph: rand(0, 6), spin: rand(0.6, 1.6) * (k % 2 ? 1 : -1) });
+  }
   let sd = null;
   canvas.addEventListener('pointerdown', (e) => { if (game.mode === 'menu') sd = e.clientX; });
   canvas.addEventListener('pointermove', (e) => { if (game.mode === 'menu' && sd != null) { stage.hero.rotation.y += (e.clientX - sd) * 0.012; sd = e.clientX; } });
   addEventListener('pointerup', () => { sd = null; });
 }
-function heroWave() { stage.idle.fadeOut(0.2); stage.wave.reset().fadeIn(0.2).play(); }
+function heroWave() { if (!stage.wave) return; stage.idle.fadeOut(0.2); stage.wave.reset().fadeIn(0.2).play(); }
+function updateStage(dt) {
+  stage.mixer.update(dt);
+  for (const f of stage.friends) f.mixer.update(dt);
+  for (const fl of stage.floaters) { fl.obj.rotation.y += fl.spin * dt; fl.obj.position.y = fl.base + Math.sin(stage.t * 1.3 + fl.ph) * 0.25; }
+  if (Math.random() < dt * 14) {
+    const g = stage.root.position, cols = [0xff4f9a, 0xffd23f, 0x36e0a8, 0x5fcfff, 0xa070ff];
+    confetti.emit({ pos: V(g.x + rand(-9, 9), g.y + 9, g.z + rand(-8, 2)), vel: V(rand(-0.5, 0.5), -rand(0.5, 1.5), 0), life: 7, size: 1, g: 0.4, drag: 0.2, spin: rand(2, 5), color: cols[Math.floor(rand(0, 5))], shrink: false });
+  }
+}
 
 // ---------------------------------------------------------------- game flow
 const game = { mode: 'loading', runners: [], player: null, t: 0, countdown: 0, finishedCount: 0, coins: 0, paused: false, endT: 0, qualify: 6 };
@@ -695,8 +927,9 @@ function toMenu() {
   puffs.clear(); confetti.clear();
   show('hud', false); show('menu', true); show('result', false); show('pause', false); show('big', false);
   level.root.visible = false; stage.root.visible = true;
-  refreshMenuStats(); heroWave();
-  stage.t = 0; const g = stage.root.position; camPos.set(g.x, g.y + 2.1, g.z + (innerWidth < innerHeight ? 8.5 : 6));
+  setTab('play'); refreshMenuStats(); heroWave();
+  stage.t = 0; camPos.copy(stageCamTarget());
+  if (!save.gift) { save.gift = true; save.coins += 300; persist(); refreshMenuStats(); setTimeout(() => toast('هدية البداية: 300 عملة للشوب'), 600); }
 }
 
 function startRace() {
@@ -707,7 +940,7 @@ function startRace() {
   for (const c of level.cannons) c.t = c.period - 0.3 - (c.side > 0 ? 0 : 1.1);
   const n = 8; game.runners = [];
   for (let i = 0; i < n; i++) {
-    const r = new Runner(i, i === 0);
+    const r = new Runner(i, i === 0, i === 0 ? save.equip : randomEquip());
     const row = Math.floor(i / 4), col = i % 4;
     r.reset(-4.5 + col * 3 + (row ? 1.5 : 0), COURSE.start - row * 2.2);
     game.runners.push(r);
@@ -716,7 +949,7 @@ function startRace() {
   ctl.yaw = 0; ctl.pitch = 0.32;
   show('menu', false); show('hud', true); show('result', false);
   $('touch').hidden = !IS_TOUCH; $('keys').hidden = IS_TOUCH;
-  $('hTotal').textContent = arabicNum(n); $('hCoins').textContent = arabicNum(0);
+  $('hTotal').textContent = n; $('hCoins').textContent = 0;
   const prog = $('prog'); prog.querySelectorAll('i').forEach((x) => x.remove());
   game.runners.forEach((r) => { const d = document.createElement('i'); if (r.isPlayer) d.className = 'me'; prog.appendChild(d); r.dot = d; });
 }
@@ -726,12 +959,16 @@ function endRace(qualified) {
   game.mode = 'result';
   const pl = game.player.place || game.runners.length;
   const earned = game.coins + (qualified ? Math.max(5, 30 - pl * 4) : 2);
-  save.coins += earned; if (qualified && pl === 1) save.wins += 1;
-  store.set('coins', save.coins); store.set('wins', save.wins);
+  const before = levelOf(save.xp).lvl;
+  save.coins += earned; save.xp += qualified ? 40 + (8 - pl) * 6 : 15;
+  if (qualified && pl === 1) save.wins += 1;
+  if (qualified) track('qualify');
+  persist();
   $('rTitle').textContent = qualified ? (pl === 1 ? 'المركز الأول!' : 'اتأهلت!') : 'خرجت المرة دي';
   $('rTitle').className = qualified ? 'win' : 'lose';
-  $('rPlace').textContent = qualified ? '#' + arabicNum(pl) : '—';
-  $('rCoins').textContent = arabicNum(earned);
+  $('rPlace').textContent = qualified ? '#' + pl : '—';
+  $('rCoins').textContent = earned;
+  if (levelOf(save.xp).lvl > before) setTimeout(() => toast(`وصلت للمستوى ${levelOf(save.xp).lvl}!`), 900);
   setTimeout(() => { show('result', true); }, 300);
   qualified ? sfx.win() : sfx.lose();
 }
@@ -821,7 +1058,7 @@ function updateRace(dt) {
   const p = game.player;
   for (const c of level.coins) if (!c.taken && Math.hypot(p.pos.x - c.x, p.pos.z - c.z) < 1.15 && Math.abs(p.pos.y + 0.8 - c.obj.position.y) < 1.3) {
     c.taken = true; c.obj.visible = false; game.coins++; $('hCoins').textContent = arabicNum(game.coins);
-    fx.burst(c.obj.position.clone(), 0xffd23f, 8, 4); sfx.coin();
+    fx.burst(c.obj.position.clone(), 0xffd23f, 8, 4); sfx.coin(); track('coins');
   }
   // eliminated when the qualifying spots are gone
   if (!p.finished && game.finishedCount >= game.qualify && game.mode === 'race') { toast('الأماكن خلصت'); setTimeout(() => endRace(false), 900); game.mode = 'ending'; }
@@ -834,15 +1071,23 @@ function updateRace(dt) {
 }
 
 // camera
+function stageCamTarget() {
+  const g = stage.root.position, narrow = innerWidth < innerHeight, sway = Math.sin(stage.t * 0.25) * 0.35;
+  if (stage.view === 'locker') return narrow ? V(g.x + sway * 0.3, g.y + 1.5, g.z + 6.2) : V(g.x + 1.3 + sway * 0.3, g.y + 1.6, g.z + 4.8);
+  return narrow ? V(g.x + sway, g.y + 2.0, g.z + 8.6) : V(g.x + sway, g.y + 1.9, g.z + 6.2);
+}
+function stageLookTarget() {
+  const g = stage.root.position, narrow = innerWidth < innerHeight;
+  if (stage.view === 'locker') return narrow ? V(g.x, g.y - 0.7, g.z) : V(g.x + 1.3, g.y + 1.05, g.z);
+  return narrow ? V(g.x, g.y + 0.55, g.z) : V(g.x, g.y + 1.35, g.z);
+}
 const camPos = new THREE.Vector3(0, 6, 16), camLook = new THREE.Vector3();
 function updateCamera(dt) {
   if (game.mode === 'menu' || game.mode === 'loading') {
     stage.t += dt;
     const g = stage.root.position;
-    const narrow = innerWidth < innerHeight;
-    const target = tmpV.set(g.x + Math.sin(stage.t * 0.2) * 0.5, g.y + 2.1, g.z + (narrow ? 8.5 : 6));
-    camPos.lerp(target, 1 - Math.exp(-3 * dt)); camera.position.copy(camPos);
-    camLook.set(g.x, g.y + (narrow ? 0.6 : 1.1), g.z); camera.lookAt(camLook);
+    camPos.lerp(stageCamTarget(), 1 - Math.exp(-4 * dt)); camera.position.copy(camPos);
+    camLook.lerp(stageLookTarget(), 1 - Math.exp(-4 * dt)); camera.lookAt(camLook);
     sun.position.set(g.x + 8, g.y + 18, g.z + 10); sun.target.position.copy(g);
     return;
   }
@@ -863,10 +1108,7 @@ const clock = new THREE.Clock();
 function frame() {
   requestAnimationFrame(frame);
   const dt = Math.min(clock.getDelta(), 1 / 20);
-  if (game.mode === 'menu') {
-    stage.mixer.update(dt);
-    stage.root.traverse((o) => { if (o.userData.spin) o.rotation.y += o.userData.spin * dt; });
-  } else if ((game.mode === 'race' || game.mode === 'ending' || game.mode === 'result') && !game.paused) {
+  if (game.mode === 'menu') updateStage(dt); else if ((game.mode === 'race' || game.mode === 'ending' || game.mode === 'result') && !game.paused) {
     updateRace(dt);
   }
   if (!game.paused) { puffs.update(dt); confetti.update(dt); }
@@ -881,10 +1123,11 @@ function frame() {
   try {
     await loadAssets((k) => { $('loadbar').style.width = Math.round(k * 100) + '%'; });
   } catch (e) {
-    $('loadtxt').textContent = 'الموديلات مش راضية تحمّل. اعمل ريفريش للصفحة.';
+    (window.__bdFail || ((m) => { $('loadtxt').textContent = m; }))('الموديلات مش راضية تحمّل (' + (e?.message || e) + ')');
     console.error(e); return;
   }
-  buildCourse(); buildStage();
+  computeBoneFix(); buildCourse(); buildStage();
+  try { makeThumbs(); } catch (e) { console.warn('thumbnails failed', e); }
   level.root.visible = false;
   show('loading', false);
   toMenu();

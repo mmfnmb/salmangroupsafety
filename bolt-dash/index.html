@@ -41,32 +41,74 @@ svg.i{width:1.3em;height:1.3em;display:block;flex:none}
 #loading p{margin:0;font-weight:800;color:var(--ink)}
 
 /* ---------- menu ---------- */
-#menu{display:flex;flex-direction:column;justify-content:space-between;pointer-events:none}
-#menu .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
-#menu .brand{font-family:var(--display);font-size:clamp(30px,6vw,44px);color:var(--paper);line-height:1;text-shadow:0 3px 0 var(--pink-d),0 6px 0 var(--ink);transform:rotate(-3deg);direction:ltr}
+#menu{display:grid;grid-template-rows:auto 1fr;gap:10px;pointer-events:none}
+#menu .top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+#menu .brand{font-family:var(--display);font-size:clamp(28px,4.4vw,42px);color:var(--paper);line-height:1;text-shadow:0 3px 0 var(--pink-d),0 6px 0 var(--ink);transform:rotate(-3deg);direction:ltr;white-space:nowrap}
 #menu .brand span{color:var(--sun)}
-.tabs{display:flex;gap:8px;background:rgba(33,18,74,.35);padding:6px;border-radius:22px;backdrop-filter:blur(6px)}
-.tab{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 14px 6px;border-radius:16px;background:transparent;color:var(--paper);font-size:17px;min-width:70px}
-.tab svg.i{width:26px;height:26px}
-.tab[aria-selected="true"]{background:var(--paper);color:var(--ink);box-shadow:0 4px 0 rgba(0,0,0,.2)}
-.stats{display:flex;gap:8px}
-#menu .bottom{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
-.modecard{background:var(--paper);border-radius:22px;padding:12px 16px;box-shadow:0 6px 0 rgba(33,18,74,.25);min-width:0;max-width:340px}
-.modecard small{display:block;font-weight:800;color:var(--pink);font-size:13px;letter-spacing:.3px}
-.modecard b{display:block;font-family:var(--display);font-size:28px;font-weight:400;line-height:1.15}
-.modecard p{margin:2px 0 0;font-size:13.5px;color:var(--ink-2);font-weight:600}
-.modes{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
-.modes button{font-family:var(--body);font-weight:800;font-size:12.5px;padding:5px 10px;border-radius:999px;background:#efeaff;color:var(--ink-2)}
-.modes button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
-.modes button[disabled]{opacity:.45;cursor:default}
-.play{font-size:44px;padding:10px 46px 14px;border-radius:26px;background:var(--sun);box-shadow:0 8px 0 var(--sun-d),0 14px 18px rgba(0,0,0,.2);display:flex;align-items:center;gap:12px;transition:transform .08s}
-.play:active{transform:translateY(5px);box-shadow:0 3px 0 var(--sun-d)}
-.play svg.i{width:38px;height:38px}
-.panel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,calc(100% - 32px));background:var(--paper);border-radius:26px;padding:22px;box-shadow:0 10px 0 rgba(33,18,74,.25);text-align:center}
+.tabs{display:flex;gap:4px;background:var(--paper);padding:5px;border-radius:20px;box-shadow:0 5px 0 rgba(33,18,74,.25)}
+.tab{display:flex;align-items:center;gap:7px;padding:7px 16px 6px;border-radius:15px;background:transparent;color:var(--ink-2);font-size:20px;white-space:nowrap}
+.tab svg.i{width:22px;height:22px}
+.tab[aria-selected="true"]{background:var(--sun);color:var(--ink);box-shadow:inset 0 -4px 0 var(--sun-d)}
+.stats{display:flex;gap:8px;align-items:center}
+.view{position:relative;min-height:0;pointer-events:none}
+.view > *{pointer-events:auto}
+/* play view */
+.side{position:absolute;inset-inline-start:0;top:0;display:grid;gap:10px;width:min(300px,42vw)}
+.card2{background:var(--paper);border-radius:22px;padding:12px 14px;box-shadow:0 6px 0 rgba(33,18,74,.22)}
+.who{display:flex;align-items:center;gap:12px}
+.lvl{width:54px;height:54px;flex:none;border-radius:16px;background:var(--pink);color:var(--paper);display:grid;place-items:center;font-family:var(--display);font-size:26px;line-height:1;box-shadow:inset 0 -5px 0 var(--pink-d)}
+.lvl small{display:block;font-family:var(--body);font-size:10px;font-weight:800;margin-bottom:-6px}
+.who b{font-family:var(--display);font-weight:400;font-size:24px;display:block;line-height:1.1}
+.xp{height:12px;border-radius:999px;background:#ece6ff;overflow:hidden;margin-top:4px}
+.xp i{display:block;height:100%;background:linear-gradient(90deg,var(--mint),#7cf2c8);border-radius:999px}
+.who .sub{font-size:12px;font-weight:700;color:var(--ink-2)}
+.card2 h3{margin:0 0 6px;font-family:var(--display);font-weight:400;font-size:22px;display:flex;justify-content:space-between;align-items:center}
+.card2 h3 small{font-family:var(--body);font-size:11.5px;font-weight:800;color:var(--pink)}
+.chal{display:grid;gap:7px}
+.chal div{display:grid;grid-template-columns:1fr auto;gap:2px 8px;font-size:13px;font-weight:700;align-items:center}
+.chal .bar{grid-column:1/-1;height:8px;border-radius:999px;background:#ece6ff;overflow:hidden}
+.chal .bar i{display:block;height:100%;background:var(--sun);border-radius:999px}
+.chal .rew{display:flex;align-items:center;gap:3px;color:var(--sun-d);font-weight:800}
+.chal .done{color:var(--mint-d)}
+.chal svg.i{width:15px;height:15px}
+.go{position:absolute;inset-inline-end:0;bottom:0;display:grid;gap:10px;justify-items:stretch;width:min(320px,46vw)}
+.modebtn{display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:start;background:var(--ink);color:var(--paper);border-radius:20px;padding:10px 16px;box-shadow:0 6px 0 rgba(0,0,0,.3)}
+.modebtn small{display:block;font-family:var(--body);font-weight:800;font-size:12px;color:var(--sun)}
+.modebtn b{display:block;font-weight:400;font-size:24px;line-height:1.15}
+.modebtn .chev{font-size:13px;font-family:var(--body);font-weight:800;background:rgba(255,255,255,.15);border-radius:999px;padding:3px 10px}
+.play{font-size:50px;padding:6px 20px 12px;border-radius:26px;background:var(--sun);box-shadow:0 9px 0 var(--sun-d),0 16px 22px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;gap:14px;transition:transform .08s;animation:pulse 2.2s ease-in-out infinite}
+.play:active{transform:translateY(6px);box-shadow:0 3px 0 var(--sun-d)}
+.play svg.i{width:40px;height:40px}
+@keyframes pulse{0%,100%{scale:1}50%{scale:1.035}}
+.modes{position:absolute;inset-inline-end:0;bottom:calc(100% + 10px);width:100%;background:var(--paper);border-radius:20px;padding:8px;display:grid;gap:4px;box-shadow:0 8px 0 rgba(33,18,74,.22)}
+.modes button{display:flex;justify-content:space-between;align-items:center;font-family:var(--body);font-weight:800;font-size:15px;padding:9px 12px;border-radius:13px;background:transparent;color:var(--ink);text-align:start}
+.modes button[aria-pressed="true"]{background:#efeaff}
+.modes button[disabled]{opacity:.5;cursor:default}
+.modes button span{font-size:11px;color:var(--pink);font-weight:800}
+/* locker / shop panel */
+.locker{position:absolute;inset-inline-start:0;top:0;bottom:0;width:min(400px,46vw);background:var(--paper);border-radius:24px;box-shadow:0 8px 0 rgba(33,18,74,.22);display:grid;grid-template-rows:auto auto 1fr auto;overflow:hidden}
+.locker header{padding:12px 16px 8px;background:repeating-linear-gradient(-45deg,var(--pink) 0 14px,#ff6aab 14px 28px);color:var(--paper)}
+.locker header h2{margin:0;font-family:var(--display);font-weight:400;font-size:30px;line-height:1.1;text-shadow:0 3px 0 var(--pink-d)}
+.locker header p{margin:0;font-size:12.5px;font-weight:700;opacity:.95}
+.cats{display:flex;gap:6px;padding:10px 12px 4px;overflow-x:auto;scrollbar-width:none}
+.cats button{font-family:var(--body);font-weight:800;font-size:13.5px;padding:6px 12px;border-radius:999px;background:#efeaff;color:var(--ink-2);white-space:nowrap}
+.cats button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px;padding:8px 12px 12px;overflow-y:auto;align-content:start;touch-action:pan-y}
+.item{position:relative;display:grid;justify-items:center;gap:2px;padding:6px 6px 8px;border-radius:18px;background:#f4f1ff;font-family:var(--body);font-weight:800;font-size:12.5px;color:var(--ink);box-shadow:inset 0 -4px 0 #e0d8ff;border:3px solid transparent}
+.item img{width:100%;aspect-ratio:1;max-width:100%;border-radius:12px;background:radial-gradient(circle at 50% 40%,#fff,#dff1ff)}
+.item.on{border-color:var(--mint);background:#e6fff5}
+.item.sel{border-color:var(--pink)}
+.item .tag{display:inline-flex;align-items:center;gap:3px;font-size:12px;border-radius:999px;padding:1px 8px;background:var(--sun);color:var(--ink)}
+.item .tag.own{background:transparent;color:var(--ink-2)}
+.item .tag.on{background:var(--mint);color:var(--ink)}
+.item .tag svg.i{width:13px;height:13px}
+.buybar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border-top:2px solid #efeaff;font-weight:800}
+.buybar .btn{font-size:20px;padding:5px 16px 7px}
+.btn[disabled]{opacity:.5}
+.panel{position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);width:min(420px,calc(100% - 8px));background:var(--paper);border-radius:26px;padding:22px;box-shadow:0 10px 0 rgba(33,18,74,.25);text-align:center}
 .panel h2{font-family:var(--display);font-weight:400;font-size:34px;margin:0 0 4px;color:var(--ink)}
 .panel p{margin:0 0 12px;font-weight:600;color:var(--ink-2);line-height:1.6}
 .panel .chip{display:inline-block;background:var(--pink);color:var(--paper);border-radius:999px;padding:3px 12px;font-weight:800;font-size:13px}
-
 /* ---------- HUD ---------- */
 #hud{display:flex;flex-direction:column;justify-content:space-between}
 #hud .row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
@@ -101,14 +143,19 @@ svg.i{width:1.3em;height:1.3em;display:block;flex:none}
 .btn.alt{background:#ece6ff;box-shadow:0 6px 0 #c4b8f0}
 .btn:active{transform:translateY(4px);box-shadow:0 2px 0 var(--sun-d)}
 .btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-@media (max-width:600px){
-  .tab{min-width:56px;padding:6px 8px 4px;font-size:14px}
-  .tab svg.i{width:22px;height:22px}
-  .play{font-size:36px;padding:8px 34px 12px}
-  .modecard b{font-size:23px}
-  #menu .bottom{flex-direction:column;align-items:stretch}
-  #menu .bottom .play{justify-content:center}
-  .modecard{max-width:none}
+@media (max-width:760px){
+  #menu .top{flex-wrap:wrap}
+  #menu .brand{font-size:28px}
+  .tabs{order:3;width:100%;justify-content:space-between}
+  .tab{flex:1;justify-content:center;flex-direction:column;gap:1px;padding:6px 4px 5px;font-size:15px}
+  .side{width:min(220px,58vw)}
+  .side .card2{padding:9px 11px}
+  .who b{font-size:19px} .lvl{width:44px;height:44px;font-size:21px}
+  .chalcard{display:none}
+  .go{width:100%}
+  .play{font-size:40px}
+  .locker{inset:auto 0 0 0;top:auto;width:auto;height:min(54vh,460px)}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:8px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -146,9 +193,9 @@ svg.i{width:1.3em;height:1.3em;display:block;flex:none}
     <div class="brand">BOLT <span>DASH</span></div>
     <nav class="tabs" role="tablist">
       <button class="tab" role="tab" data-tab="play" aria-selected="true"><svg class="i"><use href="#i-play"/></svg>العب</button>
-      <button class="tab" role="tab" data-tab="build" aria-selected="false"><svg class="i"><use href="#i-build"/></svg>ابني</button>
       <button class="tab" role="tab" data-tab="wardrobe" aria-selected="false"><svg class="i"><use href="#i-hanger"/></svg>الخزانة</button>
       <button class="tab" role="tab" data-tab="shop" aria-selected="false"><svg class="i"><use href="#i-bag"/></svg>الشوب</button>
+      <button class="tab" role="tab" data-tab="build" aria-selected="false"><svg class="i"><use href="#i-build"/></svg>ابني</button>
     </nav>
     <div class="stats">
       <div class="pill"><span class="dot"><svg class="i"><use href="#i-coin"/></svg></span><span id="mCoins">0</span></div>
@@ -157,23 +204,46 @@ svg.i{width:1.3em;height:1.3em;display:block;flex:none}
     </div>
   </div>
 
-  <div id="tabPanel" class="panel" hidden></div>
-
-  <div class="bottom" id="playBottom">
-    <div class="modecard">
-      <small>المود المختار</small>
-      <b id="modeName">سباق العقبات</b>
-      <p id="modeDesc">٨ لاعبين · أول ٦ يوصلوا للعلم يتأهلوا</p>
-      <div class="modes" id="modes">
-        <button aria-pressed="true" data-mode="race">سباق العقبات</button>
-        <button disabled>الأرض بتقع</button>
-        <button disabled>جمع النجوم</button>
-        <button disabled>تفادي المدافع</button>
-        <button disabled>القمة</button>
-        <button disabled><svg class="i" style="display:inline;width:14px;height:14px;vertical-align:-2px"><use href="#i-friends"/></svg> مع أصحابك</button>
+  <div class="view" id="vPlay">
+    <div class="side">
+      <div class="card2 who">
+        <div class="lvl"><div><small>مستوى</small><span id="pLvl">1</span></div></div>
+        <div style="flex:1;min-width:0">
+          <b>Bolt</b>
+          <div class="sub" id="pXpTxt">0 / 100 خبرة</div>
+          <div class="xp"><i id="pXp" style="width:0"></i></div>
+        </div>
+      </div>
+      <div class="card2 chalcard">
+        <h3>تحديات النهارده <small id="chalReset"></small></h3>
+        <div class="chal" id="chal"></div>
       </div>
     </div>
-    <button class="play" id="playBtn"><svg class="i"><use href="#i-play"/></svg>العب</button>
+    <div class="go">
+      <div class="modes" id="modes" hidden>
+        <button aria-pressed="true" data-mode="race">سباق العقبات</button>
+        <button disabled>الأرض بتقع <span>قريباً</span></button>
+        <button disabled>جمع النجوم <span>قريباً</span></button>
+        <button disabled>تفادي المدافع <span>قريباً</span></button>
+        <button disabled>القمة <span>قريباً</span></button>
+        <button disabled>مع أصحابك <span>قريباً</span></button>
+      </div>
+      <button class="modebtn" id="modeBtn"><div><small>المود</small><b id="modeName">سباق العقبات</b></div><span class="chev">غيّر</span></button>
+      <button class="play" id="playBtn"><svg class="i"><use href="#i-play"/></svg>العب</button>
+    </div>
+  </div>
+
+  <div class="view" id="vLocker" hidden>
+    <div class="locker">
+      <header><h2 id="lkTitle">الخزانة</h2><p id="lkSub">اختار لونك والبس اللي يعجبك</p></header>
+      <div class="cats" id="cats"></div>
+      <div class="grid" id="grid"></div>
+      <div class="buybar" id="buybar" hidden><span id="buyName"></span><button class="btn" id="buyBtn">اشتري</button></div>
+    </div>
+  </div>
+
+  <div class="view" id="vBuild" hidden>
+    <div class="panel"><span class="chip">في التحديث الجاي</span><h2>مود البناء</h2><p>هتحط منصات ونطاطات ومناشير ومدافع على شبكة، وتجرب الماب بتاعك وتحفظه.</p></div>
   </div>
 </div>
 
@@ -225,6 +295,13 @@ svg.i{width:1.3em;height:1.3em;display:block;flex:none}
   </div>
 </div>
 
+<script>
+  // show load errors on the loading screen instead of hanging silently
+  window.__bdFail = function (msg) { var t = document.getElementById('loadtxt'); if (t) { t.textContent = 'حصلت مشكلة في التحميل: ' + msg; t.style.color = '#c42a6e'; } };
+  addEventListener('error', function (e) { if (!window.__boltdash) window.__bdFail((e.message || (e.target && (e.target.src || e.target.href)) || 'خطأ غير معروف')); }, true);
+  addEventListener('unhandledrejection', function (e) { if (!window.__boltdash) window.__bdFail(String(e.reason && e.reason.message || e.reason)); });
+  setTimeout(function () { if (!window.__boltdash) window.__bdFail('التحميل طوّل أكتر من اللازم. اعمل ريفريش.'); }, 45000);
+</script>
 <script type="importmap">
 {"imports":{
   "three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
