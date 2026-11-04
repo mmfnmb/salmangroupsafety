@@ -117,10 +117,18 @@ const M = {};
 async function loadAssets(onProgress) {
   const loader = new GLTFLoader();
   let done = 0;
-  await Promise.all(MODEL_NAMES.map((n) => new Promise((res, rej) => loader.load(`./models/${n}.glb`, (g) => {
-    g.scene.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
-    M[n] = g; done++; onProgress(done / MODEL_NAMES.length); res();
-  }, undefined, rej))));
+  const finish = (n, g) => { g.scene.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); M[n] = g; done++; onProgress(done / MODEL_NAMES.length); };
+  // hosts that can't serve .glb get one JSON bundle of base64 models instead
+  const bundleUrl = document.querySelector('meta[name="bolt-bundle"]')?.content;
+  if (bundleUrl) {
+    const bundle = await (await fetch(bundleUrl)).json();
+    await Promise.all(MODEL_NAMES.map((n) => {
+      const bin = Uint8Array.from(atob(bundle[n]), (c) => c.charCodeAt(0)).buffer;
+      return new Promise((res, rej) => loader.parse(bin, './', (g) => { finish(n, g); res(); }, rej));
+    }));
+    return;
+  }
+  await Promise.all(MODEL_NAMES.map((n) => new Promise((res, rej) => loader.load(`./models/${n}.glb`, (g) => { finish(n, g); res(); }, undefined, rej))));
 }
 function place(name, x, y, z, s = 1, ry = 0, parent = scene) {
   const o = M[name].animations.length ? SkeletonUtils.clone(M[name].scene) : M[name].scene.clone();
