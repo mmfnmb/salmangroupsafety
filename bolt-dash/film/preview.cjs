@@ -7,7 +7,7 @@ const srv = http.createServer((q, res) => { const f = path.join(root, decodeURIC
   const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   const p = await b.newPage({ viewport: { width: 960, height: 540 } });
   p.on('pageerror', (e) => console.log('ERR', e.message)); p.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') console.log(m.text().slice(0, 300)); });
-  await p.goto(`http://localhost:${srv.address().port}/film/ep.html?ep=${process.env.EP || '1'}`); await p.waitForFunction('window.ready || document.body.textContent.startsWith("ERR")', null, { timeout: 300000 });
+  await p.goto(`http://localhost:${srv.address().port}/film/ep.html?ep=${process.env.EP || '1'}&only=${process.env.ONLY || ''}`); await p.waitForFunction('window.ready || document.body.textContent.startsWith("ERR")', null, { timeout: 300000 });
   const err = await p.evaluate(() => document.body.textContent.startsWith('ERR') ? document.body.textContent : null); if (err) { console.log(err); process.exit(1); }
   console.log('total', await p.evaluate(() => window.F.total));
   const tmp = fs.mkdtempSync('/tmp/pv'); const want = new Set(secs.map((s) => Math.round(s * 24))); const last = Math.max(...want); const files = [];

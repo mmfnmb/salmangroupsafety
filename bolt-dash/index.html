@@ -156,6 +156,14 @@ html[dir=rtl] svg:has(use[href="#i-back"]){transform:scaleX(-1)}
 .rolec span{font-family:var(--body);font-weight:800;font-size:15px}
 .rolec:active{transform:translateY(3px);box-shadow:0 2px 0 #c4b8f0}
 .rwheel{display:grid;justify-items:center;gap:10px}.rwheel canvas{width:min(260px,70vw);height:auto}
+#subLine{position:fixed;left:50%;bottom:9vh;transform:translateX(-50%);max-width:min(860px,92vw);z-index:31;text-align:center;font:800 clamp(16px,2.6vw,24px)/1.35 var(--body);color:#fff;text-shadow:0 2px 0 #000,0 0 6px #000;pointer-events:none}
+#subLine b{color:#ffd23f;font-weight:900}
+.eps{display:grid;gap:10px}
+.epc{display:flex;gap:12px;align-items:center;text-align:start;background:var(--lav);border-radius:18px;padding:10px 12px;font-family:var(--body)}
+.epc .n{flex:none;width:54px;height:54px;border-radius:14px;background:var(--grape);color:var(--paper);display:grid;place-items:center;font:400 22px var(--display)}
+.epc b{display:block;font:400 22px var(--display)}
+.epc span{font-weight:800;font-size:13px;color:var(--ink-2)}
+.epc[disabled]{opacity:.55}
 .cgrid{position:absolute;inset:4px 0 0;display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:14px;align-items:start;overflow:auto;padding:4px 4px 12px}
 .ccard{background:var(--paper);border-radius:26px;padding:18px;box-shadow:0 8px 0 rgba(33,18,74,.25);display:grid;gap:10px;justify-items:center;text-align:center}
 .ccard h2{font-family:var(--display);font-weight:400;font-size:32px;margin:0}
@@ -412,6 +420,7 @@ html[dir=rtl] svg:has(use[href="#i-back"]){transform:scaleX(-1)}
   <symbol id="i-yes" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="i-no" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></symbol>
   <symbol id="i-fist" viewBox="0 0 24 24"><rect x="5" y="7" width="14" height="10" rx="4" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M9 7v4M13 7v4M17 9v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-film" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5" stroke="currentColor" stroke-width="2.2" fill="none"/><path d="M10 9.2v5.6l4.8-2.8z" fill="currentColor"/></symbol>
   <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
 </svg>
 
@@ -440,6 +449,7 @@ html[dir=rtl] svg:has(use[href="#i-back"]){transform:scaleX(-1)}
       <div class="pill"><span class="dot"><svg class="i"><use href="#i-coin"/></svg></span><span id="mCoins">0</span></div>
       <div class="pill"><span class="dot pk"><svg class="i"><use href="#i-crown"/></svg></span><span id="mWins">0</span></div>
       <div class="topbtns">
+        <button class="iconbtn" id="mMovie" aria-label="Movie"><svg class="i"><use href="#i-film"/></svg></button>
         <button class="iconbtn" id="mWheel" aria-label="Lucky Wheel"><svg class="i"><use href="#i-wheel"/></svg><span class="badge" id="wheelBadge" hidden></span></button>
         <button class="iconbtn" id="mCode" aria-label="Redeem code"><svg class="i"><use href="#i-gift"/></svg></button>
         <button class="iconbtn" id="mSet" aria-label="Settings"><svg class="i"><use href="#i-gear"/></svg></button>
@@ -552,7 +562,7 @@ html[dir=rtl] svg:has(use[href="#i-back"]){transform:scaleX(-1)}
 <div id="toast" hidden></div>
 
 <div id="ov" class="layer" hidden><div class="sheet"><header><h2 id="ovTitle"></h2><button id="ovClose" aria-label="Close">×</button></header><div class="body" id="ovBody"></div></div></div>
-<video id="introVid" playsinline hidden></video><button class="btn alt skipbtn" id="introSkip" hidden>Skip</button>
+<video id="introVid" playsinline hidden></video><div id="subLine" hidden></div><button class="btn alt skipbtn" id="introSkip" hidden>Skip</button>
 <div id="pause" class="layer veil" hidden>
   <div class="card"><h2>Paused</h2><div class="btns"><button class="btn" id="pResume">Resume</button><button class="btn alt" id="pQuit">Menu</button></div></div>
 </div>

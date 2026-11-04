@@ -580,6 +580,33 @@ $('buyBtn').addEventListener('click', () => {
 
 // ---------------------------------------------------------------- show / round flow
 // intro film: plays once on first open (and from settings); the video lives next to the page
+// the series: episodes play in a row; one that isn't out yet shows "Coming soon"
+const EPISODES = [
+  { id: 's1e1', title: t('Episode 1: The Beginning'), season: 1, src: './media/s1e1.mp4', subs: './media/s1e1.subs.json' },
+  { id: 's1e2', title: t('Episode 2'), season: 1, soon: true },
+];
+function openMovies() {
+  $('ovTitle').textContent = t('Bolt Dash: the series');
+  $('ovBody').innerHTML = `<p style="margin:0;font-weight:700;color:var(--ink-2)">${t('Season 1: the Party Games League')}</p><div class="eps">${EPISODES.map((e, i) => `<button class="epc" data-ep="${i}" ${e.soon ? 'disabled' : ''}><span class="n">${i + 1}</span><span><b>${e.title}</b><span>${e.soon ? t('Coming soon') : t('Season {n}', { n: e.season })}</span></span></button>`).join('')}</div>`;
+  show('ov', true);
+  $('ovBody').querySelectorAll('[data-ep]').forEach((b) => b.addEventListener('click', () => { sfx.click(); closeOv(); playEpisode(+b.dataset.ep); }));
+}
+async function playEpisode(i) {
+  const e = EPISODES[i]; if (!e || e.soon) { toast(t('Coming soon')); return; }
+  const v = $('introVid'); let subs = [];
+  try { subs = await (await fetch(e.subs)).json(); } catch { subs = []; }
+  const stop = () => { v.pause(); v.ontimeupdate = null; show('introVid', false); show('introSkip', false); show('subLine', false); if (flow.state === 'intro') flow.state = flow.prevState || 'menu'; };
+  const next = () => { stop(); if (EPISODES[i + 1] && !EPISODES[i + 1].soon) playEpisode(i + 1); else toast(t('Next episode: coming soon'), 2.5); };
+  v.src = e.src; v.muted = save.muted; v.onended = next; v.onerror = () => { stop(); toast(t('Coming soon')); };
+  v.ontimeupdate = () => {
+    const s = subs.find((x) => v.currentTime >= x.start && v.currentTime < (x.end ?? 1e9));
+    if (s) { $('subLine').innerHTML = `<b>${t(s.who)}:</b> ${t(s.text)}`; show('subLine', true); } else show('subLine', false);
+  };
+  flow.prevState = flow.state; flow.state = 'intro'; show('introVid', true); show('introSkip', true);
+  $('introSkip').onclick = stop;
+  v.play().catch(() => { v.muted = true; v.play().catch(stop); });
+}
+$('mMovie').addEventListener('click', () => { sfx.click(); openMovies(); });
 function playIntro(force) {
   if (!force && store.get('introSeen', false)) return;
   const v = $('introVid'), src = document.querySelector('meta[name="bolt-intro"]')?.content || './media/intro.mp4';
