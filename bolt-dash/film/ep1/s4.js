@@ -22,7 +22,7 @@ export function shots(A) {
   // 4. Gold, from below: he likes what he hears
   shot(5, () => { pose(); G.play('Yes', 0.8); }, (t) => { camTo(V(0.9, 1.1, -8.4), V(0, 2.4, TZ), 99); if (t > 1.2) say('gold', 'A league... with a crown.'); });
   // 5. the three followers, trembling
-  shot(5, () => { pose(); }, (t, dt, T) => { tremble(T); frameGroup(F, { side: -1, h: 1.0, dist: 0.9, look: 0.9, k: 99 }); });
+  shot(5, () => { pose(); }, (t, dt, T) => { tremble(T); const k = ease(t / 5); camTo(V(lerp(-2.5, 2.5, k), 1.1, -9.4), V(0, 0.9, -5.4), 99); });
   // 6. he gets up and walks down the steps towards them; low tracking shot
   shot(6, () => { pose(); }, (t) => {
     const k = ease(t / 6), z = lerp(TZ, -7.2, k), y = z < -9.6 ? TY : Math.max(0, TY - (z + 9.6) * 0.45);
@@ -32,7 +32,7 @@ export function shots(A) {
   // 7. over the followers' shoulders
   shot(5, () => { pose(); G.at(0, 0, -7.2, 0); }, (t, dt, T) => { tremble(T); overShoulder(A.slate, G, { side: 1, k: 99 }); say('gold', 'You three.'); });
   // 8. he points at them: low close-up
-  shot(5, () => { pose(); G.at(0, 0, -7.2, 0).play('Punch', 0.6); }, (t, dt, T) => { tremble(T); camTo(V(0.8, 0.6, -5.5), V(0, 1.4, -7.2), 99); if (t > 0.8) say('gold', 'You are my team.'); });
+  shot(5, () => { pose(); G.at(0, 0, -7.2, 0).play('Punch', 0.6); }, (t, dt, T) => { tremble(T); camTo(V(1.6, 0.55, -4.2), V(0, 1.2, -7.2), 99); if (t > 0.8) say('gold', 'You are my team.'); });
   // 9. quick close-ups of each follower
   const fc = (i) => shot(2.2, () => { pose(); G.at(0, 0, -7.2, 0); }, (t, dt, T) => { tremble(T, 1.6); closeUp(F[i], { ang: 0.4 * (i - 1), dist: 1.6, h: 1.1, k: 99 }); say(null); });
   fc(0); fc(1); fc(2);
@@ -41,7 +41,7 @@ export function shots(A) {
   // 11. silence, a slow push on his face
   shot(3, () => { pose(); G.at(0, 0, -7.2, 0); }, (t) => { const k = ease(t / 3); closeUp(G, { ang: 0.2, dist: lerp(1.7, 1.15, k), h: 1.05, k: 99 }); say(null); });
   // 12. they gulp and shrink
-  shot(4, () => { pose(); G.at(0, 0, -7.2, 0); F.forEach((f) => f.play('Duck', 0.8)); }, (t, dt, T) => { tremble(T, 2); frameGroup(F, { side: -1, h: 0.8, dist: 0.75, look: 0.7, k: 99 }); });
+  shot(4, () => { pose(); G.show(false); F.forEach((f) => f.play('Duck', 0.8)); }, (t, dt, T) => { tremble(T, 2); camTo(V(0, 0.9, -8.6), V(0, 0.7, -5.4), 99); });
   // 13. he turns back to his throne laughing; wide from low
   shot(6, () => { pose(); G.at(0, 0, -7.2, PI); }, (t) => {
     const k = ease(t / 5), z = lerp(-7.2, TZ, k), y = z < -9.6 ? TY : Math.max(0, TY - (z + 9.6) * 0.45);

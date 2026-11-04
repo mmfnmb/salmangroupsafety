@@ -62,7 +62,10 @@ SETS.stadium = (root) => {
     }
   }
   instanced('z/Step_Large', steps, root, false);
-  const make = (spots, key) => { const g = crowd(spots, colorsA); root.add(g); const up = g.userData.update; g.userData.update = (T) => up(T, STAD.cheer[key]); return g; };
+  // the crowd's per-fan colour multiplies the material colour, so make the body materials white (eyes stay dark)
+  const srcNames = []; M.Character.scene.traverse((o) => { if (o.isMesh) srcNames.push((Array.isArray(o.material) ? o.material : [o.material]).map((m) => m.name)); });
+  const whiten = (g) => g.children.forEach((im, i) => (Array.isArray(im.material) ? im.material : [im.material]).forEach((m, k) => { const n = srcNames[i]?.[k] || ''; if (!/Eye|Black/.test(n)) m.color.setHex(0xffffff); }));
+  const make = (spots, key) => { const g = crowd(spots, colorsA); whiten(g); root.add(g); const up = g.userData.update; g.userData.update = (T) => up(T, STAD.cheer[key]); return g; };
   make(fansL, 'left'); make(fansR, 'right'); make(fansE, 'ends');
 
   // rim: columns with flags and banners

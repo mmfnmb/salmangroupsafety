@@ -3,10 +3,10 @@ import { SETS, put, THREE } from '../lib.js';
 
 // one shared set of gold finishes, slightly different for floor / walls / trim
 const GOLD = {
-  floor: new THREE.MeshStandardMaterial({ color: 0xc99a10, metalness: 1, roughness: 0.32, emissive: 0x2a1a00, emissiveIntensity: 0.6 }),
-  wall: new THREE.MeshStandardMaterial({ color: 0xf0c22a, metalness: 1, roughness: 0.22, emissive: 0x3a2600, emissiveIntensity: 0.55 }),
-  trim: new THREE.MeshStandardMaterial({ color: 0xffd94a, metalness: 1, roughness: 0.14, emissive: 0x5a3a00, emissiveIntensity: 0.5 }),
-  dark: new THREE.MeshStandardMaterial({ color: 0x8a6206, metalness: 1, roughness: 0.3, emissive: 0x1a1000, emissiveIntensity: 0.5 }),
+  floor: new THREE.MeshStandardMaterial({ color: 0x9a7410, metalness: 0.75, roughness: 0.45 }),
+  wall: new THREE.MeshStandardMaterial({ color: 0xc8981e, metalness: 0.7, roughness: 0.42 }),
+  trim: new THREE.MeshStandardMaterial({ color: 0xe0b030, metalness: 0.85, roughness: 0.3 }),
+  dark: new THREE.MeshStandardMaterial({ color: 0x6a4a08, metalness: 0.7, roughness: 0.45 }),
 };
 const gild = (o, m) => { o.traverse((x) => { if (x.isMesh) { x.material = m; x.castShadow = true; x.receiveShadow = true; } }); return o; };
 const g = (root, name, x, y, z, s, ry, m = GOLD.wall) => gild(put(root, name, x, y, z, s, ry), m);
@@ -59,6 +59,4 @@ SETS.palace = (root) => {
   }
   g(root, 'f/mini-floor', 0, 0, 34, [60, 1, 30], 0, GOLD.floor);
   for (let x = -24; x <= 24; x += 8) g(root, 'f/mini-tree', x, 0, 30 + (Math.abs(x) % 16 ? 4 : 0), 4, 0, GOLD.trim);
-  // warm glow inside the hall
-  const lamp = new THREE.PointLight(0xffd27a, 40, 40, 1.4); lamp.position.set(0, 9, -4); root.add(lamp);
 };
