@@ -166,8 +166,9 @@ export class Runner {
       // zones: speed pads and conveyors
       let zx = 0, zz = 0;
       if (L) for (const zn of L.zones) {
-        if (Math.abs(b.position.x - zn.x) > zn.hx || Math.abs(b.position.z - zn.z) > zn.hz || Math.abs(b.position.y - zn.y) > (zn.type === 'wind' ? 4 : 1.2)) continue;
+        if (Math.abs(b.position.x - zn.x) > zn.hx || Math.abs(b.position.z - zn.z) > zn.hz || Math.abs(b.position.y - zn.y) > (zn.type === 'wind' || zn.type === 'moon' ? 4 : 1.2)) continue;
         if (zn.type === 'wind') { zx += zn.dir.x * zn.speed; zz += zn.dir.z * zn.speed; continue; }
+        if (zn.type === 'moon') { if (!this.grounded) v.y += (v.y < 0 ? 19 : 13) * dt; if (Math.random() < dt * 6) puffs.emit({ pos: V(b.position.x, b.position.y + 0.2, b.position.z), vel: V(0, 0.4, 0), life: 0.5, size: 0.1, drag: 2, color: 0xcfd8ff }); continue; }
         if (!this.grounded) continue;
         if (zn.type === 'speed') { if (this.boostT < 0.2 && this.isPlayer) sfx.tick(); this.boostT = 1.0; this.boostDir = zn.dir; }
         else if (zn.type === 'conveyor') { zx += zn.dir.x * zn.speed; zz += zn.dir.z * zn.speed; }

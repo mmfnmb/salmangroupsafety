@@ -49,19 +49,38 @@ const sprint = {
     L.pickup(5, 0, -140);
     // springs up to the finish deck
     for (const x of [-5, 0, 5]) L.spring(x, -160, 0, 21);
-    L.floor(-W, W, -164, -200, 3); L.rails(-W, W, -164, -200, 3);
+    L.floor(-W, W, -164, -172, 3); L.rails(-W, W, -164, -172, 3);
     L.box(0, 1.5, -164.3, W, 1.5, 0.3);
     L.checkpoint(0, 3, -168);
-    for (const x of [-4.5, 0, 4.5]) L.speedPad(x, -176, 3, 0, -1);
-    L.finishGate(-188, 3, 16);
+    // NEW: trapdoor bridge over a pit; flashing tiles swing open under your feet
+    L.trapBridge(-W, W, -172, -196, 3); L.rails(-W, W, -172, -196, 3);
+    L.floor(-W, W, -196, -252, 3); L.rails(-W, W, -196, -252, 3);
+    L.checkpoint(0, 3, -199);
+    // NEW: hole in the wall; a brick wall slides at you, run through the gap
+    L.holeWall(0, -232, 3, W, { travel: 26, speed: 6, gap: 2 });
+    L.checkpoint(0, 3, -248);
+    // NEW: piston pit; platforms pump up and down over the drop
+    L.pistonPit(-W, W, -252, -278, 3);
+    L.floor(-W, W, -278, -320, 3); L.rails(-W, W, -278, -320, 3); L.checkpoint(0, 3, -281);
+    // NEW: crushers slam down from above, then two spinning laser bars to jump over (the second spins the other way, faster)
+    L.crushers(-288, 3);
+    L.laserBar(0, -298, 3, 14, false, 1.5);
+    L.laserBar(0, -311, 3, 14, false, -2.1);
+    // NEW: moon zone; weak gravity over shrinking pads
+    L.checkpoint(0, 3, -318);
+    L.moonZone(0, -333, 3, W, 13);
+    L.shrinkPads([[-4.5, -324], [0, -327], [4.5, -324], [-3, -332], [3, -333], [-5, -339], [0, -340], [5, -339]], 3);
+    L.floor(-W, W, -345, -372, 3); L.rails(-W, W, -345, -372, 3); L.checkpoint(0, 3, -348);
+    for (const x of [-4.5, 0, 4.5]) L.speedPad(x, -352, 3, 0, -1);
+    L.finishGate(-362, 3, 16);
     // coins
     for (let z = -4; z > -36; z -= 3.2) L.coin(Math.sin(z * 0.3) * 4, 1, z);
     for (let z = -84; z > -118; z -= 3) L.coin(((z / 3) | 0) % 2 ? 5.5 : -5.5, 1, z);
     for (let z = -126; z > -158; z -= 4) L.coin(Math.cos(z * 0.2) * 4, 1, z);
     for (const x of [-5, 0, 5]) L.coin(x, 6, -71);
-    L.scenery(20, -220, 30);
-    this.finishZ = -188; this.len = 14 + 188;
-    this.fly = [[0, 26, -205, 0, 3, -170], [14, 18, -120, 0, 0, -100], [-12, 14, -40, 0, 0, -20], [0, 6, 18, 0, 1, 4]];
+    L.scenery(20, -390, 30);
+    this.finishZ = -362; this.len = 14 + 362;
+    this.fly = [[0, 30, -380, 0, 3, -330], [0, 22, -260, 0, 3, -300], [14, 18, -120, 0, 0, -100], [-12, 14, -40, 0, 0, -20], [0, 6, 18, 0, 1, 4]];
   },
   spawn(i) { const row = Math.floor(i / 5), col = i % 5; return { x: -6 + col * 3 + (row % 2) * 1.5, y: 0, z: 10 - row * 2.2 }; },
   target(r) {
@@ -77,6 +96,7 @@ const sprint = {
     if (p.z < -54 && p.z > -64.5 && p.y < 1) x = [-5, 0, 5].reduce((a, c) => (Math.abs(c - p.x) < Math.abs(a - p.x) ? c : a));
     if (p.z < -150 && p.z > -161 && p.y < 2) { x = [-5, 0, 5].reduce((a, c) => (Math.abs(c - p.x) < Math.abs(a - p.x) ? c : a)); noJump = true; }
     for (const s of L.saws) { const dz = p.z - s.z, sx = s.body.position.x; if (dz > 0 && dz < 5 && Math.abs(sx - p.x) < 3) x = sx > 0 ? -5.5 : 5.5; }
+    for (const w of L.walls || []) { const wz = w.z0 + w.pos; if (p.z > wz - 1 && p.z < wz + 14 && p.y > 2) x = w.holeX(); }
     for (const s of L.spikes) { const dz = p.z - s.z, sx = s.body.position.x, half = s.wide ? 3.8 : 2; if (dz > 0 && dz < 4.5 && Math.abs(sx - p.x) < half) { x = sx > 0 ? -6 : 6; if (dz < 2) return { x: p.x, z: p.z + 2, noJump: true }; } }
     return { x, z: p.z - 9, push, noJump, jumpNow };
   },
@@ -120,6 +140,7 @@ const race = {
     L.pendulum(0, -48, 0, 'z/Obstacle_Hammer', { dir: 'x', amp: 1.0, sp: 1.5, ph: 0 });
     L.pendulum(0, -57, 0, 'z/Obstacle_Hammer', { dir: 'x', amp: 1.0, sp: 1.5, ph: PI });
     L.fan(-7, -66, 0, 1, 0, 6, 10, 7);
+    L.fan(7, -11, 0, -1, 0, 5, 13, 7); L.fan(-87, -40, 0, 1, 0, 5, 13, 7); L.fan(-30, 1, 0, 0, 1, 5, 13, 6);
     L.speedPad(-2, -70, 0, -1, 0);
     L.pickup(0, 0, -23);
     // the long straight going left
@@ -132,6 +153,8 @@ const race = {
     L.pickup(-66, 0, -70);
     // going back up
     L.conveyor(-84, -76, -44, -56, 0, 0, -1, 5);
+    // NEW: spiked boulders roll down the lane toward you
+    L.boulders(-80, -2, -62, 0, 7, 1.4);
     L.saw(-80, -34, 0, 4.6, 1.8, 0, 'x'); L.saw(-80, -26, 0, 4.6, 2.1, 2, 'x');
     for (const x of [-84, -80, -76]) L.trap(x, -16, 0);
     L.pole(-80, -5, 0, 6.6, -1.4);

@@ -242,6 +242,116 @@ export class Level {
     this.onExplode?.(c, r);
   }
 
+  // ---- new obstacles
+  // HOLE IN THE WALL: a brick wall slides toward you with one gap in it; it sinks, comes back with the gap somewhere else
+  holeWall(x, z, y = 0, half = 8, opts = {}) {
+    const n = Math.round(half), segs = [], travel = opts.travel ?? 16, speed = opts.speed ?? 5;
+    for (let i = 0; i < n; i++) {
+      const sx = x - half + 1 + i * 2, o = this.model('Cube_Bricks', sx, y + 1.6, z, [0.98, 1.6, 0.35]); // the brick cube is centred on its origin
+      const body = this.kin(new CANNON.Box(new CANNON.Vec3(1, 1.6, 0.35)), sx, y + 1.6, z, 'mover');
+      segs.push({ o, body, x: sx });
+    }
+    const w = { segs, x, half, z0: z, phase: 'rise', t: 0, pos: 0, hole: 0, gap: opts.gap ?? 2 }; (this.walls ||= []).push(w);
+    w.holeX = () => x - half + 1 + (w.hole + (w.gap - 1) / 2) * 2;
+    const pickHole = () => { w.hole = Math.floor(Math.random() * (n - w.gap + 1)); segs.forEach((g, i) => { const open = i >= w.hole && i < w.hole + w.gap; g.open = open; g.o.visible = !open; }); };
+    pickHole();
+    this.updaters.push((dt) => {
+      w.t += dt; let yy = 0, vz = 0;
+      if (w.phase === 'rise') { yy = -3.4 * (1 - Math.min(1, w.t / 0.8)); if (w.t > 1.4) { w.phase = 'move'; w.t = 0; } }
+      else if (w.phase === 'move') { w.pos = Math.min(travel, w.pos + speed * dt); vz = speed; if (w.pos >= travel) { w.phase = 'sink'; w.t = 0; } }
+      else if (w.phase === 'sink') { yy = -3.4 * Math.min(1, w.t / 0.6); if (w.t > 0.8) { w.phase = 'rise'; w.t = 0; w.pos = 0; pickHole(); } }
+      for (const g of segs) {
+        const solid = !g.open && yy > -2.5;
+        g.body.collisionResponse = solid; g.body.position.set(g.x, y + 1.6 + yy, w.z0 + w.pos); g.body.velocity.set(0, 0, solid ? vz : 0);
+        g.o.position.set(g.x, y + 1.6 + yy, w.z0 + w.pos);
+      }
+    });
+  }
+  // TRAPDOOR BRIDGE: a bridge of tiles over a pit; groups of tiles flash red and swing open under your feet
+  trapBridge(x0, x1, z0, z1, y = 0) {
+    const cells = []; for (let x = x0 + 1; x < x1; x += 2) for (let z = z0 - 1; z > z1; z -= 2) cells.push({ x, z });
+    const { meshes } = this.inst('Cube_Grass_Single', cells.map((c) => ({ x: c.x, y: y - 1, z: c.z })));
+    meshes.forEach((m) => { m.frustumCulled = false; });
+    const base = [0x7fb8ff, 0xffd23f, 0xff7ab8, 0x5fe0b0], col = new THREE.Color(), mtx = new THREE.Matrix4(), tmp = new THREE.Matrix4(), q = new THREE.Quaternion();
+    const tiles = cells.map((c, i) => ({ ...c, i, body: this.box(c.x, y - 1, c.z, 1, 1, 1), state: 0, t: 0, ang: 0, c: base[(Math.round(c.x / 2) + Math.round(c.z / 2)) & 3] }));
+    const paint = (tl, hex) => { col.setHex(hex); for (const m of meshes) { m.setColorAt(tl.i, col); m.instanceColor.needsUpdate = true; } };
+    const pose = (tl) => { q.setFromEuler(new THREE.Euler(tl.ang, 0, 0)); mtx.compose(V(tl.x, y - 1 - Math.sin(tl.ang) * 1, tl.z - (1 - Math.cos(tl.ang)) * 1), q, V(1, 1, 1)); for (const m of meshes) { m.setMatrixAt(tl.i, tmp.copy(mtx).multiply(m.userData.local)); m.instanceMatrix.needsUpdate = true; } };
+    tiles.forEach((tl) => paint(tl, tl.c));
+    let next = 1.5, wave = 0;
+    this.updaters.push((dt) => {
+      next -= dt;
+      if (next <= 0) { // a new pattern: alternating stripes, a checkerboard or a random third of the bridge
+        next = 2.6; wave++; const kind = wave % 3;
+        for (const tl of tiles) { const a = Math.round(tl.x / 2), b = Math.round(tl.z / 2); const pick_ = kind === 0 ? (b + wave) % 2 === 0 : kind === 1 ? (a + b + wave) % 2 === 0 : Math.random() < 0.35; if (pick_ && tl.state === 0) { tl.state = 1; tl.t = 0.9; } }
+      }
+      for (const tl of tiles) {
+        if (tl.state === 1) { tl.t -= dt; paint(tl, tl.t % 0.2 < 0.1 ? 0xff3030 : tl.c); if (tl.t <= 0) { tl.state = 2; tl.t = 1.5; tl.body.collisionResponse = false; } }
+        else if (tl.state === 2) { tl.ang = Math.min(1.5, tl.ang + dt * 6); pose(tl); tl.t -= dt; if (tl.t <= 0) { tl.state = 3; } }
+        else if (tl.state === 3) { tl.ang = Math.max(0, tl.ang - dt * 4); pose(tl); if (tl.ang === 0) { tl.state = 0; tl.body.collisionResponse = true; paint(tl, tl.c); } }
+      }
+    });
+  }
+  // PISTON PIT: platforms that pump up and down over a pit, out of step with each other
+  pistonPit(x0, x1, z0, z1, y = 0) {
+    let k = 0;
+    for (let z = z0 - 2.5; z > z1 + 1; z -= 4.2) for (let x = x0 + 2.5; x < x1 - 1; x += 4.4) { this.mover(x, y, z, { w: 3.6, d: 3.4, axis: 'y', amp: 1.6, sp: 1.4 + (k % 3) * 0.25, ph: k * 1.3 }); k++; }
+  }
+  // CRUSHERS: spiked blocks that slam down from above and slowly rise again
+  crushers(z, y = 0, xs = [-4.5, 0, 4.5]) {
+    xs.forEach((x, i) => {
+      const o = this.model('k/spike-block', x, y + 3, z, 2.2, PI);
+      const body = this.kin(new CANNON.Box(new CANNON.Vec3(0.95, 0.9, 0.95)), x, y + 4, z, 'spike');
+      let t = i * 0.9;
+      this.updaters.push((dt) => {
+        t += dt; const c = t % 2.7, h = c < 1.4 ? 3 : c < 1.6 ? 3 - (c - 1.4) / 0.2 * 3 : c < 2.1 ? 0 : (c - 2.1) / 0.6 * 3;
+        o.position.y = y + h; body.position.set(x, y + h + 0.9, z); body.velocity.set(0, c >= 1.4 && c < 1.6 ? -15 : 0, 0);
+        if (c >= 1.6 && c < 1.65) fx.dust(V(x, y + 0.1, z), 3, 0xffffff, 2);
+      });
+    });
+  }
+  // LASER BAR: a long glowing bar spinning around a post, low (jump it) or at head height (dive under it)
+  laserBar(x, z, y = 0, len = 7, high = false, w = 1.6) {
+    const h = high ? 1.25 : 0.45;
+    this.model('Hazard_Cylinder', x, y, z, 0.6);
+    const bar = this.model('z/Obstacle_Pole_Large', x, y + h, z, [0.55, 0.55, len / 9.08], 0);
+    bar.traverse((m) => { if (m.isMesh) { m.material = m.material.clone(); m.material.color.setHex(0xff2244); m.material.emissive = new THREE.Color(0xff0022); m.material.emissiveIntensity = 1.2; } });
+    const body = this.kin(new CANNON.Box(new CANNON.Vec3(0.15, 0.15, len / 2)), x, y + h, z, 'saw');
+    let a = 0;
+    this.updaters.push((dt) => { a += w * dt; bar.rotation.y = a; body.quaternion.setFromEuler(0, a, 0); body.angularVelocity.set(0, w, 0); });
+  }
+  // MOON ZONE: weak gravity, you float up high and drift down slowly
+  moonZone(x, z, y, hx, hz) {
+    this.zones.push({ type: 'moon', x, y: y + 3, z, hx, hz });
+    for (let k = 0; k < 6; k++) this.model('Star', x + rand(-hx, hx), y + rand(2, 6), z + rand(-hz, hz), 0.35, rand(0, 6));
+  }
+  // SHRINKING PADS: little platforms over the void that shrink away and pop back
+  shrinkPads(list, y = 0) {
+    list.forEach(([x, z], i) => {
+      const o = this.model('Cube_Grass_Single', x, y - 0.5, z, [1.2, 0.5, 1.2]); const body = this.box(x, y - 0.5, z, 1.2, 0.5, 1.2);
+      let t = i * 0.8;
+      this.updaters.push((dt) => {
+        t += dt; const c = t % 4.4, s = c < 2.2 ? 1 : c < 3.2 ? 1 - (c - 2.2) : c < 3.8 ? 0 : (c - 3.8) / 0.6;
+        o.scale.set(1.2 * Math.max(0.001, s), 0.5, 1.2 * Math.max(0.001, s)); body.collisionResponse = s > 0.35;
+      });
+    });
+  }
+  // ROLLING BOULDERS: big spiked boulders roll down the lane toward you, one lane at a time
+  boulders(x, zFrom, zTo, y = 0, half = 6, every = 1.6) {
+    const pool = [];
+    for (let i = 0; i < 6; i++) { const o = this.model('SpikyBall', x, -50, zFrom, 1.6); const body = this.kin(new CANNON.Sphere(1.1), x, -50, zFrom, 'spiky'); pool.push({ o, body, on: false, x: 0, z: 0 }); }
+    let t = 0;
+    const dir = Math.sign(zTo - zFrom), speed = 9;
+    this.updaters.push((dt) => {
+      t -= dt;
+      if (t <= 0) { t = every; const b = pool.find((p) => !p.on); if (b) { b.on = true; b.x = x + (Math.floor(Math.random() * 3) - 1) * (half * 0.6); b.z = zFrom; } }
+      for (const b of pool) {
+        if (!b.on) continue; b.z += dir * speed * dt;
+        b.body.position.set(b.x, y + 1.1, b.z); b.body.velocity.set(0, 0, dir * speed); b.o.position.set(b.x, y + 1.1, b.z); b.o.rotation.x += dir * speed * dt / 1.1;
+        if (Math.random() < dt * 8) puffs.emit({ pos: V(b.x, y + 0.1, b.z), vel: V(rand(-1, 1), rand(0.5, 1.5), 0), life: 0.4, size: 0.18, drag: 2, color: 0xd9c8a0 });
+        if ((zTo - b.z) * dir <= 0) { b.on = false; b.body.position.set(x, -50, zFrom); b.o.position.set(x, -50, zFrom); }
+      }
+    });
+  }
   update(dt, t, active) {
     for (const m of this.mixers) m.update(dt);
     for (const f of this.updaters) f(dt, t);
