@@ -203,3 +203,48 @@ const training = {
   progress(r) { return clamp((14 - r.pos.z) / this.len, 0, 1); },
 };
 MODES.training = training; MODE_LIST.unshift(training);
+
+// ======================================================================= LAVA RISING
+// three spiral stairs of rock platforms; the lava keeps rising, faster and faster. Climb or burn.
+const rising = {
+  id: 'rising', name: t('Lava Rising'), short: t('Lava'), kind: 'survival', icon: 'crown',
+  desc: t('The lava keeps rising. Jump up the rocks as fast as you can. Last ones standing win'), weapons: t('Push + Grab'),
+  build() {
+    const L = new Level({ killY: -3 }); G.level = L;
+    this.steps = [];
+    for (let arm = 0; arm < 3; arm++) for (let k = 0; k < 34; k++) {
+      const a = arm * (PI * 2 / 3) + k * 0.36, rr = 9 + Math.sin(k * 0.7) * 1.2, x = Math.cos(a) * rr, z = Math.sin(a) * rr, y = k * 1.15;
+      L.model('RockPlatforms_Medium', x, y - 2.6, z, 0.9, rand(0, 6)); L.box(x, y - 0.5, z, 2, 0.5, 2);
+      this.steps.push({ arm, k, x, y, z });
+    }
+    const top = 34 * 1.15; L.model('RockPlatforms_Medium', 0, top - 2.6, 0, 1.6, 0); L.box(0, top - 0.5, 0, 3.6, 0.5, 3.6); L.model('acc/Crown', 0, top + 0.6, 0, 1.4);
+    // the lava sea: a field of glowing cubes that moves up
+    const cells = []; for (let x = -24; x <= 24; x += 2) for (let z = -24; z <= 24; z += 2) cells.push({ x, y: -1, z });
+    const { group, meshes } = L.inst('Cube_Grass_Single', cells, false);
+    const hot = [0xff4a12, 0xff7a1a, 0xd7263d]; meshes.forEach((m) => { m.frustumCulled = false; for (let i = 0; i < cells.length; i++) m.setColorAt(i, new THREE.Color(hot[i % 3])); m.instanceColor.needsUpdate = true; m.material = m.material.clone(); m.material.emissive = new THREE.Color(0xff3300); m.material.emissiveIntensity = 0.6; });
+    this.lava = group; this.lavaY = -4; this.time = 100;
+    L.scenery(60, -60, 40, { towers: [[-40, -20, 3], [45, 10, 3.4]] });
+    this.fly = [[0, 50, 30, 0, 20, 0], [20, 12, 10, 0, 6, 0], [0, 6, 16, 0, 2, 0]];
+  },
+  spawn(i, n) { const s = this.steps[(i % 3) * 34 + Math.floor(i / 3)]; return { x: s.x, y: s.y + 0.4, z: s.z, facing: 0 }; },
+  update(dt) {
+    this.time -= dt;
+    const speed = 0.32 + (100 - this.time) * 0.006; this.lavaY += speed * dt;
+    this.lava.position.y = this.lavaY + Math.sin(G.t * 2) * 0.08; G.level.killY = this.lavaY + 0.6;
+    if (Math.random() < dt * 6) fx.burst(V(rand(-14, 14), this.lavaY + 0.3, rand(-14, 14)), 0xff7a1a, 4, 3);
+    if (this.time <= 0) G.endRound();
+  },
+  onFall(r) { fx.burst(V(r.pos.x, this.lavaY + 0.5, r.pos.z), 0xff4a12, 14, 5); G.eliminate(r); },
+  target(r, dt) {
+    const p = r.pos, ai = r.ai;
+    // the step I'm on (closest below my feet), then aim at the next one up my stair
+    let cur = null, bd = 1e9;
+    for (const s of this.steps) { const d = Math.hypot(s.x - p.x, s.z - p.z) + Math.abs(s.y - p.y) * 2; if (d < bd) { bd = d; cur = s; } }
+    if (!cur) return null;
+    if (cur.k >= 33) return { x: 0, z: 0, jump: Math.hypot(p.x, p.z) < 6 };
+    const nx = this.steps.find((s) => s.arm === cur.arm && s.k === cur.k + 1);
+    const d = Math.hypot(nx.x - p.x, nx.z - p.z);
+    return { x: nx.x, z: nx.z, near: 0.3, jump: d < 3.2 && nx.y > p.y - 0.2, noJump: d >= 3.2 };
+  },
+};
+MODES.rising = rising; MODE_LIST.push(rising);

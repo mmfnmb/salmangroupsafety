@@ -445,3 +445,5 @@ Push the dummy: orange button. Hold the purple button to grab him
 Speed arrows throw you forward. Reach the flag!
 Training
 Learn every move step by step. The tips show your keys or your phone buttons
+Lava Rising
+The lava keeps rising. Jump up the rocks as fast as you can. Last ones standing win

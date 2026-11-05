@@ -445,3 +445,5 @@ Pousse le mannequin : bouton orange. Maintiens le bouton violet pour l'attraper
 Les flèches de vitesse te propulsent. Atteins le drapeau !
 Entraînement
 Apprends chaque geste pas à pas. Les conseils montrent tes touches ou les boutons du téléphone
+Lave montante
+La lave monte sans arrêt. Saute sur les rochers le plus vite possible. Les derniers debout gagnent

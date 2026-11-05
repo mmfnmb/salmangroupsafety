@@ -445,3 +445,5 @@ Empuja al muñeco: botón naranja. Mantén el botón morado para agarrarlo
 Las flechas de velocidad te lanzan. ¡Llega a la bandera!
 Entrenamiento
 Aprende cada movimiento paso a paso. Los consejos muestran tus teclas o los botones del móvil
+Lava creciente
+La lava no deja de subir. Salta por las rocas lo más rápido que puedas. Ganan los últimos en pie
