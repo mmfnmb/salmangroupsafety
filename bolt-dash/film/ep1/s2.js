@@ -32,7 +32,7 @@ export function shots(A) {
     // 1. the two of them on the sofa, Yellow flicking channels
     { dur: 5, set: 'house_int', time: 'interior', setup() { hideAll(); sit(B, BX); sit(Y, YX); say('Yellow', 'Cooking show... cooking show...'); }, upd(t) {
       tv('flip', t); inHand(Y, remote());
-      const k = ease(t / 5); fixed([lerp(3.4, 2.6, k), lerp(2.6, 2.2, k), lerp(-4.6, -4.0, k)], [0, 0.8, -0.2]);
+      const k = ease(t / 5); fixed([lerp(2.6, 1.8, k), lerp(1.7, 1.5, k), lerp(-3.9, -3.3, k)], [0, 0.95, -0.8]);
     } },
     // 2. Yellow finds the cooking channel
     { dur: 4, set: 'house_int', time: 'interior', setup() { sit(B, BX); sit(Y, YX); say('Yellow', 'Ooh! Chef Waffle is on!'); }, upd(t) {
@@ -69,14 +69,14 @@ export function shots(A) {
       B.move(t, 0.6, 2.2, [-0.35, -0.05], [onCircle(-0.7).x, onCircle(-0.7).z], { run: true, speed: 1.6 });
       if (t > 2.2) runCircle(B, -0.7 + (t - 2.2) * 1.1);
       inHand(Y, remote());
-      fixed([0.3, 5.2, 3.6], [0.3, 0.2, -2.6]);
+      fixed([3.6, 2.9, -0.6], [0.3, 0.6, -3.0]);
     } },
     // 7. round and round the coffee table
     { dur: 6, set: 'house_int', time: 'interior', setup() { hideAll(); B.show(); Y.show(); say('Blue', 'Come back here!'); }, upd(t) {
       const th = 0.4 + (3.6 + t) * 1.1; runCircle(Y, th); runCircle(B, th - 1.2 + t * 0.06);
       inHand(Y, remote());
       if (t > 3.2) say('Yellow', 'Hahaha! Too slow!');
-      orbit([C.x, 0, C.z], t, { r: 6.2, h: 4.2, speed: 0.18, from: 0.6 });
+      orbit([C.x, 0, C.z], t, { r: 4.4, h: 2.6, speed: 0.18, from: 2.2 });
     } },
     // 8. Blue dives... Yellow sidesteps, Blue slides along the rug
     { dur: 5, set: 'house_int', time: 'interior', setup() { hideAll(); B.show(); Y.show(); this.d = null; say('Blue', 'HYAAAA!'); }, upd(t) {
@@ -88,7 +88,7 @@ export function shots(A) {
       const bx = bc.x + dx / l * (k * 4.2), bz = bc.z + dz / l * (k * 4.2);
       stand(B); B.at(bx, Math.sin(k * PI) * 0.7, bz, Math.atan2(dx, dz)); B.play(t < 1.3 ? 'Jump_Idle' : 'HitReact', 1);
       if (t < 1.3) B.m.rotation.x = 0.9 * Math.sin(k * PI); else { B.m.rotation.x = PI / 2 * 0.85; B.at(bx, 0.25, bz); if (!this.d) { this.d = 1; fx.dust(V(bx, 0.1, bz), 16, 0xf3ecdf, 3); } }
-      fixed([C.x + 0.5, 4.6, 2.6], [C.x, 0.4, C.z]);
+      fixed([C.x + 3.4, 2.4, C.z + 2.4], [C.x + 0.3, 0.5, C.z]);
     } },
     // 9. ...and the remote goes flying
     { dur: 4, set: 'house_int', time: 'interior', setup() { hideAll(); B.show(); Y.show(); say('Yellow', 'Oops!'); }, upd(t) {
@@ -97,7 +97,7 @@ export function shots(A) {
       const o = remote(), k = clamp(t / 2.4, 0, 1), from = V(yc.x + 1.2, 0.9, yc.z), to = V(0.1, SEAT.y + 0.32, SEAT.z);
       o.position.set(lerp(from.x, to.x, k), lerp(from.y, to.y, k) + Math.sin(k * PI) * 2.0, lerp(from.z, to.z, k)); o.rotation.set(k * 9, k * 6, 0); o.visible = true;
       if (t > 1.2) say('Blue', 'NOOO!');
-      fixed([-3.0, 2.3, -3.8], [lerp(from.x, to.x, 0.5), 1.4, lerp(from.z, to.z, 0.5)]);
+      fixed([3.8, 2.2, -4.6], [lerp(from.x, to.x, 0.5), 1.2, lerp(from.z, to.z, 0.5)]);
     } },
     // 10. it lands on the cushion... click
     { dur: 3, set: 'house_int', time: 'interior', setup() { hideAll(); say(null); this.f = 0; }, upd(t) {

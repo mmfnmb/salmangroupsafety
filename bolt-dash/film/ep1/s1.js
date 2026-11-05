@@ -26,8 +26,8 @@ function burntToast() {
 }
 // grey smoke rising out of the toaster; amount 0..1
 function smoke(amount, dt) {
-  const n = Math.round(amount * 3);
-  for (let i = 0; i < n; i++) if (Math.random() < 0.7) puffs.emit({ pos: V(TOASTER.x + (Math.random() - 0.5) * 0.4, TOASTER.y, TOASTER.z + (Math.random() - 0.5) * 0.3), vel: V((Math.random() - 0.5) * 1.2, 0.8 + Math.random() * 1.2, 1 + Math.random() * 1.5 * amount), life: 1.6 + amount * 1.6, size: 0.35 + amount * 0.6, drag: 0.8, g: -0.6, color: [0x6b6b70, 0x8a8a90, 0x4e4e54][i % 3], shrink: false });
+  const n = 1 + Math.round(amount * 4);
+  for (let i = 0; i < n; i++) puffs.emit({ pos: V(TOASTER.x + (Math.random() - 0.5) * 0.3, TOASTER.y + 0.1, TOASTER.z + (Math.random() - 0.5) * 0.25), vel: V((Math.random() - 0.5) * 0.5, 0.7 + Math.random() * 0.7, 0.3 + Math.random() * 0.6 * amount), life: 1.4 + amount * 1.4, size: 0.07 + Math.random() * 0.08 + amount * 0.06, drag: 1.2, g: -0.35, color: [0xd9d9de, 0xc4c4cc, 0xeeeef2][i % 3], shrink: true });
 }
 // soft "z" puffs over the sleeper
 function zzz(t) { if (every(t, 0.9)) puffs.emit({ pos: V(BED.x + 0.1, BED.y + 0.5, BED.z - 1.2), vel: V(0.15, 0.6, 0.1), life: 1.6, size: 0.18, drag: 0.3, g: -0.2, color: 0xffffff }); }
@@ -40,7 +40,7 @@ export function shots(A) {
     // 2. closer: the front of the house, the sun up over the sea
     { dur: 4, set: 'house_ext', time: 'morning', setup() { hideAll(); }, upd(t) { const k = ease(t / 4); fixed([lerp(5, 2, k), lerp(4, 3.4, k), lerp(16, 11, k)], [0, 3, -4]); } },
     // 3. inside: Blue fast asleep
-    { dur: 5, set: 'house_int', time: 'interior', setup() { hideAll(); lie(B); B.show().play('Idle'); last = -1; }, upd(t) { zzz(t); const k = ease(t / 5); fixed([lerp(-3.4, -4.6, k), lerp(3.4, 2.8, k), lerp(1.2, -0.6, k)], [-7.4, 1.2, -5.6]); } },
+    { dur: 5, set: 'house_int', time: 'interior', setup() { hideAll(); lie(B); B.show().play('Idle'); last = -1; }, upd(t) { zzz(t); const k = ease(t / 5); fixed([lerp(-4.9, -5.6, k), lerp(2.6, 2.3, k), lerp(-2.2, -3.0, k)], [-7.6, 1.2, -5.4]); } },
     // 4. the radio alarm goes off
     { dur: 4, set: 'house_int', time: 'interior', setup() { hideAll(); lie(B); B.show(); last = -1; say('Radio', 'BEEP! BEEP! BEEP!'); }, upd(t) {
       if (every(t, 0.28)) fx.burst(RADIO.clone(), [0xffd23f, 0xff4f9a][Math.floor(t / 0.28) % 2], 8, 2.5, 0.8);
@@ -110,11 +110,11 @@ export function shots(A) {
     { dur: 6, set: 'house_int', time: 'interior', setup() { hideAll(); stand(B); stand(Y); B.show(); Y.show(); say('Blue', 'Okay. My turn. TV!'); }, upd(t) {
       B.move(t, 0.4, 4.2, [TABLE.x - 0.6, TABLE.z - 1.0], [1.6, -1.6], { run: true, speed: 1.3 });
       Y.move(t, 1.2, 5.5, [TABLE.x + 0.4, TABLE.z + 1.0], [2.8, -1.0], { run: false });
-      frameGroup([B, Y], { side: 1, h: 2.0, dist: 0.9, look: 0.8 });
+      frameGroup([B, Y], { side: -1, h: 2.2, dist: 0.9, look: 0.8 });
     } },
     // 15. outside: smoke still drifting out of the kitchen window
     { dur: 5, set: 'house_ext', time: 'morning', setup() { hideAll(); }, upd(t, dt) {
-      if (Math.random() < 0.6) puffs.emit({ pos: V(3.4 + Math.random() * 0.6, 4.4, -1.0), vel: V(0.6, 1.2 + Math.random(), 0.5), life: 2.4, size: 0.6 + Math.random() * 0.5, drag: 0.6, g: -0.5, color: [0x6b6b70, 0x8a8a90][Math.random() < 0.5 ? 0 : 1], shrink: false });
+      if (Math.random() < 0.6) for (let i = 0; i < 2; i++) puffs.emit({ pos: V(3.4 + Math.random() * 0.6, 4.4, -1.0), vel: V(0.5, 0.9 + Math.random() * 0.6, 0.4), life: 2.6, size: 0.18 + Math.random() * 0.14, drag: 0.9, g: -0.3, color: [0xd9d9de, 0xc4c4cc][i], shrink: true });
       const k = ease(t / 5); fixed([lerp(8, 10, k), lerp(5, 6, k), lerp(14, 16, k)], [1.5, 3.4, -3]);
     } },
   ];
