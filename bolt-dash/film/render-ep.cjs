@@ -11,9 +11,10 @@ const srv = http.createServer((q, res) => { const f = path.join(root, decodeURIC
   const total = Math.round(await p.evaluate(() => window.F.total) * 24), to = +(process.argv[4] || total);
   console.log('frames', total);
   for (let n = 0; n < to; n++) {
-    const want = n >= from && (n - from) % step === 0;
+    const fn = path.join(out, String(n).padStart(5, '0') + '.jpg');
+    const want = n >= from && (n - from) % step === 0 && !fs.existsSync(fn); // resume: skip frames already on disk
     const url = await p.evaluate(([n, w]) => window.F.frame(n, w), [n, want]);
-    if (want) fs.writeFileSync(path.join(out, String(n).padStart(5, '0') + '.jpg'), Buffer.from(url.split(',')[1], 'base64'));
+    if (want) fs.writeFileSync(fn, Buffer.from(url.split(',')[1], 'base64'));
     if (n % 60 === 0) console.log('frame', n, new Date().toISOString().slice(11, 19));
   }
   await b.close(); srv.close();

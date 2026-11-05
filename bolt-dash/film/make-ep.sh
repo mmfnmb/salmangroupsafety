@@ -4,9 +4,9 @@
 # Usage: EP=1 OUT=s1e1 film/make-ep.sh      (progress in /tmp/make-ep.log; finished marker /tmp/make-ep.done)
 set -e
 cd "$(dirname "$0")/.."
-EP=${EP:-1}; OUT=${OUT:-s1e1}; W=${W:-4}; T=$(mktemp -d /tmp/ep.XXXX)
+EP=${EP:-1}; OUT=${OUT:-s1e1}; W=${W:-4}; T=${T:-/tmp/ep-$OUT}; mkdir -p $T/frames  # same folder every run, so a restart resumes
 rm -f /tmp/make-ep.done; exec > >(tee -a /tmp/make-ep.log) 2>&1
-echo "[$(date +%T)] dump"; EP=$EP node film/dump-ep.cjs $T/ep
+echo "[$(date +%T)] dump"; [ -f $T/ep.meta.json ] || EP=$EP node film/dump-ep.cjs $T/ep
 FR=$(node -e "console.log(require('$T/ep.meta.json').frames)"); TOTAL=$(node -e "console.log(require('$T/ep.meta.json').total)")
 node -e "require('fs').writeFileSync('$T/cues.json', JSON.stringify(require('$T/ep.meta.json').cues))"
 echo "[$(date +%T)] render $FR frames with $W workers"
