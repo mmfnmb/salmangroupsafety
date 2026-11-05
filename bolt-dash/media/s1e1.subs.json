@@ -1,0 +1,698 @@
+[
+ {
+  "who": "Radio",
+  "text": "BEEP! BEEP! BEEP!",
+  "start": 21,
+  "end": 25
+ },
+ {
+  "who": "Blue",
+  "text": "Five more minutes...",
+  "start": 25,
+  "end": 29
+ },
+ {
+  "who": "Blue",
+  "text": "WHOAAA!",
+  "start": 29,
+  "end": 33
+ },
+ {
+  "who": "Yellow",
+  "text": "Breakfast is almost ready!",
+  "start": 33,
+  "end": 38
+ },
+ {
+  "who": "Yellow",
+  "text": "Uh oh...",
+  "start": 38,
+  "end": 43
+ },
+ {
+  "who": "Blue",
+  "text": "Is something BURNING?!",
+  "start": 43,
+  "end": 48
+ },
+ {
+  "who": "Yellow",
+  "text": "It's... extra crispy!",
+  "start": 48,
+  "end": 53
+ },
+ {
+  "who": "Blue",
+  "text": "Extra crispy. Again.",
+  "start": 53,
+  "end": 55.54
+ },
+ {
+  "who": "Yellow",
+  "text": "Hahaha!",
+  "start": 55.54,
+  "end": 58
+ },
+ {
+  "who": "Blue",
+  "text": "Mmm... charcoal.",
+  "start": 58,
+  "end": 61.04
+ },
+ {
+  "who": "Yellow",
+  "text": "Chef's special!",
+  "start": 61.04,
+  "end": 64
+ },
+ {
+  "who": "Yellow",
+  "text": "Best breakfast ever!",
+  "start": 64,
+  "end": 69
+ },
+ {
+  "who": "Blue",
+  "text": "Okay. My turn. TV!",
+  "start": 69,
+  "end": 75
+ },
+ {
+  "who": "Yellow",
+  "text": "Cooking show... cooking show...",
+  "start": 80,
+  "end": 85
+ },
+ {
+  "who": "Yellow",
+  "text": "Ooh! Chef Waffle is on!",
+  "start": 85,
+  "end": 89
+ },
+ {
+  "who": "Blue",
+  "text": "No way. The MATCH is on!",
+  "start": 89,
+  "end": 93
+ },
+ {
+  "who": "Yellow",
+  "text": "Finders keepers!",
+  "start": 93,
+  "end": 95.63
+ },
+ {
+  "who": "Blue",
+  "text": "Hand. It. Over.",
+  "start": 95.63,
+  "end": 98
+ },
+ {
+  "who": "Blue",
+  "text": "Give... me... that!",
+  "start": 98,
+  "end": 103
+ },
+ {
+  "who": "Yellow",
+  "text": "Catch me first!",
+  "start": 103,
+  "end": 108
+ },
+ {
+  "who": "Blue",
+  "text": "Come back here!",
+  "start": 108,
+  "end": 111.21
+ },
+ {
+  "who": "Yellow",
+  "text": "Hahaha! Too slow!",
+  "start": 111.21,
+  "end": 114
+ },
+ {
+  "who": "Blue",
+  "text": "HYAAAA!",
+  "start": 114,
+  "end": 119
+ },
+ {
+  "who": "Yellow",
+  "text": "Oops!",
+  "start": 119,
+  "end": 120.21
+ },
+ {
+  "who": "Blue",
+  "text": "NOOO!",
+  "start": 120.21,
+  "end": 123
+ },
+ {
+  "who": "TV",
+  "text": "BREAKING NEWS!",
+  "start": 126,
+  "end": 131
+ },
+ {
+  "who": "Blue",
+  "text": "Wait... what is this?",
+  "start": 131,
+  "end": 134.04
+ },
+ {
+  "who": "Yellow",
+  "text": "Turn it up! TURN IT UP!",
+  "start": 134.04,
+  "end": 137
+ },
+ {
+  "who": "TV",
+  "text": "This is huge, folks. Stay with us...",
+  "start": 137,
+  "end": 142
+ },
+ {
+  "who": "Blue",
+  "text": "...!",
+  "start": 144.54,
+  "end": 147
+ },
+ {
+  "who": "Blue",
+  "text": "Finally, the news!",
+  "start": 147,
+  "end": 149.63
+ },
+ {
+  "who": "Yellow",
+  "text": "Shh! Ads first.",
+  "start": 149.63,
+  "end": 152
+ },
+ {
+  "who": "Announcer",
+  "text": "Tired of losing?",
+  "start": 152,
+  "end": 154.21
+ },
+ {
+  "who": "Announcer",
+  "text": "Need something... STRONGER?",
+  "start": 154.21,
+  "end": 156.5
+ },
+ {
+  "who": "Announcer",
+  "text": "BONG! The FRYING PAN makes anyone dizzy!",
+  "start": 156.5,
+  "end": 160.5
+ },
+ {
+  "who": "Announcer",
+  "text": "Only 200 coins! Special price!",
+  "start": 160.5,
+  "end": 164.5
+ },
+ {
+  "who": "Announcer",
+  "text": "Side effects may include... stars.",
+  "start": 164.5,
+  "end": 168
+ },
+ {
+  "who": "Blue",
+  "text": "Ha! Poor guy.",
+  "start": 168,
+  "end": 170
+ },
+ {
+  "who": "Yellow",
+  "text": "I want one!",
+  "start": 170,
+  "end": 172
+ },
+ {
+  "who": "Announcer",
+  "text": "The BLACK HOLE.",
+  "start": 172,
+  "end": 177.5
+ },
+ {
+  "who": "Announcer",
+  "text": "The rarest character in the world.",
+  "start": 177.5,
+  "end": 182.5
+ },
+ {
+  "who": "Announcer",
+  "text": "Only in the Lucky Wheel... if you are lucky.",
+  "start": 182.5,
+  "end": 187
+ },
+ {
+  "who": "Yellow",
+  "text": "I... need... it.",
+  "start": 187,
+  "end": 192
+ },
+ {
+  "who": "Blue",
+  "text": "You can't even afford the pan!",
+  "start": 192,
+  "end": 196
+ },
+ {
+  "who": "Anchor",
+  "text": "Good evening. We have breaking news!",
+  "start": 196,
+  "end": 201.5
+ },
+ {
+  "who": "Anchor",
+  "text": "For the first time ever...",
+  "start": 201.5,
+  "end": 206.5
+ },
+ {
+  "who": "Anchor",
+  "text": "the PARTY GAMES LEAGUE!",
+  "start": 206.5,
+  "end": 212.5
+ },
+ {
+  "who": "Anchor",
+  "text": "Nine teams. Four players each. Eight games.",
+  "start": 212.5,
+  "end": 218.5
+ },
+ {
+  "who": "Anchor",
+  "text": "Obstacle Dash, Hex Drop, Golf, Volley, Puck, Bat Ball, The Summit... and the Arena!",
+  "start": 218.5,
+  "end": 224.5
+ },
+ {
+  "who": "Anchor",
+  "text": "And the champion takes the LEAGUE CROWN!",
+  "start": 224.5,
+  "end": 230.5
+ },
+ {
+  "who": "Anchor",
+  "text": "Team sign-ups open... TOMORROW!",
+  "start": 230.5,
+  "end": 235.5
+ },
+ {
+  "who": "Blue",
+  "text": "WE ARE IN!",
+  "start": 244.5,
+  "end": 248
+ },
+ {
+  "who": "Yellow",
+  "text": "LET'S GOOOO!",
+  "start": 248,
+  "end": 251.5
+ },
+ {
+  "who": "TV",
+  "text": "Nine teams. Eight games. One crown!",
+  "start": 264.5,
+  "end": 269.5
+ },
+ {
+  "who": "gold",
+  "text": "A league... with a crown.",
+  "start": 270.71,
+  "end": 274.5
+ },
+ {
+  "who": "gold",
+  "text": "You three.",
+  "start": 285.5,
+  "end": 290.5
+ },
+ {
+  "who": "gold",
+  "text": "You are my team.",
+  "start": 291.33,
+  "end": 295.5
+ },
+ {
+  "who": "gold",
+  "text": "If we lose...",
+  "start": 302.13,
+  "end": 307.13
+ },
+ {
+  "who": "gold",
+  "text": "Ha... ha ha ha!",
+  "start": 318.71,
+  "end": 320.13
+ },
+ {
+  "who": "yellow",
+  "text": "We need two more players.",
+  "start": 335.13,
+  "end": 338.13
+ },
+ {
+  "who": "blue",
+  "text": "Team Splashvolt! We are two.",
+  "start": 338.13,
+  "end": 341.13
+ },
+ {
+  "who": "ref",
+  "text": "You need four. Find them here.",
+  "start": 341.13,
+  "end": 344.13
+ },
+ {
+  "who": "blue",
+  "text": "Okay! Who wants to try?",
+  "start": 344.13,
+  "end": 348.13
+ },
+ {
+  "who": "candidate",
+  "text": "Wheee!",
+  "start": 348.13,
+  "end": 350.42
+ },
+ {
+  "who": "yellow",
+  "text": "Ouch.",
+  "start": 354.13,
+  "end": 357.13
+ },
+ {
+  "who": "candidate",
+  "text": "Here I gooo!",
+  "start": 359.13,
+  "end": 362.13
+ },
+ {
+  "who": "blue",
+  "text": "...Other way!",
+  "start": 362.13,
+  "end": 365.13
+ },
+ {
+  "who": "vio",
+  "text": "I... I timed the arm. Every few seconds.",
+  "start": 365.13,
+  "end": 369.13
+ },
+ {
+  "who": "yellow",
+  "text": "Clean! Every single jump!",
+  "start": 379.13,
+  "end": 383.13
+ },
+ {
+  "who": "minto",
+  "text": "My turn! Watch THIS!",
+  "start": 383.13,
+  "end": 387.13
+ },
+ {
+  "who": "minto",
+  "text": "TA-DAAA!",
+  "start": 394.42,
+  "end": 397.13
+ },
+ {
+  "who": "blue",
+  "text": "You're both in!",
+  "start": 397.13,
+  "end": 400.13
+ },
+ {
+  "who": "yellow",
+  "text": "Splashvolt is complete!",
+  "start": 400.13,
+  "end": 403.13
+ },
+ {
+  "who": "minto",
+  "text": "Who's that?",
+  "start": 405.71,
+  "end": 408.13
+ },
+ {
+  "who": "blue",
+  "text": "He's strong... really strong.",
+  "start": 424.13,
+  "end": 429.13
+ },
+ {
+  "who": null,
+  "text": "Good luck.",
+  "start": 429.13,
+  "end": 431.13
+ },
+ {
+  "who": "brown",
+  "text": "Good luck.",
+  "start": 431.13,
+  "end": 433.13
+ },
+ {
+  "who": null,
+  "text": "Good luck.",
+  "start": 433.13,
+  "end": 435.13
+ },
+ {
+  "who": "minto",
+  "text": "Pfff. We are stronger.",
+  "start": 435.13,
+  "end": 438.13
+ },
+ {
+  "who": "vio",
+  "text": "Statistically... no.",
+  "start": 438.13,
+  "end": 441.13
+ },
+ {
+  "who": "orange",
+  "text": "Team Flarix is ON FIRE!",
+  "start": 441.13,
+  "end": 446.13
+ },
+ {
+  "who": "red",
+  "text": "Faster! Are you SLEEPING?!",
+  "start": 446.13,
+  "end": 451.13
+ },
+ {
+  "who": "Announcer",
+  "text": "Welcome... to the first ever PARTY GAMES LEAGUE!",
+  "start": 451.13,
+  "end": 458.13
+ },
+ {
+  "who": "Announcer",
+  "text": "Nine teams. Eight games. One crown!",
+  "start": 458.13,
+  "end": 462.13
+ },
+ {
+  "who": "Crowd",
+  "text": "WOOOOOO!",
+  "start": 462.13,
+  "end": 465.13
+ },
+ {
+  "who": "Announcer",
+  "text": "From Azuria... SPLASHVOLT!",
+  "start": 465.13,
+  "end": 470.13
+ },
+ {
+  "who": "Blue",
+  "text": "Yellow! Look at all these people!",
+  "start": 470.13,
+  "end": 474.13
+ },
+ {
+  "who": "Yellow",
+  "text": "WE'RE GONNA WIN THIS! WOOHOO!",
+  "start": 474.13,
+  "end": 477.63
+ },
+ {
+  "who": "Announcer",
+  "text": "TIMBROK! Led by the quiet one... BROWN!",
+  "start": 477.63,
+  "end": 482.13
+ },
+ {
+  "who": "Brown",
+  "text": "...",
+  "start": 482.13,
+  "end": 485.13
+ },
+ {
+  "who": "Blue",
+  "text": "That's Brown... he's strong. Really strong.",
+  "start": 485.13,
+  "end": 489.13
+ },
+ {
+  "who": "Announcer",
+  "text": "The fire of FLARIX!",
+  "start": 489.13,
+  "end": 493.63
+ },
+ {
+  "who": "Red",
+  "text": "MOVE IT! FASTER! Show them who we are!",
+  "start": 493.63,
+  "end": 498.63
+ },
+ {
+  "who": "Announcer",
+  "text": "WOBBLZ!",
+  "start": 498.63,
+  "end": 501.21
+ },
+ {
+  "who": "Announcer",
+  "text": "The SNOOZIES... are they awake?",
+  "start": 501.21,
+  "end": 503.83
+ },
+ {
+  "who": "Announcer",
+  "text": "JELLYJAX!",
+  "start": 503.83,
+  "end": 506.42
+ },
+ {
+  "who": "Announcer",
+  "text": "And the little PEBBLINOS!",
+  "start": 506.42,
+  "end": 509.13
+ },
+ {
+  "who": "Announcer",
+  "text": "And finally... the last team...",
+  "start": 509.13,
+  "end": 513.13
+ },
+ {
+  "who": "Announcer",
+  "text": "Falling from the sky...!",
+  "start": 513.13,
+  "end": 517.13
+ },
+ {
+  "who": "Announcer",
+  "text": "...the golden one... AUREX!!",
+  "start": 517.13,
+  "end": 520.63
+ },
+ {
+  "who": "Gold",
+  "text": "You may now applaud.",
+  "start": 520.63,
+  "end": 524.13
+ },
+ {
+  "who": "Crowd",
+  "text": "AUREX! AUREX! AUREX!",
+  "start": 524.13,
+  "end": 527.63
+ },
+ {
+  "who": "Crowd",
+  "text": "BOOOOOOO!",
+  "start": 527.63,
+  "end": 531.13
+ },
+ {
+  "who": "Gold",
+  "text": "Wave to the crowd, Blue. It's the only time you'll ever be on top.",
+  "start": 531.13,
+  "end": 534.71
+ },
+ {
+  "who": "Yellow",
+  "text": "Ignore him. We'll talk on the field.",
+  "start": 534.71,
+  "end": 537.71
+ },
+ {
+  "who": "Announcer",
+  "text": "Eight games. Nine teams. Only ONE crown!",
+  "start": 537.71,
+  "end": 542.71
+ },
+ {
+  "who": "Announcer",
+  "text": "LET THE LEAGUE... BEGIN!",
+  "start": 542.71,
+  "end": 548.71
+ },
+ {
+  "who": "Yellow",
+  "text": "Tomorrow we sign up!",
+  "start": 548.71,
+  "end": 553.71
+ },
+ {
+  "who": "Blue",
+  "text": "Tomorrow... everything starts.",
+  "start": 553.71,
+  "end": 557.71
+ },
+ {
+  "who": "Anchor",
+  "text": "Our special guest tonight... GOLD!",
+  "start": 557.71,
+  "end": 562.71
+ },
+ {
+  "who": "Gold",
+  "text": "Ha! Thank you, thank you. I know.",
+  "start": 562.71,
+  "end": 567.21
+ },
+ {
+  "who": "Anchor",
+  "text": "So... which team scares you the most?",
+  "start": 567.21,
+  "end": 571.71
+ },
+ {
+  "who": "Gold",
+  "text": "Scared? ME?",
+  "start": 571.71,
+  "end": 576.21
+ },
+ {
+  "who": "Gold",
+  "text": "I'll tell you one thing...",
+  "start": 576.21,
+  "end": 579.21
+ },
+ {
+  "who": "Gold",
+  "text": "BLUE will finish LAST in the league.",
+  "start": 579.21,
+  "end": 583.21
+ },
+ {
+  "who": "Yellow",
+  "text": "...Blue?",
+  "start": 591.71,
+  "end": 595.21
+ }
+]

@@ -39,7 +39,7 @@ for (let ci = 0; ci < CUES.length; ci++) {
   }
 }
 // dialogue blips: a soft 'chirp' when a line starts (characters 'talk' without voices)
-for (const s of SUBS) { const n = 72 + (s.who.length * 3) % 7; for (let i = 0; i < Math.min(4, Math.ceil(s.text.length / 12)); i++) add(s.start + i * 0.13, 0.09, (x, k) => Math.sin(2 * Math.PI * hz(n + (i % 2) * 2) * x * (1 + k * 0.2)) * env(k, 0.05, 0.5), 0.08); }
+for (const s of SUBS) { if (!s.text) continue; const n = 72 + ((s.who || "").length * 3) % 7; for (let i = 0; i < Math.min(4, Math.ceil(s.text.length / 12)); i++) add(s.start + i * 0.13, 0.09, (x, k) => Math.sin(2 * Math.PI * hz(n + (i % 2) * 2) * x * (1 + k * 0.2)) * env(k, 0.05, 0.5), 0.08); }
 const buf = Buffer.alloc(44 + N * 2);
 buf.write('RIFF', 0); buf.writeUInt32LE(36 + N * 2, 4); buf.write('WAVE', 8); buf.write('fmt ', 12); buf.writeUInt32LE(16, 16); buf.writeUInt16LE(1, 20); buf.writeUInt16LE(1, 22);
 buf.writeUInt32LE(SR, 24); buf.writeUInt32LE(SR * 2, 28); buf.writeUInt16LE(2, 32); buf.writeUInt16LE(16, 34); buf.write('data', 36); buf.writeUInt32LE(N * 2, 40);

@@ -11,8 +11,8 @@ FR=$(node -e "console.log(require('$T/ep.meta.json').frames)"); TOTAL=$(node -e 
 node -e "require('fs').writeFileSync('$T/cues.json', JSON.stringify(require('$T/ep.meta.json').cues))"
 echo "[$(date +%T)] render $FR frames with $W workers"
 STEP=$(( (FR + W - 1) / W ))
-for ((i=0; i<W; i++)); do a=$((i*STEP)); b=$((a+STEP)); [ $b -gt $FR ] && b=$FR; EP=$EP node film/render-ep.cjs $T/frames $a $b 1 > $T/w$i.log 2>&1 & done
-wait
+for ((i=0; i<W; i++)); do a=$((i*STEP)); b=$((a+STEP)); [ $b -gt $FR ] && b=$FR; EP=$EP node film/render-ep.cjs $T/frames $a $b 1 > $T/w$i.log 2>&1 & PIDS="$PIDS $!"; done
+wait $PIDS  # only the workers (a bare wait would also wait for the log's tee forever)
 echo "[$(date +%T)] frames: $(ls $T/frames | wc -l)"
 node film/audio-ep.cjs $T/cues.json $T/ep.subs.json $TOTAL $T/audio.wav
 ffmpeg -v error -y -framerate 24 -i $T/frames/%05d.jpg -i $T/audio.wav -c:v libx264 -preset slow -crf 24 -pix_fmt yuv420p -movflags +faststart -c:a aac -b:a 112k -shortest media/$OUT.mp4

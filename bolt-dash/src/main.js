@@ -582,7 +582,7 @@ $('buyBtn').addEventListener('click', () => {
 // intro film: plays once on first open (and from settings); the video lives next to the page
 // the series: episodes play in a row; one that isn't out yet shows "Coming soon"
 const EPISODES = [
-  { id: 's1e1', title: t('Episode 1: The Beginning'), season: 1, src: './media/s1e1.mp4', subs: './media/s1e1.subs.json' },
+  { id: 's1e1', title: t('Episode 1: The Beginning'), season: 1, parts: [0, 1, 2, 3, 4, 5].map((k) => `./media/s1e1_${k}.mp4`), partLen: 120, subs: './media/s1e1.subs.json' },
   { id: 's1e2', title: t('Episode 2'), season: 1, soon: true },
 ];
 function openMovies() {
@@ -597,14 +597,18 @@ async function playEpisode(i) {
   try { subs = await (await fetch(e.subs)).json(); } catch { subs = []; }
   const stop = () => { v.pause(); v.ontimeupdate = null; show('introVid', false); show('introSkip', false); show('subLine', false); if (flow.state === 'intro') flow.state = flow.prevState || 'menu'; };
   const next = () => { stop(); if (EPISODES[i + 1] && !EPISODES[i + 1].soon) playEpisode(i + 1); else toast(t('Next episode: coming soon'), 2.5); };
-  v.src = e.src; v.muted = save.muted; v.onended = next; v.onerror = () => { stop(); toast(t('Coming soon')); };
+  // the episode is stored in parts (each file must stay small); they play back to back
+  const parts = e.parts || [e.src]; let part = 0;
+  const load = () => { v.src = parts[part]; v.play().catch(() => { v.muted = true; v.play().catch(stop); }); };
+  v.muted = save.muted; v.onended = () => { if (++part < parts.length) load(); else next(); }; v.onerror = () => { stop(); toast(t('Coming soon')); };
   v.ontimeupdate = () => {
-    const s = subs.find((x) => v.currentTime >= x.start && v.currentTime < (x.end ?? 1e9));
+    const now = part * (e.partLen || 0) + v.currentTime;
+    const s = subs.find((x) => now >= x.start && now < (x.end ?? 1e9));
     if (s) { $('subLine').innerHTML = `<b>${t(s.who)}:</b> ${t(s.text)}`; show('subLine', true); } else show('subLine', false);
   };
   flow.prevState = flow.state; flow.state = 'intro'; show('introVid', true); show('introSkip', true);
   $('introSkip').onclick = stop;
-  v.play().catch(() => { v.muted = true; v.play().catch(stop); });
+  load();
 }
 $('mMovie').addEventListener('click', () => { sfx.click(); openMovies(); });
 function playIntro(force) {
