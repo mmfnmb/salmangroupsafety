@@ -257,20 +257,22 @@ const paint = {
   desc: t('Four teams. Every tile you step on takes your colour. The team with the most tiles when time runs out wins'), weapons: t('Push + Grab'),
   build() {
     const L = new Level({ killY: -10 }); G.level = L;
-    const cells = [], N = 8;
+    const cells = [], N = 13;
     for (let x = -N; x < N; x++) for (let z = -N; z < N; z++) cells.push({ x: x * 2 + 1, z: z * 2 + 1, color: 0xe9e4f2 });
     this.g = tileGrid(L, 'Cube_Grass_Single', cells, 1, 0);
     this.g.tiles.forEach((tl) => { tl.team = null; });
-    L.fence(-16, 16, 16, 16); L.fence(-16, -16, 16, -16); L.fence(-16, 16, -16, -16); L.fence(16, 16, 16, -16);
+    L.fence(-26, 26, 26, 26); L.fence(-26, -26, 26, -26); L.fence(-26, 26, -26, -26); L.fence(26, 26, 26, -26);
     // a few spinning arms and springs to make it messy
-    L.sweeper(-7, -7, 0, 4.2, 0.9); L.sweeper(7, 7, 0, 4.2, -0.9);
-    for (const [x, z] of [[-7, 7], [7, -7]]) L.spring(x, z, 0, 18);
+    for (const [x, z, w] of [[-12, -12, 0.9], [12, 12, -0.9], [12, -12, 1], [-12, 12, -1]]) L.sweeper(x, z, 0, 4.6, w);
+    L.sweeper(0, 0, 0, 7, 0.7, { cross: true });
+    for (const [x, z] of [[-12, 0], [12, 0], [0, 12], [0, -12]]) L.spring(x, z, 0, 18);
+    for (const [x, z] of [[-20, 0], [20, 0], [0, 20], [0, -20]]) L.speedPad(x, z, 0, -Math.sign(x), -Math.sign(z), 2.6);
     L.scenery(60, -60, 36, { towers: [[-40, -20, 3], [45, 10, 3]] });
-    this.score = { red: 0, blue: 0, green: 0, yellow: 0 }; this.time = 90;
-    this.fly = [[0, 30, 26, 0, 0, 0], [20, 10, 8, 0, 0, 0], [0, 9, 18, 0, 0, 0]];
+    this.score = { red: 0, blue: 0, green: 0, yellow: 0 }; this.time = 120;
+    this.fly = [[0, 44, 40, 0, 0, 0], [30, 12, 10, 0, 0, 0], [0, 10, 30, 0, 0, 0]];
   },
   teamOf: (i) => PT[i % 4],
-  spawn(i) { const tm = i % 4, k = Math.floor(i / 4), cx = [-11, 11, -11, 11][tm], cz = [-11, -11, 11, 11][tm]; return { x: cx + k * 2, y: 0, z: cz, facing: Math.atan2(-cx, -cz) }; },
+  spawn(i) { const tm = i % 4, k = Math.floor(i / 4), cx = [-20, 20, -20, 20][tm], cz = [-20, -20, 20, 20][tm]; return { x: cx + k * 2, y: 0, z: cz, facing: Math.atan2(-cx, -cz) }; },
   update(dt) {
     this.time -= dt;
     for (const r of G.runners) {
@@ -289,7 +291,7 @@ const paint = {
     const p = r.pos, ai = r.ai; ai.wanderT = (ai.wanderT || 0) - dt;
     if (!ai.wander || ai.wander.team === r.team || ai.wanderT <= 0) {
       let best = null, bs = -1e9;
-      for (let k = 0; k < 18; k++) { const tl = pick(this.g.tiles); if (tl.team === r.team) continue; const d = Math.hypot(tl.x - p.x, tl.z - p.z); const sc = (tl.team ? 3 : 2) - d * 0.25; if (sc > bs) { bs = sc; best = tl; } }
+      for (let k = 0; k < 18; k++) { const tl = pick(this.g.tiles); if (tl.team === r.team) continue; const d = Math.hypot(tl.x - p.x, tl.z - p.z); const sc = (tl.team ? 3 : 2) - d * 0.18; if (sc > bs) { bs = sc; best = tl; } }
       ai.wander = best; ai.wanderT = rand(0.8, 1.6);
     }
     return ai.wander ? { x: ai.wander.x, z: ai.wander.z, near: 0.5 } : { x: 0, z: 0 };

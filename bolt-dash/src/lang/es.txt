@@ -484,3 +484,10 @@ El patio de la prisión
 ¡El suelo se agrieta!
 Se apagan las luces...
 Logro: ¡desbloqueaste al Prisionero loco!
+Casco de caballero
+Gorro de oso
+Sombrero de mago
+Capa marrón
+Capa roja
+Capa rosa
+Capa verde

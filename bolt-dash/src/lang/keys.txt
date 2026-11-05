@@ -484,3 +484,10 @@ ROAR!
 The floor is cracking!
 Lights out...
 Achievement: you unlocked the Mad Prisoner!
+Knight Helmet
+Bear Hat
+Wizard Hat
+Brown Cape
+Red Cape
+Pink Cape
+Green Cape

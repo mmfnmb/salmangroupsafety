@@ -226,7 +226,7 @@ applyQuality();
 const Q = ['Character', 'Bouncer', 'Hazard_Saw', 'Hazard_Cylinder', 'SpikyBall', 'Cannon', 'Cannonball', 'Goal_Flag', 'Coin', 'Star',
   'Cube_Grass_Single', 'Cube_Bricks', 'Cube_Crate', 'Cube_Question', 'Cloud_1', 'Cloud_2', 'Cloud_3', 'Tree', 'Tree_Fruit', 'Bush', 'Rock_1', 'Rock_2',
   'RockPlatforms_Medium', 'Arrow', 'Tower', 'Plant_Large', 'Fence_Middle', 'Hazard_SpikeTrap'];
-const A = ['Crown', 'Crown2', 'ice-cream', 'cupcake', 'donut-sprinkles', 'present-a-cube', 'aid-glasses', 'aid-sunglasses', 'Armor_Leather', 'Armor_Metal',
+const A = ['kk-Knight_Helmet', 'kk-Barbarian_Hat', 'kk-Mage_Hat', 'kk-Barbarian_Cape', 'kk-Knight_Cape', 'kk-Mage_Cape', 'kk-Rogue_Cape', 'Crown', 'Crown2', 'ice-cream', 'cupcake', 'donut-sprinkles', 'present-a-cube', 'aid-glasses', 'aid-sunglasses', 'Armor_Leather', 'Armor_Metal',
   'Armor_Golden', 'Armor_Black', 'StarBadge', 'Backpack', 'Bag', 'Shield_Round', 'Shield_Heater'];
 const K = ['fence-straight', 'fence-low-straight', 'fence-rope', 'conveyor-belt', 'spring', 'saw', 'spike-block', 'spike-block-wide', 'platform', 'platform-ramp',
   'door-rotate', 'block-moving', 'block-moving-large', 'crate', 'crate-strong', 'crate-item', 'flag', 'block-grass-low-hexagon', 'block-snow-low-hexagon', 'star',

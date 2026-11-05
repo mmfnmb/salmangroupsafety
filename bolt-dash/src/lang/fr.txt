@@ -484,3 +484,10 @@ RUGISSEMENT !
 Le sol se fissure !
 Lumières éteintes...
 Succès : tu as débloqué le Prisonnier fou !
+Casque de chevalier
+Chapeau d'ours
+Chapeau de sorcier
+Cape marron
+Cape rouge
+Cape rose
+Cape verte

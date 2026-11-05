@@ -629,7 +629,7 @@ function playIntro(force) {
 const flow = { state: 'loading', choice: store.get('choice', 'show'), show: null, round: 0, t: 0, count: 0, flyT: 0, endT: 0, finishedCount: 0, coins: 0, bannerT: 0 };
 const camPos = V(0, 6, 16), camLook = V(), camRay = new CANNON.RaycastResult();
 function newShow(choice) {
-  const n = choice === 'show' ? 10 : choice === 'football' ? 14 : choice === 'training' ? 2 : choice === 'slasher' ? 4 : 8;
+  const n = choice === 'show' ? 10 : choice === 'football' ? 14 : choice === 'training' ? 2 : choice === 'slasher' ? 4 : choice === 'paint' ? 12 : 8;
   const players = [{ name: save.name, equip: { ...save.equip }, isPlayer: true }];
   const names = [...NAMES].sort(() => Math.random() - 0.5);
   for (let i = 1; i < n; i++) players.push({ name: names[i % names.length], equip: randomEquip(), isPlayer: false });
@@ -716,7 +716,7 @@ function openRolePick() {
   show('intro', false);
   $('ovTitle').textContent = t('Pick your position');
   setTimeout(() => toast(t('Player card') + ' ' + cardOvr() + ' · ' + t(cardTier() === 'gold' ? 'Gold' : cardTier() === 'silver' ? 'Silver' : 'Bronze'), 2.5), 300);
-  $('ovBody').innerHTML = `<div class="roles">${ROLES.map(([k, n]) => `<button class="rolec" data-role="${k}"><b>${k}</b><span>${n}</span></button>`).join('')}</div><div class="rwheel" id="rWheel" hidden><canvas id="rwCv" width="360" height="360"></canvas><div class="prize" id="rwTxt"></div></div>`;
+  $('ovBody').innerHTML = `${cardHTML()}<div class="roles">${ROLES.map(([k, n]) => `<button class="rolec" data-role="${k}"><b>${k}</b><span>${n}</span></button>`).join('')}</div><div class="rwheel" id="rWheel" hidden><canvas id="rwCv" width="360" height="360"></canvas><div class="prize" id="rwTxt"></div></div>`;
   $('ovClose').hidden = true; show('ov', true);
   $('ovBody').querySelectorAll('[data-role]').forEach((b) => b.addEventListener('click', () => pickRole(b.dataset.role)));
 }

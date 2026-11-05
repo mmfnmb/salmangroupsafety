@@ -270,14 +270,18 @@ const football = {
     return { x: sl[1], y: 0, z: own + dir * Math.min(ROLE_FRAC[role], 0.4) * FZ * 2, facing: team === 'red' ? PI : 0 };
   },
   assignRoles() {
-    if (this.roles) return; this.roles = true;
+    // redo when the player's chosen position arrives (the pick can come after the first frames)
+    if (this.roles && this.rolesFor === G.playerRole) return; this.roles = true; this.rolesFor = G.playerRole;
     for (const team of ['red', 'blue']) {
       const mates = G.runners.filter((r) => r.team === team), free = teamSlots(mates.length);
       const me = mates.find((r) => r.isPlayer);
       if (me) { const want = G.playerRole || 'MID', k = Math.max(0, free.findIndex((x) => x.role === want)); const sl = free.splice(k, 1)[0]; me.role = want; me.slotX = sl?.x ?? 0; }
       for (const r of mates) if (!r.isPlayer) { const sl = free.shift() || { role: 'MID', x: 0 }; r.role = sl.role; r.slotX = sl.x; }
     }
+    this.placeAll();
   },
+  // everyone to their own position's kick-off spot (so picking Attacker really starts you up front)
+  placeAll() { for (const r of G.runners) if (!r.out) { const h = this.home(r, true); r.reset(h.x, 0, h.z, r.team === 'red' ? PI : 0); } },
   playerSpeed() { return 0.92 + save.card.pac / 600; },
   update(dt) {
     this.assignRoles();
@@ -287,7 +291,7 @@ const football = {
     for (const r of G.runners) { r.noBallT = Math.max(0, (r.noBallT || 0) - dt); r.tackleCd = Math.max(0, (r.tackleCd || 0) - dt); }
     if (this.resetT > 0) {
       this.resetT -= dt;
-      if (this.resetT <= 0) { this.kickoff(); G.runners.forEach((r, i) => { if (!r.out) { const s = this.spawn(i); r.reset(s.x, 0, s.z, s.facing); } }); }
+      if (this.resetT <= 0) { this.kickoff(); this.placeAll(); }
     } else {
       let o = this.owner;
       if (o && (o.out || o.state === 'tumble' || o.stunT > 0 || o.frozenT > 0)) { this.owner = o = null; }
@@ -398,7 +402,7 @@ const football = {
     const h = this.home(r, false), up = o && o.team === r.team ? -Math.sign(own) * 9 : 0;
     return { x: h.x, z: clamp(h.z + up, -FZ + 1, FZ - 1), near: 1, noJump: true };
   },
-  onFall(r) { const s = this.spawn(G.runners.indexOf(r)); r.reset(s.x, 0, s.z, s.facing); },
+  onFall(r) { const h = this.home(r, true); r.reset(h.x, 0, h.z, r.team === 'red' ? PI : 0); },
   hud() { return { red: this.score.red, blue: this.score.blue, time: this.time }; },
   winners() { return this.score.red === this.score.blue ? (Math.random() < 0.5 ? 'red' : 'blue') : this.score.red > this.score.blue ? 'red' : 'blue'; },
 };

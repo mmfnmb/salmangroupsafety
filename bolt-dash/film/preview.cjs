@@ -14,7 +14,7 @@ const srv = http.createServer((q, res) => { const f = path.join(root, decodeURIC
   for (let n = 0; n <= last; n++) { const url = await p.evaluate(([n, w]) => window.F.frame(n, w), [n, want.has(n)]); if (want.has(n)) { const f = `${tmp}/${String(n).padStart(6, '0')}.jpg`; fs.writeFileSync(f, Buffer.from(url.split(',')[1], 'base64')); files.push(f); } }
   fs.writeFileSync(out.replace(/\.jpg$/, '') + '-subs.json', JSON.stringify(await p.evaluate(() => window.F.subs()), null, 1));
   await b.close(); srv.close();
-  const cols = Math.min(4, files.length), rows = Math.ceil(files.length / cols);
+  const cols = Math.min(+(process.env.COLS || 4), files.length), rows = Math.ceil(files.length / cols);
   const ins = files.map((f) => `-i ${f}`).join(' '), pad = cols * rows - files.length;
   let fc = files.map((_, i) => `[${i}]scale=${process.env.FULL ? 960 : 480}:-1[v${i}]`).join(";");
   for (let i = 0; i < pad; i++) fc += `;color=black:s=480x270:d=1[p${i}]`;
