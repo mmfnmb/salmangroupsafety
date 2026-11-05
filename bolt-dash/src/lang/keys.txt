@@ -421,3 +421,15 @@ Season 1: the Party Games League
 Season {n}
 Next episode: coming soon
 Movie
+Lava Tiles
+Lava
+Tiles glow and drop into the lava. Every 20 seconds a new danger joins in. Last one standing wins
+Push + Grab
+Watch out: the spinning arm!
+Cannons!
+Saws!
+More cannons!
+Hot Bomb
+Bomb
+Someone carries a ticking bomb. Touch another player to pass it on. When it explodes, whoever holds it is out
+You have the bomb! Pass it on!

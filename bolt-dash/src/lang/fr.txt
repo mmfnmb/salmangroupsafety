@@ -421,3 +421,15 @@ Saison 1 : la Ligue des jeux
 Saison {n}
 Prochain épisode : bientôt
 Film
+Dalles de lave
+Lave
+Les dalles s'allument et tombent dans la lave. Toutes les 20 secondes un nouveau danger arrive. Le dernier debout gagne
+Pousser + Attraper
+Attention : le bras tournant !
+Canons !
+Scies !
+Encore des canons !
+Bombe brûlante
+Bombe
+Quelqu'un porte une bombe qui fait tic-tac. Touche un autre joueur pour la lui passer. Quand elle explose, celui qui l'a est éliminé
+Tu as la bombe ! Passe-la !

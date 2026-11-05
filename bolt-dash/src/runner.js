@@ -59,7 +59,7 @@ export class Runner {
     this.boostDir = { x: 0, z: -1 }; this.groundBody = null;
     this.input = { x: 0, z: 0, jump: false, dive: false, fire: false, push: false, grab: false };
     this.stars.visible = false; this.model.rotation.set(0, 0, 0); this.model.position.set(0, 0, 0); this.root.quaternion.identity();
-    this.ai = this.ai || { lane: rand(-4, 4), laneT: rand(1, 3), skill: rand(0.6, 0.95), speed: rand(0.88, 1.0), think: 0, lastP: null, stuck: 0, wander: null, wanderT: 0, aimT: 0 };
+    this.ai = this.ai || { lane: rand(-4, 4), laneT: rand(1, 3), skill: rand(0.78, 0.99), speed: rand(0.93, 1.03), think: 0, lastP: null, stuck: 0, wander: null, wanderT: 0, aimT: 0 };
     this.play('Idle', 0);
     this.sync();
   }
@@ -316,6 +316,14 @@ export function think(r, dt) {
         if (!wallAhead(p, sx, sz, 1.7, 1.6) && groundAt(p.x + sx * 1.6, p.y, p.z + sz * 1.6, 3)) { inp.x = sx; inp.z = sz; break; }
       }
     }
+  }
+  // see cannonballs and rolling balls coming and step out of the way (dive if it is very close)
+  if (!tgt.noDodge && G.level?.balls?.length && Math.random() < ai.skill + 0.1) for (const b of G.level.balls) {
+    const v = b.body.velocity, sp = Math.hypot(v.x, v.z); if (sp < 4) continue;
+    const rx = p.x - b.body.position.x, rz = p.z - b.body.position.z, along = (rx * v.x + rz * v.z) / sp;
+    if (along < 0 || along > 8 || Math.abs(b.body.position.y - p.y) > 2) continue;
+    const perp = (rx * v.z - rz * v.x) / sp;
+    if (Math.abs(perp) < 1.5) { const sd = perp >= 0 ? 1 : -1; inp.x = (v.z / sp) * sd; inp.z = -(v.x / sp) * sd; if (along < 2.2 && r.grounded && !r.dived) inp.dive = true; break; }
   }
   const k = tgt.speed ?? 1; inp.x *= k; inp.z *= k;
   if (r.grounded && d > 1.2 && !tgt.noJump) {

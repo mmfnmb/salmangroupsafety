@@ -5,6 +5,7 @@ import { ITEMS, ITEM, CATS, SKINS, BATS, THUMB, computeBoneFix, dress, randomEqu
 import { Runner, think } from './runner.js';
 import { MODES, MODE_LIST } from './modes.js';
 import './sports.js';
+import './party.js';
 import { WEAPONS, giveWeapon, fire, botFire, updateProjectiles, updatePickups, tickWeapons, clearProjectiles, dropWeapon } from './weapons.js';
 import { editor, customMode, getMap, PIECES, MAP_TYPES, piecesFor } from './build.js';
 import { comm, initCommunity, allMaps, featuredMaps, mapHash, publishMap, unpublishMap, recordPlay, liked, toggleLike, setFeatured, PUBLISH_PRICE, MAX_MAPS } from './community.js';
@@ -632,7 +633,7 @@ function newShow(choice) {
   const names = [...NAMES].sort(() => Math.random() - 0.5);
   for (let i = 1; i < n; i++) players.push({ name: names[i % names.length], equip: randomEquip(), isPlayer: false });
   let rounds;
-  if (choice === 'show') rounds = [{ m: pick(['race', 'race', 'golf']), q: 8 }, { m: pick(['stars', 'ball', 'volley', 'football', 'puck']) }, { m: pick(['cannons', 'climb', 'arena']), q: 3 }, { m: 'fall', q: 1 }];
+  if (choice === 'show') rounds = [{ m: pick(['race', 'race', 'golf']), q: 8 }, { m: pick(['stars', 'ball', 'volley', 'football', 'puck']) }, { m: pick(['cannons', 'climb', 'arena', 'lava', 'bomb']), q: 3 }, { m: 'fall', q: 1 }];
   else if (choice === 'custom') rounds = [{ m: 'custom', q: 3 }];
   else if (choice.startsWith('cm:')) rounds = [{ m: 'custom', q: 5, cm: choice.slice(3) }];
   else { const md = MODES[choice]; rounds = [{ m: choice, q: md.kind === 'race' ? (choice === 'climb' ? 4 : 6) : md.kind === 'survival' ? 1 : null }]; }

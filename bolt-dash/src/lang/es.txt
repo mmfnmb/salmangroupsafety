@@ -421,3 +421,15 @@ Temporada 1: la Liga de Juegos
 Temporada {n}
 Próximo episodio: muy pronto
 Película
+Baldosas de lava
+Lava
+Las baldosas brillan y caen a la lava. Cada 20 segundos llega un peligro nuevo. El último en pie gana
+Empujar + Agarrar
+¡Cuidado: el brazo giratorio!
+¡Cañones!
+¡Sierras!
+¡Más cañones!
+Bomba caliente
+Bomba
+Alguien lleva una bomba con temporizador. Toca a otro jugador para pasársela. Cuando explota, quien la tenga queda fuera
+¡Tienes la bomba! ¡Pásala!
