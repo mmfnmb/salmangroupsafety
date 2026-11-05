@@ -10,7 +10,7 @@ function tileGrid(L, model, cells, s, y = 0) {
   meshes.forEach((m) => { m.frustumCulled = false; });
   const tiles = cells.map((c, i) => {
     const b = new CANNON.Body({ type: CANNON.Body.STATIC, material: matGround, collisionFilterGroup: G_STATIC, collisionFilterMask: G_RUNNER | G_BALL | G_PROJ });
-    b.addShape(new CANNON.Box(new CANNON.Vec3(s * 0.5, 1, s * 0.5))); b.position.set(c.x, y - 1, c.z); world.addBody(b); L.bodies.push(b);
+    b.addShape(new CANNON.Box(new CANNON.Vec3(s * 0.98, 1, s * 0.98))); b.position.set(c.x, y - 1, c.z); world.addBody(b); L.bodies.push(b);
     return { i, x: c.x, y, z: c.z, body: b, state: 0, t: 0, dropY: y, dropV: 0, color: new THREE.Color(c.color) };
   });
   const mtx = new THREE.Matrix4(), tmp = new THREE.Matrix4();
