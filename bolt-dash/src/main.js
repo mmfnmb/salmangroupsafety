@@ -596,18 +596,20 @@ const EPISODES = [
   { id: 's1e1', title: t('Episode 1: The Beginning'), season: 1, parts: [0, 1, 2, 3, 4, 5].map((k) => `./media/s1e1_${k}.mp4`), partLen: 120, subs: './media/s1e1.subs.json' },
   { id: 's1e2', title: t('Episode 2'), season: 1, soon: true },
 ];
+// the first game trailer moved here when the new mini-game ad became the opening film
+const TRAILER = { id: 'trailer', title: t('The first trailer'), parts: ['./media/trailer.mp4'], partLen: 0 };
 function openMovies() {
   $('ovTitle').textContent = t('Bolt Dash: the series');
-  $('ovBody').innerHTML = `<p style="margin:0;font-weight:700;color:var(--ink-2)">${t('Season 1: the Party Games League')}</p><div class="eps">${EPISODES.map((e, i) => `<button class="epc" data-ep="${i}" ${e.soon ? 'disabled' : ''}><span class="n">${i + 1}</span><span><b>${e.title}</b><span>${e.soon ? t('Coming soon') : t('Season {n}', { n: e.season })}</span></span></button>`).join('')}</div>`;
+  $('ovBody').innerHTML = `<p style="margin:0;font-weight:700;color:var(--ink-2)">${t('Season 1: the Party Games League')}</p><div class="eps"><button class="epc" data-ep="-1"><span class="n">▶</span><span><b>${TRAILER.title}</b><span>${t('Trailer')}</span></span></button>${EPISODES.map((e, i) => `<button class="epc" data-ep="${i}" ${e.soon ? 'disabled' : ''}><span class="n">${i + 1}</span><span><b>${e.title}</b><span>${e.soon ? t('Coming soon') : t('Season {n}', { n: e.season })}</span></span></button>`).join('')}</div>`;
   show('ov', true);
   $('ovBody').querySelectorAll('[data-ep]').forEach((b) => b.addEventListener('click', () => { sfx.click(); closeOv(); playEpisode(+b.dataset.ep); }));
 }
 async function playEpisode(i) {
-  const e = EPISODES[i]; if (!e || e.soon) { toast(t('Coming soon')); return; }
+  const e = i < 0 ? TRAILER : EPISODES[i]; if (!e || e.soon) { toast(t('Coming soon')); return; }
   const v = $('introVid'); let subs = [];
-  try { subs = await (await fetch(e.subs)).json(); } catch { subs = []; }
+  try { subs = e.subs ? await (await fetch(e.subs)).json() : []; } catch { subs = []; }
   const stop = () => { v.pause(); v.ontimeupdate = null; show('introVid', false); show('introSkip', false); show('subLine', false); if (flow.state === 'intro') flow.state = flow.prevState || 'menu'; };
-  const next = () => { stop(); if (EPISODES[i + 1] && !EPISODES[i + 1].soon) playEpisode(i + 1); else toast(t('Next episode: coming soon'), 2.5); };
+  const next = () => { stop(); if (i < 0) return; if (EPISODES[i + 1] && !EPISODES[i + 1].soon) playEpisode(i + 1); else toast(t('Next episode: coming soon'), 2.5); };
   // the episode is stored in parts (each file must stay small); they play back to back
   const parts = e.parts || [e.src]; let part = 0;
   const load = () => { v.src = parts[part]; v.play().catch(() => { v.muted = true; v.play().catch(stop); }); };
@@ -1113,5 +1115,5 @@ translateDom();
   toMenu();
   frame();
   playIntro(false); initCommunity();
-  window.__boltdash = { G, flow, ctl, MODES, comm, setTab, save, camera, renderer, scene, giveWeapon, startRound, startMatchmaking, toMenu, openBuild, editor, sim(sec, hook) { for (let i = 0; i < sec * 60; i++) { hook && hook(i / 60); if (flow.state === 'fly') { flow.flyT = 99; flyCam(1 / 60); } if (flow.state === 'count' || flow.state === 'play') { stepRound(1 / 60); playCam(1 / 60); } } } };
+  window.__boltdash = { G, flow, ctl, MODES, comm, setTab, save, camera, renderer, scene, render: (dt) => renderScene(dt), giveWeapon, startRound, startMatchmaking, toMenu, openBuild, editor, sim(sec, hook) { for (let i = 0; i < sec * 60; i++) { hook && hook(i / 60); if (flow.state === 'fly') { flow.flyT = 99; flyCam(1 / 60); } if (flow.state === 'count' || flow.state === 'play') { stepRound(1 / 60); playCam(1 / 60); } } } };
 })();

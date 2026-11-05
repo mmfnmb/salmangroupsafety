@@ -526,3 +526,5 @@ Armabeille
 Pousser et attraper se rechargent plus vite
 Alpaking
 +10 % de pièces et +10 % d'XP
+La première bande-annonce
+Bande-annonce

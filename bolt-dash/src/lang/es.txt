@@ -526,3 +526,5 @@ Armabeja
 Empujar y agarrar se recargan antes
 Alpaking
 +10% monedas y +10% XP
+El primer tráiler
+Tráiler
