@@ -414,3 +414,10 @@ Puck Rush
 Puck
 Slap the metal puck into any of the other team's small goals. Side goals are worth 1, the guarded middle goal is worth 3
 Attacker
+Episode 1: The Beginning
+Episode 2
+Bolt Dash: the series
+Season 1: the Party Games League
+Season {n}
+Next episode: coming soon
+Movie

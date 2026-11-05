@@ -414,3 +414,10 @@ Puck Rush
 Palet
 Frappe le palet en métal dans n'importe quel petit but adverse. Ceux des côtés valent 1, celui du milieu, protégé, vaut 3
 Attaquant
+Épisode 1 : Le commencement
+Épisode 2
+Bolt Dash : la série
+Saison 1 : la Ligue des jeux
+Saison {n}
+Prochain épisode : bientôt
+Film

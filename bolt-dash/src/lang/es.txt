@@ -414,3 +414,10 @@ Puck Rush
 Disco
 Golpea el disco de metal hacia cualquier portería pequeña del otro equipo. Las laterales valen 1 y la del centro, protegida, vale 3
 Delantero
+Episodio 1: El comienzo
+Episodio 2
+Bolt Dash: la serie
+Temporada 1: la Liga de Juegos
+Temporada {n}
+Próximo episodio: muy pronto
+Película

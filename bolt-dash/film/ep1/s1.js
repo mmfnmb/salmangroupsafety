@@ -26,8 +26,8 @@ function burntToast() {
 }
 // grey smoke rising out of the toaster; amount 0..1
 function smoke(amount, dt) {
-  const n = 1 + Math.round(amount * 4);
-  for (let i = 0; i < n; i++) puffs.emit({ pos: V(TOASTER.x + (Math.random() - 0.5) * 0.3, TOASTER.y + 0.1, TOASTER.z + (Math.random() - 0.5) * 0.25), vel: V((Math.random() - 0.5) * 0.5, 0.7 + Math.random() * 0.7, 0.3 + Math.random() * 0.6 * amount), life: 1.4 + amount * 1.4, size: 0.1 + Math.random() * 0.1 + amount * 0.1, drag: 1.2, g: -0.35, color: [0xd9d9de, 0xc4c4cc, 0xeeeef2][i % 3], shrink: true });
+  const n = 2 + Math.round(amount * 6);
+  for (let i = 0; i < n; i++) puffs.emit({ pos: V(TOASTER.x + (Math.random() - 0.5) * 0.3, TOASTER.y + 0.1, TOASTER.z + (Math.random() - 0.5) * 0.25), vel: V((Math.random() - 0.5) * 0.5, 0.7 + Math.random() * 0.7, 0.3 + Math.random() * 0.6 * amount), life: 1.2 + amount * 1.2, size: 0.045 + Math.random() * 0.06 + amount * 0.04, drag: 1.4, g: -0.3, color: [0xf0f0f4, 0xe2e2e8, 0xd4d4dc][i % 3], shrink: true });
 }
 // soft "z" puffs over the sleeper
 function zzz(t) { if (every(t, 0.9)) puffs.emit({ pos: V(BED.x + 0.1, BED.y + 0.5, BED.z - 1.2), vel: V(0.15, 0.6, 0.1), life: 1.6, size: 0.18, drag: 0.3, g: -0.2, color: 0xffffff }); }

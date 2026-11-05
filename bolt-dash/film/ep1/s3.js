@@ -109,8 +109,8 @@ export function shots(A) {
   S.push({ dur: 4, set: 'house_int', time: 'interior',
     setup() { hideAll(); sit(A.blue, 'L').play('Idle'); sit(A.yellow, 'R').play('Idle'); },
     upd(t) { HOUSE.tvShow('news', t); sofaCam(A, 3); if (t > 1.2) { A.blue.face(A.yellow.p.x, A.yellow.p.z); A.yellow.face(A.blue.p.x, A.blue.p.z); } say(null); } });
-  S.push({ dur: 2.5, upd() { closeUp(A.blue, { ang: 0.6, dist: 1.9, h: 0.95 }); } });
-  S.push({ dur: 2.5, upd() { closeUp(A.yellow, { ang: -0.6, dist: 1.9, h: 0.95 }); } });
+  S.push({ dur: 2.5, upd() { closeUp(A.blue, { ang: 0.9, dist: 1.9, h: 0.95 }); } }); // they face each other: swing towards the TV side
+  S.push({ dur: 2.5, upd() { closeUp(A.yellow, { ang: -0.9, dist: 1.9, h: 0.95 }); } });
   S.push({ dur: 7, setup() { A.blue.stand(); A.yellow.stand(); },
     upd(t, dt, T) {
       // bouncing on the sofa cushions
@@ -118,7 +118,7 @@ export function shots(A) {
       const sy = HOUSE.seat.y; A.blue.at(HOUSE.seat.blue, sy + hb, HOUSE.seat.z, PI + Math.sin(T * 2) * 0.4); A.yellow.at(HOUSE.seat.yellow, sy + hy, HOUSE.seat.z, PI - Math.sin(T * 2) * 0.4);
       A.blue.play(hb > 0.3 ? 'Jump_Idle' : 'Yes'); A.yellow.play(hy > 0.3 ? 'Jump_Idle' : 'Yes');
       if (Math.floor(T * 5.2 / PI) !== Math.floor((T - dt) * 5.2 / PI)) puffs.emit({ pos: V(0, HOUSE.seat.y + 0.2, HOUSE.seat.z), vel: V(0, 2, -1), life: 0.6, size: 0.12, color: 0xffffff });
-      frameGroup([A.blue, A.yellow], { side: -1, h: 1.3, dist: 0.95, look: 1.2, ang: Math.sin(t * 0.4) * 0.2 });
+      frameGroup([A.blue, A.yellow], { side: -1, h: 1.2, dist: 0.75, look: 1.2, ang: Math.sin(t * 0.4) * 0.2 });
       say(t < 3.5 ? 'Blue' : 'Yellow', t < 3.5 ? 'WE ARE IN!' : 'LET\'S GOOOO!');
     } });
   return S;

@@ -76,7 +76,7 @@ export function shots(A) {
       const th = 0.4 + (3.6 + t) * 1.1; runCircle(Y, th); runCircle(B, th - 1.2 + t * 0.06);
       inHand(Y, remote());
       if (t > 3.2) say('Yellow', 'Hahaha! Too slow!');
-      orbit([C.x, 0, C.z], t, { r: 4.4, h: 2.6, speed: 0.16, from: -0.45 });
+      orbit([C.x, 0, C.z], t, { r: 4.0, h: 3.2, speed: 0.16, from: -0.45 });
     } },
     // 8. Blue dives... Yellow sidesteps, Blue slides along the rug
     { dur: 5, set: 'house_int', time: 'interior', setup() { hideAll(); B.show(); Y.show(); this.d = null; say('Blue', 'HYAAAA!'); }, upd(t) {
@@ -88,7 +88,7 @@ export function shots(A) {
       const bx = bc.x + dx / l * (k * 4.2), bz = bc.z + dz / l * (k * 4.2);
       stand(B); B.at(bx, Math.sin(k * PI) * 0.7, bz, Math.atan2(dx, dz)); B.play(t < 1.3 ? 'Jump_Idle' : 'HitReact', 1);
       if (t < 1.3) B.m.rotation.x = 0.9 * Math.sin(k * PI); else { B.m.rotation.x = PI / 2 * 0.85; B.at(bx, 0.25, bz); if (!this.d) { this.d = 1; fx.dust(V(bx, 0.1, bz), 16, 0xf3ecdf, 3); } }
-      fixed([C.x - 1.0, 2.0, C.z - 2.7], [C.x + 0.6, 0.45, C.z + 0.3]);
+      frameGroup([B, Y], { side: -1, h: 1.9, dist: 1.0, look: 0.5, k: 3 });
     } },
     // 9. ...and the remote goes flying
     { dur: 4, set: 'house_int', time: 'interior', setup() { hideAll(); B.show(); Y.show(); say('Yellow', 'Oops!'); }, upd(t) {
