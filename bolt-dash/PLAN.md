@@ -24,7 +24,10 @@ Everything agreed so far, in one place. Done items are marked ✅.
 - Play with bots (friends online later). Weapon: your bat only. Die once and you are out of the run.
 - 5 stages at night, each harder: forest (zombies, skeletons) · abandoned city streets (small Mad Prisoner copies with cleavers chasing you) · abandoned hospital/house (ghosts jumping out) · the prison yard he escaped from (everything at once, more and faster copies) · final fight.
 - Boss: the Mad Prisoner. Phase 1 hockey mask + cleaver; at half health he goes mad: pumpkin + chainsaw, faster. Health bar must reach zero.
-- Reward: the rare Mad Prisoner skin as an achievement, only from winning this mode (not shop, wheel or codes).
+- Reward: the rare Mad Prisoner skin as an achievement, only from winning this mode, and only for players still alive at the end (not shop, wheel or codes).
+- Boss attacks (many): cleaver swing, cleaver throw (comes back), jump slam shockwave you must jump over, charge dash, grab-and-throw, whistle that calls copies; mad phase adds chainsaw spin, chainsaw lunge, ground-cut lines, pumpkin bombs, rage roar that slows everyone.
+- Arena turns into mini-games mid-fight (every ~30 s, warning first): tiles crack and fall (Hex Drop) · lava tiles glowing red then dropping · cannons from the walls · spinning arms and saws · arena edges falling (shrinking) · lights out with only the boss's red eyes visible · conveyor/ice floor.
+- Colours: varied but dark (deep purple, blood red, dark teal, burnt orange, swamp green, midnight blue) with glowing edges so it stays readable.
 - Look ready: hockey mask ("Jason Mask", ShadowSupreme), carved pumpkin, cleaver, chainsaw ✅ (film/epx.js).
 
 ## Football update (next)
