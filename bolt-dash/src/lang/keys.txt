@@ -447,3 +447,17 @@ Training
 Learn every move step by step. The tips show your keys or your phone buttons
 Lava Rising
 The lava keeps rising. Jump up the rocks as fast as you can. Last ones standing win
+Player card
+Pace
+Shooting
+Passing
+Control
+Bronze
+Silver
+Gold
+Paint Rush
+Paint
+Four teams. Every tile you step on takes your colour. The team with the most tiles when time runs out wins
+Green
+Yellow
+{x} team won with {n} tiles

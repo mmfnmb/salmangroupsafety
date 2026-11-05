@@ -4,7 +4,7 @@ import { t, LANG, LANGS, setLang, translateDom } from './i18n.js';
 import { ITEMS, ITEM, CATS, SKINS, BATS, THUMB, computeBoneFix, dress, randomEquip, makeThumbs, holdItem, skinFx, updateGold } from './cosmetics.js';
 import { Runner, think } from './runner.js';
 import { MODES, MODE_LIST } from './modes.js';
-import './sports.js';
+import { cardOvr, cardTier } from './sports.js';
 import './party.js';
 import { WEAPONS, giveWeapon, fire, botFire, updateProjectiles, updatePickups, tickWeapons, clearProjectiles, dropWeapon } from './weapons.js';
 import { editor, customMode, getMap, PIECES, MAP_TYPES, piecesFor } from './build.js';
@@ -435,7 +435,7 @@ async function openOv(kind) {
     T.textContent = t('Your profile');
     const st = save.stats;
     B.innerHTML = `<b>${t('Your name')}</b><div class="field"><input id="nameIn" maxlength="14" value="${save.name.replace(/"/g, '')}" style="text-transform:none"><button class="btn" id="nameGo">${t('Save')}</button></div>
-      <div class="statg"><div><b>${st.games || 0}</b>${t('Shows played')}</div><div><b>${st.rounds || 0}</b>${t('Rounds')}</div><div><b>${st.qual || 0}</b>${t('Qualified')}</div><div><b>${save.wins}</b>${t('Crowns')}</div><div><b>${levelOf(save.xp).lvl}</b>${t('Level')}</div><div><b>${(st.earned || 0).toLocaleString('en')}</b>${t('Coins earned')}</div></div>`;
+      <div class="statg"><div><b>${st.games || 0}</b>${t('Shows played')}</div><div><b>${st.rounds || 0}</b>${t('Rounds')}</div><div><b>${st.qual || 0}</b>${t('Qualified')}</div><div><b>${save.wins}</b>${t('Crowns')}</div><div><b>${levelOf(save.xp).lvl}</b>${t('Level')}</div><div><b>${(st.earned || 0).toLocaleString('en')}</b>${t('Coins earned')}</div></div>${cardHTML()}`;
     $('nameIn').addEventListener('keydown', (e) => e.stopPropagation());
     $('nameGo').addEventListener('click', () => { const v = $('nameIn').value.trim().slice(0, 14); if (v) { save.name = v; persist2(); toast(t('Saved')); refreshMenu(); } });
   }
@@ -633,7 +633,7 @@ function newShow(choice) {
   const names = [...NAMES].sort(() => Math.random() - 0.5);
   for (let i = 1; i < n; i++) players.push({ name: names[i % names.length], equip: randomEquip(), isPlayer: false });
   let rounds;
-  if (choice === 'show') rounds = [{ m: pick(['race', 'race', 'golf']), q: 8 }, { m: pick(['stars', 'ball', 'volley', 'football', 'puck']) }, { m: pick(['cannons', 'climb', 'arena', 'lava', 'bomb', 'rising']), q: 3 }, { m: 'fall', q: 1 }];
+  if (choice === 'show') rounds = [{ m: pick(['race', 'race', 'golf']), q: 8 }, { m: pick(['stars', 'ball', 'volley', 'football', 'puck', 'paint']) }, { m: pick(['cannons', 'climb', 'arena', 'lava', 'bomb', 'rising']), q: 3 }, { m: 'fall', q: 1 }];
   else if (choice === 'custom') rounds = [{ m: 'custom', q: 3 }];
   else if (choice.startsWith('cm:')) rounds = [{ m: 'custom', q: 5, cm: choice.slice(3) }];
   else { const md = MODES[choice]; rounds = [{ m: choice, q: md.kind === 'race' ? (choice === 'climb' ? 4 : 6) : md.kind === 'survival' ? 1 : null }]; }
@@ -704,10 +704,16 @@ function startRound() {
 }
 // football: pick your position before kick-off; if a teammate wants the same one, a lucky wheel decides
 const ROLES = [['GK', t('Goalkeeper')], ['DEF', t('Defender')], ['MID', t('Midfielder')], ['FWD', t('Attacker')]];
+// the football player card, coloured bronze / silver / gold by its overall rating
+function cardHTML() {
+  const c = save.card, o = cardOvr(), tier = cardTier(o), row = (k, n) => `<div><span>${n}</span><b>${Math.round(c[k])}</b></div>`;
+  return `<div class="pcard ${tier}"><div class="po"><b>${o}</b><span>${t(tier === 'gold' ? 'Gold' : tier === 'silver' ? 'Silver' : 'Bronze')}</span></div><div class="pn">${save.name}<em>${t('Player card')}</em></div><div class="ps">${row('pac', t('Pace'))}${row('sho', t('Shooting'))}${row('pas', t('Passing'))}${row('ctl', t('Control'))}</div></div>`;
+}
 function openRolePick() {
   if (flow.rolePicking) return; flow.rolePicking = true;
   show('intro', false);
   $('ovTitle').textContent = t('Pick your position');
+  setTimeout(() => toast(t('Player card') + ' ' + cardOvr() + ' · ' + t(cardTier() === 'gold' ? 'Gold' : cardTier() === 'silver' ? 'Silver' : 'Bronze'), 2.5), 300);
   $('ovBody').innerHTML = `<div class="roles">${ROLES.map(([k, n]) => `<button class="rolec" data-role="${k}"><b>${k}</b><span>${n}</span></button>`).join('')}</div><div class="rwheel" id="rWheel" hidden><canvas id="rwCv" width="360" height="360"></canvas><div class="prize" id="rwTxt"></div></div>`;
   $('ovClose').hidden = true; show('ov', true);
   $('ovBody').querySelectorAll('[data-role]').forEach((b) => b.addEventListener('click', () => pickRole(b.dataset.role)));
@@ -770,6 +776,7 @@ G.eliminate = (r) => {
 G.endRound = () => {
   if (flow.done || !G.modeObj) return;
   flow.done = true;
+  if (G.modeObj.id === 'football') persist2();
   const md = G.modeObj, rd = flow.show.rounds[flow.round];
   let qualified;
   if (md.team) { const w = md.winners(); qualified = G.runners.filter((r) => r.team === w); flow.winTeam = w; }
@@ -801,7 +808,7 @@ function showResult(won, last, qualified, earned) {
   const crown = won && last && flow.show.rounds.length > 1;
   $('rTitle').textContent = crown ? t('You won the crown!') : won ? (last ? t('You won!') : t('Qualified!')) : t('Out this time');
   $('rTitle').className = won ? 'win' : 'lose';
-  $('rSub').textContent = md.team ? t('{x} team won {a} - {b}', { x: flow.winTeam === 'red' ? t('Red') : t('Blue'), a: md.hud().red, b: md.hud().blue }) : t('{n} of {m} qualified', { n: qualified.length, m: G.runners.length });
+  $('rSub').textContent = md.teams ? t('{x} team won with {n} tiles', { x: t({ red: 'Red', blue: 'Blue', green: 'Green', yellow: 'Yellow' }[flow.winTeam]), n: md.hud()[flow.winTeam] }) : md.team ? t('{x} team won {a} - {b}', { x: flow.winTeam === 'red' ? t('Red') : t('Blue'), a: md.hud().red, b: md.hud().blue }) : t('{n} of {m} qualified', { n: qualified.length, m: G.runners.length });
   $('rList').innerHTML = qualified.slice(0, 10).map((r) => `<span class="${r.isPlayer ? 'me' : ''}"><img alt="" src="${THUMB.portrait(r.part.equip)}">${r.isPlayer ? t('You') : r.name}</span>`).join('');
   $('rCoins').textContent = earned;
   $('rNext').textContent = won && !last ? t('Next round') : t('Play again');
@@ -846,7 +853,8 @@ function buildHud() {
 }
 function updateHud() {
   const md = G.modeObj, p = G.player; if (!md || !p) return;
-  if (md.team) { const h = md.hud(); $('hRed').textContent = h.red; $('hBlue').textContent = h.blue; $('hTime').textContent = Math.max(0, Math.ceil(h.time)); }
+  if (md.team && md.teams) { const h = md.hud(), col = { red: '#ff5a6e', blue: '#6fb0ff', green: '#4be37a', yellow: '#ffd23f' }; $('hRed').innerHTML = md.teams.slice(0, 2).map((k) => `<span style="color:${col[k]}">${h[k]}</span>`).join(' '); $('hBlue').innerHTML = md.teams.slice(2).map((k) => `<span style="color:${col[k]}">${h[k]}</span>`).join(' '); $('hTime').textContent = Math.max(0, Math.ceil(h.time)); }
+  else if (md.team) { const h = md.hud(); $('hRed').textContent = h.red; $('hBlue').textContent = h.blue; $('hTime').textContent = Math.max(0, Math.ceil(h.time)); }
   else if (md.kind === 'race') {
     const order = [...G.runners].filter((r) => !r.out).sort((a, b) => (a.finished && b.finished ? a.place - b.place : a.finished ? -1 : b.finished ? 1 : (md.progress(b) - md.progress(a))));
     $('hPlace').textContent = `${order.indexOf(p) + 1}/${order.length}`; $('hPlaceLbl').textContent = md.laps ? t('Place · lap {n}/{m}', { n: Math.min(md.laps, (p.lap || 0) + 1), m: md.laps }) : t('Place · top {n} qualify', { n: flow.q });

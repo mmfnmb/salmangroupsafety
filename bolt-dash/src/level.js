@@ -2,6 +2,8 @@
 import { THREE, CANNON, M, G, V, PI, rand, pick, clamp, scene, world, addBox, place, instanced, fx, puffs, sfx, matGround, matBall, G_STATIC, G_RUNNER, G_HAZARD, G_BALL, G_PROJ } from './core.js';
 
 const CAT = { mask: G_RUNNER | G_BALL | G_PROJ };
+// all moving obstacles run a bit faster than they were first tuned (players found the maps too easy)
+const HARD = 1.2;
 export class Level {
   constructor(opts = {}) {
     this.root = new THREE.Group(); scene.add(this.root);
@@ -67,6 +69,7 @@ export class Level {
   }
   // ---- hazards
   sweeper(x, z, y = 0, len = 5.8, w = 1.3, opts = {}) {
+    w *= HARD;
     const pillar = this.model('Hazard_Cylinder', x, y, z, 0.9);
     const pb = new CANNON.Body({ type: CANNON.Body.STATIC, material: matGround, collisionFilterGroup: G_STATIC, collisionFilterMask: CAT.mask });
     pb.addShape(new CANNON.Cylinder(1, 1, 3.5, 12)); pb.position.set(x, y + 1.75, z); world.addBody(pb); this.bodies.push(pb);
@@ -80,6 +83,7 @@ export class Level {
     this.sweepers.push({ arm, body, w, x, y: y + 0.75, z, len, pillar });
   }
   saw(x, z, y = 0, amp = 4.4, sp = 1.8, ph = 0, axis = 'x') {
+    sp *= HARD;
     const o = this.model('Hazard_Saw', x, y + 1.55, z, 1.25, axis === 'x' ? 0 : PI / 2);
     this.inst('Fence_Middle', [-4.5, -1.5, 1.5, 4.5].filter((t) => Math.abs(t) <= amp + 0.5).map((t) => axis === 'x' ? { x: x + t, y, z: z - 0.9, s: 0.8 } : { x: x - 0.9, y, z: z + t, s: 0.8, ry: PI / 2 }));
     const body = this.kin(new CANNON.Sphere(1.5), x, y + 1.55, z, 'saw');
@@ -125,6 +129,7 @@ export class Level {
     sfx.crack();
   }
   cannon(x, z, y, dirX, dirZ, period = 2.4, delay = 0, power = 17) {
+    period /= HARD;
     const c = this.model('Cannon', x, y + 0.7, z, 0.75, Math.atan2(dirX, dirZ) - PI / 2);
     this.cannons.push({ obj: c, x, y, z, dx: dirX, dz: dirZ, t: delay, period, power });
   }

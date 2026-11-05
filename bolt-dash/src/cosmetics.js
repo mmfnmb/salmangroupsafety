@@ -207,7 +207,10 @@ export function teamFlag(model, team) {
   const u = model.userData;
   if (u.flag) { u.flag.removeFromParent(); u.flag = null; }
   if (!team) return;
-  const o = M[team === 'red' ? 'k/flag-large-red' : 'k/flag-large-blue'].scene.clone();
+  const o = M[team === 'blue' ? 'k/flag-large-blue' : 'k/flag-large-red'].scene.clone();
+  // green and yellow teams: the red flag with its cloth recoloured
+  const tc = { green: 0x2ec45a, yellow: 0xffd23f }[team];
+  if (tc) o.traverse((m) => { if (m.isMesh) { m.material = m.material.clone(); const c = m.material.color; if (c && c.r > 0.5 && c.g < 0.45) c.setHex(tc); } });
   o.scale.setScalar(3.4); o.position.set(0.15, 0.2, -0.75); o.rotation.set(-0.15, 0, 0);
   u.flag = attach(model, 'Torso', o);
 }

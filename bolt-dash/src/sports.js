@@ -1,6 +1,6 @@
 // Sports modes: Golf, Volleyball, Football (with positions) and Puck Rush (many small goals).
 // They register themselves into MODES / MODE_LIST when this module loads.
-import { THREE, CANNON, G, V, PI, rand, pick, clamp, world, place, fx, sfx, toast, G_STATIC, G_HAZARD, G_BALL, matBall, matGround } from './core.js';
+import { THREE, CANNON, G, V, PI, rand, pick, clamp, world, place, fx, sfx, toast, save, persist, G_STATIC, G_HAZARD, G_BALL, matBall, matGround } from './core.js';
 import { t } from './i18n.js';
 import { Level } from './level.js';
 import { MODES, MODE_LIST, ballClassic } from './modes.js';
@@ -231,6 +231,10 @@ function goalFrame(L, z, s) {
   for (const x of [-GW - 0.25, GW + 0.25]) { L.model('k/fence-rope', x, 0, (z + back) / 2, [2 / 0.94, GH / 0.3, 1], PI / 2); L.box(x, GH / 2, (z + back) / 2, 0.12, GH / 2, 1); }
   L.box(0, GH + 0.1, (z + back) / 2, GW + 0.3, 0.08, 1);
 }
+// the player card: grows as you play football and changes how well you play
+export const cardOvr = (c = save.card) => Math.round((c.pac + c.sho + c.pas + c.ctl) / 4);
+export const cardTier = (o = cardOvr()) => (o >= 80 ? 'gold' : o >= 65 ? 'silver' : 'bronze');
+function grow(r, stat, amt) { if (!r?.isPlayer) return; const c = save.card; const before = cardOvr(); c[stat] = Math.min(99, c[stat] + amt * (1 - c[stat] / 120)); if (cardOvr() > before) toast(t('Player card') + ' ' + cardOvr() + ' ▲', 1.4); }
 const football = {
   id: 'football', name: t('Bolt Football'), short: t('Football'), kind: 'team', team: true, charge: true, positions: true, camDist: 2.7, icon: 'ball',
   desc: t('Real football: the ball sticks to your feet. Dive to pass, hold Hit to shoot, and dive into the player with the ball to tackle'), weapons: t('Your feet'),
@@ -274,8 +278,10 @@ const football = {
       for (const r of mates) if (!r.isPlayer) { const sl = free.shift() || { role: 'MID', x: 0 }; r.role = sl.role; r.slotX = sl.x; }
     }
   },
+  playerSpeed() { return 0.92 + save.card.pac / 600; },
   update(dt) {
     this.assignRoles();
+    const me = G.player; if (me && !me.out) { const v = me.body.velocity; grow(me, 'pac', Math.hypot(v.x, v.z) * dt * 0.0012); }
     const b = this.b.body, p = b.position;
     this.time -= dt;
     for (const r of G.runners) { r.noBallT = Math.max(0, (r.noBallT || 0) - dt); r.tackleCd = Math.max(0, (r.tackleCd || 0) - dt); }
@@ -297,7 +303,7 @@ const football = {
         }
       }
       if (Math.abs(p.z) > FZ + 0.3 && Math.abs(p.x) < GW && p.y < GH) {
-        const scorer = p.z > 0 ? 'blue' : 'red'; this.score[scorer]++; this.resetT = 2.2; this.owner = null;
+        const scorer = p.z > 0 ? 'blue' : 'red'; this.score[scorer]++; if (this.lastTouch?.team === scorer) grow(this.lastTouch, 'sho', 1.5); this.resetT = 2.2; this.owner = null;
         sfx.goal(); fx.confetti(V(p.x, p.y + 1, p.z), 140); toast(scorer === 'red' ? t('Goal for Red!') : t('Goal for Blue!'), 2);
         if (this.score[scorer] >= 3) setTimeout(() => G.endRound(), 1400);
       } else if (Math.abs(p.x) > FX + 1 || Math.abs(p.z) > FZ + 3.5 || p.y < -3) {
@@ -316,8 +322,8 @@ const football = {
     const ahead = (dx * f.x + dz * f.z) / (d || 1);
     if (sp > 0.8 && d < 0.95 && o.touchT <= 0) {
       // a touch: a little faster than you, a bit of random error that grows with speed (bad first touches happen)
-      const long = sp > 6 ? 1.55 : 1.22, err = (Math.random() - 0.5) * (0.12 + sp * 0.035) * (o.isPlayer ? 1 : 0.7), v = sp * long + 0.6;
-      b.velocity.set((f.x + err * f.z) * v, 0.35, (f.z - err * f.x) * v); o.touchT = sp > 6 ? 0.32 : 0.2;
+      const long = sp > 6 ? 1.55 : 1.22, err = (Math.random() - 0.5) * (0.12 + sp * 0.035) * (o.isPlayer ? 1.4 - save.card.ctl / 100 : 0.7), v = sp * long + 0.6;
+      b.velocity.set((f.x + err * f.z) * v, 0.35, (f.z - err * f.x) * v); o.touchT = sp > 6 ? 0.32 : 0.2; this.lastTouch = o; grow(o, 'ctl', 0.04);
       if (o.isPlayer) sfx.swing?.();
     } else if (sp <= 0.8 && d < 1.6) {
       // standing still: settle the ball at your feet
@@ -327,18 +333,18 @@ const football = {
     for (const r of G.runners) {
       if (r.team === o.team || r.out || r.stunT > 0 || r.state === 'tumble') continue;
       if (Math.hypot(r.pos.x - p.x, r.pos.z - p.z) < 0.9 && Math.random() < dt * 2.2) {
-        const a = flat(p.x - r.pos.x, p.z - r.pos.z); this.owner = null; o.noBallT = 0.5;
+        const a = flat(p.x - r.pos.x, p.z - r.pos.z); this.owner = null; o.noBallT = 0.5; grow(r, 'ctl', 0.3);
         b.velocity.set(a.x * 5 + rand(-2, 2), 1.2, a.z * 5 + rand(-2, 2)); sfx.bat(); break;
       }
     }
   },
-  steal(r, from) { this.owner = r; from.noBallT = 0.8; from.stun(0.45); fx.burst(V(r.pos.x, r.pos.y + 0.8, r.pos.z), 0xffd23f, 12, 6); sfx.bat(); if (r.isPlayer) toast(t('Tackle!'), 1); },
-  kick(r, dir, speed, vy) { const b = this.b.body; this.owner = null; r.noBallT = 0.45; b.position.set(r.pos.x + dir.x * 0.9, 0.45, r.pos.z + dir.z * 0.9); b.velocity.set(dir.x * speed, vy, dir.z * speed); },
+  steal(r, from) { grow(r, 'ctl', 0.5); this.owner = r; from.noBallT = 0.8; from.stun(0.45); fx.burst(V(r.pos.x, r.pos.y + 0.8, r.pos.z), 0xffd23f, 12, 6); sfx.bat(); if (r.isPlayer) toast(t('Tackle!'), 1); },
+  kick(r, dir, speed, vy) { const b = this.b.body; this.owner = null; this.lastTouch = r; r.noBallT = 0.45; b.position.set(r.pos.x + dir.x * 0.9, 0.45, r.pos.z + dir.z * 0.9); b.velocity.set(dir.x * speed, vy, dir.z * speed); },
   shoot(r, pw) {
     let a;
     if (r.isPlayer) a = playerAim(r);
     else { const gz = -this.ownZ(r.team); a = flat(rand(-GW + 0.7, GW - 0.7) - r.pos.x, gz - r.pos.z); }
-    this.kick(r, a, 11 + pw * 16, 1 + pw * 2.8); sfx.bat();
+    this.kick(r, a, (11 + pw * 16) * (r.isPlayer ? 0.85 + save.card.sho / 333 : 1), 1 + pw * 2.8); sfx.bat(); grow(r, 'sho', 0.25);
     if (r.isPlayer && r.batPerfect) G.banner?.(t('PERFECT!'), true);
   },
   pass(r) {
@@ -347,7 +353,7 @@ const football = {
     const score = (m) => { const dx = m.pos.x - r.pos.x, dz = m.pos.z - r.pos.z, d = Math.hypot(dx, dz) || 1; return r.isPlayer ? (dx * a.x + dz * a.z) / d - d * 0.01 : dz * fwd * 0.08 - this.pressure(m) * 1.5 - (m.role === 'GK' ? 3 : 0); };
     const m = mates.reduce((x, y) => (score(y) > score(x) ? y : x));
     const mv = m.body.velocity, tx = m.pos.x + mv.x * 0.35, tz = m.pos.z + mv.z * 0.35, d = Math.hypot(tx - r.pos.x, tz - r.pos.z);
-    this.kick(r, flat(tx - r.pos.x, tz - r.pos.z), clamp(d * 1.15 + 4, 8, 28), d > 18 ? 5 : 1.2); sfx.swing();
+    this.kick(r, flat(tx - r.pos.x, tz - r.pos.z), clamp(d * 1.15 + 4, 8, 28), d > 18 ? 5 : 1.2); sfx.swing(); grow(r, 'pas', 0.4);
     return true;
   },
   pressure(m) { let n = 0; for (const o of G.runners) if (o.team !== m.team && !o.out && Math.hypot(o.pos.x - m.pos.x, o.pos.z - m.pos.z) < 3) n++; return n; },

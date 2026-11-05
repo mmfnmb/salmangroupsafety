@@ -447,3 +447,17 @@ Entrenamiento
 Aprende cada movimiento paso a paso. Los consejos muestran tus teclas o los botones del móvil
 Lava creciente
 La lava no deja de subir. Salta por las rocas lo más rápido que puedas. Ganan los últimos en pie
+Carta de jugador
+Ritmo
+Tiro
+Pase
+Control
+Bronce
+Plata
+Oro
+Carrera de pintura
+Pintura
+Cuatro equipos. Cada baldosa que pisas toma tu color. Gana el equipo con más baldosas al acabar el tiempo
+Verde
+Amarillo
+El equipo {x} ganó con {n} baldosas

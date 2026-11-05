@@ -358,6 +358,11 @@ html[dir=rtl] svg:has(use[href="#i-back"]){transform:scaleX(-1)}
 .statg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .statg div{background:var(--lav);border-radius:14px;padding:8px;text-align:center;font-weight:800;font-size:12px}
 .statg b{display:block;font-family:var(--display);font-weight:400;font-size:26px}
+.pcard{margin-top:10px;border-radius:18px;padding:12px;display:grid;grid-template-columns:auto 1fr;gap:6px 12px;color:#2b1a0a;text-align:left;box-shadow:inset 0 0 0 3px rgba(255,255,255,.35),0 6px 0 rgba(0,0,0,.2)}
+.pcard.bronze{background:linear-gradient(135deg,#e2a26b,#a8642f)}.pcard.silver{background:linear-gradient(135deg,#f1f4f8,#9aa4b2)}.pcard.gold{background:linear-gradient(135deg,#ffe98a,#d4a017)}
+.pcard .po{grid-row:span 2;text-align:center}.pcard .po b{display:block;font-family:var(--display);font-weight:400;font-size:44px;line-height:1}.pcard .po span{font-weight:800;font-size:12px}
+.pcard .pn{font-family:var(--display);font-size:22px}.pcard .pn em{display:block;font-style:normal;font-family:inherit;font-size:11px;font-weight:800;opacity:.7}
+.pcard .ps{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;font-weight:800;font-size:13px}.pcard .ps div{display:flex;justify-content:space-between}
 /* skydive matchmaking */
 #mm{grid-template-rows:auto 1fr auto}
 #introVid{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;background:#000;z-index:30}

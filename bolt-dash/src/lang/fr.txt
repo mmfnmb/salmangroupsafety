@@ -447,3 +447,17 @@ Entraînement
 Apprends chaque geste pas à pas. Les conseils montrent tes touches ou les boutons du téléphone
 Lave montante
 La lave monte sans arrêt. Saute sur les rochers le plus vite possible. Les derniers debout gagnent
+Carte joueur
+Vitesse
+Tir
+Passe
+Contrôle
+Bronze
+Argent
+Or
+Course de peinture
+Peinture
+Quatre équipes. Chaque dalle où tu marches prend ta couleur. L'équipe avec le plus de dalles à la fin gagne
+Vert
+Jaune
+L'équipe {x} a gagné avec {n} dalles

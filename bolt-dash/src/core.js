@@ -34,11 +34,11 @@ export const save = {
   owned: store.get('owned', ['skin-blue', 'bat-golf']), equip: store.get('equip', { skin: 'skin-blue', bat: 'bat-golf' }),
   xp: store.get('xp', 0), gift: store.get('gift', false), daily: store.get('daily', null), maps: store.get('maps', null),
   name: store.get('name', 'Bolt'), stats: store.get('stats', { games: 0, rounds: 0, qual: 0, crowns: 0, earned: 0 }),
-  season: store.get('season', []), dailyRew: store.get('dailyRew', { day: '', streak: 0 }), sens: store.get('sens', 1), shadows: store.get('shadows', true), quality: store.get('quality', null),
+  season: store.get('season', []), dailyRew: store.get('dailyRew', { day: '', streak: 0 }), sens: store.get('sens', 1), card: store.get('card', { pac: 50, sho: 50, pas: 50, ctl: 50 }), shadows: store.get('shadows', true), quality: store.get('quality', null),
 };
 if (!save.owned.includes('bat-golf')) save.owned.push('bat-golf');
 if (!save.equip.bat) save.equip.bat = 'bat-golf';
-export const persist = () => { for (const k of ['coins', 'wins', 'owned', 'equip', 'xp', 'gift', 'daily', 'maps', 'muted', 'name', 'stats', 'season', 'dailyRew', 'sens', 'shadows', 'quality']) store.set(k, save[k]); };
+export const persist = () => { for (const k of ['coins', 'wins', 'owned', 'equip', 'xp', 'gift', 'daily', 'maps', 'muted', 'name', 'stats', 'season', 'dailyRew', 'sens', 'shadows', 'quality', 'card']) store.set(k, save[k]); };
 
 // ---------------------------------------------------------------- audio (synth)
 export const sfx = (() => {
@@ -101,12 +101,12 @@ export const canvas = $('c');
 export const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.1;
+renderer.toneMappingExposure = 1.2;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 export const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(0xc9b8ff, 110, 320);
+scene.fog = new THREE.Fog(0xbfe6ff, 150, 420);
 export const camera = new THREE.PerspectiveCamera(62, 1, 0.1, 900);
 // reflections for shiny materials (gold, crystal, metal)
 { const pm = new THREE.PMREMGenerator(renderer); scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture; scene.environmentIntensity = 0.3; }
@@ -121,7 +121,7 @@ export const sky = (() => {
       float h21(vec2 p){ p = fract(p*vec2(123.34,456.21)); p += dot(p,p+45.32); return fract(p.x*p.y); }
       void main(){
         float h = vP.y;
-        vec3 top = vec3(0.22,0.33,0.95), mid = vec3(0.45,0.80,1.0), hor = vec3(1.0,0.78,0.92), low = vec3(0.70,0.55,1.0);
+        vec3 top = vec3(0.22,0.33,0.95), mid = vec3(0.45,0.80,1.0), hor = vec3(0.95,0.92,1.0), low = vec3(0.55,0.80,1.0);
         vec3 c = h > 0.0 ? mix(mix(hor, mid, smoothstep(0.0,0.18,h)), top, smoothstep(0.18,0.85,h)) : mix(hor, low, smoothstep(0.0,-0.35,h));
         // aurora ribbons
         float a = sin(vP.x*3.0 + time*0.15 + sin(vP.z*2.0+time*0.1)*1.5) * 0.5 + 0.5;
@@ -138,7 +138,7 @@ export const sky = (() => {
   });
   const s = new THREE.Mesh(new THREE.SphereGeometry(800, 48, 24), m); s.renderOrder = -1; s.frustumCulled = false; scene.add(s); return s;
 })();
-export const hemi = new THREE.HemisphereLight(0xfff4ff, 0x9fb8ff, 1.2);
+export const hemi = new THREE.HemisphereLight(0xfffaf0, 0xa8e6a0, 1.35);
 scene.add(hemi);
 export const sun = new THREE.DirectionalLight(0xfff0dc, 2.6);
 sun.castShadow = true;
@@ -146,7 +146,7 @@ Object.assign(sun.shadow.camera, { left: -34, right: 34, top: 34, bottom: -34, n
 sun.shadow.bias = -0.0005; sun.shadow.normalBias = 0.03;
 scene.add(sun, sun.target);
 // soft rim light from behind gives characters a glowing outline
-export const rim = new THREE.DirectionalLight(0xb8a0ff, 0.9); rim.position.set(-10, 8, -14); scene.add(rim);
+export const rim = new THREE.DirectionalLight(0xffd8ec, 0.7); rim.position.set(-10, 8, -14); scene.add(rim);
 
 // shimmering sea with rolling waves
 export const seaU = { time: { value: 0 } };

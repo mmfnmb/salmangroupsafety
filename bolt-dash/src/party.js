@@ -11,7 +11,7 @@ function tileGrid(L, model, cells, s, y = 0) {
   const tiles = cells.map((c, i) => {
     const b = new CANNON.Body({ type: CANNON.Body.STATIC, material: matGround, collisionFilterGroup: G_STATIC, collisionFilterMask: G_RUNNER | G_BALL | G_PROJ });
     b.addShape(new CANNON.Box(new CANNON.Vec3(s * 0.98, 1, s * 0.98))); b.position.set(c.x, y - 1, c.z); world.addBody(b); L.bodies.push(b);
-    return { i, x: c.x, y, z: c.z, body: b, state: 0, t: 0, dropY: y, dropV: 0, color: new THREE.Color(c.color) };
+    const tl = { i, x: c.x, y, z: c.z, body: b, state: 0, t: 0, dropY: y, dropV: 0, color: new THREE.Color(c.color) }; b.userData = { ptile: tl }; return tl;
   });
   const mtx = new THREE.Matrix4(), tmp = new THREE.Matrix4();
   const grid = {
@@ -248,3 +248,51 @@ const rising = {
   },
 };
 MODES.rising = rising; MODE_LIST.push(rising);
+
+// ======================================================================= PAINT RUSH (4 teams)
+// every tile you step on takes your team's colour. Most tiles when time runs out wins.
+const PAINT = { red: 0xd7263d, blue: 0x3d8bff, green: 0x2ec45a, yellow: 0xffd23f }, PT = ['red', 'blue', 'green', 'yellow'];
+const paint = {
+  id: 'paint', name: t('Paint Rush'), short: t('Paint'), kind: 'team', team: true, teams: PT, icon: 'star',
+  desc: t('Four teams. Every tile you step on takes your colour. The team with the most tiles when time runs out wins'), weapons: t('Push + Grab'),
+  build() {
+    const L = new Level({ killY: -10 }); G.level = L;
+    const cells = [], N = 8;
+    for (let x = -N; x < N; x++) for (let z = -N; z < N; z++) cells.push({ x: x * 2 + 1, z: z * 2 + 1, color: 0xe9e4f2 });
+    this.g = tileGrid(L, 'Cube_Grass_Single', cells, 1, 0);
+    this.g.tiles.forEach((tl) => { tl.team = null; });
+    L.fence(-16, 16, 16, 16); L.fence(-16, -16, 16, -16); L.fence(-16, 16, -16, -16); L.fence(16, 16, 16, -16);
+    // a few spinning arms and springs to make it messy
+    L.sweeper(-7, -7, 0, 4.2, 0.9); L.sweeper(7, 7, 0, 4.2, -0.9);
+    for (const [x, z] of [[-7, 7], [7, -7]]) L.spring(x, z, 0, 18);
+    L.scenery(60, -60, 36, { towers: [[-40, -20, 3], [45, 10, 3]] });
+    this.score = { red: 0, blue: 0, green: 0, yellow: 0 }; this.time = 90;
+    this.fly = [[0, 30, 26, 0, 0, 0], [20, 10, 8, 0, 0, 0], [0, 9, 18, 0, 0, 0]];
+  },
+  teamOf: (i) => PT[i % 4],
+  spawn(i) { const tm = i % 4, k = Math.floor(i / 4), cx = [-11, 11, -11, 11][tm], cz = [-11, -11, 11, 11][tm]; return { x: cx + k * 2, y: 0, z: cz, facing: Math.atan2(-cx, -cz) }; },
+  update(dt) {
+    this.time -= dt;
+    for (const r of G.runners) {
+      if (r.out || !r.grounded) continue;
+      const tl = r.groundBody?.userData?.ptile; if (!tl || tl.team === r.team) continue;
+      if (tl.team) this.score[tl.team]--;
+      tl.team = r.team; this.score[r.team]++; this.g.tint(tl, new THREE.Color(PAINT[r.team]));
+      if (r.isPlayer && Math.random() < 0.3) sfx.tick();
+    }
+    if (this.time <= 0) G.endRound();
+  },
+  onFall(r) { const s = this.spawn(G.runners.indexOf(r)); r.reset(s.x, 0, s.z, s.facing); },
+  hud() { return { ...this.score, time: this.time, teams: PT }; },
+  winners() { return PT.reduce((a, b) => (this.score[b] > this.score[a] ? b : a)); },
+  target(r, dt) {
+    const p = r.pos, ai = r.ai; ai.wanderT = (ai.wanderT || 0) - dt;
+    if (!ai.wander || ai.wander.team === r.team || ai.wanderT <= 0) {
+      let best = null, bs = -1e9;
+      for (let k = 0; k < 18; k++) { const tl = pick(this.g.tiles); if (tl.team === r.team) continue; const d = Math.hypot(tl.x - p.x, tl.z - p.z); const sc = (tl.team ? 3 : 2) - d * 0.25; if (sc > bs) { bs = sc; best = tl; } }
+      ai.wander = best; ai.wanderT = rand(0.8, 1.6);
+    }
+    return ai.wander ? { x: ai.wander.x, z: ai.wander.z, near: 0.5 } : { x: 0, z: 0 };
+  },
+};
+MODES.paint = paint; MODE_LIST.push(paint);

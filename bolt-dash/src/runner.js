@@ -172,7 +172,7 @@ export class Runner {
         else if (zn.type === 'slime') this.slow(0.4);
       }
       if (!dive) {
-        let speed = RUN * (this.isPlayer ? 1 : this.ai.speed) * (this.slowT > 0 ? 0.4 : 1) * (G.modeObj?.speedMul || 1);
+        let speed = RUN * (this.isPlayer ? (G.modeObj?.playerSpeed?.() ?? 1) : this.ai.speed) * (this.slowT > 0 ? 0.4 : 1) * (G.modeObj?.speedMul || 1);
         let tx = ix * speed + gvx + zx, tz = iz * speed + gvz + zz;
         if (this.boostT > 0) { tx += this.boostDir.x * 8; tz += this.boostDir.z * 8; if (Math.random() < dt * 25) puffs.emit({ pos: V(b.position.x, b.position.y + 0.3, b.position.z), vel: V(rand(-1, 1), rand(0.5, 1.5), rand(-1, 1)), life: 0.35, size: 0.14, drag: 2, color: 0xffd23f }); }
         const acc = (this.grounded ? (this.slipT > 0 ? 9 : GROUND_ACC) : AIR_ACC * (this.launchT > 0 ? 0.15 : 1)) * dt;
