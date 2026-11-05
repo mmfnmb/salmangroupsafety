@@ -7,3 +7,5 @@ Downloaded from the GitHub mirror `trebeljahr/quaternius-showcase` (`public/glb/
 `models/acc/` and `models/k/` contain models from **Kenney** (https://kenney.nl, CC0) via the GitHub
 mirror `shorepine/kenney`, and from **Quaternius** (CC0) via `trebeljahr/quaternius-showcase`.
 Kenney textures (colormap.png) were embedded into each .glb.
+
+- film/x-hm-b (hockey mask): "Jason Mask" by ShadowSupreme, https://sketchfab.com/3d-models/jason-mask-e4835b7ecfb949abab16cc2065a1e738 (Sketchfab Standard licence), via github.com/apaleblueman/amazoff-dot-com. Textures resized.

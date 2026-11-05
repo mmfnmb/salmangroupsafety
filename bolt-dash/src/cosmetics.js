@@ -142,7 +142,7 @@ export function dress(model, equip, opts = {}) {
     if (!id || !ITEM[id]) continue;
     const it = ITEM[id];
     const o = M[it.model].scene.clone();
-    o.scale.setScalar(it.s); o.position.set(...it.p); if (it.r) o.rotation.set(...it.r);
+    if (Array.isArray(it.s)) o.scale.set(...it.s); else o.scale.setScalar(it.s); o.position.set(...it.p); if (it.r) o.rotation.set(...it.r);
     u.acc[slot] = { id, obj: attach(model, it.bone, o) };
   }
   holdItem(model, opts.bat && equip.bat ? 'bat:' + equip.bat : null);

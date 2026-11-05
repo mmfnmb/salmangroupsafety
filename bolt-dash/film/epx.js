@@ -3,16 +3,17 @@ import { initFilm, episode, Actor, ACTORS, setTime, fixed, V, place, scene } fro
 import { ITEM } from '../src/cosmetics.js';
 let EP; export let total = 0;
 export async function init() {
-  await initFilm(['x-mask', 'x-pumpkin', 'x-cleaver', 'x-chainsaw']);
+  await initFilm(['x-hm-b', 'x-pumpkin', 'x-cleaver', 'x-chainsaw']);
   const P = new URLSearchParams(location.search), ms = +(P.get('ms') || 5), my = +(P.get('my') || 0.3), mz = +(P.get('mz') || 0.3), ps = +(P.get('ps') || 7.0), py = +(P.get('py') || -0.32);
   ITEM['film-mad'] = { id: 'film-mad', colors: { Main: 0x121216, Main2: 0x2a2a30, Main_Light: 0x9a0c16, EyeColor: 0xff2a2a }, mat: { EyeColor: { emi: 0xff0000, ei: 2.5 }, Main_Light: { rough: 0.5 } } };
-  ITEM['x-mask'] = { id: 'x-mask', slot: 'face', model: 'f/x-mask', bone: 'Head', s: ms, p: [0, my, mz] };
+  // hockey mask: flattened a little so the tall mask sits on the round face
+  ITEM['x-hockey'] = { id: 'x-hockey', slot: 'face', model: 'f/x-hm-b', bone: 'Head', s: [1.68, 1.25, 1.4], p: [0, 0.2, 0.85] };
   ITEM['x-pumpkin'] = { id: 'x-pumpkin', slot: 'head', model: 'f/x-pumpkin', bone: 'Head', s: ps, p: [0, py, 0.1] };
   ITEM['x-cleaver'] = { id: 'x-cleaver', slot: 'bat', model: 'f/x-cleaver', axis: 'x', grip: 1, len: 3.4 };
   ITEM['x-saw'] = { id: 'x-saw', slot: 'bat', model: 'f/x-chainsaw', axis: 'z', grip: 1, len: 5.2 };
   for (let x = -6; x <= 6; x += 2) for (let z = -6; z <= 4; z += 2) place('Cube_Grass_Single', x, -1, z, 1, 0, scene);
-  // a: bare red face + cleaver; b: pumpkin head (ears hidden so it sits as a full head) + chainsaw
-  const a = new Actor({ skin: 'film-mad', bat: 'x-cleaver' }), b = new Actor({ skin: 'film-mad', head: 'x-pumpkin', bat: 'x-cleaver' }).noEars();
+  // a: hockey mask + cleaver; b: pumpkin head (ears hidden so it sits as a full head) + chainsaw
+  const a = new Actor({ skin: 'film-mad', face: 'x-hockey', bat: 'x-cleaver' }), b = new Actor({ skin: 'film-mad', head: 'x-pumpkin', bat: 'x-cleaver' }).noEars();
   ACTORS.push(a, b);
   const { holdItem } = await import('../src/cosmetics.js');
   const { THREE, scene: sc } = await import('./lib.js');
