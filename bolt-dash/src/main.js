@@ -105,6 +105,7 @@ canvas.addEventListener('pointermove', (e) => {
   const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.moved += Math.abs(dx) + Math.abs(dy);
   if (drag.moved >= 8 && ctl.held && ctl.charge && !keys.has('KeyF')) { ctl.held = false; ctl.charge = null; show('pwr', false); }
   if (flow.state === 'build') { editor.cam.x = clamp(editor.cam.x - dx * editor.cam.zoom * 0.0025, -14, 14); editor.cam.z = clamp(editor.cam.z - dy * editor.cam.zoom * 0.004, -80, 14); }
+  else if (flow.state === 'menu') { lobby.spin = (lobby.spin || 0) + dx * 0.012; lobby.spinT = 4; }
   else { ctl.yaw -= dx * 0.006 * save.sens; ctl.pitch = clamp(ctl.pitch + dy * 0.004 * save.sens, -0.45, 1.1); }
   drag.x = e.clientX; drag.y = e.clientY;
 });
@@ -200,12 +201,12 @@ function buildLobby() {
   for (const [x, z, n] of [[-5.4, 7.4, 'k/candy-cane-red'], [5.6, 7.2, 'k/candy-cane-green'], [-11.5, -2.5, 'k/candy-cane-green'], [11.5, -2.5, 'k/candy-cane-red']]) place(n, x, 0, z, 5, rand(0, 6), g);
   for (const [x, z] of [[-3, -9], [3, -9]]) place('k/flagCheckers', x, 0, z, 3, 0, g);
   for (const [x, z] of [[-6.5, -3], [6.5, -3]]) place('z/Launchpad', x, 0, z, 1.4, rand(0, 6), g);
-  lobby.hero = SkeletonUtils.clone(M.Character.scene); lobby.hero.scale.setScalar(0.55); lobby.hero.position.set(0, 0.5, 0); g.add(lobby.hero);
+  lobby.hero = SkeletonUtils.clone(M.Character.scene); lobby.hero.scale.setScalar(0.75); lobby.hero.position.set(0, 1.4, 0); g.add(lobby.hero);
   lobby.hero.traverse((o) => { if (o.isMesh) o.castShadow = true; });
   lobby.rig = rig(lobby.hero); playOn(lobby.rig, 'Idle', 0);
   lobby.rig.mixer.addEventListener('finished', () => { if (lobby.state === 'dance') playOn(lobby.rig, 'Idle'); });
   // the troublemaker who runs in now and then
-  lobby.bully = SkeletonUtils.clone(M.Character.scene); lobby.bully.scale.setScalar(0.5); lobby.bully.visible = false; g.add(lobby.bully);
+  lobby.bully = SkeletonUtils.clone(M.Character.scene); lobby.bully.scale.setScalar(0.7); lobby.bully.visible = false; g.add(lobby.bully);
   lobby.bully.traverse((o) => { if (o.isMesh) o.castShadow = true; });
   lobby.brig = rig(lobby.bully);
   for (let k = 0; k < 14; k++) {
@@ -225,6 +226,8 @@ function heroDress(extra) {
 function fadeTo(n) { if (lobby.state !== 'dance') return; if (n === 'dance') { lobby.move = 'spin'; lobby.moveT = 0; return; } lobby.move = 'emote'; lobby.moveT = 0; playOn(lobby.rig, n); if (n === 'Jump') sfx.jump(); else sfx.click(); }
 function heroEmote() { fadeTo(pick(['Wave', 'Yes', 'No', 'Punch', 'dance'])); }
 const floorY = (x, z) => (Math.hypot(x, z) < 1.3 ? 0.5 : 0);
+// in the menu your character floats in the air, cape flowing, so you always see all of it
+const lobbyFloat = () => 1.5 + Math.sin(lobby.t * 1.7) * 0.18;
 function updateLobby(dt) {
   lobby.t += dt; lobby.st += dt; lobby.moveT += dt;
   const h = lobby.hero, R = lobby.rig, t = lobby.t;
@@ -236,12 +239,12 @@ function updateLobby(dt) {
     if (lobby.move === 'groove' || lobby.move === 'hop') {
       playOn(R, 'Idle', 0.3, 1.4);
       const beat = Math.abs(Math.sin(t * PI * 2.1));
-      h.position.y = 0.5 + beat * (lobby.move === 'hop' ? 0.45 : 0.16);
+      h.position.y = lobbyFloat() + beat * (lobby.move === 'hop' ? 0.45 : 0.16);
       h.rotation.y = Math.sin(t * PI * 1.05) * 0.45; h.rotation.z = Math.sin(t * PI * 2.1) * 0.08;
     } else if (lobby.move === 'spin') {
       if (lobby.moveT < 0.05) playOn(R, 'Jump', 0.1);
-      h.rotation.y = (lobby.moveT / 0.9) * PI * 2; h.position.y = 0.5 + Math.sin(Math.min(1, lobby.moveT / 0.9) * PI) * 0.7; h.rotation.z = 0;
-    } else { h.position.y = damp(h.position.y, 0.5, 10, dt); h.rotation.y = damp(h.rotation.y, 0, 6, dt); h.rotation.z = 0; }
+      h.rotation.y = (lobby.moveT / 0.9) * PI * 2; h.position.y = lobbyFloat() + Math.sin(Math.min(1, lobby.moveT / 0.9) * PI) * 0.7; h.rotation.z = 0;
+    } else { h.position.y = damp(h.position.y, lobbyFloat(), 10, dt); h.rotation.y = damp(h.rotation.y, 0, 6, dt); h.rotation.z = 0; }
     const len = { groove: 3.2, hop: 1.6, spin: 0.9, emote: 1.4 }[lobby.move];
     if (lobby.moveT > len) { lobby.move = pick(['groove', 'groove', 'hop', 'spin', 'emote']); lobby.moveT = 0; if (lobby.move === 'emote') playOn(R, pick(['Wave', 'Yes', 'Punch', 'No'])); }
     lobby.nextHit -= dt;
@@ -261,9 +264,14 @@ function updateLobby(dt) {
     const dx = -h.position.x, dz = -h.position.z, d = Math.hypot(dx, dz);
     h.rotation.y = Math.atan2(dx, dz); h.rotation.x = 0;
     if (d > 0.08) { const sp = Math.min(d, 2.2 * dt); h.position.x += dx / d * sp; h.position.z += dz / d * sp; h.position.y = damp(h.position.y, floorY(h.position.x, h.position.z), 12, dt); }
-    else { h.position.set(0, 0.5, 0); lobby.state = 'dance'; lobby.move = 'emote'; lobby.moveT = 0; playOn(R, 'No'); lobby.nextHit = rand(10, 16); }
+    else { h.position.set(0, h.position.y, 0); lobby.state = 'dance'; lobby.move = 'emote'; lobby.moveT = 0; playOn(R, 'No'); lobby.nextHit = rand(10, 16); }
   }
-  updateBully(dt);
+  // mirror: drag on your character to turn it around and look at your outfit from every side
+  if (lobby.spinT > 0 || lobby.view === 'locker') {
+    lobby.spinT = Math.max(0, (lobby.spinT || 0) - dt);
+    if (lobby.state === 'dance') { h.rotation.y = lobby.spin || 0; h.rotation.z = 0; }
+  } else if (lobby.spin) lobby.spin = 0;
+  if (lobby.view !== 'locker') updateBully(dt); else lobby.nextHit = Math.max(lobby.nextHit, 6);
   for (const fl of lobby.floaters) { fl.obj.rotation.y += fl.spin * dt; fl.obj.position.y = fl.base + Math.sin(lobby.t * 1.3 + fl.ph) * 0.3; }
   const { meshes, cells, cols } = lobby.floor, c = new THREE.Color();
   if (Math.floor(lobby.t * 4) !== lobby.step) {
@@ -280,8 +288,8 @@ function updateLobby(dt) {
 }
 function startBully() {
   const b = lobby.bully, side = Math.random() < 0.5 ? -1 : 1;
-  dress(b, randomEquip(false));
-  b.visible = true; b.position.set(side * 13, 0, rand(-1, 2)); lobby.bstate = 'in'; lobby.bst = 0; lobby.bside = side;
+  dress(b, { ...randomEquip(false), back: pick(['c-hero', 'c-knight', 'c-wizard', 'c-rogue']) });
+  b.visible = true; b.position.set(side * 13, 3, rand(-1, 2)); lobby.bstate = 'in'; lobby.bst = 0; lobby.bside = side;
   playOn(lobby.brig, 'Run', 0.1, 1.3);
 }
 function updateBully(dt) {
@@ -289,7 +297,7 @@ function updateBully(dt) {
   lobby.bst += dt; const h = lobby.hero;
   if (lobby.bstate === 'in') {
     const dx = h.position.x - b.position.x, dz = h.position.z - b.position.z, d = Math.hypot(dx, dz);
-    b.rotation.y = Math.atan2(dx, dz); b.position.y = floorY(b.position.x, b.position.z);
+    b.rotation.y = Math.atan2(dx, dz); b.position.y = damp(b.position.y, h.position.y + Math.sin(lobby.bst * 6) * 0.1, 4, dt);
     if (d > 1.1) { const sp = Math.min(d - 1.0, 8 * dt); b.position.x += dx / d * sp; b.position.z += dz / d * sp; }
     else if (lobby.state === 'dance') { lobby.bstate = 'punch'; lobby.bst = 0; playOn(lobby.brig, 'Punch', 0.05, 1.4); }
   } else if (lobby.bstate === 'punch' && lobby.bst > 0.25 && lobby.state === 'dance') {
@@ -302,7 +310,7 @@ function updateBully(dt) {
     lobby.bstate = 'out'; playOn(lobby.brig, 'Run', 0.1, 1.4);
   } else if (lobby.bstate === 'out') {
     const tx = lobby.bside * 15; b.rotation.y = Math.atan2(tx - b.position.x, 2 - b.position.z);
-    b.position.x += Math.sign(tx - b.position.x) * 8 * dt; b.position.y = floorY(b.position.x, b.position.z);
+    b.position.x += Math.sign(tx - b.position.x) * 8 * dt; b.position.y += dt * 2.5;
     if (Math.abs(b.position.x) > 14) b.visible = false;
   }
 }
@@ -310,7 +318,7 @@ function lobbyCam(dt) {
   const g = lobby.root.position, narrow = innerWidth < innerHeight, sway = Math.sin(lobby.t * 0.25) * 0.4;
   let pos, look;
   if (lobby.view === 'locker') { pos = narrow ? V(g.x + sway * 0.3, g.y + 2.4, g.z + 6.4) : V(g.x + 1.4 + sway * 0.3, g.y + 2.5, g.z + 5.4); look = narrow ? V(g.x, g.y + 0.2, g.z) : V(g.x + 1.4, g.y + 1.75, g.z); }
-  else { pos = narrow ? V(g.x + sway, g.y + 3.1, g.z + 10.2) : V(g.x + sway, g.y + 2.9, g.z + 8.2); look = narrow ? V(g.x, g.y + 1.1, g.z) : V(g.x, g.y + 1.9, g.z); }
+  else { pos = narrow ? V(g.x + sway, g.y + 3.4, g.z + 8.6) : V(g.x + sway, g.y + 3.0, g.z + 7.6); look = narrow ? V(g.x, g.y + 1.55, g.z) : V(g.x, g.y + 2.1, g.z); }
   camPos.lerp(pos, 1 - Math.exp(-4 * dt)); camLook.lerp(look, 1 - Math.exp(-4 * dt));
   camera.position.copy(camPos); camera.lookAt(camLook);
   sun.position.set(g.x + 8, g.y + 18, g.z + 10); sun.target.position.copy(g);
@@ -348,7 +356,7 @@ function updateDive(dt) {
 
 // ---------------------------------------------------------------- menu UI
 const MODE_CHOICES = [
-  { id: 'show', name: t('The Show'), sub: t('4 rounds in a row. Win the last one to take the crown'), thumb: 'fall' },
+  { id: 'show', name: t('The Show'), sub: t('7 rounds in a row. Win the last one to take the crown'), thumb: 'fall' },
   ...MODE_LIST.map((m) => ({ id: m.id, name: m.name, sub: m.team ? t('Teams') + ' · ' + m.weapons : m.weapons, thumb: m.id, special: m.special })),
 ];
 const choices = () => [...MODE_CHOICES, ...featuredMaps().map((m) => ({ id: 'cm:' + m.key, name: m.name, sub: t('Featured player map') + ' · ' + m.author, thumb: 'race' }))];
@@ -553,7 +561,7 @@ function lockerList() {
 function renderLocker() {
   const isShop = locker.mode === 'shop';
   $('lkTitle').textContent = isShop ? t('Shop') : t('Wardrobe');
-  $('lkSub').textContent = isShop ? t('Today\'s deals, new every day') : t('Change your colour, dress up and pick your bat');
+  $('lkSub').textContent = isShop ? t('Today\'s deals, new every day') : t('Change your colour, dress up and pick your bat') + ' · ' + t('Drag your character to turn it around');
   $('cats').hidden = isShop;
   $('cats').innerHTML = CATS.map(([k, n]) => `<button data-cat="${k}" aria-pressed="${k === locker.cat}">${n}</button>`).join('');
   const list = lockerList();
@@ -636,12 +644,14 @@ function playIntro(force) {
 const flow = { state: 'loading', choice: store.get('choice', 'show'), show: null, round: 0, t: 0, count: 0, flyT: 0, endT: 0, finishedCount: 0, coins: 0, bannerT: 0 };
 const camPos = V(0, 6, 16), camLook = V(), camRay = new CANNON.RaycastResult();
 function newShow(choice) {
-  const n = choice === 'show' ? 10 : choice === 'football' ? 14 : choice === 'training' ? 2 : choice === 'slasher' ? 4 : choice === 'paint' ? 12 : 8;
+  const n = choice === 'show' ? 16 : choice === 'football' ? 14 : choice === 'training' ? 2 : choice === 'slasher' ? 4 : choice === 'paint' ? 12 : 8;
   const players = [{ name: save.name, equip: { ...save.equip }, isPlayer: true }];
   const names = [...NAMES].sort(() => Math.random() - 0.5);
   for (let i = 1; i < n; i++) players.push({ name: names[i % names.length], equip: randomEquip(), isPlayer: false });
   let rounds;
-  if (choice === 'show') rounds = [{ m: pick(['race', 'race', 'golf']), q: 8 }, { m: pick(['stars', 'ball', 'volley', 'football', 'puck', 'paint']) }, { m: pick(['cannons', 'climb', 'arena', 'lava', 'bomb', 'rising']), q: 3 }, { m: 'fall', q: 1 }];
+  // the Show: 7 rounds, 16 players -> 12 -> 6 (teams) -> 5 -> 4 -> 3 -> 2 -> 1 crown
+  if (choice === 'show') { const surv = ['cannons', 'arena', 'lava', 'bomb', 'rising'], s1 = pick(surv), s2 = pick(surv.filter((x) => x !== s1)), r2 = pick(['climb', 'sprint', 'golf']);
+    rounds = [{ m: pick(['race', 'race', 'sprint']), q: 12 }, { m: pick(['stars', 'ball', 'volley', 'football', 'puck']) }, { m: s1, q: 5 }, { m: r2, q: 4 }, { m: s2, q: 3 }, { m: pick(['race', 'climb'].filter((x) => x !== r2)), q: 2 }, { m: 'fall', q: 1 }]; }
   else if (choice === 'custom') rounds = [{ m: 'custom', q: 3 }];
   else if (choice === 'slasher') rounds = [{ m: 'slasher', q: 0 }];
   else if (choice.startsWith('cm:')) rounds = [{ m: 'custom', q: 5, cm: choice.slice(3) }];
@@ -810,8 +820,47 @@ G.endRound = () => {
   if (last || !won) { st.games = (st.games || 0) + 1; if (isShow) track('shows'); }
   track('coins', flow.coins);
   persist2();
-  setTimeout(() => showResult(won, last, qualified, earned), 700);
+  if (isShow) setTimeout(() => ceremony(qualified, () => showResult(won, last, qualified, earned)), 900);
+  else setTimeout(() => showResult(won, last, qualified, earned), 700);
 };
+// between Show rounds: everyone stands on one big box split into squares (one per player).
+// The qualified ones celebrate; behind each loser a crate slides out and shoves them into the sea.
+const cer = { g: null, t: 0, list: [], done: null };
+function ceremony(qualified, done) {
+  const keep = new Set(qualified), rs = G.runners.filter((r) => !r.out || keep.has(r));
+  const all = rs.length ? rs : G.runners, n = all.length, cols = Math.min(6, n), rows = Math.ceil(n / cols);
+  const g = new THREE.Group(); g.position.set(0, -34, -320); scene.add(g); cer.g = g; cer.t = 0; cer.done = done; cer.list = [];
+  if (G.level) G.level.root.visible = false; for (const r of G.runners) { r.root.visible = false; if (r.pet) r.pet.o.visible = false; }
+  const cells = []; for (let i = 0; i < n; i++) { const c = i % cols, w = Math.floor(i / cols); cells.push({ x: (c - (cols - 1) / 2) * 2.2, z: (w - (rows - 1) / 2) * 2.4 }); }
+  const { meshes } = instanced('Cube_Grass_Single', cells.map((c) => ({ x: c.x, y: -1, z: c.z, s: 1.05 })), g);
+  const pal = [0xffd23f, 0x7fb8ff, 0xff7ab8, 0x5fe0b0];
+  meshes.forEach((m) => { cells.forEach((c, i) => m.setColorAt(i, new THREE.Color(pal[i % 4]))); m.instanceColor.needsUpdate = true; });
+  all.forEach((r, i) => {
+    const o = SkeletonUtils.clone(M.Character.scene); o.scale.setScalar(0.42); o.position.set(cells[i].x, 0, cells[i].z); g.add(o);
+    dress(o, r.equip || {}, { bat: false }); const rg = rig(o); playOn(rg, 'Idle');
+    const win = keep.has(r), crate = win ? null : place('Cube_Crate', cells[i].x, 0.6, cells[i].z - 2.4, 1.1, 0, g);
+    cer.list.push({ o, rg, win, crate, x: cells[i].x, z: cells[i].z, vy: 0, fell: false, me: r.isPlayer, delay: 1.1 + Math.random() * 0.6 });
+  });
+  for (const id of ['hud', 'big', 'banner', 'keys', 'touch', 'xhair']) show(id, false);
+  flow.state = 'ceremony';
+}
+function updateCeremony(dt) {
+  cer.t += dt; const g = cer.g;
+  for (const c of cer.list) {
+    c.rg.mixer.update(dt);
+    if (c.win) { if (cer.t > 1.6 && !c.cheer) { c.cheer = true; playOn(c.rg, pick(['Wave', 'Yes', 'Dance'])); } continue; }
+    const k = cer.t - c.delay;
+    if (k > 0 && c.crate) { c.crate.position.z = Math.min(c.z - 0.6, c.crate.position.z + dt * 9); }
+    if (k > 0.2) {
+      if (!c.hit) { c.hit = true; playOn(c.rg, 'HitReact', 0.05); if (c.me) sfx.hit(); }
+      c.o.position.z += dt * 5; c.o.rotation.x += dt * 4;
+      if (c.o.position.z > c.z + 1.1) { c.vy -= 22 * dt; c.o.position.y += c.vy * dt; }
+      if (!c.fell && c.o.position.y < -6) { c.fell = true; fx.burst(V(g.position.x + c.x, g.position.y - 6, g.position.z + c.o.position.z), 0x9fdcff, 16, 6); sfx.land(); }
+    }
+  }
+  const span = Math.max(6, cer.list.length * 0.9); camera.position.set(g.position.x, g.position.y + span * 0.75, g.position.z + span * 1.05); camera.lookAt(g.position.x, g.position.y - 0.5, g.position.z + 0.6);
+  if (cer.t > 4.2) { scene.remove(g); cer.g = null; if (G.level) G.level.root.visible = true; for (const r of G.runners) r.root.visible = !r.out; flow.state = 'result'; const d = cer.done; cer.done = null; d?.(); }
+}
 function showResult(won, last, qualified, earned) {
   flow.state = 'result';
   const md = G.modeObj;
@@ -1092,6 +1141,7 @@ function frame() {
   requestAnimationFrame(frame);
   const dt = Math.min(clock.getDelta(), 1 / 20);
   if (flow.state === 'menu') { updateLobby(dt); lobbyCam(dt); }
+  else if (flow.state === 'ceremony') updateCeremony(dt);
   else if (flow.state === 'mm') updateMatchmaking(dt);
   else if (flow.state === 'fly') flyCam(dt);
   else if ((flow.state === 'count' || flow.state === 'play' || flow.state === 'result') && !G.paused && G.modeObj) { stepRound(dt); playCam(dt); }

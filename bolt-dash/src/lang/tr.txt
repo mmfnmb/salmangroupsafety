@@ -528,3 +528,8 @@ Alpaking
 %10 fazla altın ve %10 fazla XP
 İlk fragman
 Fragman
+Arka arkaya 7 tur. Tacı almak için sonuncuyu kazan
+Karakterini döndürmek için sürükle
+Her turda %15 fazla altın. Yakındaki düşmanları ısırır
+Darbeden sonra daha hızlı kalk. Yakındaki düşmanları tırmalar
+Yapışkan ve yavaşlatmalar seni pek etkilemez. Şarkı söyleyip etrafındakileri şaşırtır

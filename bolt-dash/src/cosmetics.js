@@ -43,6 +43,10 @@ export const SKINS = [
   { id: 'film-olive', name: 'Olive', price: 0, hidden: true, colors: { Main: 0x7b7d3a, Main2: 0xd6d7a8 } },
   { id: 'skin-mad', name: t('Mad Prisoner'), price: 0, rare: t('Achievement'), secret: true, colors: { Main: 0x121216, Main2: 0x2a2a30, Main_Light: 0x9a0c16, EyeColor: 0xff2a2a },
     mat: { EyeColor: { emi: 0xff0000, ei: 2.5 }, Main_Light: { rough: 0.5 } } },
+  { id: 'mon-zombie', name: 'Zombie', price: 0, hidden: true, colors: { Main: 0x5f9a3c, Main2: 0x3d6a2a, Main_Light: 0x9ab86a, EyeColor: 0xff2020 }, mat: { EyeColor: { emi: 0xff0000, ei: 2.2 }, Main: { rough: 0.9 } } },
+  { id: 'mon-skel', name: 'Skeleton', price: 0, hidden: true, colors: { Main: 0xe9e3d2, Main2: 0xbdb59f, Main_Light: 0xf6f1e3, EyeColor: 0x15101a }, mat: { Main: { rough: 0.7 } } },
+  { id: 'mon-ghost', name: 'Ghost', price: 0, hidden: true, colors: { Main: 0xe4ecff, Main2: 0xc4d2ff, Main_Light: 0xffffff, EyeColor: 0x1a1a40 }, mat: { Main: { emi: 0x8aa0ff, ei: 0.35, op: 0.6 }, Main2: { op: 0.6 }, Main_Light: { op: 0.6 } } },
+  { id: 'mon-vamp', name: 'Vampire', price: 0, hidden: true, colors: { Main: 0x2b1733, Main2: 0x8a1020, Main_Light: 0xd9cdd2, EyeColor: 0xff1a1a }, mat: { EyeColor: { emi: 0xff0000, ei: 2.5 } } },
   { id: 'skin-ref', name: t('Referee'), price: 0, hidden: true, colors: { Main: 0xffffff, Main2: 0xe8202a, Main_Light: 0xffe0c0 } },
   { id: 'skin-bolt', name: t('Original Bolt'), price: 0, rare: t('Exclusive'), secret: true, fx: 'bolt', colors: { Main: 0xffc21a, Main2: 0x08050f, Main_Light: 0x2a0f55 },
     mat: { Main: { metal: 1, rough: 0.16, emi: 0x7a4a00, ei: 0.5 }, Main2: { emi: 0x7a2cff, ei: 1.8 }, Main_Light: { emi: 0xb06cff, ei: 2.4 } } },
@@ -71,10 +75,10 @@ export const ACCS = [
   { id: 'h-knight', slot: 'head', name: t('Knight Helmet'), price: 220, noEars: true, model: 'acc/kk-Knight_Helmet', bone: 'Head', s: 1.75, p: [0, -2.17, -0.03] },
   { id: 'h-viking', slot: 'head', name: t('Bear Hat'), price: 240, noEars: true, model: 'acc/kk-Barbarian_Hat', bone: 'Head', s: 2.0, p: [0, -2.95, -0.14] },
   { id: 'h-wizard', slot: 'head', name: t('Wizard Hat'), price: 200, noEars: true, model: 'acc/kk-Mage_Hat', bone: 'Head', s: 1.11, p: [0, -1.15, 0.07] },
-  { id: 'c-hero', slot: 'back', name: t('Brown Cape'), price: 150, model: 'acc/kk-Barbarian_Cape', bone: 'Torso', s: 1.44, p: [0, -1.45, -0.38], perk: 'speed', desc: t('Run faster') },
-  { id: 'c-knight', slot: 'back', name: t('Red Cape'), price: 170, model: 'acc/kk-Knight_Cape', bone: 'Torso', s: 1.44, p: [0, -1.45, -0.38], perk: 'glide', desc: t('Fall slowly from high places and steer to land') },
-  { id: 'c-wizard', slot: 'back', name: t('Pink Cape'), price: 170, model: 'acc/kk-Mage_Cape', bone: 'Torso', s: 1.44, p: [0, -1.45, -0.38], perk: 'double', desc: t('Jump again in the air') },
-  { id: 'c-rogue', slot: 'back', name: t('Green Cape'), price: 150, model: 'acc/kk-Rogue_Cape', bone: 'Torso', s: 1.44, p: [0, -1.45, -0.38], perk: 'high', desc: t('Jump higher') },
+  { id: 'c-hero', slot: 'back', name: t('Brown Cape'), price: 150, model: 'acc/kk-Barbarian_Cape', bone: 'Torso', s: 1.44, p: [0, -1.45, -0.29], perk: 'speed', desc: t('Run faster') },
+  { id: 'c-knight', slot: 'back', name: t('Red Cape'), price: 170, model: 'acc/kk-Knight_Cape', bone: 'Torso', s: 1.44, p: [0, -1.45, -0.29], perk: 'glide', desc: t('Fall slowly from high places and steer to land') },
+  { id: 'c-wizard', slot: 'back', name: t('Pink Cape'), price: 170, model: 'acc/kk-Mage_Cape', bone: 'Torso', s: 1.44, p: [0, -1.45, -0.29], perk: 'double', desc: t('Jump again in the air') },
+  { id: 'c-rogue', slot: 'back', name: t('Green Cape'), price: 150, model: 'acc/kk-Rogue_Cape', bone: 'Torso', s: 1.44, p: [0, -1.45, -0.29], perk: 'high', desc: t('Jump higher') },
   { id: 'k-knight', slot: 'back', name: t('Knight Shield'), price: 180, model: 'acc/Shield_Heater', bone: 'Torso', s: 0.5, p: [0, 0.1, -0.62], r: [0, PI, 0] },
 ];
 
@@ -100,12 +104,12 @@ export const BATS = [
 
 // pets: small creatures that follow you around, each with a little power
 export const PETS = [
-  { id: 'pet-dog', model: 'k/pet-Dog', name: t('Puppy'), price: 400, perk: 'coins', desc: t('+15% coins from every round') },
-  { id: 'pet-cat', model: 'k/pet-Cat', name: t('Kitty'), price: 400, perk: 'recover', desc: t('Get back up faster after a hit') },
+  { id: 'pet-dog', model: 'k/pet-Dog', name: t('Puppy'), price: 400, perk: 'coins', desc: t('+15% coins from every round. Bites enemies near you') },
+  { id: 'pet-cat', model: 'k/pet-Cat', name: t('Kitty'), price: 400, perk: 'recover', desc: t('Get back up faster after a hit. Scratches enemies near you') },
   { id: 'pet-chicken', model: 'k/pet-Chicken', name: t('Chick'), price: 350, perk: 'speed', desc: t('Run a little faster') },
   { id: 'pet-birb', model: 'k/pet-Birb', name: t('Birb'), price: 350, perk: 'dive', desc: t('Dive further') },
   { id: 'pet-pigeon', model: 'k/pet-Pigeon', name: t('Pigeon'), price: 300, perk: 'jump', desc: t('Jump a little higher') },
-  { id: 'pet-cactoro', model: 'k/pet-Cactoro', name: t('Cactoro'), price: 450, perk: 'noslow', desc: t('Sticky goo and slow-downs barely touch you') },
+  { id: 'pet-cactoro', model: 'k/pet-Cactoro', name: t('Cactoro'), price: 450, perk: 'noslow', desc: t('Sticky goo and slow-downs barely touch you. Sings to confuse everyone around you') },
   { id: 'pet-mushnub', model: 'k/pet-Mushnub', name: t('Mushnub'), price: 450, perk: 'xp', desc: t('+20% season XP') },
   { id: 'pet-pinkblob', model: 'k/pet-PinkBlob', name: t('Pink Blob'), price: 500, perk: 'heavy', desc: t('Harder to push and knock over') },
   { id: 'pet-greenblob', model: 'k/pet-GreenBlob', name: t('Green Blob'), price: 500, perk: 'thaw', desc: t('Freezes and dizziness wear off twice as fast') },

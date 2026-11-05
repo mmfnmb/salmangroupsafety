@@ -1,5 +1,5 @@
 // The character: physics body, movement, status effects, animation, bot brain.
-import { THREE, CANNON, M, G, V, PI, rand, clamp, damp, scene, world, sfx, fx, puffs, SkeletonUtils, G_STATIC, G_RUNNER, G_HAZARD, G_BALL, G_PROJ, matRunner } from './core.js';
+import { THREE, CANNON, M, G, V, PI, rand, pick, clamp, damp, scene, world, sfx, fx, puffs, SkeletonUtils, G_STATIC, G_RUNNER, G_HAZARD, G_BALL, G_PROJ, matRunner } from './core.js';
 import { dress, paint, holdItem, HAND, ITEM, skinFx, teamFlag, makePet, petPerk } from './cosmetics.js';
 
 export const RUN = 10.5, AIR_ACC = 30, GROUND_ACC = 80, JUMP_V = 12.2, DIVE_V = 14.5;
@@ -242,6 +242,26 @@ export class Runner {
     this.wasGrounded = this.grounded;
     if (this.frozenT <= 0) this.mixer.update(dt);
   }
+  // pets that help in the fight: the puppy and kitty bite, the cactus sings to confuse everyone near you
+  petAct(dt) {
+    const kind = { coins: 'bite', recover: 'scratch', noslow: 'sing' }[this.perk]; if (!kind || this.out || !G.modeObj) return;
+    this.petCd = (this.petCd ?? 4) - dt; if (this.petCd > 0) return;
+    const p = this.pos, range = kind === 'sing' ? 5 : 3.2, foes = [];
+    for (const o of G.runners) if (o !== this && !o.out && !o.finished && (!this.team || o.team !== this.team) && Math.hypot(o.pos.x - p.x, o.pos.z - p.z) < range) foes.push(o);
+    const mons = (G.modeObj.mons || []).filter((m) => !m.dead && Math.hypot(m.pos.x - p.x, m.pos.z - p.z) < range);
+    if (!foes.length && !mons.length) { this.petCd = 0.5; return; }
+    this.petCd = kind === 'sing' ? 9 : kind === 'bite' ? 7 : 8;
+    const po = this.pet.o.position;
+    if (kind === 'sing') {
+      for (const o of foes) o.confuse(1.6); for (const m of mons) { m.hitT = 1.2; }
+      for (let k = 0; k < 8; k++) puffs.emit({ pos: V(po.x, po.y + 0.6, po.z), vel: V(rand(-1.5, 1.5), rand(1, 2.5), rand(-1.5, 1.5)), life: 0.9, size: 0.16, drag: 1, color: pick([0xff7ab8, 0xffd23f, 0x7fb8ff]) });
+      if (this.isPlayer) sfx.boing();
+    } else {
+      const t = mons[0] || foes[0], tp = t.pos; po.set(tp.x, tp.y + 0.3, tp.z);
+      if (mons[0]) mons[0].hurt(1, { x: Math.sin(this.facing), z: Math.cos(this.facing) }); else { t.stun(kind === 'bite' ? 0.7 : 0.45); t.knock(V((tp.x - p.x) * 1.5, 3, (tp.z - p.z) * 1.5), false); }
+      fx.burst(V(tp.x, tp.y + 0.8, tp.z), 0xffffff, 8, 4); sfx.bat();
+    }
+  }
   // closest other player in front of you within range
   nearest(range) {
     let best = null, bd = range; const fx_ = Math.sin(this.facing), fz = Math.cos(this.facing);
@@ -301,7 +321,7 @@ export class Runner {
       held.frame.rotation.x = held.key.startsWith('bat:') ? base + Math.sin(k * PI) * 1.9 : base;
     }
     if (this.model.userData.fx && !this.out) { const v = this.body.velocity; skinFx(this.model, dt, this.body.position, { moving: Math.hypot(v.x, v.z) > 1.5, grounded: this.grounded, puffs, scene }); }
-    if (this.pet) { const v = this.body.velocity; this.pet.o.visible = !this.out && this.root.visible; this.pet.update(dt, p.x, p.y, p.z, this.facing, Math.hypot(v.x, v.z) > 1.5); }
+    if (this.pet) { const v = this.body.velocity; this.pet.o.visible = !this.out && this.root.visible; this.pet.update(dt, p.x, p.y, p.z, this.facing, Math.hypot(v.x, v.z) > 1.5); this.petAct(dt); }
     this.squash = damp(this.squash, 1, 12, dt);
     const s = 0.42; this.model.scale.set(s / Math.sqrt(this.squash), s * this.squash, s / Math.sqrt(this.squash));
   }

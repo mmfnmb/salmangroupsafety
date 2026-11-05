@@ -17,22 +17,24 @@ function bloodOf(r) {
 }
 // monster types: Kenney graveyard characters, plus copies of the Mad Prisoner
 const KINDS = {
-  zombie: { model: 'k/gy-character-zombie', s: 1.25, hp: 2, speed: 2.2, dmg: 20, blood: 0x2ec45a },
-  skeleton: { model: 'k/gy-character-skeleton', s: 1.25, hp: 2, speed: 3.2, dmg: 20, blood: 0x9a9080 },
-  ghost: { model: 'k/gy-character-ghost', s: 1.25, hp: 1, speed: 4.2, dmg: 15, blood: 0x6a7a9a, float: true },
-  vampire: { model: 'k/gy-character-vampire', s: 1.3, hp: 3, speed: 3.6, dmg: 25, blood: 0x111111 },
-  copy: { model: 'Character', s: 0.36, hp: 3, speed: 4.4, dmg: 25, blood: 0x111111, mad: true },
+  // every monster is the game's own character re-dressed, so they match the look of the game
+  zombie: { look: { skin: 'mon-zombie', body: 'b-vest' }, anim: 'Walk', s: 0.42, hp: 2, speed: 2.2, dmg: 20, blood: 0x2ec45a },
+  skeleton: { look: { skin: 'mon-skel' }, anim: 'Run', s: 0.42, hp: 2, speed: 3.2, dmg: 20, blood: 0x9a9080 },
+  ghost: { look: { skin: 'mon-ghost' }, anim: 'Walk', s: 0.42, hp: 1, speed: 4.2, dmg: 15, blood: 0x9fb4ff, float: true },
+  vampire: { look: { skin: 'mon-vamp', back: 'c-knight' }, anim: 'Run', s: 0.44, hp: 3, speed: 3.6, dmg: 25, blood: 0x111111 },
+  copy: { look: { skin: 'skin-mad', face: 'f-hockey', bat: 'bat-cleaver' }, anim: 'Run', s: 0.36, hp: 3, speed: 4.4, dmg: 25, blood: 0x111111 },
 };
 const clipBy = (anims, names) => { for (const n of names) { const c = anims.find((a) => a.name === n || a.name.endsWith('|' + n)); if (c) return c; } return null; };
 
 class Monster {
   constructor(L, kind, x, z) {
     const k = KINDS[kind]; this.k = k; this.kind = kind; this.hp = k.hp; this.atkCd = rand(0.5, 1.2); this.hitT = 0; this.dead = false; this.deadT = 0;
-    this.o = SkeletonUtils.clone(M[k.model].scene); this.o.scale.setScalar(k.s); this.o.position.set(x, 0, z); L.root.add(this.o);
+    this.o = SkeletonUtils.clone(M.Character.scene); this.o.scale.setScalar(k.s); this.o.position.set(x, 0, z); L.root.add(this.o);
     this.o.traverse((m) => { if (m.isMesh) m.castShadow = true; });
-    if (k.mad) dress(this.o, { skin: 'skin-mad', face: 'f-hockey', bat: 'bat-cleaver' }, { bat: true });
-    const an = M[k.model].animations; this.mixer = new THREE.AnimationMixer(this.o);
-    this.run = clipBy(an, k.mad ? ['Run'] : ['sprint', 'walk']); this.atk = clipBy(an, k.mad ? ['Punch'] : ['attack-melee-right']); this.die = clipBy(an, k.mad ? ['Death'] : ['die']);
+    dress(this.o, k.look, { bat: true });
+    const an = M.Character.animations; this.mixer = new THREE.AnimationMixer(this.o);
+    this.run = clipBy(an, [k.anim]); this.atk = clipBy(an, ['Punch']); this.die = clipBy(an, ['Death']);
+    this.arms = kind === 'zombie' || kind === 'ghost' ? ['UpperArm.L', 'UpperArm.R'].map((n) => this.o.getObjectByName(n)).filter(Boolean) : [];
     this.cur = null; this.play(this.run); this.rise = 1; this.o.position.y = -1.3;
   }
   play(c, once) { if (!c) return; const a = this.mixer.clipAction(c); if (this.cur === a && !once) return; if (once) { a.reset(); a.setLoop(THREE.LoopOnce, 1); a.clampWhenFinished = true; } a.play(); if (this.cur && this.cur !== a) this.cur.fadeOut(0.12); a.fadeIn(0.12); this.cur = a; }
@@ -44,6 +46,8 @@ class Monster {
   }
   update(dt, mode) {
     this.mixer.update(dt);
+    // zombies and ghosts walk with their arms stretched out in front
+    if (!this.dead) for (const a of this.arms) { a.rotation.x -= 1.25; a.rotation.z *= 0.3; }
     if (this.dead) { this.deadT += dt; if (this.deadT > 1.6) this.o.position.y -= dt * 1.2; return this.deadT < 3; }
     if (this.rise > 0) { this.rise -= dt; this.o.position.y = -1.3 * Math.max(0, this.rise); if (Math.random() < dt * 10) fx.dust(V(this.pos.x, 0.1, this.pos.z), 1, 0x5a4a3a, 1.5); return true; }
     this.hitT -= dt; this.atkCd -= dt;
@@ -87,7 +91,7 @@ const slasher = {
     // dark stone road with iron cemetery fences on both sides
     L.floor(-W, W, 12, -172, 0, { model: 'Cube_Bricks' });
     const fl = L.root.children[L.root.children.length - 1]; fl?.traverse((m) => { if (m.isMesh) { m.material = m.material.clone(); m.material.color.multiplyScalar(0.38); } });
-    for (const sx of [-1, 1]) { L.box(sx * (W + 0.3), 2, -80, 0.3, 2, 92); for (let z = 10; z > -172; z -= 2.2) L.model('k/gy-iron-fence', sx * (W + 0.4), 0, z, 2.2, sx > 0 ? -PI / 2 : PI / 2); }
+    for (const sx of [-1, 1]) { L.box(sx * (W + 0.3), 2, -80, 0.3, 2, 92); for (let z = 10; z > -172; z -= 2.2) L.model('k/gy-iron-fence', sx * (W - 0.69), 0, z, 2.2, sx > 0 ? -PI / 2 : PI / 2); } // the fence mesh sits ~1 m off its origin
     // 4 zones, each closed by a gate that opens when its monsters are all dead
     const theme = [['Tree', 'gy-gravestone-cross'], ['gy-lantern-candle', 'gy-crypt'], ['gy-coffin', 'gy-altar-stone'], ['gy-gravestone-cross', 'gy-crypt']];
     this.zones = [];
@@ -97,7 +101,7 @@ const slasher = {
       for (let z = z0 - 3, k = 0; z > z1; z -= 6, k++) for (const sx of [-1, 1]) { const n = theme[i][k % 2], name = n.startsWith('gy-') ? 'k/' + n : n; L.model(name, sx * (W + 3), 0, z, n.startsWith('gy-') ? 2.4 : 1, sx > 0 ? -PI / 2 : PI / 2); }
       const graves = []; for (let z = z0 - 8; z > z1 + 4; z -= 7) for (const sx of [-1, 1]) { const x = sx * (W - 2.2); L.model('k/gy-grave', x, 0.02, z, 2, 0); L.model('k/gy-gravestone-cross', x, 0, z - 1.4, 1.6, 0); graves.push({ x, z: z + 0.6 }); }
       let gate = null;
-      if (i < 4) { const gm = []; for (let x = -W + 1.1; x < W; x += 2.2) gm.push(L.model('k/gy-fence-gate', x, 0, gz, 2.2, 0)); gate = { body: L.box(0, 2, gz, W, 2, 0.4), models: gm, open: false, y: 0 }; }
+      if (i < 4) { const gm = []; for (let x = -W + 1.1; x < W; x += 2.2) gm.push(L.model('k/gy-fence-gate', x, 0, gz + 1.1, 2.2, 0)); gate = { body: L.box(0, 2, gz, W, 2, 0.4), models: gm, open: false, y: 0 }; }
       const lamp = new THREE.PointLight(0xffa040, 18, 26); lamp.position.set(0, 4, (z0 + z1) / 2); L.root.add(lamp);
       this.zones.push({ z0, z1, graves, gate, started: false, mons: [] });
     }
@@ -271,7 +275,7 @@ const slasher = {
   },
 };
 // closes the way back once the boss fight starts
-function L_gate(L) { L.box(0, 2, -173, W, 2, 0.4); for (let x = -W + 1.1; x < W; x += 2.2) L.model('k/gy-fence-gate', x, 0, -173, 2.2, 0); }
+function L_gate(L) { L.box(0, 2, -173, W, 2, 0.4); for (let x = -W + 1.1; x < W; x += 2.2) L.model('k/gy-fence-gate', x, 0, -173 + 1.1, 2.2, 0); }
 
 // arena tiles that crack (glow purple), drop and come back a few seconds later
 function makeTiles(L, cells) {
