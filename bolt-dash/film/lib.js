@@ -64,6 +64,8 @@ export class Actor {
   // sit on a seat whose top is at height y: hips rest on the seat, thighs forward, shins down (no clipping into the cushion)
   sitAt(x, y, z, ry) { this.sitting = true; this.at(x, y - this.hipH * 0.55, z, ry); this.play('Idle'); return this; }
   stand() { this.sitting = false; return this; }
+  // hide the ear mesh (for full-head masks like the pumpkin)
+  noEars() { this.m.traverse((o) => { if (o.isMesh && /^Ears/.test(o.name)) o.visible = false; }); return this; }
   play(n, speed = 1, fade = 0.15) { const a = this.acts[n] || this.acts.Idle; a.timeScale = speed; if (this.cur === a) return this; a.reset().fadeIn(fade).play(); if (this.cur) this.cur.fadeOut(fade); this.cur = a; return this; }
   // play a one-shot action again even if it is the current one
   replay(n, speed = 1) { this.cur = null; return this.play(n, speed, 0.08); }
