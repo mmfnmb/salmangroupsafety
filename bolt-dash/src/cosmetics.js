@@ -28,9 +28,9 @@ export const SKINS = [
   { id: 'skin-void', name: t('Black Hole'), price: 50000, rare: t('Mythic'), fx: 'void', colors: { Main: 0x050409, Main2: 0x14082a, Main_Light: 0x2a0f55 },
     mat: { Main: { metal: 0.6, rough: 0.2 }, Main2: { emi: 0x6a1cff, ei: 1.6 }, Main_Light: { emi: 0x9a4cff, ei: 2.2 } } },
   // the series cast (hidden from the shop): normal face unless said otherwise; Gold is gold all over, face included
-  { id: 'film-yellow', name: 'Yellow', price: 0, hidden: true, colors: { Main: 0xffd23f, Main2: 0xfff6cf } },
+  { id: 'film-yellow', name: 'Yellow', price: 0, hidden: true, colors: { Main: 0xffe14a, Main2: 0xffffff }, mat: { Main: { metal: 0, rough: 0.95 }, Main2: { rough: 0.95 } } },
   { id: 'film-gold', name: 'Gold', price: 0, hidden: true, fx: 'gold', colors: { Main: 0xe8b600, Main2: 0xffd94a, Main_Light: 0xe8b600 },
-    mat: { Main: { metal: 1, rough: 0.16, emi: 0x7a4a00, ei: 0.5 }, Main2: { metal: 1, rough: 0.15, emi: 0x8a6a10, ei: 0.45 }, Main_Light: { metal: 1, rough: 0.16, emi: 0x7a4a00, ei: 0.5 } } },
+    mat: { Main: { metal: 1, rough: 0.22, emi: 0x5a3600, ei: 0.25 }, Main2: { metal: 1, rough: 0.2, emi: 0x6a5010, ei: 0.22 }, Main_Light: { metal: 1, rough: 0.22, emi: 0x5a3600, ei: 0.25 } } },
   { id: 'film-brown', name: 'Brown', price: 0, hidden: true, colors: { Main: 0x7a4a2a, Main2: 0xd9b48c } },
   { id: 'film-black', name: 'Black', price: 0, hidden: true, colors: { Main: 0x1e1e24, Main2: 0x50505c } },
   { id: 'film-white', name: 'White', price: 0, hidden: true, colors: { Main: 0xf4f4f8, Main2: 0xc9ccd8 } },

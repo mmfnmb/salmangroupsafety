@@ -1,7 +1,7 @@
 // Shared toolkit for the series episodes: cast, smart camera, lighting presets, subtitles, crowds and the shot engine.
 // Every episode (film/epN.js) builds on this so all scenes look and move the same way.
-import { THREE, M, G, V, PI, rand, clamp, scene, camera, renderer, renderScene, puffs, confetti, fx, sun, hemi, SkeletonUtils, place, loadAssets, save, applyQuality } from '../src/core.js';
-import { computeBoneFix, dress, skinFx, updateGold, teamFlag } from '../src/cosmetics.js';
+import { THREE, M, G, V, PI, rand, clamp, scene, camera, renderer, renderScene, puffs, confetti, fx, sun, hemi, SkeletonUtils, place, loadAssets, save, applyQuality, bloom } from '../src/core.js';
+import { computeBoneFix, dress, skinFx, updateGold, teamFlag, ITEM } from '../src/cosmetics.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 export { THREE, M, G, V, PI, rand, clamp, scene, camera, puffs, confetti, fx, place, teamFlag, dress };
 
@@ -12,6 +12,16 @@ export const lerpV = (a, b, t) => V(lerp(a[0], b[0], t), lerp(a[1], b[1], t), le
 
 // ---------------------------------------------------------------- cast
 // The series cast. Face colour: 'Main_Light' is the face; leaving it out keeps the normal face.
+// every on-screen extra gets its own colour (crowds may repeat). Hues avoid the main cast's colours.
+const EXTRA_COLORS = [0x00897b, 0xc2185b, 0x7cb342, 0x5d4037, 0x00acc1, 0xad1457, 0x9e9d24, 0x6d4c41, 0x26a69a, 0xf06292, 0x558b2f, 0x8d6e63,
+  0x0097a7, 0xba68c8, 0x827717, 0xa1887f, 0x004d40, 0xe91e63, 0x33691e, 0x3e2723, 0x80cbc4, 0xf48fb1, 0xaed581, 0xbcaaa4, 0x006064, 0xce93d8,
+  0xdce775, 0x795548, 0x4dd0e1, 0x880e4f, 0xc0ca33, 0xd7ccc8, 0x1de9b6, 0xff80ab, 0x76ff03, 0x4e342e, 0x18ffff, 0xea80fc, 0xeeff41, 0xffab91];
+let extraN = 0;
+export function extraLook(extra = {}) {
+  const c = EXTRA_COLORS[extraN++ % EXTRA_COLORS.length], id = 'film-extra-' + extraN;
+  ITEM[id] = { id, colors: { Main: c, Main2: new THREE.Color(c).lerp(new THREE.Color(0xffffff), 0.6).getHex() } };
+  return { skin: id, ...extra };
+}
 export const LOOKS = {
   blue: { skin: 'skin-blue' },
   yellow: { skin: 'film-yellow' },
@@ -38,7 +48,12 @@ export class Actor {
       this.acts[n] = a;
     }
     this.play('Idle'); this.lastPos = V(); this.m.visible = false;
+    this.bones = {}; this.m.traverse((o) => { if (o.isBone) this.bones[o.name] = o; });
+    this.m.updateMatrixWorld(true); const hp = V(); this.bones.Hips?.getWorldPosition(hp); this.hipH = hp.y - this.m.position.y; this.sitting = false;
   }
+  // sit on a seat whose top is at height y: hips rest on the seat, thighs forward, shins down (no clipping into the cushion)
+  sitAt(x, y, z, ry) { this.sitting = true; this.at(x, y - this.hipH * 0.55, z, ry); this.play('Idle'); return this; }
+  stand() { this.sitting = false; return this; }
   play(n, speed = 1, fade = 0.15) { const a = this.acts[n] || this.acts.Idle; a.timeScale = speed; if (this.cur === a) return this; a.reset().fadeIn(fade).play(); if (this.cur) this.cur.fadeOut(fade); this.cur = a; return this; }
   // play a one-shot action again even if it is the current one
   replay(n, speed = 1) { this.cur = null; return this.play(n, speed, 0.08); }
@@ -55,6 +70,7 @@ export class Actor {
   }
   tick(dt) {
     this.mixer.update(dt);
+    if (this.sitting) for (const side of ['L', 'R']) { const u = this.bones['UpperLeg.' + side], l = this.bones['LowerLeg.' + side]; if (u) u.rotation.x -= PI / 2; if (l) l.rotation.x += PI / 2; }
     const p = this.m.position, moving = p.distanceTo(this.lastPos) > dt * 1.2; this.lastPos.copy(p);
     if (this.m.visible) skinFx(this.m, dt, p, { moving, grounded: this.grounded !== false, puffs, scene });
   }
@@ -210,6 +226,7 @@ export async function initFilm(extra = []) {
   await Promise.all(extra.map((n) => new Promise((res) => loader.load(`/models/f/${n}.glb`, (g) => { g.scene.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); M['f/' + n] = g; res(); }, undefined, () => { console.warn('missing film model', n); res(); }))));
   renderer.setPixelRatio(1); renderer.setSize(W, H, false); camera.aspect = W / H; camera.fov = 50; camera.updateProjectionMatrix();
   applyQuality(); renderer.setSize(W, H, false); camera.aspect = W / H; camera.updateProjectionMatrix();
+  bloom.strength = 0.26; bloom.threshold = 1.08; // softer glow so floors and gold don't wash out
   await document.fonts.load('400 40px Lilita'); await document.fonts.load('800 30px Nunito');
 }
 // title cards drawn on the frame (episode titles only; dialogue goes to subtitles)
