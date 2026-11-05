@@ -2,19 +2,15 @@
 import { hideAll, fixed, frameGroup, closeUp, chase, orbit, overShoulder, say, puffs, fx, V, PI, ease, lerp, clamp, put, useSet } from '../lib.js';
 import { HOUSE } from '../sets/house.js';
 
-const SEAT = { y: 0.42, z: -0.05 }; // sofa seat (world); seated cast face -z towards the TV
-const YX = 0.55, BX = -0.55; // where each one sits
+const SEAT = HOUSE.seat; // sofa seat (world); seated cast face -z towards the TV
+const YX = SEAT.yellow, BX = SEAT.blue; // where each one sits
 const C = { x: 0.3, z: -3.6 }, R = 1.85; // chase circle round the coffee table
-const CHANNELS = [0xff7a2f, 0x2a9d4b, 0xff4f9a, 0x3d8bff, 0xffd23f];
 
 // standing up again: clear any tilt and release a held sitting pose
-const stand = (a) => { a.m.rotation.x = 0; a.m.rotation.z = 0; const d = a.acts.Duck; if (d.timeScale === 0) { d.stop(); d.timeScale = 1; if (a.cur === d) { a.cur = null; a.play('Idle', 1, 0.01); } } };
-// a seated pose: the crouch from 'Duck' held halfway
-function sit(a, x, ry = PI) {
-  stand(a); a.at(x, SEAT.y, SEAT.z, ry).show();
-  a.cur = null; a.play('Duck', 1, 0.01); const act = a.acts.Duck; act.time = act.getClip().duration * 0.45; act.timeScale = 0;
-}
-const screen = (hex) => HOUSE.screen?.material.color.setHex(hex);
+const stand = (a) => { a.m.rotation.x = 0; a.m.rotation.z = 0; a.stand(); };
+// seated on the cushion (legs bent, hips on the seat)
+function sit(a, x, ry = PI) { stand(a); a.sitAt(x, SEAT.y, SEAT.z, ry).show(); }
+const tv = (mode, t) => HOUSE.tvShow(mode, t);
 function remote() {
   const root = useSet('house_int');
   if (!root.userData.remote) {
@@ -32,22 +28,20 @@ function runCircle(a, th) { const c = onCircle(th); stand(a); a.at(c.x, 0, c.z, 
 
 export function shots(A) {
   const B = A.blue, Y = A.yellow;
-  let ch = 0;
-  const flip = (t, step = 0.7) => { const k = Math.floor(t / step); if (k !== ch) { ch = k; screen(CHANNELS[k % CHANNELS.length]); } };
   return [
     // 1. the two of them on the sofa, Yellow flicking channels
-    { dur: 5, set: 'house_int', time: 'interior', setup() { hideAll(); sit(B, BX); sit(Y, YX); ch = -1; say('Yellow', 'Cooking show... cooking show...'); }, upd(t) {
-      flip(t); inHand(Y, remote());
+    { dur: 5, set: 'house_int', time: 'interior', setup() { hideAll(); sit(B, BX); sit(Y, YX); say('Yellow', 'Cooking show... cooking show...'); }, upd(t) {
+      tv('flip', t); inHand(Y, remote());
       const k = ease(t / 5); fixed([lerp(3.4, 2.6, k), lerp(2.6, 2.2, k), lerp(-4.6, -4.0, k)], [0, 0.8, -0.2]);
     } },
     // 2. Yellow finds the cooking channel
     { dur: 4, set: 'house_int', time: 'interior', setup() { sit(B, BX); sit(Y, YX); say('Yellow', 'Ooh! Chef Waffle is on!'); }, upd(t) {
-      if (t < 1.2) flip(t, 0.4); else screen(0xff7a2f); inHand(Y, remote());
+      tv(t < 1.2 ? 'flip' : 'cooking', t * 2); inHand(Y, remote());
       closeUp(Y, { ang: -0.25, dist: 2.0, h: 0.95 });
     } },
     // 3. Blue is not having it
     { dur: 4, set: 'house_int', time: 'interior', setup() { sit(B, BX); sit(Y, YX); say('Blue', 'No way. The MATCH is on!'); }, upd(t) {
-      screen(0xff7a2f); inHand(Y, remote());
+      tv('cooking', t); inHand(Y, remote());
       if (t > 1.4) B.m.rotation.y = PI + Math.sin(t * 6) * 0.3;
       closeUp(B, { ang: 0.25, dist: 2.0, h: 0.95 });
     } },
@@ -109,30 +103,30 @@ export function shots(A) {
     { dur: 3, set: 'house_int', time: 'interior', setup() { hideAll(); say(null); this.f = 0; }, upd(t) {
       const o = remote(); const b = Math.max(0, Math.sin(t * 9) * Math.exp(-t * 4)) * 0.25;
       o.position.set(0.1, SEAT.y + 0.32 + b, SEAT.z); o.rotation.set(0, 0.4, 0); o.visible = true;
-      if (t > 0.5) { screen(0xffffff); if (!this.f) { this.f = 1; fx.burst(V(0.1, SEAT.y + 0.5, SEAT.z), 0xffffff, 8, 2, 0.6); } }
-      if (t > 0.75) screen(0x1f3a8f);
+      tv(t > 0.75 ? 'news' : t > 0.5 ? 'flip' : 'cooking', t);
+      if (t > 0.5) { if (!this.f) { this.f = 1; fx.burst(V(0.1, SEAT.y + 0.5, SEAT.z), 0xffffff, 8, 2, 0.6); } }
       fixed([0.7, 1.35, -2.0], [0.1, SEAT.y + 0.35, SEAT.z]);
     } },
     // 11. the news comes on: both freeze and turn
     { dur: 5, set: 'house_int', time: 'interior', setup() { hideAll(); stand(B); stand(Y); B.at(-0.6, 0, -2.0, 0).show().replay('Idle'); Y.at(1.4, 0, -1.9, 0).show().replay('Idle'); say('TV', 'BREAKING NEWS!'); }, upd(t) {
-      screen(Math.floor(t * 3) % 2 ? 0x1f3a8f : 0x2b4fb8);
+      tv('news', t);
       const k = ease((t - 0.8) / 0.8); B.m.rotation.y = lerp(0, PI, k); Y.m.rotation.y = lerp(0, PI, ease((t - 1.1) / 0.8));
       frameGroup([B, Y], { side: -1, h: 1.3, dist: 0.8, look: 1.0 });
     } },
     // 12. over their shoulders: the TV glowing
     { dur: 6, set: 'house_int', time: 'interior', setup() { hideAll(); stand(B); stand(Y); B.at(-0.6, 0, -2.0, PI).show().play('Idle'); Y.at(1.4, 0, -1.9, PI).show().play('Idle'); say('Blue', 'Wait... what is this?'); }, upd(t) {
-      screen(Math.floor(t * 3) % 2 ? 0x1f3a8f : 0x2b4fb8);
+      tv('news', t);
       if (t > 3) say('Yellow', 'Turn it up! TURN IT UP!');
       const k = ease(t / 6); fixed([lerp(0.4, 0.3, k), lerp(3.4, 2.9, k), lerp(3.2, 1.8, k)], [0.1, 1.2, -7.0]);
     } },
     // 13. close on the screen
     { dur: 5, set: 'house_int', time: 'interior', setup() { hideAll(); stand(B); stand(Y); B.at(-0.6, 0, -2.0, PI).show(); Y.at(1.4, 0, -1.9, PI).show(); say('TV', 'This is huge, folks. Stay with us...'); }, upd(t) {
-      screen(Math.floor(t * 4) % 2 ? 0x1f3a8f : 0x2b4fb8);
+      tv('news', t);
       const k = ease(t / 5); fixed([lerp(0.2, 0.05, k), lerp(1.6, 1.4, k), lerp(-3.4, -5.0, k)], [0, 1.37, -7.03]);
     } },
     // 14. the two of them, eyes wide
     { dur: 5, set: 'house_int', time: 'interior', setup() { hideAll(); stand(B); stand(Y); B.at(-0.6, 0, -2.0, PI).show().play('Idle'); Y.at(1.4, 0, -1.9, PI).show().play('Idle'); say(null); }, upd(t) {
-      screen(Math.floor(t * 3) % 2 ? 0x1f3a8f : 0x2b4fb8);
+      tv('news', t);
       if (t > 2.5) { say('Blue', '...!'); B.play('Yes', 1); Y.play('Yes', 1); }
       fixed([-3.0, 1.6, -3.6], [0.4, 1.0, -1.95]);
     } },

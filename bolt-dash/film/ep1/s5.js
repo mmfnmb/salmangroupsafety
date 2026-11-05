@@ -1,5 +1,5 @@
 // Episode 1, scene 5: "Tryouts" — Splashvolt finds Vio and Minto, then Brown clears the course perfectly.
-import { V, PI, G, ease, lerp, clamp, hideAll, camTo, closeUp, frameGroup, overShoulder, track, chase, orbit, fixed, say, useSet, Actor, ACTORS, fx, puffs } from '../lib.js';
+import { V, PI, G, ease, lerp, clamp, hideAll, camTo, closeUp, frameGroup, overShoulder, track, chase, orbit, fixed, say, useSet, Actor, ACTORS, fx, puffs, extraLook } from '../lib.js';
 import { COURSE, DESK } from '../sets/tryouts.js';
 
 const X = COURSE.x;
@@ -27,15 +27,15 @@ function runCourse(a, t, T, speed, { spin = false, x = X } = {}) {
 
 export function shots(A) {
   const extra = (look) => { const a = new Actor(look); ACTORS.push(a); return a; };
-  const straw = extra({ skin: 'skin-straw', head: 'h-cone' }), melon = extra({ skin: 'skin-melon' });
-  const oTeam = [extra({ skin: 'skin-grape' }), extra({ skin: 'skin-snow' }), extra({ skin: 'skin-lemon' })];
-  const rTeam = [extra({ skin: 'skin-night' }), extra({ skin: 'skin-mint' }), extra({ skin: 'skin-straw' })];
+  const straw = extra(extraLook({ head: 'h-cone' })), melon = extra(extraLook());
+  const oTeam = [extra(extraLook()), extra(extraLook()), extra(extraLook())];
+  const rTeam = [extra(extraLook()), extra(extraLook()), extra(extraLook())];
   const B = A.blue, Y = A.yellow, Vi = A.vio, Mi = A.minto, Br = A.brown;
   // Blue and Yellow stand beside the start, watching; the candidates wait behind them
   const judges = () => { B.at(-4.4, 0, 9.5, PI * 0.8).play('Idle'); Y.at(-5.6, 0, 8.6, PI * 0.8).play('Idle'); };
   const fans = (k) => { const r = useSet('tryouts'); if (r.userData.fans) r.userData.fans.userData.cheer = k; for (const a of r.userData.queue || []) a.show(true); };
   const S = [];
-  const shot = (dur, setup, upd) => S.push({ set: 'tryouts', time: 'day', dur, setup() { hideAll(); fans(0); setup?.(); }, upd(t, dt, T) { spinArms(T); upd(t, dt, T); } });
+  const shot = (dur, setup, upd) => S.push({ set: 'tryouts', time: 'morning', dur, setup() { hideAll(); fans(0); setup?.(); }, upd(t, dt, T) { spinArms(T); upd(t, dt, T); } });
 
   // 1. the field: crowds, the course, the long sign-up queue
   shot(6, () => { judges(); }, (t) => { orbit([2, 0, -6], t, { r: 34, h: 16, speed: 0.07, from: 2.2, k: 99 }); });

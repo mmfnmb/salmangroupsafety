@@ -34,7 +34,7 @@ export function shots(A) {
   // 8. he points at them: low close-up
   shot(5, () => { pose(); G.at(0, 0, -7.2, 0).play('Punch', 0.6); }, (t, dt, T) => { tremble(T); camTo(V(-3.6, 0.5, -4.6), V(0, 1.3, -7.2), 99); if (t > 0.8) say('gold', 'You are my team.'); });
   // 9. quick close-ups of each follower
-  const fc = (i) => shot(2.2, () => { pose(); G.at(0, 0, -7.2, 0); }, (t, dt, T) => { tremble(T, 1.6); closeUp(F[i], { ang: 0.4 * (i - 1), dist: 1.6, h: 1.1, k: 99 }); say(null); });
+  const fc = (i) => shot(2.2, () => { pose(); G.at(0, 0, -7.2, 0); }, (t, dt, T) => { tremble(T, 1.6); closeUp(F[i], { ang: 0.15 * (i - 1), dist: 1.95, h: 1.1, k: 99 }); say(null); });
   fc(0); fc(1); fc(2);
   // 10. the threat
   shot(5, () => { pose(); G.at(0, 0, -7.2, 0); }, (t) => { closeUp(G, { ang: 0.2, dist: 1.7, h: 0.9, k: 99 }); say('gold', 'If we lose...'); });

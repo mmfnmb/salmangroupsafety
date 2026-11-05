@@ -1,10 +1,10 @@
 // Episode 1, scene 6: the opening ceremony of the Party Games League.
 // Nine teams jog out of the tunnel one after another (flags on their backs) and line up in front of the stage;
 // Gold drops in last on a golden parachute: half the stadium cheers, half boos. Ends on the 8 games and the crown.
-import { Actor, ACTORS, hideAll, say, THREE, M, V, PI, clamp, lerp, ease, puffs, confetti, place, camTo, frameGroup, closeUp, track, orbit, fixed, overShoulder } from '../lib.js';
+import { Actor, ACTORS, hideAll, say, THREE, M, V, PI, clamp, lerp, ease, puffs, confetti, place, camTo, frameGroup, closeUp, track, orbit, fixed, overShoulder, extraLook } from '../lib.js';
 import { STAD } from '../sets/stadium.js';
 
-const SET = 'stadium', TIME = 'day';
+const SET = 'stadium', TIME = 'morning';
 const GATE = { x: 0, z: 46 };
 const OFF = [[-1, 0], [1, 0], [-1, 1.8], [1, 1.8]]; // 2x2 block, captain front-left
 
@@ -15,20 +15,20 @@ function makeTeams(A) {
   const mk = (look, sc) => { const a = new Actor(look); if (sc) { a.m.scale.setScalar(sc); a.s = sc; } ACTORS.push(a); return a; };
   const T = [
     { name: 'SPLASHVOLT', col: 0x3d8bff, slot: -6.5, E: 14, m: [A.blue, A.yellow, A.vio, A.minto] },
-    { name: 'TIMBROK', col: 0x7a4a2a, slot: 6.5, E: 24, m: [A.brown, mk({ skin: 'skin-melon' }), mk({ skin: 'skin-snow' }), mk({ skin: 'skin-grape' })] },
-    { name: 'FLARIX', col: 0xff7a1a, slot: -13, E: 36, m: [A.orange, mk({ skin: 'skin-straw' }), mk({ skin: 'skin-mint' }), mk({ skin: 'skin-snow', head: 'h-cone' })] },
-    { name: 'RUBRAX', col: 0xd7263d, slot: 13, E: 41, m: [A.red, mk({ skin: 'skin-night' }), mk({ skin: 'skin-grape' }), mk({ skin: 'skin-melon' })] },
-    { name: 'WOBBLZ', col: 0xff4f9a, slot: -19.5, E: 46.5, m: [mk({ skin: 'skin-straw', head: 'h-cupcake' }), mk({ skin: 'skin-straw' }), mk({ skin: 'skin-lemon' }), mk({ skin: 'skin-straw' })] },
-    { name: 'SNOOZIES', col: 0x8fa0ff, slot: 19.5, E: 49, m: [mk({ skin: 'skin-night' }), mk({ skin: 'skin-snow' }), mk({ skin: 'skin-night' }), mk({ skin: 'skin-grape' })] },
-    { name: 'JELLYJAX', col: 0x36e0a8, slot: -26, E: 51.5, m: [mk({ skin: 'skin-mint' }), mk({ skin: 'skin-melon' }), mk({ skin: 'skin-mint' }), mk({ skin: 'skin-lemon' })] },
-    { name: 'PEBBLINOS', col: 0xb8a48a, slot: 26, E: 54, m: [mk({ skin: 'skin-orange' }, 0.33), mk({ skin: 'skin-snow' }, 0.33), mk({ skin: 'skin-orange' }, 0.33), mk({ skin: 'skin-melon' }, 0.33)] },
+    { name: 'TIMBROK', col: 0x7a4a2a, slot: 6.5, E: 24, m: [A.brown, mk(extraLook()), mk(extraLook()), mk(extraLook())] },
+    { name: 'FLARIX', col: 0xff7a1a, slot: -13, E: 36, m: [A.orange, mk(extraLook()), mk(extraLook()), mk(extraLook({ head: 'h-cone' }))] },
+    { name: 'RUBRAX', col: 0xd7263d, slot: 13, E: 41, m: [A.red, mk(extraLook()), mk(extraLook()), mk(extraLook())] },
+    { name: 'WOBBLZ', col: 0xff4f9a, slot: -19.5, E: 46.5, m: [mk(extraLook({ head: 'h-cupcake' })), mk(extraLook()), mk(extraLook()), mk(extraLook())] },
+    { name: 'SNOOZIES', col: 0x8fa0ff, slot: 19.5, E: 49, m: [mk(extraLook()), mk(extraLook()), mk(extraLook()), mk(extraLook())] },
+    { name: 'JELLYJAX', col: 0x36e0a8, slot: -26, E: 51.5, m: [mk(extraLook()), mk(extraLook()), mk(extraLook()), mk(extraLook())] },
+    { name: 'PEBBLINOS', col: 0xb8a48a, slot: 26, E: 54, m: [mk(extraLook(), 0.33), mk(extraLook(), 0.33), mk(extraLook(), 0.33), mk(extraLook(), 0.33)] },
     { name: 'AUREX', col: 0xe8b600, slot: 0, E: 63, m: [null, A.silver, A.slate, A.olive] }, // Gold drops in by parachute
   ];
   for (const t of T) t.D = 8.5;
   // front-row fans for the cheering / booing close-ups
   const looks = ['skin-lemon', 'skin-straw', 'skin-mint', 'skin-orange', 'skin-grape', 'skin-snow'];
-  fansL = looks.map((s) => mk({ skin: s, head: s === 'skin-straw' ? 'h-cone' : undefined }));
-  fansR = looks.map((s) => mk({ skin: s }));
+  fansL = looks.map((s, i) => mk(extraLook(i === 1 ? { head: 'h-cone' } : {})));
+  fansR = looks.map(() => mk(extraLook()));
   return T;
 }
 

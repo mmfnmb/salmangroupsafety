@@ -31,12 +31,16 @@ function drawScreen(cv, mode) {
   }
 }
 
+// matte floor: the shiny grass tiles bloom into white glare on camera, so give this set's copies a rough, non-reflective finish
+function matte(obj) { obj.traverse((o) => { if (!o.isMesh) return; const ms = Array.isArray(o.material) ? o.material : [o.material]; const nm = ms.map((m) => { const c = m.clone(); c.roughness = 1; c.metalness = 0; c.envMapIntensity = 0.15; if (c.color) c.color.multiplyScalar(0.88); return c; }); o.material = Array.isArray(o.material) ? nm : nm[0]; }); }
 SETS.stadium = (root) => {
   const { FX, FZ } = STAD;
   // field
   const tiles = [];
   for (let x = -FX - 6; x <= FX + 6; x += 2.24) for (let z = -FZ - 6; z <= FZ + 6; z += 2.24) tiles.push({ x, y: -1, z });
+  const before = new Set(root.children);
   instanced('Cube_Grass_Single', tiles, root, false);
+  for (const c of root.children) if (!before.has(c)) matte(c);
   // a white running track ring (low border pieces) around the field
   const ring = [];
   for (let z = -FZ; z <= FZ; z += 1) { ring.push({ x: -FX, y: 0, z, ry: PI / 2 }); ring.push({ x: FX, y: 0, z, ry: PI / 2 }); }

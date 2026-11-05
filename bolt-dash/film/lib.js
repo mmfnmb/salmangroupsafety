@@ -13,12 +13,13 @@ export const lerpV = (a, b, t) => V(lerp(a[0], b[0], t), lerp(a[1], b[1], t), le
 // ---------------------------------------------------------------- cast
 // The series cast. Face colour: 'Main_Light' is the face; leaving it out keeps the normal face.
 // every on-screen extra gets its own colour (crowds may repeat). Hues avoid the main cast's colours.
-const EXTRA_COLORS = [0x00897b, 0xc2185b, 0x7cb342, 0x5d4037, 0x00acc1, 0xad1457, 0x9e9d24, 0x6d4c41, 0x26a69a, 0xf06292, 0x558b2f, 0x8d6e63,
-  0x0097a7, 0xba68c8, 0x827717, 0xa1887f, 0x004d40, 0xe91e63, 0x33691e, 0x3e2723, 0x80cbc4, 0xf48fb1, 0xaed581, 0xbcaaa4, 0x006064, 0xce93d8,
-  0xdce775, 0x795548, 0x4dd0e1, 0x880e4f, 0xc0ca33, 0xd7ccc8, 0x1de9b6, 0xff80ab, 0x76ff03, 0x4e342e, 0x18ffff, 0xea80fc, 0xeeff41, 0xffab91];
+const EXTRA_COLORS = [0xc2185b, 0x7cb342, 0x5d4037, 0xad1457, 0x9e9d24, 0x6d4c41, 0xf06292, 0x558b2f, 0x8d6e63, 0xba68c8, 0x827717, 0xa1887f,
+  0xe91e63, 0x33691e, 0x3e2723, 0xf48fb1, 0xaed581, 0xbcaaa4, 0xce93d8, 0xdce775, 0x795548, 0x880e4f, 0xc0ca33, 0xd7ccc8, 0xff80ab, 0x76ff03,
+  0x4e342e, 0xea80fc, 0xeeff41, 0xffab91, 0x546e7a, 0xb0bec5, 0xff8a65, 0x9575cd];
+// no teals/cyans (too close to Minto and Blue); after one round the hues come back in a darker shade so no two extras match
 let extraN = 0;
 export function extraLook(extra = {}) {
-  const c = EXTRA_COLORS[extraN++ % EXTRA_COLORS.length], id = 'film-extra-' + extraN;
+  const k = extraN++, c = new THREE.Color(EXTRA_COLORS[k % EXTRA_COLORS.length]).multiplyScalar(k >= EXTRA_COLORS.length ? 0.62 : 1).getHex(), id = 'film-extra-' + extraN;
   ITEM[id] = { id, colors: { Main: c, Main2: new THREE.Color(c).lerp(new THREE.Color(0xffffff), 0.6).getHex() } };
   return { skin: id, ...extra };
 }
