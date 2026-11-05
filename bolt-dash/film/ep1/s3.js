@@ -28,7 +28,7 @@ export function tvCard(badge, color = '#e8202a') {
 // sitting on the house sofa (legs bent, hips on the cushion), facing the TV
 export const sit = (a, side, ry = PI) => { a.m.rotation.x = 0; a.m.rotation.z = 0; return a.sitAt(side === 'L' ? HOUSE.seat.blue : HOUSE.seat.yellow, HOUSE.seat.y, HOUSE.seat.z, ry); };
 export const standUp = (a) => { a.stand(); return a; };
-const sofaCam = (A, k = 4) => frameGroup([A.blue, A.yellow], { side: -1, h: 0.9, dist: 0.95, look: 0.85, k });
+const sofaCam = (A, k = 4) => frameGroup([A.blue, A.yellow], { side: -1, h: 0.85, dist: 0.72, look: 0.85, k });
 // the people on TV are extras, each in their own colour (made once, shared with scene 7)
 const X = {};
 export function tvCast() {
@@ -55,7 +55,7 @@ export function shots(A) {
   // 2. ad: the Frying Pan
   S.push({ dur: 4.5, set: 'adstage', time: 'day', card: tvCard('AD', '#ff7a1a'),
     setup() { hideAll(); const T = tvCast(); dress(T.hitter.m, { ...T.hitter.look, bat: 'bat-pan' }, { bat: true }); T.hitter.at(-1.6, 0, 1.6, PI / 2).play('Idle'); T.victim.at(1.2, 0, 1.6, -PI / 2).play('Idle'); },
-    upd(t) { const T = tvCast(); frameGroup([T.hitter, T.victim], { side: 1, h: 1.2, look: 1.0 }); say('Announcer', t < 2.2 ? 'Tired of losing?' : 'Need something... STRONGER?'); if (t > 2.2) T.hitter.play('Yes'); } });
+    upd(t) { const T = tvCast(); frameGroup([T.hitter, T.victim], { side: 1, h: 1.1, dist: 0.7, look: 1.0 }); say('Announcer', t < 2.2 ? 'Tired of losing?' : 'Need something... STRONGER?'); if (t > 2.2) T.hitter.play('Yes'); } });
   S.push({ dur: 4, card: tvCard('AD', '#ff7a1a'),
     setup() { tvCast().hitter.replay('Punch', 1.1); },
     upd(t, dt, T) {
@@ -84,7 +84,7 @@ export function shots(A) {
   S.push({ dur: 5, set: 'house_int', time: 'interior',
     setup() { hideAll(); sit(A.blue, 'L').play('Idle'); sit(A.yellow, 'R').play('Idle'); },
     upd(t, dt, T) {
-      HOUSE.tvShow('advoid', t); closeUp(A.yellow, { ang: 0.25, dist: 2.0 - t * 0.12, h: 0.95 });
+      HOUSE.tvShow('advoid', t); closeUp(A.yellow, { ang: -0.35, dist: 2.0 - t * 0.12, h: 0.95 });
       if (Math.floor(T * 6) !== Math.floor((T - dt) * 6)) { const h = A.yellow.head(); fx.burst(V(h.x + 0.25, h.y + 0.05, h.z + 0.55), 0xfff2a0, 3, 1.5); fx.burst(V(h.x - 0.25, h.y + 0.05, h.z + 0.55), 0xfff2a0, 3, 1.5); }
       say('Yellow', 'I... need... it.');
     } });
@@ -109,8 +109,8 @@ export function shots(A) {
   S.push({ dur: 4, set: 'house_int', time: 'interior',
     setup() { hideAll(); sit(A.blue, 'L').play('Idle'); sit(A.yellow, 'R').play('Idle'); },
     upd(t) { HOUSE.tvShow('news', t); sofaCam(A, 3); if (t > 1.2) { A.blue.face(A.yellow.p.x, A.yellow.p.z); A.yellow.face(A.blue.p.x, A.blue.p.z); } say(null); } });
-  S.push({ dur: 2.5, upd() { closeUp(A.blue, { ang: -0.6, dist: 1.9, h: 0.95 }); } });
-  S.push({ dur: 2.5, upd() { closeUp(A.yellow, { ang: 0.6, dist: 1.9, h: 0.95 }); } });
+  S.push({ dur: 2.5, upd() { closeUp(A.blue, { ang: 0.6, dist: 1.9, h: 0.95 }); } });
+  S.push({ dur: 2.5, upd() { closeUp(A.yellow, { ang: -0.6, dist: 1.9, h: 0.95 }); } });
   S.push({ dur: 7, setup() { A.blue.stand(); A.yellow.stand(); },
     upd(t, dt, T) {
       // bouncing on the sofa cushions
@@ -118,7 +118,7 @@ export function shots(A) {
       const sy = HOUSE.seat.y; A.blue.at(HOUSE.seat.blue, sy + hb, HOUSE.seat.z, PI + Math.sin(T * 2) * 0.4); A.yellow.at(HOUSE.seat.yellow, sy + hy, HOUSE.seat.z, PI - Math.sin(T * 2) * 0.4);
       A.blue.play(hb > 0.3 ? 'Jump_Idle' : 'Yes'); A.yellow.play(hy > 0.3 ? 'Jump_Idle' : 'Yes');
       if (Math.floor(T * 5.2 / PI) !== Math.floor((T - dt) * 5.2 / PI)) puffs.emit({ pos: V(0, HOUSE.seat.y + 0.2, HOUSE.seat.z), vel: V(0, 2, -1), life: 0.6, size: 0.12, color: 0xffffff });
-      frameGroup([A.blue, A.yellow], { side: -1, h: 1.6, dist: 1.4, look: 1.2, ang: Math.sin(t * 0.4) * 0.2 });
+      frameGroup([A.blue, A.yellow], { side: -1, h: 1.3, dist: 0.95, look: 1.2, ang: Math.sin(t * 0.4) * 0.2 });
       say(t < 3.5 ? 'Blue' : 'Yellow', t < 3.5 ? 'WE ARE IN!' : 'LET\'S GOOOO!');
     } });
   return S;

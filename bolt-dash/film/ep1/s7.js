@@ -22,11 +22,11 @@ const SEAT = HOUSE.seat;
 export function shots(A) {
   let remote = null;
   const S = [];
-  const sofaCam = (k = 4) => frameGroup([A.blue, A.yellow], { side: -1, h: 0.9, dist: 0.95, look: 0.85, k });
+  const sofaCam = (k = 4) => frameGroup([A.blue, A.yellow], { side: -1, h: 0.85, dist: 0.72, look: 0.85, k });
   // 1. a happy night on the sofa
   S.push({ dur: 5, set: 'house_int', time: 'night', setup() { nightHouse(); hideAll(); sit(A.blue, 'L').play('Idle'); sit(A.yellow, 'R').play('Idle'); },
     upd(t) { HOUSE.tvShow('news', t); camTo(V(lerp(-2.8, -1.4, ease(t / 5)), 1.8, -3.9), V(0, 0.9, -0.8), 3); say('Yellow', 'Tomorrow we sign up!'); if (t > 2.5) A.yellow.play('Yes'); } });
-  S.push({ dur: 4, upd(t) { HOUSE.tvShow('gold', t); closeUp(A.blue, { ang: 0.3, dist: 2.0, h: 0.95 }); say('Blue', 'Tomorrow... everything starts.'); } });
+  S.push({ dur: 4, upd(t) { HOUSE.tvShow('gold', t); closeUp(A.blue, { ang: 0.4, dist: 2.0, h: 0.95 }); say('Blue', 'Tomorrow... everything starts.'); } });
   // 2. on TV: the interview with Gold
   S.push({ dur: 5, set: 'studio', time: 'interior', card: tvCard('LIVE'),
     setup() { hideAll(); tvCast().anchor.at(1.6, 0, 2.6, PI / 2).play('Idle'); A.gold.at(4.0, 0, 2.6, -PI / 2).play('Wave'); },
