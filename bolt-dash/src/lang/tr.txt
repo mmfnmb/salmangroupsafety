@@ -1,0 +1,528 @@
+Zemin
+Yüksek blok
+Çit
+Hız okları
+Yürüyen bant
+Yay
+Zıplatıcı
+Testere
+Dönen kol
+Dikenli blok
+Diken tuzağı
+Kırılabilir sandık
+Çelik sandık
+Top
+Altın
+Silah sandığı
+Başlangıç
+Bitiş
+Haritan
+Yaptığın harita
+Dondurma + İtme
+Başlangıca dön
+Oyuncu
+Klasik Mavi
+Çilek
+Nane
+Limon
+Üzüm
+Portakal
+Kavun
+Kar
+Gece yarısı
+Lav
+Kristal
+Nadir
+Gökkuşağı
+Erimiş lav
+Efsanevi
+Galaksi
+Parlak altın
+Kara delik
+Mitik
+Hakem
+Orijinal Bolt
+Özel
+Altın taç
+Kraliçe tacı
+Parti şapkası
+Cupcake
+Donut
+Hediye kutusu
+Gözlük
+Güneş gözlüğü
+Deri yelek
+Demir zırh
+Ninja zırhı
+Altın zırh
+Kahraman yıldızı
+Sırt çantası
+Yan çanta
+Tahta kalkan
+Şövalye kalkanı
+Golf sopası
+Her şeyde dengeli
+Baget
+En hızlı vuruş
+Spatula
+Topu çok yükseğe atar
+Merdane
+Topu yerde tutar
+Mısır sosisi
+Vurduğun kişi bir saniye yapışır
+Kemik
+Topu yükseğe sektirir
+Balık
+Vurduğun kişi kayar
+Muz
+Vurduğun kişi kayar ve döner
+Şeker baston
+Topa falso verir
+Kürek
+En uzun menzil
+Tava
+BONG! Vurduğun kişinin başı döner
+Çekiç
+Etrafındaki herkesi savurur
+Sopa
+En güçlü vuruş
+Altın çekiç
+Efsanevi olan
+Renkler
+Kafa
+Yüz
+Gövde
+Sırt
+Sopalar
+Tur {n} / {m}
+Turlarda 30 altın topla
+3 turda geç
+15 kez atla
+Bir Şov'da tacı kazan
+20 turda geç
+Turlarda 300 altın topla
+İlk geçiş
+İlk galibiyet
+İlk taç
+10 Şov oyna
+Her modu oyna
+100 kez atla
+Nadir bir karakter al
+50 kez geç
+5 taç
+altın
+Görev tamamlandı
+Başarım
+Sezon seviyesi {n}
+Sezon: {x} açıldı
+Sezon
+Günlük ödül ({n}. gün)
+Şov
+Arka arkaya 4 tur. Tacı almak için sonuncuyu kazan
+Takımlar
+Öne çıkan oyuncu haritası
+Tamam
+Sezon 1
+Seviye {n}
+Sezon tamamlandı!
+Günlük ödül
+Hazır
+Yarın
+{n} al
+Bugün alındı
+Haftanın etkinliği
+Bütün hafta çift altın
+Bugünün mağaza fırsatları
+Her şeye sahipsin
+Her gün gel: ödül 7. günde 500'e çıkar.
+Görevler
+Bugün
+Bu hafta
+Başarımlar
+Bir mod seç
+Resim yükleniyor…
+Yakında
+Arkadaşlarla çevrimiçi
+Oda koduyla arkadaşlarınla oyna
+Şans çarkı
+Bugün bedava çevirme!
+500 altına ekstra çevirme
+Bedava çevir
+500'e çevir
+Kod kullan
+Ödülünü almak için bir kod yaz. Bazı kodlar şanslıysan nadir bir karakter verir.
+Kullan
+Ayarlar
+Grafik
+Hafif
+Orta
+Fantastik
+Ses
+Açık
+Kapalı
+Kamera hızı
+Yavaş
+Normal
+Hızlı
+Dil
+Giriş filmini tekrar izle
+Profilin
+Adın
+Kaydet
+Oynanan şovlar
+Turlar
+Geçti
+Taçlar
+Seviye
+Kazanılan altın
+Kaydedildi
+Aksesuar
+Nadir!
+Büyük ikramiye
+{x} zaten sende, bu yüzden {n} altın aldın
+Tebrikler! {x} kazandın ({r})
+500 altına ihtiyacın var
+{x} kazandın
+Her şeye sahipsin! 300 altın al
+{n} altın kazandın
+Bu kod geçerli değil
+Bu kodu zaten kullandın
+{x}: sana özel karakter!
+Mağaza
+Gardırop
+Bugünün fırsatları, her gün yeni
+Rengini değiştir, giyin ve sopanı seç
+Her şeyi aldın! Yeni fırsatlar için yarın gel.
+Giyiliyor
+Sende var
+Güç
+Hız
+Menzil
+Koşarken arkanda zemin altına döner
+Etrafında bir kara delik döner
+Senden ateş kıvılcımları saçılır
+Etrafında yıldızlar parlar
+Elmas gibi parlak ve şeffaf
+Rengin hiç durmadan değişir
+Altın ve kara delik bir arada: özel karakter
+Sadece kodla
+{n} altına al
+{n} daha lazım
+{x} aldın
+Bu harita artık yok
+Oyuncu aranıyor
+İpucu: dönen kolların altından atla
+İpucu: sarı hız okları seni ileri fırlatır
+İpucu: Hex Drop'ta asla 3 saniye durma
+İpucu: tava insanların başını döndürür
+İpucu: tahta sandıklar kırılır, çelik olanlar kırılmaz
+Bulundu!
+{x} tarafından yapılan harita
+Son tur
+Tur
+Kazanan takım geçer
+Bitişe ilk varan {n} kişi geçer
+Ayakta kalan son kişi kazanır
+Ayakta kalan son {n} kişi geçer
+Geçtin!
+Biraz geç kaldın
+Elendin!
+Haritanı bitirdin! Artık yayınlayabilirsin
+Tacı kazandın!
+Kazandın!
+Bu sefer olmadı
+{x} takımı {a} - {b} kazandı
+Kırmızı
+Mavi
+{m} kişiden {n} kişi geçti
+Sen
+Sonraki tur
+Tekrar oyna
+Hoş geldin hediyesi: mağaza için 500 altın
+Sıra · tur {n}/{m}
+Sıra · ilk {n} geçer
+Kalan · {n}sn
+Kalan
+BAŞLA!
+Yayınlama, yayınlanan bağlantıdan oynarken çalışır
+Haritalar yükleniyor…
+Yayınlamak için katkıcı erişimi gerekiyor
+Önce bir başlangıç ve bitiş koy
+Önce kendi haritanı bitirmelisin (test et ve bitişe ulaş)
+Sınıra ulaştın ({n} harita). Önce birini sil
+{n} altına ihtiyacın var
+Yayına hazır
+Haritalar şu an yüklenmiyor, birazdan tekrar dene
+Oyuncu haritaları oyunu yayınlanan bağlantıdan açınca görünür
+Henüz harita yok. İlkini yap ve yayınla!
+Öne çıkan
+Yapan: {x}
+{n} kez oynandı
+Sil
+Beğen
+Ana modlardan çıkar
+Ana modlara ekle
+Oyna
+Haritaların oynandı ({n} kez)
+Olmadı, tekrar dene
+Ana modlardan çıkarıldı
+Harita artık ana modlardan biri!
+Silindi
+Emin misin?
+Harita için bir ad yaz
+Harita yayınlandı! Biri her oynadığında 5 altın kazanırsın
+Sınıra ulaşıldı
+Yayınlanamadı, tekrar dene
+İleri
+Sağ
+Hepsini sil
+Orijinal harita geri yüklendi
+Önce başlangıç parçasını koy
+Önce bitiş parçasını koy
+Modeller yüklenemedi
+Engelli koşu (klasik)
+Yarış
+Kapılar, testereler ve topların arasından bayrağa koş
+Kontrol noktası
+Engelli koşu
+İki turluk kıvrımlı bir parkur: tahterevalliler, zıplayan minderler, çekiçler, yıkım topları, vantilatörler ve fırlatma rampaları
+Tur {n} / {m}
+Hex Drop
+Karolar ilk basışta çatlar, ikincide düşer. 3 saniye durursan da düşerler
+RPG + El bombası + Dondurma + Uçuş (nadir)
+Yıldız avı
+Yıldızlar
+İki takım. Küçük yıldız 1, büyük yıldız 3, mücevher 5, kristal 10. Vurulursan yıldızlarını düşürürsün
+Çekme + Dondurma
+{n} yıldız düşürdün!
+Sopa-top
+Top
+Sopalı iki takım: topu rakip takımın kalesine vur. Her sopanın kendi gücü var
+MÜKEMMEL!
+Kırmızıya gol!
+Maviye gol!
+Sopalı iki takım: topu rakip takımın çukuruna vur. Doldurmak için basılı tut, mükemmel vuruş için yeşilde bırak
+Toplardan kaç
+Toplar
+Süre bitene kadar platformda kal. Toplar gittikçe daha hızlı ateş eder
+Uçuş tabancası
+Zirve
+Platformlardan en tepedeki taca tırman
+Şaşırtma tabancası
+Arena
+Herkes herkese karşı, kenarlar da düşüp gidiyor. Ayakta kalan son kişi kazanır
+Hızlı tabanca + Güdümlü roket + Yapışkan bomba
+Arena küçülüyor!
+İtme tabancası
+Hızlı tabanca
+Dondurma tabancası
+Çekme tabancası
+RPG
+Güdümlü roket
+El bombası
+Yapışkan bomba
+Vurduğu kişiyi geri iter
+Her biri biraz iten bir sürü atış
+Vurduğu kişiyi dondurur
+Vurduğu kişiyi sana çeker
+Birini fırlatmak için ona, kendin uçmak için yere ateş et
+Vurduğu kişinin kontrollerini ters çevirir
+Zeminleri ve sandıkları kırar
+Kendi kendine en yakın oyuncuya uçar
+At, 1,5 saniye sonra patlar
+Oyuncuları yavaşlatan yapışkan bir gölet bırakır
+Arena hazırlanıyor…
+Yap
+Dans
+El salla
+Evet
+Hayır
+Yumruk
+Mod
+Değiştir
+Satın al
+Yapım modu
+Parçalardan kendi haritanı yap ve 3 bota karşı test et. Kendin bitirirsen herkes için yayınlayabilirsin.
+Yapmaya başla
+Harita adı
+Yayınla · 1500
+Oyuncu haritaları
+Başkalarının haritalarını oyna. Biri her oynadığında yapan 5 altın kazanır.
+İptal
+Tur 1
+Hemen başlamak için ekrana dokun
+Sıra
+Duraklat
+Atla
+Zıpla
+Vur
+WASD: koş · Boşluk: zıpla · Shift: atla · F veya tık: vur (doldurmak için basılı tut) · Sürükle: kamerayı çevir · Q: it · G (basılı tut): yakala
+Kapat
+Geç
+Duraklatıldı
+Devam
+Menü
+Bir parça seç ve bir kareye dokun. Gezmek için sürükle, yakınlaştırmak için fare tekerleği.
+Yön:
+Parçayı sil
+Orijinal harita
+Haritayı test et
+Kırmızı çukur
+Mavi çukur
+Top noktası
+Bitişe ilk sen var
+Hayatta kalma
+Süre bitene kadar haritada kal
+İki takım topu diğer çukura vurur
+Kırmızı çukuru koy
+Mavi çukuru koy
+Top noktasını koy
+Önce kendi haritanı kazanmalısın (test et)
+Düzenle
+Yayınla
+Oluştur
+Kendi Yarış, Hayatta kalma veya Top haritanı yap ve yayınla
+Diğer oyuncuların yaptığı haritaları oyna
+Bir harita türü seç. Haritanı kendin bitir, sonra 1500 altına yayınla. Biri her oynadığında 5 altın kazanırsın.
+Hepsi
+Kaleci
+Defans
+Orta saha
+Mevkini seç
+{x} olarak oynuyorsun
+{x} de {y} istiyor! Çark dönüyor…
+{x} senin oldu!
+{x} aldı. {y} oynuyorsun
+Bolt Golf
+Golf
+Kendi topunu deliğe sok. Su topu 1 ceza vuruşuyla geri gönderir. Doldurmak için basılı tut, vurmak için bırak
+Golf sopası
+Şap! +1 vuruş
+Delikte! {n} vuruş
+Volley Bash
+Voleybol
+İki takım ve bir file. Topu karşıya at ve kendi tarafına düşürme. Doldurmak için basılı tut, mükemmel smaç için yeşilde bırak
+Dışarı!
+Kırmızıya sayı!
+Maviye sayı!
+Bolt Futbol
+Futbol
+Gerçek futbol: top ayağına yapışır. Pas için atla, şut için Vur'a basılı tut, topu almak için toplu oyuncuya atla
+Ayakların
+Top kapma!
+Puck Rush
+Pak
+Metal pakı rakibin küçük kalelerinden birine vur. Yan kaleler 1, korunan orta kale 3 değerinde
+Forvet
+Bölüm 1: Başlangıç
+Bölüm 2
+Bolt Dash: dizi
+Sezon 1: Parti Oyunları Ligi
+Sezon {n}
+Sonraki bölüm: yakında
+Film
+Lav karoları
+Lav
+Karolar parlar ve lava düşer. Her 20 saniyede yeni bir tehlike gelir. Ayakta kalan son kişi kazanır
+İtme + Yakalama
+Dikkat: dönen kol!
+Toplar!
+Testereler!
+Daha fazla top!
+Sıcak bomba
+Bomba
+Biri tik tak eden bir bomba taşıyor. Başkasına dokunup ona ver. Patladığında elinde tutan oyundan çıkar
+Bomba sende! Başkasına ver!
+Koş: W A S D
+Koş: soldaki çubuğu sürükle
+Boşluğun üstünden zıpla: Boşluk
+Boşluğun üstünden zıpla: sarı tuş
+Kolun altından atla: Shift
+Kolun altından atla: yeşil tuş
+Zayıf kapıları kırmak için kapılara koş
+Kuklayı it: Q. Yakalamak için G'ye basılı tut
+Kuklayı it: turuncu tuş. Yakalamak için mor tuşa basılı tut
+Hız okları seni ileri fırlatır. Bayrağa ulaş!
+Antrenman
+Her hareketi adım adım öğren. İpuçları tuşlarını ya da telefon tuşlarını gösterir
+Yükselen lav
+Lav durmadan yükseliyor. Kayalardan olabildiğince hızlı yukarı zıpla. Ayakta kalan son kişiler kazanır
+Oyuncu kartı
+Hız
+Şut
+Pas
+Kontrol
+Bronz
+Gümüş
+Altın
+Boya yarışı
+Boya
+Dört takım. Bastığın her karo senin rengini alır. Süre bitince en çok karosu olan takım kazanır
+Yeşil
+Sarı
+{x} takımı {n} karoyla kazandı
+Deli Mahkum
+Başarım
+Hokey maskesi
+Balkabağı kafa
+Satır
+Motorlu testere
+Deli Mahkum'un satırı
+Deli Mahkum'un motorlu testeresi
+Delirdi! Motorlu testereye dokunma!
+Katil Gecesi
+Katil
+Canavarlar ve Deli Mahkum'un kopyalarıyla dolu uzun bir gece. Görünümünü açmak için sonunda onu yen. Bir kez ölürsen oyundan çıkarsın
+Sopan
+Orman
+Boş sokaklar
+Eski ev
+Hapishane avlusu
+Deli Mahkum!
+Kopyalarını çağırıyor!
+ROAR!
+Zemin çatlıyor!
+Işıklar söndü...
+Başarım: Deli Mahkum'u açtın!
+Şövalye miğferi
+Ayı şapkası
+Büyücü şapkası
+Kahverengi pelerin
+Kırmızı pelerin
+Pembe pelerin
+Yeşil pelerin
+Daha hızlı koş
+Yüksek yerlerden yavaşça düş ve inmek için yönlen
+Havada bir kez daha zıpla
+Daha yükseğe zıpla
+Patron
+Bölge {n}/{m}
+Kapıyı açmak için bütün canavarları öldür
+Kapı açıldı!
+Evcil hayvanlar
+Köpek yavrusu
+Her turda %15 fazla altın
+Kedicik
+Darbeden sonra daha hızlı kalk
+Civciv
+Biraz daha hızlı koş
+Kuşçuk
+Daha uzağa atla
+Güvercin
+Biraz daha yükseğe zıpla
+Cactoro
+Yapışkan sıvılar ve yavaşlatmalar seni pek etkilemez
+Mushnub
+%20 fazla sezon XP'si
+Pembe Blob
+İtilmesi ve devrilmesi daha zor
+Yeşil Blob
+Donma ve baş dönmesi iki kat hızlı geçer
+Balıkçık
+Buzda ve muzda çok daha az kay
+Glub
+Biraz daha yavaş düş
+Zırhlı arı
+İtme ve yakalama daha hızlı dolar
+Alpaking
+%10 fazla altın ve %10 fazla XP
