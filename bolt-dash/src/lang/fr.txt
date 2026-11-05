@@ -461,3 +461,26 @@ Quatre équipes. Chaque dalle où tu marches prend ta couleur. L'équipe avec le
 Vert
 Jaune
 L'équipe {x} a gagné avec {n} dalles
+Prisonnier fou
+Succès
+Masque de hockey
+Tête de citrouille
+Couperet
+Tronçonneuse
+Le couperet du Prisonnier fou
+La tronçonneuse du Prisonnier fou
+Il est devenu fou ! Ne touche pas la tronçonneuse !
+Nuit du tueur
+Tueur
+Une longue nuit de monstres et de copies du Prisonnier fou. Bats-le à la fin pour débloquer son apparence. Meurs une fois et tu es éliminé
+Ta batte
+La forêt
+Les rues vides
+La vieille maison
+La cour de la prison
+Le Prisonnier fou !
+Il appelle ses copies !
+RUGISSEMENT !
+Le sol se fissure !
+Lumières éteintes...
+Succès : tu as débloqué le Prisonnier fou !

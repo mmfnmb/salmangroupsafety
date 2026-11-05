@@ -6,6 +6,7 @@ import { Runner, think } from './runner.js';
 import { MODES, MODE_LIST } from './modes.js';
 import { cardOvr, cardTier } from './sports.js';
 import './party.js';
+import './slasher.js';
 import { WEAPONS, giveWeapon, fire, botFire, updateProjectiles, updatePickups, tickWeapons, clearProjectiles, dropWeapon } from './weapons.js';
 import { editor, customMode, getMap, PIECES, MAP_TYPES, piecesFor } from './build.js';
 import { comm, initCommunity, allMaps, featuredMaps, mapHash, publishMap, unpublishMap, recordPlay, liked, toggleLike, setFeatured, PUBLISH_PRICE, MAX_MAPS } from './community.js';
@@ -343,7 +344,7 @@ function updateDive(dt) {
 // ---------------------------------------------------------------- menu UI
 const MODE_CHOICES = [
   { id: 'show', name: t('The Show'), sub: t('4 rounds in a row. Win the last one to take the crown'), thumb: 'fall' },
-  ...MODE_LIST.map((m) => ({ id: m.id, name: m.name, sub: m.team ? t('Teams') + ' · ' + m.weapons : m.weapons, thumb: m.id })),
+  ...MODE_LIST.map((m) => ({ id: m.id, name: m.name, sub: m.team ? t('Teams') + ' · ' + m.weapons : m.weapons, thumb: m.id, special: m.special })),
 ];
 const choices = () => [...MODE_CHOICES, ...featuredMaps().map((m) => ({ id: 'cm:' + m.key, name: m.name, sub: t('Featured player map') + ' · ' + m.author, thumb: 'race' }))];
 const selectedMode = () => choices().find((m) => m.id === flow.choice) || MODE_CHOICES[0];
@@ -405,7 +406,7 @@ async function openOv(kind) {
   else if (kind === 'picker') {
     T.textContent = t('Choose a mode');
     const ev = eventMode();
-    B.innerHTML = `<div class="picks">${choices().map((m) => `<button class="pick" data-mode="${m.id}" aria-pressed="${m.id === flow.choice}">${m.id === ev ? '<span class="tagx">×2</span>' : ''}${THUMB['mode:' + m.thumb] ? `<img alt="" src="${THUMB['mode:' + m.thumb]}">` : '<div class="ph" data-ph="' + m.thumb + '">' + t('Loading picture…') + '</div>'}<b>${m.name}</b><span>${m.sub}</span></button>`).join('')}
+    B.innerHTML = `<div class="picks">${choices().map((m) => `<button class="pick" data-mode="${m.id}" aria-pressed="${m.id === flow.choice}">${m.id === ev ? '<span class="tagx">×2</span>' : m.special ? '<span class="tagx" style="background:#6a3fd1">★</span>' : ''}${THUMB['mode:' + m.thumb] ? `<img alt="" src="${THUMB['mode:' + m.thumb]}">` : '<div class="ph" data-ph="' + m.thumb + '">' + t('Loading picture…') + '</div>'}<b>${m.name}</b><span>${m.sub}</span></button>`).join('')}
       <button class="pick" disabled><div class="ph">${t('Coming soon')}</div><b>${t('Online with friends')}</b><span>${t('Play with your friends using a room code')}</span></button></div>`;
     B.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => { flow.choice = b.dataset.mode; store.set('choice', flow.choice); sfx.click(); closeOv(); }));
     for (const m of choices()) if (!THUMB['mode:' + m.thumb]) { await new Promise(requestAnimationFrame); modeThumb(m.thumb); const ph = B.querySelector(`[data-ph="${m.thumb}"]`); if (ph && THUMB['mode:' + m.thumb]) ph.outerHTML = `<img alt="" src="${THUMB['mode:' + m.thumb]}">`; }
@@ -628,13 +629,14 @@ function playIntro(force) {
 const flow = { state: 'loading', choice: store.get('choice', 'show'), show: null, round: 0, t: 0, count: 0, flyT: 0, endT: 0, finishedCount: 0, coins: 0, bannerT: 0 };
 const camPos = V(0, 6, 16), camLook = V(), camRay = new CANNON.RaycastResult();
 function newShow(choice) {
-  const n = choice === 'show' ? 10 : choice === 'football' ? 14 : choice === 'training' ? 2 : 8;
+  const n = choice === 'show' ? 10 : choice === 'football' ? 14 : choice === 'training' ? 2 : choice === 'slasher' ? 4 : 8;
   const players = [{ name: save.name, equip: { ...save.equip }, isPlayer: true }];
   const names = [...NAMES].sort(() => Math.random() - 0.5);
   for (let i = 1; i < n; i++) players.push({ name: names[i % names.length], equip: randomEquip(), isPlayer: false });
   let rounds;
   if (choice === 'show') rounds = [{ m: pick(['race', 'race', 'golf']), q: 8 }, { m: pick(['stars', 'ball', 'volley', 'football', 'puck', 'paint']) }, { m: pick(['cannons', 'climb', 'arena', 'lava', 'bomb', 'rising']), q: 3 }, { m: 'fall', q: 1 }];
   else if (choice === 'custom') rounds = [{ m: 'custom', q: 3 }];
+  else if (choice === 'slasher') rounds = [{ m: 'slasher', q: 0 }];
   else if (choice.startsWith('cm:')) rounds = [{ m: 'custom', q: 5, cm: choice.slice(3) }];
   else { const md = MODES[choice]; rounds = [{ m: choice, q: md.kind === 'race' ? (choice === 'climb' ? 4 : 6) : md.kind === 'survival' ? 1 : null }]; }
   return { choice, players, rounds, coins: 0, place: null };
@@ -754,7 +756,7 @@ function beginPlay() {
 }
 function cleanupRound() {
   for (const r of G.runners) r.dispose(); G.runners = []; G.player = null;
-  clearProjectiles(); G.level?.dispose(); G.level = null; G.modeObj = null;
+  G.modeObj?.cleanup?.(); clearProjectiles(); G.level?.dispose(); G.level = null; G.modeObj = null;
   puffs.clear(); confetti.clear();
 }
 G.finish = (r) => {

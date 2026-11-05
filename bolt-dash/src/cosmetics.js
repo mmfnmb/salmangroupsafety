@@ -41,6 +41,8 @@ export const SKINS = [
   { id: 'film-silver', name: 'Silver', price: 0, hidden: true, colors: { Main: 0xa9adb8, Main2: 0xe6e8ee } },
   { id: 'film-slate', name: 'Slate', price: 0, hidden: true, colors: { Main: 0x4a4f5c, Main2: 0x8a90a0 } },
   { id: 'film-olive', name: 'Olive', price: 0, hidden: true, colors: { Main: 0x7b7d3a, Main2: 0xd6d7a8 } },
+  { id: 'skin-mad', name: t('Mad Prisoner'), price: 0, rare: t('Achievement'), secret: true, colors: { Main: 0x121216, Main2: 0x2a2a30, Main_Light: 0x9a0c16, EyeColor: 0xff2a2a },
+    mat: { EyeColor: { emi: 0xff0000, ei: 2.5 }, Main_Light: { rough: 0.5 } } },
   { id: 'skin-ref', name: t('Referee'), price: 0, hidden: true, colors: { Main: 0xffffff, Main2: 0xe8202a, Main_Light: 0xffe0c0 } },
   { id: 'skin-bolt', name: t('Original Bolt'), price: 0, rare: t('Exclusive'), secret: true, fx: 'bolt', colors: { Main: 0xffc21a, Main2: 0x08050f, Main_Light: 0x2a0f55 },
     mat: { Main: { metal: 1, rough: 0.16, emi: 0x7a4a00, ei: 0.5 }, Main2: { emi: 0x7a2cff, ei: 1.8 }, Main_Light: { emi: 0xb06cff, ei: 2.4 } } },
@@ -48,6 +50,8 @@ export const SKINS = [
 
 // offsets are in the character's own units, measured from the Head / Torso bones
 export const ACCS = [
+  { id: 'f-hockey', slot: 'face', name: t('Hockey Mask'), price: 0, rare: t('Achievement'), secret: true, model: 'k/x-hm-b', bone: 'Head', s: [1.68, 1.25, 1.4], p: [0, 0.2, 0.85] },
+  { id: 'h-pumpkin', slot: 'head', name: t('Pumpkin Head'), price: 0, rare: t('Achievement'), secret: true, noEars: true, model: 'k/x-pumpkin', bone: 'Head', s: 7, p: [0, -0.32, 0.1] },
   { id: 'h-crown', slot: 'head', name: t('Gold Crown'), price: 150, model: 'acc/Crown', bone: 'Head', s: 0.95, p: [0, 1.3, 0] },
   { id: 'h-queen', slot: 'head', name: t('Queen\'s Crown'), price: 200, model: 'acc/Crown2', bone: 'Head', s: 0.95, p: [0, 1.3, 0] },
   { id: 'h-cone', slot: 'head', name: t('Party Hat'), price: 80, model: 'acc/ice-cream', bone: 'Head', s: 2.0, p: [0, 2.15, 0], r: [PI, 0, 0] },
@@ -69,6 +73,8 @@ export const ACCS = [
 
 // bats: power / speed / reach are 1..5. axis = long axis of the model, grip = which end the hand holds (+1 max end, -1 min end)
 export const BATS = [
+  { id: 'bat-cleaver', name: t('Cleaver'), price: 0, rare: t('Achievement'), secret: true, model: 'k/x-cleaver', axis: 'x', grip: 1, len: 3.4, power: 5, speed: 3, reach: 3, special: 'balanced', desc: t('The Mad Prisoner\'s cleaver') },
+  { id: 'bat-saw', name: t('Chainsaw'), price: 0, rare: t('Achievement'), secret: true, model: 'k/x-chainsaw', axis: 'z', grip: 1, len: 5.2, power: 5, speed: 2, reach: 5, special: 'balanced', desc: t('The Mad Prisoner\'s chainsaw') },
   { id: 'bat-golf', name: t('Golf Club'), price: 0, model: 'k/club-red', axis: 'y', grip: 1, len: 2.4, power: 3, speed: 3, reach: 3, special: 'balanced', desc: t('Balanced at everything') },
   { id: 'bat-bread', name: t('Baguette'), price: 80, model: 'k/loaf-baguette', axis: 'x', grip: 1, len: 2.2, power: 2, speed: 5, reach: 3, special: 'fast', desc: t('Fastest swing') },
   { id: 'bat-spatula', name: t('Spatula'), price: 90, model: 'k/cooking-spatula', axis: 'x', grip: 1, len: 2.2, power: 2, speed: 4, reach: 2, special: 'lob', desc: t('Lobs the ball up high') },
@@ -145,6 +151,9 @@ export function dress(model, equip, opts = {}) {
     if (Array.isArray(it.s)) o.scale.set(...it.s); else o.scale.setScalar(it.s); o.position.set(...it.p); if (it.r) o.rotation.set(...it.r);
     u.acc[slot] = { id, obj: attach(model, it.bone, o) };
   }
+  // full-head items (the pumpkin) hide the ears
+  const noEars = SLOTS.some((sl) => ITEM[equip[sl]]?.noEars);
+  model.traverse((o) => { if (o.isMesh && /^Ears/.test(o.name)) o.visible = !noEars; });
   holdItem(model, opts.bat && equip.bat ? 'bat:' + equip.bat : null);
 }
 export function paint(model, tint) {

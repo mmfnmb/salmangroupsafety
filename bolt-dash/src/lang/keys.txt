@@ -461,3 +461,26 @@ Four teams. Every tile you step on takes your colour. The team with the most til
 Green
 Yellow
 {x} team won with {n} tiles
+Mad Prisoner
+Achievement
+Hockey Mask
+Pumpkin Head
+Cleaver
+Chainsaw
+The Mad Prisoner's cleaver
+The Mad Prisoner's chainsaw
+He has gone mad! Do not touch the chainsaw!
+Slasher Night
+Slasher
+A long night of monsters and copies of the Mad Prisoner. Beat him at the end to unlock his skin. Die once and you are out
+Your bat
+The forest
+The empty streets
+The old house
+The prison yard
+The Mad Prisoner!
+He calls his copies!
+ROAR!
+The floor is cracking!
+Lights out...
+Achievement: you unlocked the Mad Prisoner!

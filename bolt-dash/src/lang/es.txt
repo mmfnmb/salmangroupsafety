@@ -461,3 +461,26 @@ Cuatro equipos. Cada baldosa que pisas toma tu color. Gana el equipo con más ba
 Verde
 Amarillo
 El equipo {x} ganó con {n} baldosas
+Prisionero loco
+Logro
+Máscara de hockey
+Cabeza de calabaza
+Cuchillo de carnicero
+Motosierra
+El cuchillo del Prisionero loco
+La motosierra del Prisionero loco
+¡Se volvió loco! ¡No toques la motosierra!
+Noche del asesino
+Asesino
+Una larga noche de monstruos y copias del Prisionero loco. Derrótalo al final para desbloquear su aspecto. Si mueres una vez, quedas fuera
+Tu bate
+El bosque
+Las calles vacías
+La casa vieja
+El patio de la prisión
+¡El Prisionero loco!
+¡Llama a sus copias!
+¡RUGIDO!
+¡El suelo se agrieta!
+Se apagan las luces...
+Logro: ¡desbloqueaste al Prisionero loco!
