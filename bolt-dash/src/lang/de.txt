@@ -1,0 +1,528 @@
+Boden
+Erhöhter Block
+Zaun
+Tempopfeile
+Förderband
+Feder
+Abpraller
+Säge
+Drehender Arm
+Stachelblock
+Stachelfalle
+Zerbrechliche Kiste
+Stahlkiste
+Kanone
+Münze
+Waffenkiste
+Start
+Ziel
+Deine Karte
+Die Karte, die du gebaut hast
+Eis + Stoß
+Zurück zum Start
+Spieler
+Klassisch Blau
+Erdbeere
+Minze
+Zitrone
+Traube
+Orange
+Melone
+Schnee
+Mitternacht
+Lava
+Kristall
+Selten
+Regenbogen
+Glühende Lava
+Legendär
+Galaxie
+Strahlendes Gold
+Schwarzes Loch
+Mythisch
+Schiedsrichter
+Original-Bolt
+Exklusiv
+Goldkrone
+Königinnenkrone
+Partyhut
+Cupcake
+Donut
+Geschenkbox
+Brille
+Sonnenbrille
+Lederweste
+Eisenrüstung
+Ninja-Rüstung
+Goldrüstung
+Heldenstern
+Rucksack
+Umhängetasche
+Holzschild
+Ritterschild
+Golfschläger
+In allem ausgewogen
+Baguette
+Schnellster Schlag
+Pfannenwender
+Schlägt den Ball hoch in die Luft
+Nudelholz
+Hält den Ball am Boden
+Corn Dog
+Wen du triffst, klebt eine Sekunde fest
+Knochen
+Lässt den Ball hoch springen
+Fisch
+Wen du triffst, rutscht aus
+Banane
+Wen du triffst, rutscht aus und dreht sich
+Zuckerstange
+Gibt dem Ball Effet
+Paddel
+Größte Reichweite
+Bratpfanne
+BONG! Wen du triffst, wird schwindelig
+Hammer
+Schleudert alle um dich herum weg
+Keule
+Stärkster Schlag
+Goldener Hammer
+Der Legendäre
+Farben
+Kopf
+Gesicht
+Körper
+Rücken
+Schläger
+Runde {n} von {m}
+Sammle 30 Münzen in Runden
+Qualifiziere dich in 3 Runden
+Hechte 15 Mal
+Gewinne die Krone in einer Show
+Qualifiziere dich in 20 Runden
+Sammle 300 Münzen in Runden
+Erste Qualifikation
+Erster Sieg
+Erste Krone
+Spiele 10 Shows
+Spiele jeden Modus
+Hechte 100 Mal
+Hol dir einen seltenen Charakter
+Qualifiziere dich 50 Mal
+5 Kronen
+Münzen
+Herausforderung geschafft
+Erfolg
+Saisonstufe {n}
+Saison: {x} freigeschaltet
+Saison
+Tagesbelohnung (Tag {n})
+Die Show
+4 Runden am Stück. Gewinne die letzte und hol dir die Krone
+Teams
+Empfohlene Spielerkarte
+Erledigt
+Saison 1
+Stufe {n}
+Saison abgeschlossen!
+Tagesbelohnung
+Bereit
+Morgen
+{n} abholen
+Heute abgeholt
+Event der Woche
+Doppelte Münzen die ganze Woche
+Heutige Angebote
+Du hast alles
+Komm jeden Tag wieder: Die Belohnung steigt am 7. Tag auf 500.
+Herausforderungen
+Heute
+Diese Woche
+Erfolge
+Wähle einen Modus
+Bild wird geladen…
+Bald verfügbar
+Online mit Freunden
+Spiele mit Freunden über einen Raumcode
+Glücksrad
+Heute gratis drehen!
+Extra-Dreh für 500 Münzen
+Gratis drehen
+Für 500 drehen
+Code einlösen
+Gib einen Code ein, um deinen Preis zu bekommen. Manche Codes geben mit Glück einen seltenen Charakter.
+Einlösen
+Einstellungen
+Grafik
+Leicht
+Mittel
+Fantasie
+Ton
+An
+Aus
+Kameratempo
+Langsam
+Normal
+Schnell
+Sprache
+Intro-Film noch mal ansehen
+Dein Profil
+Dein Name
+Speichern
+Gespielte Shows
+Runden
+Qualifiziert
+Kronen
+Stufe
+Verdiente Münzen
+Gespeichert
+Zubehör
+Selten!
+Jackpot
+Du hast {x} schon, also bekommst du {n} Münzen
+Glückwunsch! Du hast {x} gewonnen ({r})
+Du brauchst 500 Münzen
+Du hast {x} gewonnen
+Du hast alles! Nimm 300 Münzen
+Du hast {n} Münzen gewonnen
+Dieser Code ist ungültig
+Diesen Code hast du schon benutzt
+{x}: dein exklusiver Charakter!
+Shop
+Garderobe
+Die Angebote von heute, jeden Tag neu
+Ändere deine Farbe, zieh dich an und wähle deinen Schläger
+Du hast alles gekauft! Komm morgen für neue Angebote wieder.
+Angezogen
+Im Besitz
+Kraft
+Tempo
+Reichweite
+Der Boden wird hinter dir golden, wenn du rennst
+Ein schwarzes Loch wirbelt um dich herum
+Feuerfunken sprühen von dir
+Sterne funkeln um dich herum
+Glänzend und klar wie ein Diamant
+Deine Farbe ändert sich ständig
+Gold und schwarzes Loch zusammen: der exklusive Charakter
+Nur per Code
+Kaufen für {n}
+Noch {n} nötig
+Du hast {x} gekauft
+Diese Karte gibt es nicht mehr
+Suche Spieler
+Tipp: Hechte unter drehenden Armen durch
+Tipp: Gelbe Tempopfeile schleudern dich nach vorn
+Tipp: Steh in Hex Drop nie 3 Sekunden still
+Tipp: Die Bratpfanne macht Leute schwindelig
+Tipp: Holzkisten zerbrechen, Stahlkisten nicht
+Gefunden!
+Eine Karte von {x}
+Finale Runde
+Runde
+Das Siegerteam qualifiziert sich
+Die ersten {n} im Ziel qualifizieren sich
+Der Letzte, der steht, gewinnt
+Die letzten {n}, die stehen, qualifizieren sich
+Qualifiziert!
+Etwas zu spät
+Ausgeschieden!
+Du hast deine Karte geschafft! Du kannst sie jetzt veröffentlichen
+Du hast die Krone gewonnen!
+Du hast gewonnen!
+Diesmal raus
+Team {x} hat {a} - {b} gewonnen
+Rot
+Blau
+{n} von {m} qualifiziert
+Du
+Nächste Runde
+Nochmal spielen
+Startgeschenk: 500 Münzen für den Shop
+Platz · Runde {n}/{m}
+Platz · Top {n} kommen weiter
+Übrig · {n}s
+Übrig
+LOS!
+Veröffentlichen geht, wenn du über den veröffentlichten Link spielst
+Karten werden geladen…
+Zum Veröffentlichen brauchst du Mitwirkenden-Zugriff
+Setze zuerst einen Start und ein Ziel
+Du musst deine Karte zuerst selbst schaffen (teste sie und erreiche das Ziel)
+Du hast das Limit erreicht ({n} Karten). Lösche zuerst eine
+Du brauchst {n} Münzen
+Bereit zum Veröffentlichen
+Die Karten laden gerade nicht, versuch es gleich nochmal
+Spielerkarten erscheinen, wenn du das Spiel über den veröffentlichten Link öffnest
+Noch keine Karten. Bau und veröffentliche die erste!
+Empfohlen
+Von {x}
+{n} Mal gespielt
+Löschen
+Gefällt mir
+Aus den Hauptmodi entfernen
+Zu den Hauptmodi hinzufügen
+Spielen
+Leute haben deine Karten gespielt ({n} Mal)
+Das hat nicht geklappt, versuch es nochmal
+Aus den Hauptmodi entfernt
+Die Karte ist jetzt einer der Hauptmodi!
+Gelöscht
+Sicher?
+Gib der Karte einen Namen
+Karte veröffentlicht! Du bekommst 5 Münzen, wenn jemand sie spielt
+Limit erreicht
+Veröffentlichen fehlgeschlagen, versuch es nochmal
+Vorwärts
+Rechts
+Alles löschen
+Originalkarte wiederhergestellt
+Setze zuerst das Startteil
+Setze zuerst das Zielteil
+Die Modelle konnten nicht geladen werden
+Hindernislauf (klassisch)
+Rennen
+Lauf zur Flagge vorbei an Türen, Sägen und Kanonen
+Kontrollpunkt
+Hindernislauf
+Ein kurviger Kurs mit zwei Runden: Wippen, Hüpfkissen, Hämmer, Abrissbirnen, Ventilatoren und Startrampen
+Runde {n} von {m}
+Hex Drop
+Die Platten bekommen beim ersten Betreten Risse und fallen beim zweiten. Steh 3 Sekunden still und sie fallen auch
+RPG + Granate + Eis + Flug (selten)
+Sternenjagd
+Sterne
+Zwei Teams. Kleiner Stern 1, großer Stern 3, Edelstein 5, Kristall 10. Wirst du getroffen, verlierst du deine Sterne
+Zug + Eis
+Du hast {n} Sterne verloren!
+Schlägerball
+Ball
+Zwei Teams mit Schlägern: Schlag den Ball ins Tor des anderen Teams. Jeder Schläger hat seine eigene Kraft
+PERFEKT!
+Tor für Rot!
+Tor für Blau!
+Zwei Teams mit Schlägern: Schlag den Ball in die Grube des anderen Teams. Halten zum Aufladen, im Grünen loslassen für einen perfekten Schlag
+Kanonen-Ausweichen
+Kanonen
+Bleib auf der Plattform, bis die Zeit abläuft. Die Kanonen feuern immer schneller
+Flug-Blaster
+Der Gipfel
+Klettere über die Plattformen zur Krone ganz oben
+Verwirrungs-Blaster
+Arena
+Jeder gegen jeden, und die Ränder fallen nach und nach weg. Der Letzte, der steht, gewinnt
+Schnellfeuer-Blaster + Lenkrakete + Klebebombe
+Die Arena schrumpft!
+Stoß-Blaster
+Schnellfeuer-Blaster
+Eis-Blaster
+Zug-Blaster
+RPG
+Lenkrakete
+Granate
+Klebebombe
+Stößt den Getroffenen zurück
+Viele Schüsse, die jeweils ein bisschen stoßen
+Friert den Getroffenen ein
+Zieht den Getroffenen zu dir
+Schieß auf jemanden, um ihn wegzuschleudern, oder auf den Boden, um selbst zu fliegen
+Vertauscht die Steuerung des Getroffenen
+Zerstört Böden und Kisten
+Fliegt von selbst zum nächsten Spieler
+Wirf sie und sie explodiert nach 1,5 Sekunden
+Hinterlässt eine klebrige Pfütze, die Spieler bremst
+Arena wird vorbereitet…
+Bauen
+Tanzen
+Winken
+Ja
+Nein
+Schlag
+Modus
+Wechseln
+Kaufen
+Baumodus
+Bau deine eigene Karte aus Teilen und teste sie gegen 3 Bots. Schaffst du sie selbst, kannst du sie für alle veröffentlichen.
+Bauen starten
+Kartenname
+Veröffentlichen · 1500
+Spielerkarten
+Spiele Karten anderer Leute. Der Ersteller bekommt 5 Münzen, wenn jemand spielt.
+Abbrechen
+Runde 1
+Tippe auf den Bildschirm, um sofort zu starten
+Platz
+Pause
+Hechten
+Springen
+Schlagen
+WASD: rennen · Leertaste: springen · Shift: hechten · F oder Klick: schlagen (halten zum Aufladen) · Ziehen: Kamera drehen · Q: stoßen · G (halten): packen
+Schließen
+Überspringen
+Pausiert
+Weiter
+Menü
+Wähle ein Teil und tippe auf ein Feld. Ziehen zum Bewegen, Mausrad zum Zoomen.
+Richtung:
+Teil löschen
+Originalkarte
+Karte testen
+Rote Grube
+Blaue Grube
+Ballpunkt
+Erreiche als Erster das Ziel
+Überleben
+Bleib auf der Karte, bis die Zeit abläuft
+Zwei Teams schlagen einen Ball in die andere Grube
+Setze die rote Grube
+Setze die blaue Grube
+Setze den Ballpunkt
+Du musst zuerst deine eigene Karte gewinnen (teste sie)
+Bearbeiten
+Veröffentlichen
+Erstellen
+Bau deine eigene Renn-, Überlebens- oder Ballkarte und veröffentliche sie
+Spiele Karten anderer Spieler
+Wähle einen Kartentyp. Schaff deine Karte selbst und veröffentliche sie für 1500 Münzen. Du bekommst 5 Münzen, wenn jemand sie spielt.
+Alle
+Torwart
+Verteidiger
+Mittelfeldspieler
+Wähle deine Position
+Du spielst als {x}
+{x} will auch {y}! Es dreht sich…
+Du hast {x} bekommen!
+{x} hat sie bekommen. Du spielst {y}
+Bolt Golf
+Golf
+Schlag deinen eigenen Ball ins Loch. Wasser schickt ihn mit 1 Strafschlag zurück. Halten zum Aufladen, loslassen zum Schlagen
+Golfschläger
+Platsch! +1 Schlag
+Eingelocht! {n} Schläge
+Volley Bash
+Volley
+Zwei Teams und ein Netz. Schlag den Ball rüber und lass ihn nicht auf deiner Seite landen. Halten zum Aufladen, im Grünen loslassen für einen perfekten Schmetterball
+Aus!
+Punkt für Rot!
+Punkt für Blau!
+Bolt Fußball
+Fußball
+Echter Fußball: Der Ball klebt dir am Fuß. Hechte zum Passen, halte Schlagen zum Schießen und hechte in den Ballführer, um ihm den Ball abzunehmen
+Deine Füße
+Grätsche!
+Puck Rush
+Puck
+Schlag den Metallpuck in eines der kleinen Tore des anderen Teams. Seitentore zählen 1, das bewachte Mitteltor zählt 3
+Stürmer
+Folge 1: Der Anfang
+Folge 2
+Bolt Dash: die Serie
+Saison 1: die Partyspiele-Liga
+Saison {n}
+Nächste Folge: bald
+Film
+Lavaplatten
+Lava
+Platten glühen und fallen in die Lava. Alle 20 Sekunden kommt eine neue Gefahr dazu. Der Letzte, der steht, gewinnt
+Stoßen + Packen
+Achtung: der drehende Arm!
+Kanonen!
+Sägen!
+Mehr Kanonen!
+Heiße Bombe
+Bombe
+Jemand trägt eine tickende Bombe. Berühre einen anderen Spieler, um sie weiterzugeben. Wenn sie explodiert, ist der Träger raus
+Du hast die Bombe! Gib sie weiter!
+Rennen: W A S D
+Rennen: zieh den Stick links
+Spring über die Lücke: Leertaste
+Spring über die Lücke: gelbe Taste
+Hechte unter dem Arm durch: Shift
+Hechte unter dem Arm durch: grüne Taste
+Renn gegen die Türen, um die schwachen zu zerbrechen
+Stoß die Puppe: Q. Halte G, um sie zu packen
+Stoß die Puppe: orange Taste. Halte die lila Taste, um sie zu packen
+Tempopfeile schleudern dich nach vorn. Erreiche die Flagge!
+Training
+Lerne jede Bewegung Schritt für Schritt. Die Tipps zeigen deine Tasten oder die Handy-Tasten
+Steigende Lava
+Die Lava steigt immer weiter. Spring so schnell du kannst die Felsen hoch. Die Letzten, die stehen, gewinnen
+Spielerkarte
+Tempo
+Schuss
+Pass
+Kontrolle
+Bronze
+Silber
+Gold
+Farbrausch
+Farbe
+Vier Teams. Jede Platte, die du betrittst, bekommt deine Farbe. Das Team mit den meisten Platten am Ende gewinnt
+Grün
+Gelb
+Team {x} hat mit {n} Platten gewonnen
+Wahnsinniger Häftling
+Erfolg
+Hockeymaske
+Kürbiskopf
+Hackbeil
+Kettensäge
+Das Hackbeil des Wahnsinnigen Häftlings
+Die Kettensäge des Wahnsinnigen Häftlings
+Er ist durchgedreht! Fass die Kettensäge nicht an!
+Nacht des Schlächters
+Schlächter
+Eine lange Nacht voller Monster und Kopien des Wahnsinnigen Häftlings. Besiege ihn am Ende, um sein Aussehen freizuschalten. Stirbst du einmal, bist du raus
+Dein Schläger
+Der Wald
+Die leeren Straßen
+Das alte Haus
+Der Gefängnishof
+Der Wahnsinnige Häftling!
+Er ruft seine Kopien!
+BRÜLL!
+Der Boden reißt auf!
+Licht aus...
+Erfolg: Du hast den Wahnsinnigen Häftling freigeschaltet!
+Ritterhelm
+Bärenmütze
+Zauberhut
+Brauner Umhang
+Roter Umhang
+Rosa Umhang
+Grüner Umhang
+Lauf schneller
+Fall langsam von hohen Stellen und steuere zur Landung
+Spring in der Luft noch einmal
+Spring höher
+Boss
+Zone {n}/{m}
+Besiege alle Monster, um das Tor zu öffnen
+Das Tor ist offen!
+Haustiere
+Welpe
++15 % Münzen in jeder Runde
+Kätzchen
+Steh nach einem Treffer schneller auf
+Küken
+Lauf ein bisschen schneller
+Vögelchen
+Hechte weiter
+Taube
+Spring ein bisschen höher
+Cactoro
+Klebeschleim und Verlangsamungen treffen dich kaum
+Mushnub
++20 % Saison-EP
+Rosa Blob
+Schwerer zu stoßen und umzuwerfen
+Grüner Blob
+Einfrieren und Schwindel vergehen doppelt so schnell
+Fischi
+Rutsch auf Eis und Bananen viel weniger
+Glub
+Fall etwas langsamer
+Panzerbiene
+Stoßen und Packen laden schneller auf
+Alpaking
++10 % Münzen und +10 % EP

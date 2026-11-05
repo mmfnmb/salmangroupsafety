@@ -1,0 +1,528 @@
+Pavimento
+Blocco rialzato
+Recinto
+Frecce di velocità
+Nastro trasportatore
+Molla
+Rimbalzatore
+Sega
+Braccio rotante
+Blocco chiodato
+Trappola chiodata
+Cassa fragile
+Cassa d'acciaio
+Cannone
+Moneta
+Cassa armi
+Partenza
+Traguardo
+La tua mappa
+La mappa che hai costruito
+Gelo + Spinta
+Di nuovo alla partenza
+Giocatore
+Blu classico
+Fragola
+Menta
+Limone
+Uva
+Arancia
+Melone
+Neve
+Mezzanotte
+Lava
+Cristallo
+Raro
+Arcobaleno
+Lava fusa
+Leggendario
+Galassia
+Oro splendente
+Buco nero
+Mitico
+Arbitro
+Bolt originale
+Esclusivo
+Corona d'oro
+Corona della regina
+Cappello da festa
+Cupcake
+Ciambella
+Pacco regalo
+Occhiali
+Occhiali da sole
+Gilet di pelle
+Armatura di ferro
+Armatura ninja
+Armatura d'oro
+Stella dell'eroe
+Zaino
+Borsa a tracolla
+Scudo di legno
+Scudo da cavaliere
+Mazza da golf
+Equilibrata in tutto
+Baguette
+Colpo più veloce
+Spatola
+Alza la palla altissima
+Mattarello
+Tiene la palla a terra
+Corn dog
+Chi colpisci resta incollato per un secondo
+Osso
+Fa rimbalzare la palla in alto
+Pesce
+Chi colpisci scivola
+Banana
+Chi colpisci scivola e gira
+Bastoncino di zucchero
+Fa curvare la palla
+Pagaia
+Portata più lunga
+Padella
+BONG! Chi colpisci ha le vertigini
+Martello
+Allontana tutti intorno a te
+Clava
+Colpo più forte
+Martello d'oro
+Il leggendario
+Colori
+Testa
+Viso
+Corpo
+Schiena
+Mazze
+Round {n} di {m}
+Raccogli 30 monete nei round
+Qualificati in 3 round
+Tuffati 15 volte
+Vinci la corona in uno Show
+Qualificati in 20 round
+Raccogli 300 monete nei round
+Prima qualificazione
+Prima vittoria
+Prima corona
+Gioca 10 Show
+Gioca tutte le modalità
+Tuffati 100 volte
+Ottieni un personaggio raro
+Qualificati 50 volte
+5 corone
+monete
+Sfida completata
+Obiettivo
+Livello stagione {n}
+Stagione: sbloccato {x}
+Stagione
+Premio giornaliero (giorno {n})
+Lo Show
+4 round di fila. Vinci l'ultimo per prendere la corona
+Squadre
+Mappa di un giocatore in evidenza
+Fatto
+Stagione 1
+Livello {n}
+Stagione completata!
+Premio giornaliero
+Pronto
+Domani
+Riscatta {n}
+Riscattato oggi
+Evento della settimana
+Monete doppie per tutta la settimana
+Offerte di oggi
+Hai tutto
+Torna ogni giorno: il premio sale fino a 500 al giorno 7.
+Sfide
+Oggi
+Questa settimana
+Obiettivi
+Scegli una modalità
+Caricamento immagine…
+In arrivo
+Online con gli amici
+Gioca con i tuoi amici con un codice stanza
+Ruota della fortuna
+Giro gratis oggi!
+Giro extra per 500 monete
+Gira gratis
+Gira per 500
+Riscatta codice
+Scrivi un codice per avere il tuo premio. Alcuni codici danno un personaggio raro se sei fortunato.
+Riscatta
+Impostazioni
+Grafica
+Leggera
+Media
+Fantasia
+Suono
+Attivo
+Disattivo
+Velocità telecamera
+Lenta
+Normale
+Veloce
+Lingua
+Rivedi il filmato iniziale
+Il tuo profilo
+Il tuo nome
+Salva
+Show giocati
+Round
+Qualificato
+Corone
+Livello
+Monete guadagnate
+Salvato
+Accessorio
+Raro!
+Jackpot
+Hai già {x}, quindi ricevi {n} monete
+Complimenti! Hai vinto {x} ({r})
+Ti servono 500 monete
+Hai vinto {x}
+Hai tutto! Prendi 300 monete
+Hai vinto {n} monete
+Questo codice non è valido
+Hai già usato questo codice
+{x}: il tuo personaggio esclusivo!
+Negozio
+Guardaroba
+Le offerte di oggi, nuove ogni giorno
+Cambia colore, vestiti e scegli la tua mazza
+Hai comprato tutto! Torna domani per nuove offerte.
+Indossato
+Tuo
+Potenza
+Velocità
+Portata
+Il terreno diventa d'oro dietro di te mentre corri
+Un buco nero vortica intorno a te
+Scintille di fuoco escono da te
+Stelle brillano intorno a te
+Lucente e trasparente come un diamante
+Il tuo colore non smette mai di cambiare
+Oro e buco nero insieme: il personaggio esclusivo
+Solo con codice
+Compra per {n}
+Ne mancano {n}
+Hai comprato {x}
+Questa mappa non esiste più
+Cerco giocatori
+Consiglio: tuffati sotto i bracci rotanti
+Consiglio: le frecce gialle ti lanciano in avanti
+Consiglio: in Hex Drop non stare mai fermo 3 secondi
+Consiglio: la padella fa girare la testa
+Consiglio: le casse di legno si rompono, quelle d'acciaio no
+Trovati!
+Una mappa creata da {x}
+Round finale
+Round
+La squadra vincente si qualifica
+I primi {n} all'arrivo si qualificano
+L'ultimo in piedi vince
+Gli ultimi {n} in piedi si qualificano
+Qualificato!
+Un po' troppo tardi
+Eliminato!
+Hai finito la tua mappa! Ora puoi pubblicarla
+Hai vinto la corona!
+Hai vinto!
+Fuori questa volta
+La squadra {x} ha vinto {a} - {b}
+Rosso
+Blu
+{n} su {m} qualificati
+Tu
+Round successivo
+Gioca ancora
+Regalo di benvenuto: 500 monete per il negozio
+Posizione · giro {n}/{m}
+Posizione · passano i primi {n}
+Rimasti · {n}s
+Rimasti
+VIA!
+La pubblicazione funziona quando giochi dal link pubblicato
+Caricamento mappe…
+Ti serve l'accesso da collaboratore per pubblicare
+Metti prima una partenza e un traguardo
+Devi prima finire la tua mappa (provala e raggiungi il traguardo)
+Hai raggiunto il limite ({n} mappe). Cancellane una prima
+Ti servono {n} monete
+Pronta da pubblicare
+Le mappe non si caricano ora, riprova tra poco
+Le mappe dei giocatori appaiono quando apri il gioco dal link pubblicato
+Ancora nessuna mappa. Costruisci e pubblica la prima!
+In evidenza
+Di {x}
+Giocata {n} volte
+Elimina
+Mi piace
+Togli dalle modalità principali
+Promuovi alle modalità principali
+Gioca
+Hanno giocato le tue mappe ({n} volte)
+Non ha funzionato, riprova
+Tolta dalle modalità principali
+La mappa ora è una delle modalità principali!
+Eliminata
+Sicuro?
+Scrivi un nome per la mappa
+Mappa pubblicata! Ricevi 5 monete ogni volta che qualcuno la gioca
+Limite raggiunto
+Pubblicazione fallita, riprova
+Avanti
+Destra
+Cancella tutto
+Mappa originale ripristinata
+Metti prima il pezzo di partenza
+Metti prima il pezzo del traguardo
+Impossibile caricare i modelli
+Corsa a ostacoli (classica)
+Corsa
+Corri fino alla bandiera tra porte, seghe e cannoni
+Checkpoint
+Corsa a ostacoli
+Un circuito tortuoso di due giri: altalene, cuscini rimbalzanti, martelli, palle da demolizione, ventilatori e trampolini
+Giro {n} di {m}
+Hex Drop
+Le piastrelle si crepano al primo passo e cadono al secondo. Resta fermo 3 secondi e cadono anche loro
+RPG + Granata + Gelo + Volo (raro)
+Caccia alle stelle
+Stelle
+Due squadre. Stella piccola 1, grande 3, gemma 5, cristallo 10. Se ti colpiscono perdi le tue stelle
+Attrazione + Gelo
+Hai perso {n} stelle!
+Mazza-palla
+Palla
+Due squadre con le mazze: manda la palla nella porta dell'altra squadra. Ogni mazza ha la sua forza
+PERFETTO!
+Gol del Rosso!
+Gol del Blu!
+Due squadre con le mazze: manda la palla nella buca dell'altra squadra. Tieni premuto per caricare e rilascia nel verde per un colpo perfetto
+Schiva i cannoni
+Cannoni
+Resta sulla piattaforma finché il tempo finisce. I cannoni sparano sempre più veloce
+Blaster volante
+La vetta
+Sali sulle piattaforme fino alla corona in cima
+Blaster confusione
+Arena
+Tutti contro tutti, e i bordi continuano a cadere. L'ultimo in piedi vince
+Blaster rapido + Razzo a ricerca + Bomba appiccicosa
+L'arena si restringe!
+Blaster spinta
+Blaster rapido
+Blaster gelo
+Blaster attrazione
+RPG
+Razzo a ricerca
+Granata
+Bomba appiccicosa
+Respinge chi colpisce
+Tanti colpi che spingono un po' ciascuno
+Congela chi colpisce
+Attira verso di te chi colpisce
+Spara a qualcuno per lanciarlo, o al suolo per volare tu
+Inverte i comandi di chi colpisce
+Rompe pavimenti e casse
+Vola da solo verso il giocatore più vicino
+Lanciala ed esplode dopo 1,5 secondi
+Lascia una pozza appiccicosa che rallenta i giocatori
+Preparo l'arena…
+Costruisci
+Balla
+Saluta
+Sì
+No
+Pugno
+Modalità
+Cambia
+Compra
+Modalità costruzione
+Costruisci la tua mappa con i pezzi e provala contro 3 bot. Finiscila tu e potrai pubblicarla per tutti.
+Inizia a costruire
+Nome mappa
+Pubblica · 1500
+Mappe dei giocatori
+Gioca le mappe degli altri. Il creatore riceve 5 monete ogni volta che qualcuno gioca.
+Annulla
+Round 1
+Tocca lo schermo per iniziare subito
+Posizione
+Pausa
+Tuffo
+Salta
+Colpisci
+WASD: corri · Spazio: salta · Shift: tuffo · F o clic: colpisci (tieni per caricare) · Trascina: ruota la telecamera · Q: spingi · G (tieni): afferra
+Chiudi
+Salta
+In pausa
+Riprendi
+Menu
+Scegli un pezzo e tocca una casella. Trascina per muoverti, rotella per lo zoom.
+Direzione:
+Cancella pezzo
+Mappa originale
+Prova mappa
+Buca rossa
+Buca blu
+Punto palla
+Arriva per primo al traguardo
+Sopravvivenza
+Resta sulla mappa finché il tempo finisce
+Due squadre mandano una palla nella buca avversaria
+Metti la buca rossa
+Metti la buca blu
+Metti il punto palla
+Devi prima vincere sulla tua mappa (provala)
+Modifica
+Pubblica
+Crea
+Costruisci la tua mappa di Corsa, Sopravvivenza o Palla e pubblicala
+Gioca le mappe create da altri giocatori
+Scegli un tipo di mappa. Finisci la tua mappa da solo, poi pubblicala per 1500 monete. Ricevi 5 monete ogni volta che qualcuno la gioca.
+Tutti
+Portiere
+Difensore
+Centrocampista
+Scegli la tua posizione
+Giochi come {x}
+Anche {x} vuole {y}! Si gira…
+Hai preso {x}!
+L'ha preso {x}. Giochi {y}
+Bolt Golf
+Golf
+Porta la tua palla in buca. L'acqua la rimanda indietro con 1 colpo di penalità. Tieni per caricare, rilascia per colpire
+Mazza da golf
+Splash! +1 colpo
+In buca! {n} colpi
+Volley Bash
+Volley
+Due squadre e una rete. Manda la palla dall'altra parte e non farla cadere nel tuo campo. Tieni per caricare, rilascia nel verde per una schiacciata perfetta
+Fuori!
+Punto per il Rosso!
+Punto per il Blu!
+Bolt Calcio
+Calcio
+Calcio vero: la palla resta ai tuoi piedi. Tuffati per passare, tieni Colpisci per tirare e tuffati su chi ha la palla per rubarla
+I tuoi piedi
+Contrasto!
+Puck Rush
+Disco
+Colpisci il disco di metallo in una delle porticine avversarie. Quelle laterali valgono 1, quella centrale protetta vale 3
+Attaccante
+Episodio 1: L'inizio
+Episodio 2
+Bolt Dash: la serie
+Stagione 1: la Lega dei Giochi
+Stagione {n}
+Prossimo episodio: presto
+Film
+Piastrelle di lava
+Lava
+Le piastrelle si illuminano e cadono nella lava. Ogni 20 secondi arriva un nuovo pericolo. L'ultimo in piedi vince
+Spingi + Afferra
+Attento: il braccio rotante!
+Cannoni!
+Seghe!
+Altri cannoni!
+Bomba bollente
+Bomba
+Qualcuno porta una bomba a orologeria. Tocca un altro giocatore per passargliela. Quando esplode, chi ce l'ha è fuori
+Hai la bomba! Passala!
+Corri: W A S D
+Corri: trascina la levetta a sinistra
+Salta il buco: Spazio
+Salta il buco: tasto giallo
+Tuffati sotto il braccio: Shift
+Tuffati sotto il braccio: tasto verde
+Corri contro le porte per rompere quelle deboli
+Spingi il manichino: Q. Tieni G per afferrarlo
+Spingi il manichino: tasto arancione. Tieni il tasto viola per afferrarlo
+Le frecce di velocità ti lanciano avanti. Raggiungi la bandiera!
+Allenamento
+Impara ogni mossa passo dopo passo. I consigli mostrano i tuoi tasti o i tasti del telefono
+Lava che sale
+La lava continua a salire. Salta sulle rocce più veloce che puoi. Gli ultimi in piedi vincono
+Carta giocatore
+Velocità
+Tiro
+Passaggio
+Controllo
+Bronzo
+Argento
+Oro
+Corsa del colore
+Colore
+Quattro squadre. Ogni piastrella che calpesti prende il tuo colore. Vince la squadra con più piastrelle alla fine
+Verde
+Giallo
+La squadra {x} ha vinto con {n} piastrelle
+Prigioniero pazzo
+Obiettivo
+Maschera da hockey
+Testa di zucca
+Mannaia
+Motosega
+La mannaia del Prigioniero pazzo
+La motosega del Prigioniero pazzo
+È impazzito! Non toccare la motosega!
+Notte del killer
+Killer
+Una lunga notte di mostri e copie del Prigioniero pazzo. Sconfiggilo alla fine per sbloccare il suo aspetto. Muori una volta e sei fuori
+La tua mazza
+La foresta
+Le strade vuote
+La vecchia casa
+Il cortile della prigione
+Il Prigioniero pazzo!
+Chiama le sue copie!
+ROAR!
+Il pavimento si crepa!
+Luci spente...
+Obiettivo: hai sbloccato il Prigioniero pazzo!
+Elmo da cavaliere
+Cappello da orso
+Cappello da mago
+Mantello marrone
+Mantello rosso
+Mantello rosa
+Mantello verde
+Corri più veloce
+Cadi piano dai posti alti e dirigiti per atterrare
+Salta di nuovo in aria
+Salta più in alto
+Boss
+Zona {n}/{m}
+Uccidi tutti i mostri per aprire il cancello
+Il cancello è aperto!
+Animali
+Cucciolo
++15% di monete in ogni round
+Gattino
+Rialzati più in fretta dopo un colpo
+Pulcino
+Corri un po' più veloce
+Uccellino
+Tuffati più lontano
+Piccione
+Salta un po' più in alto
+Cactoro
+Melma appiccicosa e rallentamenti ti toccano appena
+Mushnub
++20% di XP stagionali
+Blob rosa
+Più difficile da spingere e buttare giù
+Blob verde
+Gelo e vertigini passano due volte più in fretta
+Pesciolino
+Scivoli molto meno su ghiaccio e banane
+Glub
+Cadi un po' più piano
+Armape
+Spinta e presa si ricaricano più in fretta
+Alpaking
++10% di monete e +10% di XP

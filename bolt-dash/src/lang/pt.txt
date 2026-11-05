@@ -1,0 +1,528 @@
+Chão
+Bloco elevado
+Cerca
+Setas de velocidade
+Esteira
+Mola
+Quicador
+Serra
+Braço giratório
+Bloco de espinhos
+Armadilha de espinhos
+Caixa quebrável
+Caixa de aço
+Canhão
+Moeda
+Caixa de arma
+Largada
+Chegada
+Seu mapa
+O mapa que você construiu
+Gelo + Empurrão
+De volta à largada
+Jogador
+Azul clássico
+Morango
+Menta
+Limão
+Uva
+Laranja
+Melão
+Neve
+Meia-noite
+Lava
+Cristal
+Raro
+Arco-íris
+Lava derretida
+Lendário
+Galáxia
+Ouro radiante
+Buraco negro
+Mítico
+Juiz
+Bolt original
+Exclusivo
+Coroa de ouro
+Coroa de rainha
+Chapéu de festa
+Cupcake
+Rosquinha
+Caixa de presente
+Óculos
+Óculos de sol
+Colete de couro
+Armadura de ferro
+Armadura ninja
+Armadura de ouro
+Estrela de herói
+Mochila
+Bolsa lateral
+Escudo de madeira
+Escudo de cavaleiro
+Taco de golfe
+Equilibrado em tudo
+Baguete
+Golpe mais rápido
+Espátula
+Joga a bola bem alto
+Rolo de massa
+Mantém a bola no chão
+Corn dog
+Quem você acerta fica preso por um segundo
+Osso
+Faz a bola quicar alto
+Peixe
+Quem você acerta escorrega
+Banana
+Quem você acerta escorrega e gira
+Bengala doce
+Faz a bola fazer curva
+Raquete
+Maior alcance
+Frigideira
+BONG! Quem você acerta fica tonto
+Martelo
+Afasta todo mundo ao seu redor
+Clava
+Golpe mais forte
+Martelo dourado
+O lendário
+Cores
+Cabeça
+Rosto
+Corpo
+Costas
+Tacos
+Rodada {n} de {m}
+Pegue 30 moedas nas rodadas
+Classifique-se em 3 rodadas
+Mergulhe 15 vezes
+Ganhe a coroa em um Show
+Classifique-se em 20 rodadas
+Pegue 300 moedas nas rodadas
+Primeira classificação
+Primeira vitória
+Primeira coroa
+Jogue 10 Shows
+Jogue todos os modos
+Mergulhe 100 vezes
+Consiga um personagem raro
+Classifique-se 50 vezes
+5 coroas
+moedas
+Desafio concluído
+Conquista
+Nível da temporada {n}
+Temporada: desbloqueou {x}
+Temporada
+Recompensa diária (dia {n})
+O Show
+4 rodadas seguidas. Vença a última para levar a coroa
+Equipes
+Mapa de jogador em destaque
+Feito
+Temporada 1
+Nível {n}
+Temporada completa!
+Recompensa diária
+Pronta
+Amanhã
+Pegar {n}
+Pega hoje
+Evento da semana
+Moedas em dobro a semana toda
+Ofertas de hoje
+Você tem tudo
+Volte todo dia: a recompensa sobe até 500 no dia 7.
+Desafios
+Hoje
+Esta semana
+Conquistas
+Escolha um modo
+Carregando imagem…
+Em breve
+Online com amigos
+Jogue com seus amigos usando um código de sala
+Roda da sorte
+Giro grátis hoje!
+Giro extra por 500 moedas
+Girar grátis
+Girar por 500
+Resgatar código
+Digite um código para ganhar seu prêmio. Alguns códigos dão um personagem raro se você tiver sorte.
+Resgatar
+Configurações
+Gráficos
+Leve
+Médio
+Fantasia
+Som
+Ligado
+Desligado
+Velocidade da câmera
+Lenta
+Normal
+Rápida
+Idioma
+Ver o vídeo de abertura de novo
+Seu perfil
+Seu nome
+Salvar
+Shows jogados
+Rodadas
+Classificado
+Coroas
+Nível
+Moedas ganhas
+Salvo
+Acessório
+Raro!
+Prêmio máximo
+Você já tem {x}, então ganhou {n} moedas
+Parabéns! Você ganhou {x} ({r})
+Você precisa de 500 moedas
+Você ganhou {x}
+Você tem tudo! Leve 300 moedas
+Você ganhou {n} moedas
+Esse código não é válido
+Você já usou esse código
+{x}: seu personagem exclusivo!
+Loja
+Guarda-roupa
+Ofertas de hoje, novas todo dia
+Mude sua cor, se vista e escolha seu taco
+Você comprou tudo! Volte amanhã para novas ofertas.
+Usando
+Seu
+Força
+Velocidade
+Alcance
+O chão vira ouro atrás de você quando corre
+Um buraco negro gira ao seu redor
+Faíscas de fogo saem de você
+Estrelas brilham ao seu redor
+Brilhante e transparente como diamante
+Sua cor nunca para de mudar
+Ouro e buraco negro juntos: o personagem exclusivo
+Só com código
+Comprar por {n}
+Faltam {n}
+Você comprou {x}
+Esse mapa não existe mais
+Procurando jogadores
+Dica: mergulhe por baixo dos braços giratórios
+Dica: as setas amarelas te lançam para frente
+Dica: no Hex Drop, nunca fique parado por 3 segundos
+Dica: a frigideira deixa as pessoas tontas
+Dica: caixas de madeira quebram, as de aço não
+Encontrados!
+Um mapa feito por {x}
+Rodada final
+Rodada
+A equipe vencedora se classifica
+Os {n} primeiros a chegar se classificam
+O último de pé vence
+Os últimos {n} de pé se classificam
+Classificado!
+Um pouco tarde
+Eliminado!
+Você terminou seu mapa! Já pode publicá-lo
+Você ganhou a coroa!
+Você venceu!
+Fora desta vez
+Equipe {x} venceu {a} - {b}
+Vermelho
+Azul
+{n} de {m} se classificaram
+Você
+Próxima rodada
+Jogar de novo
+Presente de boas-vindas: 500 moedas para a loja
+Posição · volta {n}/{m}
+Posição · os {n} primeiros passam
+Restam · {n}s
+Restam
+VAI!
+Publicar funciona quando você joga pelo link publicado
+Carregando mapas…
+Você precisa de acesso de colaborador para publicar
+Coloque uma largada e uma chegada primeiro
+Você precisa terminar seu próprio mapa primeiro (teste e chegue ao fim)
+Você chegou ao limite ({n} mapas). Apague um primeiro
+Você precisa de {n} moedas
+Pronto para publicar
+Os mapas não carregam agora, tente daqui a pouco
+Os mapas de jogadores aparecem quando você abre o jogo pelo link publicado
+Ainda não há mapas. Construa e publique o primeiro!
+Destaque
+Por {x}
+Jogado {n} vezes
+Apagar
+Curtir
+Tirar dos modos principais
+Promover aos modos principais
+Jogar
+Jogaram seus mapas ({n} vezes)
+Não funcionou, tente de novo
+Removido dos modos principais
+O mapa agora é um dos modos principais!
+Apagado
+Certeza?
+Digite um nome para o mapa
+Mapa publicado! Você ganha 5 moedas toda vez que alguém joga
+Limite atingido
+Falha ao publicar, tente de novo
+Frente
+Direita
+Limpar tudo
+Mapa original restaurado
+Coloque a peça de largada primeiro
+Coloque a peça de chegada primeiro
+Os modelos não carregaram
+Corrida de obstáculos (clássica)
+Corrida
+Corra até a bandeira passando por portas, serras e canhões
+Checkpoint
+Corrida de obstáculos
+Um circuito sinuoso de duas voltas: gangorras, almofadas pula-pula, martelos, bolas de demolição, ventiladores e plataformas de lançamento
+Volta {n} de {m}
+Hex Drop
+Os blocos racham na primeira pisada e caem na segunda. Fique parado 3 segundos e eles caem também
+RPG + Granada + Gelo + Voo (raro)
+Pega-estrelas
+Estrelas
+Duas equipes. Estrela pequena 1, grande 3, gema 5, cristal 10. Se te acertarem, você solta suas estrelas
+Puxão + Gelo
+Você soltou {n} estrelas!
+Taco-bola
+Bola
+Duas equipes com tacos: jogue a bola no gol do outro time. Cada taco tem sua própria força
+PERFEITO!
+Gol do Vermelho!
+Gol do Azul!
+Duas equipes com tacos: jogue a bola no buraco do outro time. Segure para carregar e solte no verde para um golpe perfeito
+Desvie dos canhões
+Canhões
+Fique na plataforma até o tempo acabar. Os canhões atiram cada vez mais rápido
+Pistola de voo
+O cume
+Suba pelas plataformas até a coroa lá no topo
+Pistola de confusão
+Arena
+Todos contra todos, e as bordas vão caindo. O último de pé vence
+Pistola rápida + Foguete teleguiado + Bomba grudenta
+A arena está encolhendo!
+Pistola de empurrão
+Pistola rápida
+Pistola de gelo
+Pistola de puxão
+RPG
+Foguete teleguiado
+Granada
+Bomba grudenta
+Joga para trás quem ela acerta
+Muitos tiros que empurram um pouco cada
+Congela quem ela acerta
+Puxa para você quem ela acerta
+Atire em alguém para lançá-lo, ou no chão para você voar
+Inverte os controles de quem ela acerta
+Quebra chãos e caixas
+Voa sozinho até o jogador mais próximo
+Jogue e ela explode depois de 1,5 segundo
+Deixa uma poça grudenta que deixa os jogadores lentos
+Preparando a arena…
+Construir
+Dançar
+Acenar
+Sim
+Não
+Soco
+Modo
+Trocar
+Comprar
+Modo construção
+Construa seu próprio mapa com peças e teste contra 3 bots. Termine você mesmo e poderá publicá-lo para todos.
+Começar a construir
+Nome do mapa
+Publicar · 1500
+Mapas de jogadores
+Jogue mapas de outras pessoas. O criador ganha 5 moedas toda vez que alguém joga.
+Cancelar
+Rodada 1
+Toque na tela para começar já
+Posição
+Pausa
+Mergulhar
+Pular
+Bater
+WASD: correr · Espaço: pular · Shift: mergulhar · F ou clique: bater (segure para carregar) · Arrastar: girar a câmera · Q: empurrar · G (segure): agarrar
+Fechar
+Pular
+Pausado
+Continuar
+Menu
+Escolha uma peça e toque em um quadrado. Arraste para se mover, roda do mouse para zoom.
+Direção:
+Apagar peça
+Mapa original
+Testar mapa
+Buraco vermelho
+Buraco azul
+Lugar da bola
+Chegue primeiro à linha de chegada
+Sobrevivência
+Fique no mapa até o tempo acabar
+Duas equipes jogam uma bola no buraco do outro
+Coloque o buraco vermelho
+Coloque o buraco azul
+Coloque o lugar da bola
+Você precisa vencer seu próprio mapa primeiro (teste)
+Editar
+Publicar
+Criar
+Construa seu mapa de Corrida, Sobrevivência ou Bola e publique
+Jogue mapas feitos por outros jogadores
+Escolha um tipo de mapa. Termine seu mapa você mesmo e publique por 1500 moedas. Você ganha 5 moedas toda vez que alguém joga.
+Todos
+Goleiro
+Zagueiro
+Meio-campista
+Escolha sua posição
+Você joga de {x}
+{x} também quer {y}! Girando…
+Você ficou com {x}!
+{x} ficou com ela. Você joga de {y}
+Bolt Golfe
+Golfe
+Leve sua própria bola até o buraco. A água devolve a bola com 1 tacada de penalidade. Segure para carregar e solte para bater
+Taco de golfe
+Splash! +1 tacada
+No buraco! {n} tacadas
+Volley Bash
+Vôlei
+Duas equipes e uma rede. Passe a bola por cima e não deixe cair do seu lado. Segure para carregar e solte no verde para uma cortada perfeita
+Fora!
+Ponto do Vermelho!
+Ponto do Azul!
+Bolt Futebol
+Futebol
+Futebol de verdade: a bola anda nos seus pés. Mergulhe para passar, segure Bater para chutar e mergulhe em quem está com a bola para roubar
+Seus pés
+Desarme!
+Puck Rush
+Disco
+Bata o disco de metal em qualquer golzinho do outro time. Os laterais valem 1, o do meio, protegido, vale 3
+Atacante
+Episódio 1: O começo
+Episódio 2
+Bolt Dash: a série
+Temporada 1: a Liga de Jogos
+Temporada {n}
+Próximo episódio: em breve
+Filme
+Blocos de lava
+Lava
+Os blocos brilham e caem na lava. A cada 20 segundos chega um novo perigo. O último de pé vence
+Empurrar + Agarrar
+Cuidado: o braço giratório!
+Canhões!
+Serras!
+Mais canhões!
+Bomba quente
+Bomba
+Alguém carrega uma bomba-relógio. Toque em outro jogador para passá-la. Quando explodir, quem estiver com ela sai
+Você está com a bomba! Passe adiante!
+Correr: W A S D
+Correr: arraste o controle à esquerda
+Pule o buraco: Espaço
+Pule o buraco: botão amarelo
+Mergulhe sob o braço: Shift
+Mergulhe sob o braço: botão verde
+Corra contra as portas para quebrar as fracas
+Empurre o boneco: Q. Segure G para agarrá-lo
+Empurre o boneco: botão laranja. Segure o botão roxo para agarrá-lo
+As setas de velocidade te lançam. Chegue à bandeira!
+Treino
+Aprenda cada movimento passo a passo. As dicas mostram suas teclas ou os botões do celular
+Lava subindo
+A lava não para de subir. Pule pelas pedras o mais rápido que puder. Os últimos de pé vencem
+Carta do jogador
+Ritmo
+Chute
+Passe
+Controle
+Bronze
+Prata
+Ouro
+Corrida de tinta
+Tinta
+Quatro equipes. Cada bloco que você pisa fica da sua cor. A equipe com mais blocos no fim vence
+Verde
+Amarelo
+Equipe {x} venceu com {n} blocos
+Prisioneiro louco
+Conquista
+Máscara de hóquei
+Cabeça de abóbora
+Cutelo
+Motosserra
+O cutelo do Prisioneiro louco
+A motosserra do Prisioneiro louco
+Ele enlouqueceu! Não toque na motosserra!
+Noite do assassino
+Assassino
+Uma longa noite de monstros e cópias do Prisioneiro louco. Derrote-o no fim para desbloquear o visual dele. Morreu uma vez, está fora
+Seu taco
+A floresta
+As ruas vazias
+A casa velha
+O pátio da prisão
+O Prisioneiro louco!
+Ele chama suas cópias!
+RUGIDO!
+O chão está rachando!
+Luzes apagadas...
+Conquista: você desbloqueou o Prisioneiro louco!
+Elmo de cavaleiro
+Chapéu de urso
+Chapéu de mago
+Capa marrom
+Capa vermelha
+Capa rosa
+Capa verde
+Corra mais rápido
+Caia devagar de lugares altos e se guie para pousar
+Pule de novo no ar
+Pule mais alto
+Chefe
+Zona {n}/{m}
+Mate todos os monstros para abrir o portão
+O portão está aberto!
+Mascotes
+Filhote
++15% de moedas em cada rodada
+Gatinho
+Levante mais rápido depois de um golpe
+Pintinho
+Corra um pouco mais rápido
+Passarinho
+Mergulhe mais longe
+Pombo
+Pule um pouco mais alto
+Cactoro
+Gosma grudenta e lentidão quase não te afetam
+Mushnub
++20% de XP da temporada
+Blob rosa
+Mais difícil de empurrar e derrubar
+Blob verde
+Congelamento e tontura passam duas vezes mais rápido
+Peixinho
+Escorregue muito menos no gelo e nas bananas
+Glub
+Caia um pouco mais devagar
+Armabelha
+Empurrar e agarrar recarregam mais rápido
+Alpaking
++10% de moedas e +10% de XP
