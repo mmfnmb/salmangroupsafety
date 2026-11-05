@@ -16,7 +16,7 @@ const srv = http.createServer((q, res) => { const f = path.join(root, decodeURIC
   await b.close(); srv.close();
   const cols = Math.min(4, files.length), rows = Math.ceil(files.length / cols);
   const ins = files.map((f) => `-i ${f}`).join(' '), pad = cols * rows - files.length;
-  let fc = files.map((_, i) => `[${i}]scale=480:-1[v${i}]`).join(';');
+  let fc = files.map((_, i) => `[${i}]scale=${process.env.FULL ? 960 : 480}:-1[v${i}]`).join(";");
   for (let i = 0; i < pad; i++) fc += `;color=black:s=480x270:d=1[p${i}]`;
   const all = [...files.map((_, i) => `[v${i}]`), ...Array.from({ length: pad }, (_, i) => `[p${i}]`)];
   const rowsS = []; for (let r = 0; r < rows; r++) { const seg = all.slice(r * cols, r * cols + cols).join(''); fc += `;${seg}${cols > 1 ? `hstack=${cols}` : 'null'}[r${r}]`; rowsS.push(`[r${r}]`); }
