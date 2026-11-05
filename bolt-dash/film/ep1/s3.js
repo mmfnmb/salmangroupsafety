@@ -51,7 +51,7 @@ export function shots(A) {
   const S = [];
   // 1. watching TV
   S.push({ dur: 5, set: 'house_int', time: 'interior', setup() { hideAll(); sit(A.blue, 'L').play('Idle'); sit(A.yellow, 'R').play('Idle'); },
-    upd(t) { sofaCam(A); say(t < 2.6 ? 'Blue' : 'Yellow', t < 2.6 ? 'Finally, the news!' : 'Shh! Ads first.'); if (t > 2.6) A.yellow.face(A.blue.p.x, A.blue.p.z); } });
+    upd(t) { HOUSE.tvShow('adpan', t); sofaCam(A); say(t < 2.6 ? 'Blue' : 'Yellow', t < 2.6 ? 'Finally, the news!' : 'Shh! Ads first.'); if (t > 2.6) A.yellow.face(A.blue.p.x, A.blue.p.z); } });
   // 2. ad: the Frying Pan
   S.push({ dur: 4.5, set: 'adstage', time: 'day', card: tvCard('AD', '#ff7a1a'),
     setup() { hideAll(); const T = tvCast(); dress(T.hitter.m, { ...T.hitter.look, bat: 'bat-pan' }, { bat: true }); T.hitter.at(-1.6, 0, 1.6, PI / 2).play('Idle'); T.victim.at(1.2, 0, 1.6, -PI / 2).play('Idle'); },
@@ -71,7 +71,7 @@ export function shots(A) {
   // 3. back on the sofa
   S.push({ dur: 4, set: 'house_int', time: 'interior',
     setup() { stars(tvCast().victim, false); tvCast().victim.m.rotation.z = 0; hideAll(); sit(A.blue, 'L').replay('Yes'); sit(A.yellow, 'R').play('Idle'); },
-    upd(t) { sofaCam(A); say(t < 2 ? 'Blue' : 'Yellow', t < 2 ? 'Ha! Poor guy.' : 'I want one!'); if (t > 2) A.yellow.replay('Wave'); } });
+    upd(t) { HOUSE.tvShow('adpan', t); sofaCam(A); say(t < 2 ? 'Blue' : 'Yellow', t < 2 ? 'Ha! Poor guy.' : 'I want one!'); if (t > 2) A.yellow.replay('Wave'); } });
   // 4. ad: the Black Hole character
   S.push({ dur: 5.5, set: 'adstage_void', time: 'night', card: tvCard('AD', '#7b4dff'),
     setup() { hideAll(); tvCast().model.at(0, 0.0, 0.6, 0).play('Idle'); },
@@ -84,11 +84,11 @@ export function shots(A) {
   S.push({ dur: 5, set: 'house_int', time: 'interior',
     setup() { hideAll(); sit(A.blue, 'L').play('Idle'); sit(A.yellow, 'R').play('Idle'); },
     upd(t, dt, T) {
-      closeUp(A.yellow, { ang: 0.25, dist: 2.2 - t * 0.12, h: 1.2 });
+      HOUSE.tvShow('advoid', t); closeUp(A.yellow, { ang: 0.25, dist: 2.0 - t * 0.12, h: 0.95 });
       if (Math.floor(T * 6) !== Math.floor((T - dt) * 6)) { const h = A.yellow.head(); fx.burst(V(h.x + 0.25, h.y + 0.05, h.z + 0.55), 0xfff2a0, 3, 1.5); fx.burst(V(h.x - 0.25, h.y + 0.05, h.z + 0.55), 0xfff2a0, 3, 1.5); }
       say('Yellow', 'I... need... it.');
     } });
-  S.push({ dur: 4, upd(t) { sofaCam(A); A.blue.face(A.yellow.p.x, A.yellow.p.z); say('Blue', 'You can\'t even afford the pan!'); if (t > 2.2) A.yellow.replay('No'); } });
+  S.push({ dur: 4, upd(t) { HOUSE.tvShow('advoid', t); sofaCam(A); A.blue.face(A.yellow.p.x, A.yellow.p.z); say('Blue', 'You can\'t even afford the pan!'); if (t > 2.2) A.yellow.replay('No'); } });
   // 6. the news: the Party Games League
   S.push({ dur: 5.5, set: 'studio', time: 'interior', card: tvCard('LIVE'),
     setup() { hideAll(); tvCast().anchor.at(-1.2, 0, -0.9, 0).play('Idle'); },
@@ -108,9 +108,9 @@ export function shots(A) {
   // 7. Blue and Yellow look at each other... and go wild
   S.push({ dur: 4, set: 'house_int', time: 'interior',
     setup() { hideAll(); sit(A.blue, 'L').play('Idle'); sit(A.yellow, 'R').play('Idle'); },
-    upd(t) { sofaCam(A, 3); if (t > 1.2) { A.blue.face(A.yellow.p.x, A.yellow.p.z); A.yellow.face(A.blue.p.x, A.blue.p.z); } say(null); } });
-  S.push({ dur: 2.5, upd() { closeUp(A.blue, { ang: -0.9, dist: 2 }); } });
-  S.push({ dur: 2.5, upd() { closeUp(A.yellow, { ang: 0.9, dist: 2 }); } });
+    upd(t) { HOUSE.tvShow('news', t); sofaCam(A, 3); if (t > 1.2) { A.blue.face(A.yellow.p.x, A.yellow.p.z); A.yellow.face(A.blue.p.x, A.blue.p.z); } say(null); } });
+  S.push({ dur: 2.5, upd() { closeUp(A.blue, { ang: -0.6, dist: 1.9, h: 0.95 }); } });
+  S.push({ dur: 2.5, upd() { closeUp(A.yellow, { ang: 0.6, dist: 1.9, h: 0.95 }); } });
   S.push({ dur: 7, setup() { A.blue.stand(); A.yellow.stand(); },
     upd(t, dt, T) {
       // bouncing on the sofa cushions
