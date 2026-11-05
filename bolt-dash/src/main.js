@@ -85,9 +85,11 @@ addEventListener('keydown', (e) => {
   if (e.code === 'Space') { ctl.jump = true; e.preventDefault(); }
   if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'KeyE') ctl.dive = true;
   if (e.code === 'KeyF' || e.code === 'Enter') { ctl.fire = true; ctl.held = true; }
+  if (e.code === 'KeyQ') ctl.push = true;
+  if (e.code === 'KeyG') ctl.grab = true;
   if (e.code === 'Escape' && flow.state === 'play') togglePause();
 });
-addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'KeyF' || e.code === 'Enter') ctl.held = false; });
+addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'KeyF' || e.code === 'Enter') ctl.held = false; if (e.code === 'KeyG') ctl.grab = false; });
 addEventListener('blur', () => keys.clear());
 let drag = null;
 canvas.addEventListener('pointerdown', (e) => {
@@ -123,10 +125,10 @@ canvas.addEventListener('wheel', (e) => { if (flow.state === 'build') { editor.c
   stick.addEventListener('pointermove', move);
   const end = (e) => { if (e.pointerId !== sid) return; sid = null; knob.style.transform = ''; ctl.stick.x = ctl.stick.y = 0; };
   stick.addEventListener('pointerup', end); stick.addEventListener('pointercancel', end);
-  for (const [id, k] of [['bJump', 'jump'], ['bDive', 'dive'], ['bFire', 'fire']]) {
+  for (const [id, k] of [['bJump', 'jump'], ['bDive', 'dive'], ['bFire', 'fire'], ['bPush', 'push'], ['bGrab', 'grab']]) {
     const el = $(id);
     el.addEventListener('pointerdown', (e) => { e.preventDefault(); ctl[k] = true; if (k === 'fire') ctl.held = true; el.classList.add('on'); sfx.unlock(); });
-    for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) el.addEventListener(ev, () => { el.classList.remove('on'); if (k === 'fire') ctl.held = false; });
+    for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) el.addEventListener(ev, () => { el.classList.remove('on'); if (k === 'fire') ctl.held = false; if (k === 'grab') ctl.grab = false; });
   }
 }
 function readPlayerInput(r) {
@@ -140,6 +142,8 @@ function readPlayerInput(r) {
   r.input.x = -s * fz + c * fx_; r.input.z = -c * fz - s * fx_;
   if (ctl.jump) { r.input.jump = true; ctl.jump = false; }
   if (ctl.dive) { r.input.dive = true; ctl.dive = false; }
+  if (ctl.push) { r.input.push = true; ctl.push = false; }
+  r.input.grab = !!ctl.grab;
   if (G.modeObj?.bats || G.modeObj?.charge) batCharge(r);
   else if (ctl.fire) { r.input.fire = true; ctl.fire = false; }
 }
@@ -623,7 +627,7 @@ function playIntro(force) {
 const flow = { state: 'loading', choice: store.get('choice', 'show'), show: null, round: 0, t: 0, count: 0, flyT: 0, endT: 0, finishedCount: 0, coins: 0, bannerT: 0 };
 const camPos = V(0, 6, 16), camLook = V(), camRay = new CANNON.RaycastResult();
 function newShow(choice) {
-  const n = choice === 'show' ? 10 : 8;
+  const n = choice === 'show' ? 10 : choice === 'football' ? 14 : 8;
   const players = [{ name: save.name, equip: { ...save.equip }, isPlayer: true }];
   const names = [...NAMES].sort(() => Math.random() - 0.5);
   for (let i = 1; i < n; i++) players.push({ name: names[i % names.length], equip: randomEquip(), isPlayer: false });

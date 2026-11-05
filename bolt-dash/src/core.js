@@ -237,7 +237,7 @@ const K = ['fence-straight', 'fence-low-straight', 'fence-rope', 'conveyor-belt'
   'candy-cane-green', 'present-b-round', 'tool-hammer', 'tool-paddle', 'item-banana', 'q_Club', 'q_Hammer_Double_Golden', 'q_Bone', 'q_Crystal2', 'q_Gem_Pink', 'q_Star_Outline'];
 const Z = ['Launchpad', 'Seesaw_Base', 'Seesaw_Plank', 'Obstacle_Hammer', 'Fan', 'Fan_Blade', 'Spinning_Walls', 'Obstacle_Pole_Large', 'Obstacle_Pole_Center', 'Obstacle_Pole_Small',
   'Pillow', 'Wrecking_Ball', 'Barrier_01', 'Football', 'Ring_Hoop', 'Spawn_Red', 'Spawn_Blue', 'Spike_Ball', 'Balloon', 'Torus', 'Step_Large'];
-export const MODEL_NAMES = [...Q, ...A.map((n) => 'acc/' + n), ...K.map((n) => 'k/' + n), 'k/detail-parasol-a', ...Z.map((n) => 'z/' + n)];
+export const MODEL_NAMES = [...Q, ...A.map((n) => 'acc/' + n), ...K.map((n) => 'k/' + n), 'k/detail-parasol-a', 'k/soccer-field', ...Z.map((n) => 'z/' + n)];
 export const M = {};
 export async function loadAssets(onProgress) {
   const loader = new GLTFLoader();

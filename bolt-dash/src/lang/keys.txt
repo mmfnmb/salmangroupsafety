@@ -356,7 +356,7 @@ Pause
 Dive
 Jump
 Hit
-WASD: run · Space: jump · Shift: dive · F or click: hit (hold to charge) · Drag: turn the camera
+WASD: run · Space: jump · Shift: dive · F or click: hit (hold to charge) · Drag: turn the camera · Q: push · G (hold): grab
 Close
 Skip
 Paused

@@ -57,7 +57,7 @@ export class Runner {
     this.facing = facing; this.squash = 1; this.hitCool = 0; this.dived = false;
     this.frozenT = 0; this.confuseT = 0; this.slowT = 0; this.slipT = 0; this.stunT = 0; this.boostT = 0; this.launchT = 0; this.swingT = 0; this.swingCd = 0;
     this.boostDir = { x: 0, z: -1 }; this.groundBody = null;
-    this.input = { x: 0, z: 0, jump: false, dive: false, fire: false };
+    this.input = { x: 0, z: 0, jump: false, dive: false, fire: false, push: false, grab: false };
     this.stars.visible = false; this.model.rotation.set(0, 0, 0); this.model.position.set(0, 0, 0); this.root.quaternion.identity();
     this.ai = this.ai || { lane: rand(-4, 4), laneT: rand(1, 3), skill: rand(0.6, 0.95), speed: rand(0.88, 1.0), think: 0, lastP: null, stuck: 0, wander: null, wanderT: 0, aimT: 0 };
     this.play('Idle', 0);
@@ -212,6 +212,8 @@ export class Runner {
         }
       }
       if (inp.fire) { inp.fire = false; G.onFire?.(this); }
+      if (inp.push) { inp.push = false; this.doPush(); }
+      this.grabUpdate(dt, inp.grab);
 
       if (this.grounded && !this.wasGrounded) {
         this.squash = 0.72; this.dived = false;
@@ -228,6 +230,39 @@ export class Runner {
     }
     this.wasGrounded = this.grounded;
     if (this.frozenT <= 0) this.mixer.update(dt);
+  }
+  // closest other player in front of you within range
+  nearest(range) {
+    let best = null, bd = range; const fx_ = Math.sin(this.facing), fz = Math.cos(this.facing);
+    for (const o of G.runners || []) {
+      if (o === this || o.out || o.finished) continue;
+      const dx = o.pos.x - this.pos.x, dz = o.pos.z - this.pos.z, d = Math.hypot(dx, dz);
+      if (d > bd || Math.abs(o.pos.y - this.pos.y) > 1.3 || (dx * fx_ + dz * fz) / (d || 1) < 0.15) continue;
+      best = o; bd = d;
+    }
+    return best;
+  }
+  // Push: shove the player in front of you away
+  doPush() {
+    if (this.pushCd > 0) return; this.pushCd = 0.9; this.swing();
+    const o = this.nearest(1.8); if (!o) return;
+    const a = Math.atan2(o.pos.x - this.pos.x, o.pos.z - this.pos.z), v = o.body.velocity;
+    v.x = Math.sin(a) * 11; v.z = Math.cos(a) * 11; v.y = Math.max(v.y, 3.5); o.grounded = false; o.stun(0.35);
+    fx.burst(V(o.pos.x, o.pos.y + 0.8, o.pos.z), 0xffffff, 10, 5); sfx.bat();
+    if (o.grabbed?.grabbed === this) o.grabbed = null;
+  }
+  // Grab (hold): hang on to the player in front of you; they slow down and get pulled back, max 2.5 s
+  grabUpdate(dt, held) {
+    this.pushCd = Math.max(0, (this.pushCd || 0) - dt); this.grabCd = Math.max(0, (this.grabCd || 0) - dt);
+    if (!held || this.grabT > 2.5 || this.state !== 'run') { if (this.grabbed) { this.grabbed = null; this.grabCd = 1.2; } this.grabT = 0; return; }
+    if (!this.grabbed && this.grabCd <= 0) { const o = this.nearest(1.4); if (o) { this.grabbed = o; this.grabT = 0; this.play('Punch', 0.05, 0.6); if (this.isPlayer) sfx.pickup(); } }
+    const o = this.grabbed; if (!o) return;
+    this.grabT += dt;
+    const dx = o.pos.x - this.pos.x, dz = o.pos.z - this.pos.z, d = Math.hypot(dx, dz) || 1;
+    if (d > 2.3 || o.out || o.finished) { this.grabbed = null; this.grabCd = 1.2; return; }
+    o.slow(0.2); this.slow(0.2);
+    const ov = o.body.velocity, k = Math.min(1, dt * 6); ov.x += (-dx / d * 2.5 - ov.x) * k; ov.z += (-dz / d * 2.5 - ov.z) * k;
+    this.facing = Math.atan2(dx, dz);
   }
   swing() { this.swingT = 0.32; this.play('Punch', 0.05, 1.6); sfx.swing(); }
   sync(dt = 0) {
@@ -315,6 +350,9 @@ export function think(r, dt) {
     ai.lastP = { x: p.x, z: p.z };
   }
   if (tgt.fire) inp.fire = true;
+  // rough play: shove or grab a rival that is right in front (more often for skilled bots, never your own team)
+  if (!mode.noPush && r.grounded && Math.random() < dt * 0.9 * ai.skill) { const o = r.nearest(1.6); if (o && (!o.team || o.team !== r.team)) { if (Math.random() < 0.6) inp.push = true; else { inp.grab = true; ai.grabT = rand(0.6, 1.4); } } }
+  if (ai.grabT > 0) { ai.grabT -= dt; if (ai.grabT <= 0) inp.grab = false; }
   if (tgt.jump && r.grounded) inp.jump = true;
   if (r.weapon) { ai.aimT -= dt; if (ai.aimT <= 0) { ai.aimT = rand(0.6, 1.6); G.botFire?.(r); } }
   if (tgt.dive && !r.dived && r.grounded && Math.random() < dt * 2) inp.dive = true;

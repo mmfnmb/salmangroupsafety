@@ -252,6 +252,9 @@ html[dir=rtl] svg:has(use[href="#i-back"]){transform:scaleX(-1)}
 #bFire{right:max(34px,env(safe-area-inset-right,0px));bottom:max(140px,calc(env(safe-area-inset-bottom,0px) + 118px));width:74px;height:74px;background:var(--pink);color:var(--paper)}
 .act svg.i{width:38px;height:38px}
 #bDive svg.i{width:28px;height:28px}
+#bPush{right:max(214px,calc(env(safe-area-inset-right,0px) + 188px));bottom:max(30px,env(safe-area-inset-bottom,0px));width:58px;height:58px;background:#ff9f43}
+#bGrab{right:max(140px,calc(env(safe-area-inset-right,0px) + 114px));bottom:max(104px,calc(env(safe-area-inset-bottom,0px) + 82px));width:58px;height:58px;background:#a78bfa}
+#bPush svg.i,#bGrab svg.i{width:26px;height:26px}
 .act.on{transform:translateY(4px);box-shadow:0 2px 0 rgba(33,18,74,.3)}
 .keys{position:fixed;left:50%;bottom:max(64px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--veil);color:var(--paper);border-radius:12px;padding:5px 12px;font-weight:800;font-size:13px;white-space:nowrap;pointer-events:none}
 
@@ -553,9 +556,11 @@ html[dir=rtl] svg:has(use[href="#i-back"]){transform:scaleX(-1)}
     <div id="stick"><div id="knob"></div></div>
     <button class="act" id="bDive" aria-label="Dive"><svg class="i"><use href="#i-dive"/></svg></button>
     <button class="act" id="bJump" aria-label="Jump"><svg class="i"><use href="#i-up"/></svg></button>
+    <button class="act" id="bPush" aria-label="Push"><svg class="i"><use href="#i-fist"/></svg></button>
+    <button class="act" id="bGrab" aria-label="Grab"><svg class="i"><use href="#i-wave"/></svg></button>
     <button class="act" id="bFire" aria-label="Hit" hidden><svg class="i"><use href="#i-fire"/></svg></button>
   </div>
-  <div class="keys" id="keys">WASD: run · Space: jump · Shift: dive · F or click: hit (hold to charge) · Drag: turn the camera</div>
+  <div class="keys" id="keys">WASD: run · Space: jump · Shift: dive · F or click: hit (hold to charge) · Drag: turn the camera · Q: push · G (hold): grab</div>
 </div>
 <div id="big" hidden></div>
 <div id="banner" hidden></div>

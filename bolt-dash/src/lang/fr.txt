@@ -356,7 +356,7 @@ Pause
 Plonger
 Sauter
 Frapper
-WASD : courir · Espace : sauter · Maj : plonger · F ou clic : frapper (maintiens pour charger) · Glisser : tourner la caméra
+WASD : courir · Espace : sauter · Maj : plonger · F ou clic : frapper (maintiens pour charger) · Glisser : tourner la caméra · Q : pousser · G (maintiens) : attraper
 Fermer
 Passer
 En pause

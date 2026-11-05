@@ -211,9 +211,18 @@ const volley = {
 };
 
 // ======================================================================= FOOTBALL
-// small ball you carry at your feet. Hit (hold) = shoot, Dive = pass when you have the ball, otherwise a sliding tackle.
-const FX = 14, FZ = 22, GW = 3.4, GH = 2.6;
-const ROLE_FRAC = { GK: 0.03, DEF: 0.28, MID: 0.52, FWD: 0.76 }, ROLE_X = { GK: 0, DEF: -3.5, MID: 3.5, FWD: 0 };
+// Big pitch with stands. The ball is never glued: running touches it ahead of you (longer touches when sprinting),
+// sharp turns can lose it and opponents can poke it away. Hit (hold) = shoot, Dive = pass / sliding tackle.
+// pitch, lines and stands come from the Soccer Field model (scaled up ~2x); goals use the game's own goal frames
+const FX = 27.6, FZ = 47, GW = 3.6, GH = 2.6, FK = 1.95;
+const ROLE_FRAC = { GK: 0.03, DEF: 0.28, MID: 0.52, FWD: 0.76 }, ROLE_X = { GK: 0, DEF: -7, MID: 7, FWD: 0 };
+// team shape for 4..7 players: role + side position of each slot
+const SLOTS = [['GK', 0], ['DEF', -8], ['MID', 8], ['FWD', 0], ['DEF', 8], ['MID', -8], ['FWD', -9]];
+function teamSlots(n) {
+  const s = SLOTS.slice(0, Math.max(1, n)).map(([role, x]) => ({ role, x }));
+  const f = s.filter((x) => x.role === 'FWD'); if (f.length > 1) { f[0].x = 7; f[1].x = -7; }
+  return s;
+}
 function goalFrame(L, z, s) {
   const back = z + s * 2;
   for (const x of [-GW - 0.25, GW + 0.25]) { L.model('z/Obstacle_Pole_Center', x, GH / 2, z, [0.55, GH / 4, 0.55]); L.box(x, GH / 2, z, 0.25, GH / 2, 0.25); }
@@ -230,36 +239,39 @@ const football = {
     L.floor(-FX - 3, FX + 3, FZ + 4, -FZ - 4);
     L.fence(-FX, FZ, -FX, -FZ); L.fence(FX, FZ, FX, -FZ);
     for (const s of [1, -1]) { L.fence(-FX, s * FZ, -GW - 0.4, s * FZ); L.fence(GW + 0.4, s * FZ, FX, s * FZ); goalFrame(L, s * FZ, s); }
-    L.model('z/Spawn_Red', 0, 0.02, 0, 3.4); L.model('Coin', 0, 0.04, 0, [0.4, 0.04, 0.4]);
     for (const s of [1, -1]) for (const x of [-FX + 1, FX - 1]) L.model(s > 0 ? 'k/flag-large-red' : 'k/flag-large-blue', x, 0, s * (FZ - 1), 3);
-    for (const sx of [-1, 1]) for (let z = -FZ + 3; z <= FZ - 3; z += 4) L.model('z/Barrier_01', sx * (FX + 1.6), 0, z, 0.9, PI / 2);
-    L.model('k/castle', FX + 16, 0, 0, 7, -PI / 2); L.scenery(70, -70, 36, { towers: [[-50, -20, 3.4], [50, 20, 3.4]] });
-    const o = makeBall(L, { r: 0.24, mass: 0.4, damp: 0.38, model: 'z/Football', s: 0.24 / 1.14 }); this.b = o;
-    this.score = { red: 0, blue: 0 }; this.time = 150; this.resetT = 0; this.owner = null; this.roles = null;
+    for (const sx of [-1, 1]) for (let z = -FZ + 4; z <= FZ - 4; z += 8) L.model('z/Barrier_01', sx * (FX + 1.6), 0, z, 0.9, PI / 2);
+    // the model: one copy stretched for the pitch, one copy at normal proportions for the stands
+    const only = (o, re) => { o.traverse((m) => { if (m.isMesh) m.visible = re.test(m.name); }); return o; };
+    only(L.model('k/soccer-field', 0, -0.04, 0, [FK, 1, FK]), /Soccer_Field/);
+    only(L.model('k/soccer-field', 0, 0, 0, 1.9), /Bleachers/);
+    L.model('k/castle', FX + 30, 0, 0, 7, -PI / 2); L.scenery(100, -100, 60, { towers: [[-70, -30, 3.4], [70, 30, 3.4]] });
+    const o = makeBall(L, { r: 0.24, mass: 0.4, damp: 0.45, model: 'z/Football', s: 0.24 / 1.14 }); this.b = o;
+    this.score = { red: 0, blue: 0 }; this.time = 240; this.resetT = 0; this.owner = null; this.roles = null;
     this.kickoff();
-    this.fly = [[0, 26, 34, 0, 0, 0], [-20, 9, 0, 0, 1, 0], [0, 5, 12, 0, 1, 2]];
+    this.fly = [[0, 50, 70, 0, 0, 0], [-40, 14, 0, 0, 1, 0], [0, 6, 16, 0, 1, 4]];
   },
   teamOf,
   kickoff() { this.b.body.position.set(0, 0.5, 0); this.b.body.velocity.set(0, 0, 0); this.b.body.angularVelocity.set(0, 0, 0); this.owner = null; },
   // red defends +z and attacks -z
   ownZ: (team) => (team === 'red' ? FZ : -FZ),
   home(r, kick) {
-    const own = this.ownZ(r.team), dir = -Math.sign(own), role = r.role || 'MID';
+    const own = this.ownZ(r.team), dir = -Math.sign(own), role = r.role || 'MID', sx = r.slotX ?? ROLE_X[role];
     let f = ROLE_FRAC[role]; if (kick) f = Math.min(f, 0.4);
     const bp = this.b.body.position, push = kick ? 0 : clamp((bp.z - own) * dir / (FZ * 2), 0, 1) * 0.25 - 0.1;
-    return { x: ROLE_X[role] + (kick || role === 'GK' ? 0 : bp.x * 0.35), z: own + dir * (f + (role === 'GK' ? 0 : push)) * FZ * 2 };
+    return { x: sx + (kick || role === 'GK' ? 0 : bp.x * 0.3), z: own + dir * (f + (role === 'GK' ? 0 : push)) * FZ * 2 };
   },
   spawn(i) {
-    const team = teamOf(i), k = Math.floor(i / 2), role = ['GK', 'DEF', 'MID', 'FWD'][k % 4], own = team === 'red' ? FZ : -FZ, dir = -Math.sign(own);
-    return { x: ROLE_X[role] + (k >= 4 ? 2 : 0), y: 0, z: own + dir * Math.min(ROLE_FRAC[role], 0.4) * FZ * 2, facing: team === 'red' ? PI : 0 };
+    const team = teamOf(i), k = Math.floor(i / 2), sl = SLOTS[k % 7], role = sl[0], own = team === 'red' ? FZ : -FZ, dir = -Math.sign(own);
+    return { x: sl[1], y: 0, z: own + dir * Math.min(ROLE_FRAC[role], 0.4) * FZ * 2, facing: team === 'red' ? PI : 0 };
   },
   assignRoles() {
     if (this.roles) return; this.roles = true;
     for (const team of ['red', 'blue']) {
-      const mates = G.runners.filter((r) => r.team === team), free = ['GK', 'DEF', 'MID', 'FWD'];
+      const mates = G.runners.filter((r) => r.team === team), free = teamSlots(mates.length);
       const me = mates.find((r) => r.isPlayer);
-      if (me) { me.role = G.playerRole || 'MID'; free.splice(free.indexOf(me.role), 1); }
-      for (const r of mates) if (!r.isPlayer) r.role = free.shift() || 'MID';
+      if (me) { const want = G.playerRole || 'MID', k = Math.max(0, free.findIndex((x) => x.role === want)); const sl = free.splice(k, 1)[0]; me.role = want; me.slotX = sl?.x ?? 0; }
+      for (const r of mates) if (!r.isPlayer) { const sl = free.shift() || { role: 'MID', x: 0 }; r.role = sl.role; r.slotX = sl.x; }
     }
   },
   update(dt) {
@@ -276,9 +288,7 @@ const football = {
       if (o) {
         // dive tackles: an opponent diving into the carrier takes the ball
         for (const r of G.runners) if (r.team !== o.team && !r.out && r.state === 'dive' && Math.hypot(r.pos.x - o.pos.x, r.pos.z - o.pos.z) < 1.5) { this.steal(r, o); o = this.owner; break; }
-        const f = { x: Math.sin(o.facing), z: Math.cos(o.facing) }, ov = o.body.velocity;
-        b.position.set(o.pos.x + f.x * 0.55, 0.24, o.pos.z + f.z * 0.55); b.velocity.set(ov.x, 0, ov.z);
-        b.angularVelocity.set(ov.z * 2.5, 0, -ov.x * 2.5);
+        if (o) this.dribble(o, dt);
       } else {
         for (const r of G.runners) {
           if (r.out || r.noBallT > 0 || r.state === 'tumble' || r.stunT > 0) continue;
@@ -297,13 +307,38 @@ const football = {
     syncBall(this.b);
     if (this.time <= 0) G.endRound();
   },
+  // the ball stays a real ball: the carrier keeps touching it ahead, faster runs = longer touches
+  dribble(o, dt) {
+    const b = this.b.body, p = b.position, f = { x: Math.sin(o.facing), z: Math.cos(o.facing) }, ov = o.body.velocity, sp = Math.hypot(ov.x, ov.z);
+    const dx = p.x - o.pos.x, dz = p.z - o.pos.z, d = Math.hypot(dx, dz);
+    if (d > 2.6 || p.y > 1.6) { this.owner = null; o.noBallT = 0.25; return; } // touched too far or it bounced away: loose ball
+    o.touchT = (o.touchT || 0) - dt;
+    const ahead = (dx * f.x + dz * f.z) / (d || 1);
+    if (sp > 0.8 && d < 0.95 && o.touchT <= 0) {
+      // a touch: a little faster than you, a bit of random error that grows with speed (bad first touches happen)
+      const long = sp > 6 ? 1.55 : 1.22, err = (Math.random() - 0.5) * (0.12 + sp * 0.035) * (o.isPlayer ? 1 : 0.7), v = sp * long + 0.6;
+      b.velocity.set((f.x + err * f.z) * v, 0.35, (f.z - err * f.x) * v); o.touchT = sp > 6 ? 0.32 : 0.2;
+      if (o.isPlayer) sfx.swing?.();
+    } else if (sp <= 0.8 && d < 1.6) {
+      // standing still: settle the ball at your feet
+      const tx = o.pos.x + f.x * 0.55, tz = o.pos.z + f.z * 0.55; b.velocity.x += ((tx - p.x) * 8 - b.velocity.x) * Math.min(1, dt * 6); b.velocity.z += ((tz - p.z) * 8 - b.velocity.z) * Math.min(1, dt * 6);
+    } else if (ahead < -0.2 && d > 1.2) { this.owner = null; o.noBallT = 0.3; return; } // turned too sharply: the ball runs away
+    // opponents near the ball can poke it (not always a clean steal)
+    for (const r of G.runners) {
+      if (r.team === o.team || r.out || r.stunT > 0 || r.state === 'tumble') continue;
+      if (Math.hypot(r.pos.x - p.x, r.pos.z - p.z) < 0.9 && Math.random() < dt * 2.2) {
+        const a = flat(p.x - r.pos.x, p.z - r.pos.z); this.owner = null; o.noBallT = 0.5;
+        b.velocity.set(a.x * 5 + rand(-2, 2), 1.2, a.z * 5 + rand(-2, 2)); sfx.bat(); break;
+      }
+    }
+  },
   steal(r, from) { this.owner = r; from.noBallT = 0.8; from.stun(0.45); fx.burst(V(r.pos.x, r.pos.y + 0.8, r.pos.z), 0xffd23f, 12, 6); sfx.bat(); if (r.isPlayer) toast(t('Tackle!'), 1); },
   kick(r, dir, speed, vy) { const b = this.b.body; this.owner = null; r.noBallT = 0.45; b.position.set(r.pos.x + dir.x * 0.9, 0.45, r.pos.z + dir.z * 0.9); b.velocity.set(dir.x * speed, vy, dir.z * speed); },
   shoot(r, pw) {
     let a;
     if (r.isPlayer) a = playerAim(r);
     else { const gz = -this.ownZ(r.team); a = flat(rand(-GW + 0.7, GW - 0.7) - r.pos.x, gz - r.pos.z); }
-    this.kick(r, a, 9 + pw * 13, 1 + pw * 2.4); sfx.bat();
+    this.kick(r, a, 11 + pw * 16, 1 + pw * 2.8); sfx.bat();
     if (r.isPlayer && r.batPerfect) G.banner?.(t('PERFECT!'), true);
   },
   pass(r) {
@@ -312,7 +347,7 @@ const football = {
     const score = (m) => { const dx = m.pos.x - r.pos.x, dz = m.pos.z - r.pos.z, d = Math.hypot(dx, dz) || 1; return r.isPlayer ? (dx * a.x + dz * a.z) / d - d * 0.01 : dz * fwd * 0.08 - this.pressure(m) * 1.5 - (m.role === 'GK' ? 3 : 0); };
     const m = mates.reduce((x, y) => (score(y) > score(x) ? y : x));
     const mv = m.body.velocity, tx = m.pos.x + mv.x * 0.35, tz = m.pos.z + mv.z * 0.35, d = Math.hypot(tx - r.pos.x, tz - r.pos.z);
-    this.kick(r, flat(tx - r.pos.x, tz - r.pos.z), clamp(d * 1.25 + 4, 8, 21), d > 14 ? 4 : 1.2); sfx.swing();
+    this.kick(r, flat(tx - r.pos.x, tz - r.pos.z), clamp(d * 1.15 + 4, 8, 28), d > 18 ? 5 : 1.2); sfx.swing();
     return true;
   },
   pressure(m) { let n = 0; for (const o of G.runners) if (o.team !== m.team && !o.out && Math.hypot(o.pos.x - m.pos.x, o.pos.z - m.pos.z) < 3) n++; return n; },
@@ -333,14 +368,14 @@ const football = {
       const dg = Math.hypot(r.pos.x, goalZ - r.pos.z);
       if (ai.decT < 0) {
         ai.decT = rand(0.35, 0.7);
-        if (dg < 12 && Math.random() < 0.6) { this.shoot(r, rand(0.8, 1.25)); r.swing(); return { x: r.pos.x, z: r.pos.z, stop: true }; }
+        if (dg < 22 && Math.random() < (dg < 12 ? 0.7 : 0.25)) { this.shoot(r, rand(0.8, 1.25)); r.swing(); return { x: r.pos.x, z: r.pos.z, stop: true }; }
         if ((this.pressure(r) > 0 && Math.random() < 0.55) || (r.role === 'GK' || r.role === 'DEF') && Math.random() < 0.5) { if (this.pass(r)) return { x: r.pos.x, z: r.pos.z, stop: true }; }
       }
       const side = Math.sin(G.t * 0.7 + r.i) * 3;
       return { x: clamp(side, -GW, GW), z: goalZ, near: 0.2, noJump: true };
     }
     if (r.role === 'GK') {
-      const bx = clamp(bp.x * 0.6, -GW + 0.5, GW - 0.5), danger = Math.abs(bp.z - own) < 6 && !o;
+      const bx = clamp(bp.x * 0.6, -GW + 0.5, GW - 0.5), danger = Math.abs(bp.z - own) < 9 && (!o || o.team !== r.team) && Math.abs(bp.x) < GW + 6;
       if (danger) return { x: bp.x, z: bp.z, near: 0.1, noJump: true };
       return { x: bx, z: own - Math.sign(own) * 1.2, near: 0.3, noJump: true };
     }
@@ -354,7 +389,7 @@ const football = {
         return { x: bp.x, z: bp.z, near: 0.1, noJump: true };
       }
     }
-    const h = this.home(r, false), up = o && o.team === r.team ? -Math.sign(own) * 5 : 0;
+    const h = this.home(r, false), up = o && o.team === r.team ? -Math.sign(own) * 9 : 0;
     return { x: h.x, z: clamp(h.z + up, -FZ + 1, FZ - 1), near: 1, noJump: true };
   },
   onFall(r) { const s = this.spawn(G.runners.indexOf(r)); r.reset(s.x, 0, s.z, s.facing); },

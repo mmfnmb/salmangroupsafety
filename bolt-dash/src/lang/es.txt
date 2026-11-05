@@ -356,7 +356,7 @@ Pausa
 Plancha
 Saltar
 Golpear
-WASD: correr · Espacio: saltar · Shift: plancha · F o clic: golpear (mantén para cargar) · Arrastrar: girar la cámara
+WASD: correr · Espacio: saltar · Shift: plancha · F o clic: golpear (mantén para cargar) · Arrastrar: girar la cámara · Q: empujar · G (mantén): agarrar
 Cerrar
 Saltar
 En pausa
