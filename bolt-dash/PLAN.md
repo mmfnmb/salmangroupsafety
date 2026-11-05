@@ -19,6 +19,14 @@ Everything agreed so far, in one place. Done items are marked ✅.
 - Original series first. "My movies" = the traditional movie of each player's tournament (10 minutes, built automatically from recorded matches and life events). Later genres: horror, action, comedy, sports. More GPUs, voices and paid tools once the game grows.
 - **Horror villain — the Mad Prisoner:** same base character recoloured: black/red scary colours, red face, frightening eyes, black-and-red blood. Always wears a hockey-style mask with eye holes and many small holes; in his worst madness he wears a carved pumpkin mask. Mostly disguised by day, rarely at night. Walks at night attacking anyone he sees; jailed 4 times, escaped every time leaving dead or maimed policemen. Weapons: kitchen cleaver and a chainsaw. (Models to find on GitHub: hockey mask, chainsaw; found: carved pumpkin, cleaver, knives, axe.)
 
+## Slasher Night (special long mode, planned)
+- Listed with the mini-games but marked special. One long map, no time limit: it ends when someone beats the boss or everyone is dead.
+- Play with bots (friends online later). Weapon: your bat only. Die once and you are out of the run.
+- 5 stages at night, each harder: forest (zombies, skeletons) · abandoned city streets (small Mad Prisoner copies with cleavers chasing you) · abandoned hospital/house (ghosts jumping out) · the prison yard he escaped from (everything at once, more and faster copies) · final fight.
+- Boss: the Mad Prisoner. Phase 1 hockey mask + cleaver; at half health he goes mad: pumpkin + chainsaw, faster. Health bar must reach zero.
+- Reward: the rare Mad Prisoner skin as an achievement, only from winning this mode (not shop, wheel or codes).
+- Look ready: hockey mask ("Jason Mask", ShadowSupreme), carved pumpkin, cleaver, chainsaw ✅ (film/epx.js).
+
 ## Football update (next)
 - Field 5-6× bigger with stands. Realistic ball: not glued — touches push it ahead, sprinting takes longer touches, sharp turns can lose it, first touch can be set up, ball has weight, spin and bounce. Shots with the power bar, low/high/curled. Player card (overall + speed, shooting, passing, control) that grows with play and changes control quality; bronze/silver/gold card looks. Positions + lucky wheel for conflicts ✅. Kick/pass animations to find on GitHub.
 - Tournaments in the game: Party Games League and the World Cup, against bots first (online later), playable over several days. Each tournament has its own exclusive outfit for its winners only.
