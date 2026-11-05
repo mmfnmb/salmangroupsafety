@@ -433,3 +433,15 @@ Bomba caliente
 Bomba
 Alguien lleva una bomba con temporizador. Toca a otro jugador para pasársela. Cuando explota, quien la tenga queda fuera
 ¡Tienes la bomba! ¡Pásala!
+Corre: W A S D
+Corre: arrastra el joystick de la izquierda
+Salta el hueco: Espacio
+Salta el hueco: botón amarillo
+Tírate bajo el brazo: Shift
+Tírate bajo el brazo: botón verde
+Corre contra las puertas para romper las débiles
+Empuja al muñeco: Q. Mantén G para agarrarlo
+Empuja al muñeco: botón naranja. Mantén el botón morado para agarrarlo
+Las flechas de velocidad te lanzan. ¡Llega a la bandera!
+Entrenamiento
+Aprende cada movimiento paso a paso. Los consejos muestran tus teclas o los botones del móvil

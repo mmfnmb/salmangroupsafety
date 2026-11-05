@@ -158,3 +158,48 @@ const bomb = {
 
 Object.assign(MODES, { lava, bomb });
 MODE_LIST.push(lava, bomb);
+
+// ======================================================================= TRAINING
+// a short course that teaches each move; the tips match the device (keyboard keys or the phone buttons)
+import { IS_TOUCH } from './core.js';
+const TIPS = [
+  [8, t('Run: W A S D'), t('Run: drag the stick on the left')],
+  [-4, t('Jump the gap: Space'), t('Jump the gap: yellow button')],
+  [-20, t('Dive under the arm: Shift'), t('Dive under the arm: green button')],
+  [-34, t('Run into the doors to break the weak ones'), t('Run into the doors to break the weak ones')],
+  [-46, t('Push the dummy: Q. Hold G to grab him'), t('Push the dummy: orange button. Hold the purple button to grab him')],
+  [-58, t('Speed arrows throw you forward. Reach the flag!'), t('Speed arrows throw you forward. Reach the flag!')],
+];
+const training = {
+  id: 'training', name: t('Training'), short: t('Training'), kind: 'race', icon: 'flag', noPush: true,
+  desc: t('Learn every move step by step. The tips show your keys or your phone buttons'), weapons: t('Push + Grab'),
+  build() {
+    const L = new Level({ killY: -10 }); G.level = L; const W = 6;
+    L.floor(-W, W, 14, -2); L.rails(-W, W, 14, -2); L.checkpoint(0, 0, 8);
+    L.floor(-W, W, -6, -40); L.rails(-W, W, -6, -40); L.checkpoint(0, 0, -8);
+    L.sweeper(0, -22, 0, 5.4, 0.9);
+    L.doorRow(-36, 0, -W, W, 4, 2);
+    L.floor(-W, W, -40, -80); L.rails(-W, W, -40, -80); L.checkpoint(0, 0, -42);
+    for (const x of [-3, 3]) L.speedPad(x, -60, 0, 0, -1);
+    L.finishGate(-72, 0, 12);
+    for (let z = 4; z > -70; z -= 6) L.coin(0, 1, z);
+    L.scenery(20, -100, 26);
+    this.finishZ = -72; this.len = 86; this.tip = -1;
+    this.fly = [[0, 20, -90, 0, 0, -60], [0, 8, 18, 0, 1, 4]];
+  },
+  spawn(i) { return i === 0 ? { x: 0, y: 0, z: 10 } : { x: 0, y: 0, z: -50, facing: 0 }; },
+  update(dt) {
+    for (const r of G.runners) {
+      if (r.out) continue;
+      if (r.grounded && (r.bestZ == null || r.pos.z < r.bestZ)) r.bestZ = r.pos.z;
+      if (!r.finished && r.isPlayer && r.pos.z < this.finishZ) G.finish(r);
+    }
+    const p = G.player; if (!p) return;
+    for (let k = TIPS.length - 1; k > this.tip; k--) if (p.pos.z < TIPS[k][0]) { this.tip = k; toast(IS_TOUCH ? TIPS[k][2] : TIPS[k][1], 4); sfx.beep(); break; }
+  },
+  // the dummy just stands in the middle of the lane
+  target(r) { return r.isPlayer ? null : { x: 0, z: -50, near: 0.6 }; },
+  onFall(r) { const L = G.level; let cp = L.checkpoints[0]; for (const c of L.checkpoints) if (r.bestZ != null && r.bestZ < c.z + 1) cp = c; r.reset(0, cp.y + 2, cp.z); if (r.isPlayer) toast(t('Checkpoint')); },
+  progress(r) { return clamp((14 - r.pos.z) / this.len, 0, 1); },
+};
+MODES.training = training; MODE_LIST.unshift(training);

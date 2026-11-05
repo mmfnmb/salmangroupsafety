@@ -628,7 +628,7 @@ function playIntro(force) {
 const flow = { state: 'loading', choice: store.get('choice', 'show'), show: null, round: 0, t: 0, count: 0, flyT: 0, endT: 0, finishedCount: 0, coins: 0, bannerT: 0 };
 const camPos = V(0, 6, 16), camLook = V(), camRay = new CANNON.RaycastResult();
 function newShow(choice) {
-  const n = choice === 'show' ? 10 : choice === 'football' ? 14 : 8;
+  const n = choice === 'show' ? 10 : choice === 'football' ? 14 : choice === 'training' ? 2 : 8;
   const players = [{ name: save.name, equip: { ...save.equip }, isPlayer: true }];
   const names = [...NAMES].sort(() => Math.random() - 0.5);
   for (let i = 1; i < n; i++) players.push({ name: names[i % names.length], equip: randomEquip(), isPlayer: false });

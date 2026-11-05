@@ -433,3 +433,15 @@ Hot Bomb
 Bomb
 Someone carries a ticking bomb. Touch another player to pass it on. When it explodes, whoever holds it is out
 You have the bomb! Pass it on!
+Run: W A S D
+Run: drag the stick on the left
+Jump the gap: Space
+Jump the gap: yellow button
+Dive under the arm: Shift
+Dive under the arm: green button
+Run into the doors to break the weak ones
+Push the dummy: Q. Hold G to grab him
+Push the dummy: orange button. Hold the purple button to grab him
+Speed arrows throw you forward. Reach the flag!
+Training
+Learn every move step by step. The tips show your keys or your phone buttons

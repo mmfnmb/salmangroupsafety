@@ -433,3 +433,15 @@ Bombe brûlante
 Bombe
 Quelqu'un porte une bombe qui fait tic-tac. Touche un autre joueur pour la lui passer. Quand elle explose, celui qui l'a est éliminé
 Tu as la bombe ! Passe-la !
+Cours : W A S D
+Cours : fais glisser le joystick à gauche
+Saute le trou : Espace
+Saute le trou : bouton jaune
+Plonge sous le bras : Maj
+Plonge sous le bras : bouton vert
+Fonce dans les portes pour casser les fragiles
+Pousse le mannequin : Q. Maintiens G pour l'attraper
+Pousse le mannequin : bouton orange. Maintiens le bouton violet pour l'attraper
+Les flèches de vitesse te propulsent. Atteins le drapeau !
+Entraînement
+Apprends chaque geste pas à pas. Les conseils montrent tes touches ou les boutons du téléphone
