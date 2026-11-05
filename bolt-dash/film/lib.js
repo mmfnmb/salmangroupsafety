@@ -18,7 +18,16 @@ const EXTRA_COLORS = [0xc2185b, 0x7cb342, 0x5d4037, 0xad1457, 0x9e9d24, 0x6d4c41
   0x4e342e, 0xea80fc, 0xeeff41, 0xffab91, 0x546e7a, 0xb0bec5, 0xff8a65, 0x9575cd];
 // no teals/cyans (too close to Minto and Blue); after one round the hues come back in a darker shade so no two extras match
 let extraN = 0;
-export function extraLook(extra = {}) {
+import { CAST_COLORS, SPARE_COLORS } from './cast.js';
+// extraLook('Flarix 2') -> that person's fixed colour from film/cast.js; extraLook() alone still gives a one-off colour
+export function extraLook(name, extra = {}) {
+  if (typeof name === 'object') { extra = name; name = null; }
+  if (name && CAST_COLORS[name] == null) console.warn('not in film/cast.js:', name);
+  if (name && CAST_COLORS[name] != null) {
+    const c = CAST_COLORS[name], id = 'film-cast-' + name;
+    ITEM[id] = { id, colors: { Main: c, Main2: new THREE.Color(c).lerp(new THREE.Color(0xffffff), 0.6).getHex() } };
+    return { skin: id, ...extra };
+  }
   const k = extraN++, c = new THREE.Color(EXTRA_COLORS[k % EXTRA_COLORS.length]).multiplyScalar(k >= EXTRA_COLORS.length ? 0.62 : 1).getHex(), id = 'film-extra-' + extraN;
   ITEM[id] = { id, colors: { Main: c, Main2: new THREE.Color(c).lerp(new THREE.Color(0xffffff), 0.6).getHex() } };
   return { skin: id, ...extra };

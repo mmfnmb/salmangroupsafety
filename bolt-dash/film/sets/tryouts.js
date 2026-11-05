@@ -30,7 +30,7 @@ SETS.tryouts = (root) => {
   // the queue: a long line of players waiting to sign up (instanced), and spectators along the course
   // the front of the queue are real players (idle, looking around); further back an instanced line
   const looks = ['skin-grape', 'skin-orange', 'skin-snow', 'skin-mint', 'skin-straw', 'skin-lemon', 'skin-night'];
-  for (let i = 0; i < 7; i++) { const a = queueActors[i] || (queueActors[i] = (() => { const x = new Actor(extraLook()); ACTORS.push(x); return x; })()); a.at(DESK.x + 1.9 + (i % 2) * 0.35, 0, DESK.z + 2.6 + i * 1.15, Math.PI + (i % 3 - 1) * 0.3); a.keep = true; }
+  for (let i = 0; i < 7; i++) { const a = queueActors[i] || (queueActors[i] = (() => { const x = new Actor(extraLook('Queue ' + (i + 1))); ACTORS.push(x); return x; })()); a.at(DESK.x + 1.9 + (i % 2) * 0.35, 0, DESK.z + 2.6 + i * 1.15, Math.PI + (i % 3 - 1) * 0.3); a.keep = true; }
   root.userData.queue = queueActors;
   const q = []; for (let i = 7; i < 26; i++) q.push({ x: DESK.x + 1.9 + (i % 2) * 0.35, y: 0, z: DESK.z + 2.6 + i * 1.15, ry: Math.PI });
   const qg = crowd(q); root.add(qg); const qu = qg.userData.update; qg.userData.update = (T) => qu(T, 0.12);

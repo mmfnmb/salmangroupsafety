@@ -15,20 +15,20 @@ function makeTeams(A) {
   const mk = (look, sc) => { const a = new Actor(look); if (sc) { a.m.scale.setScalar(sc); a.s = sc; } ACTORS.push(a); return a; };
   const T = [
     { name: 'SPLASHVOLT', col: 0x3d8bff, slot: -6.5, E: 14, m: [A.blue, A.yellow, A.vio, A.minto] },
-    { name: 'TIMBROK', col: 0x7a4a2a, slot: 6.5, E: 24, m: [A.brown, mk(extraLook()), mk(extraLook()), mk(extraLook())] },
-    { name: 'FLARIX', col: 0xff7a1a, slot: -13, E: 36, m: [A.orange, mk(extraLook()), mk(extraLook()), mk(extraLook({ head: 'h-cone' }))] },
-    { name: 'RUBRAX', col: 0xd7263d, slot: 13, E: 41, m: [A.red, mk(extraLook()), mk(extraLook()), mk(extraLook())] },
-    { name: 'WOBBLZ', col: 0xff4f9a, slot: -19.5, E: 46.5, m: [mk(extraLook({ head: 'h-cupcake' })), mk(extraLook()), mk(extraLook()), mk(extraLook())] },
-    { name: 'SNOOZIES', col: 0x8fa0ff, slot: 19.5, E: 49, m: [mk(extraLook()), mk(extraLook()), mk(extraLook()), mk(extraLook())] },
-    { name: 'JELLYJAX', col: 0x36e0a8, slot: -26, E: 51.5, m: [mk(extraLook()), mk(extraLook()), mk(extraLook()), mk(extraLook())] },
-    { name: 'PEBBLINOS', col: 0xb8a48a, slot: 26, E: 54, m: [mk(extraLook(), 0.33), mk(extraLook(), 0.33), mk(extraLook(), 0.33), mk(extraLook(), 0.33)] },
+    { name: 'TIMBROK', col: 0x7a4a2a, slot: 6.5, E: 24, m: [A.brown, mk(extraLook('Timbrok 2')), mk(extraLook('Timbrok 3')), mk(extraLook('Timbrok 4'))] },
+    { name: 'FLARIX', col: 0xff7a1a, slot: -13, E: 36, m: [A.orange, mk(extraLook('Flarix 2')), mk(extraLook('Flarix 3')), mk(extraLook('Flarix 4', { head: 'h-cone' }))] },
+    { name: 'RUBRAX', col: 0xd7263d, slot: 13, E: 41, m: [A.red, mk(extraLook('Rubrax 2')), mk(extraLook('Rubrax 3')), mk(extraLook('Rubrax 4'))] },
+    { name: 'WOBBLZ', col: 0xff4f9a, slot: -19.5, E: 46.5, m: [mk(extraLook('Wobblz 1', { head: 'h-cupcake' })), mk(extraLook('Wobblz 2')), mk(extraLook('Wobblz 3')), mk(extraLook('Wobblz 4'))] },
+    { name: 'SNOOZIES', col: 0xb0bec5, slot: 19.5, E: 49, m: [mk(extraLook('Snoozies 1')), mk(extraLook('Snoozies 2')), mk(extraLook('Snoozies 3')), mk(extraLook('Snoozies 4'))] },
+    { name: 'JELLYJAX', col: 0xc6ff00, slot: -26, E: 51.5, m: [mk(extraLook('Jellyjax 1')), mk(extraLook('Jellyjax 2')), mk(extraLook('Jellyjax 3')), mk(extraLook('Jellyjax 4'))] },
+    { name: 'PEBBLINOS', col: 0xb8a48a, slot: 26, E: 54, m: [mk(extraLook('Pebblinos 1'), 0.33), mk(extraLook('Pebblinos 2'), 0.33), mk(extraLook('Pebblinos 3'), 0.33), mk(extraLook('Pebblinos 4'), 0.33)] },
     { name: 'AUREX', col: 0xe8b600, slot: 0, E: 63, m: [null, A.silver, A.slate, A.olive] }, // Gold drops in by parachute
   ];
   for (const t of T) t.D = 8.5;
   // front-row fans for the cheering / booing close-ups
   const looks = ['skin-lemon', 'skin-straw', 'skin-mint', 'skin-orange', 'skin-grape', 'skin-snow'];
-  fansL = looks.map((s, i) => mk(extraLook(i === 1 ? { head: 'h-cone' } : {})));
-  fansR = looks.map(() => mk(extraLook()));
+  fansL = looks.map((s, i) => mk(extraLook('Fan ' + (i + 1), i === 1 ? { head: 'h-cone' } : {})));
+  fansR = looks.map((s, i) => mk(extraLook('Fan ' + (i + 7))));
   return T;
 }
 

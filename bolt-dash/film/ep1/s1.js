@@ -3,7 +3,7 @@ import { hideAll, fixed, orbit, frameGroup, closeUp, track, say, puffs, fx, V, P
 import { HOUSE } from '../sets/house.js';
 
 // world positions inside the house (the set is scaled by HOUSE.K)
-const BED = { x: -7.75, y: 1.2, z: -4.95 }; // feet end of the bed; Blue lies with his head towards -z
+const BED = { x: -7.8, y: 0.88, z: -4.85 }; // y: mattress top + half the body's depth, so his back rests on it // feet end of the bed; Blue lies with his head towards -z
 const RADIO = V(-6.1, 1.15, -6.94);
 const COUNTER = { x: 5.4, z: -5.75 }; // Yellow stands here facing the toaster / stove
 const TOASTER = V(4.85, 1.3, -6.95);
@@ -56,7 +56,7 @@ export function shots(A) {
     { dur: 4, set: 'house_int', time: 'interior', setup() { hideAll(); lie(B); B.show().replay('HitReact', 1); last = -1; say('Blue', 'WHOAAA!'); }, upd(t) {
       const k = clamp(t / 0.9, 0, 1);
       if (t < 0.9) { B.at(lerp(BED.x, -6.0, k), BED.y + Math.sin(k * PI) * 0.6 - k * BED.y, lerp(BED.z, -5.6, k), 0); B.m.rotation.x = -PI / 2; B.m.rotation.z = -k * PI * 0.9; }
-      else { if (!B.landed) { B.landed = 1; fx.dust(V(-6.0, 0.1, -5.6), 14, 0xf3ecdf, 3); B.replay('Jump_Land'); } B.m.rotation.z = -PI * 0.9; B.at(-6.0, 0.25, -5.6, 0); B.m.rotation.x = -PI / 2; }
+      else { if (!B.landed) { B.landed = 1; fx.dust(V(-6.0, 0.1, -5.6), 14, 0xf3ecdf, 3); B.replay('Jump_Land'); } B.m.rotation.z = -PI * 0.9; B.at(-6.0, 0.31, -5.6, 0); B.m.rotation.x = -PI / 2; }
       if (t > 2.2) { B.landed = 0; stand(B); B.at(-6.0, 0, -5.4, PI / 2); B.play('No', 1); }
       fixed([-3.0, 2.4, -1.0], [-6.6, 0.7, -5.2]);
     } },

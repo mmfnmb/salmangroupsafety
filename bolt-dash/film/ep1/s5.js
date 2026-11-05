@@ -27,9 +27,9 @@ function runCourse(a, t, T, speed, { spin = false, x = X } = {}) {
 
 export function shots(A) {
   const extra = (look) => { const a = new Actor(look); ACTORS.push(a); return a; };
-  const straw = extra(extraLook({ head: 'h-cone' })), melon = extra(extraLook());
-  const oTeam = [extra(extraLook()), extra(extraLook()), extra(extraLook())];
-  const rTeam = [extra(extraLook()), extra(extraLook()), extra(extraLook())];
+  const straw = extra(extraLook('Candidate Cone', { head: 'h-cone' })), melon = extra(extraLook('Candidate Wrongway'));
+  const oTeam = [2, 3, 4].map((i) => extra(extraLook('Flarix ' + i)));
+  const rTeam = [2, 3, 4].map((i) => extra(extraLook('Rubrax ' + i)));
   const B = A.blue, Y = A.yellow, Vi = A.vio, Mi = A.minto, Br = A.brown;
   // Blue and Yellow stand beside the start, watching; the candidates wait behind them
   const judges = () => { B.at(-4.4, 0, 9.5, PI * 0.8).play('Idle'); Y.at(-5.6, 0, 8.6, PI * 0.8).play('Idle'); };
