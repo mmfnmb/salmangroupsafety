@@ -18,8 +18,8 @@ function bloodOf(r) {
 // monster types: Kenney graveyard characters, plus copies of the Mad Prisoner
 const KINDS = {
   zombie: { model: 'k/gy-character-zombie', s: 1.25, hp: 2, speed: 2.2, dmg: 20, blood: 0x2ec45a },
-  skeleton: { model: 'k/gy-character-skeleton', s: 1.25, hp: 2, speed: 3.2, dmg: 20, blood: 0xf2efe6 },
-  ghost: { model: 'k/gy-character-ghost', s: 1.25, hp: 1, speed: 4.2, dmg: 15, blood: 0xd8e8ff, float: true },
+  skeleton: { model: 'k/gy-character-skeleton', s: 1.25, hp: 2, speed: 3.2, dmg: 20, blood: 0x9a9080 },
+  ghost: { model: 'k/gy-character-ghost', s: 1.25, hp: 1, speed: 4.2, dmg: 15, blood: 0x6a7a9a, float: true },
   vampire: { model: 'k/gy-character-vampire', s: 1.3, hp: 3, speed: 3.6, dmg: 25, blood: 0x111111 },
   copy: { model: 'Character', s: 0.36, hp: 3, speed: 4.4, dmg: 25, blood: 0x111111, mad: true },
 };
@@ -33,19 +33,21 @@ class Monster {
     if (k.mad) dress(this.o, { skin: 'skin-mad', face: 'f-hockey', bat: 'bat-cleaver' }, { bat: true });
     const an = M[k.model].animations; this.mixer = new THREE.AnimationMixer(this.o);
     this.run = clipBy(an, k.mad ? ['Run'] : ['sprint', 'walk']); this.atk = clipBy(an, k.mad ? ['Punch'] : ['attack-melee-right']); this.die = clipBy(an, k.mad ? ['Death'] : ['die']);
-    this.cur = null; this.play(this.run);
+    this.cur = null; this.play(this.run); this.rise = 1; this.o.position.y = -1.3;
   }
   play(c, once) { if (!c) return; const a = this.mixer.clipAction(c); if (this.cur === a && !once) return; if (once) { a.reset(); a.setLoop(THREE.LoopOnce, 1); a.clampWhenFinished = true; } a.play(); if (this.cur && this.cur !== a) this.cur.fadeOut(0.12); a.fadeIn(0.12); this.cur = a; }
   get pos() { return this.o.position; }
   hurt(n, dir) {
     if (this.dead) return; this.hp -= n; this.hitT = 0.25; this.pos.x += dir.x * 1.1; this.pos.z += dir.z * 1.1;
-    fx.burst(V(this.pos.x, 1, this.pos.z), this.k.blood, 10, 4); sfx.bat();
+    fx.burst(V(this.pos.x, 0.8, this.pos.z), this.k.blood, 6, 3); sfx.bat();
     if (this.hp <= 0) { this.dead = true; this.play(this.die, true); }
   }
   update(dt, mode) {
     this.mixer.update(dt);
     if (this.dead) { this.deadT += dt; if (this.deadT > 1.6) this.o.position.y -= dt * 1.2; return this.deadT < 3; }
+    if (this.rise > 0) { this.rise -= dt; this.o.position.y = -1.3 * Math.max(0, this.rise); if (Math.random() < dt * 10) fx.dust(V(this.pos.x, 0.1, this.pos.z), 1, 0x5a4a3a, 1.5); return true; }
     this.hitT -= dt; this.atkCd -= dt;
+    for (const o of mode.mons) { if (o === this || o.dead) continue; const ax = this.pos.x - o.pos.x, az = this.pos.z - o.pos.z, ad = Math.hypot(ax, az); if (ad < 1.0 && ad > 0.001) { this.pos.x += ax / ad * (1.0 - ad) * 0.5; this.pos.z += az / ad * (1.0 - ad) * 0.5; } }
     let best = null, bd = 16;
     for (const r of G.runners) { if (r.out) continue; const d = Math.hypot(r.pos.x - this.pos.x, r.pos.z - this.pos.z); if (d < bd) { bd = d; best = r; } }
     if (this.k.float) this.pos.y = 0.3 + Math.sin(G.t * 3 + this.pos.x) * 0.2;
@@ -82,24 +84,37 @@ const slasher = {
   desc: t('A long night of monsters and copies of the Mad Prisoner. Beat him at the end to unlock his skin. Die once and you are out'), weapons: t('Your bat'),
   build() {
     const L = new Level({ killY: -12 }); G.level = L;
-    // the road through 5 stages, then the boss arena
-    L.floor(-W, W, 12, -170); L.rails(-W, W, 12, -170, 0, 'fence-low-straight');
-    const props = [
-      [0, -38, ['Tree', 'Tree', 'gy-grave', 'gy-gravestone-cross', 'Bush', 'Rock_1']], // forest
-      [-38, -76, ['gy-lantern-candle', 'gy-iron-fence', 'gy-crypt', 'gy-coffin']], // abandoned streets
-      [-76, -114, ['gy-coffin', 'gy-altar-stone', 'gy-crypt', 'gy-lantern-candle']], // the old house
-      [-114, -160, ['gy-iron-fence', 'gy-fence-gate', 'gy-gravestone-cross', 'gy-crypt']], // prison yard
-    ];
-    for (const [z0, z1, list] of props) for (let z = z0 - 3; z > z1; z -= 5) for (const sx of [-1, 1]) { const n = pick(list), name = n.startsWith('gy-') ? 'k/' + n : n; L.model(name, sx * (W + 2.5 + rand(0, 2)), 0, z + rand(-1.5, 1.5), n.startsWith('gy-') ? 2.2 : rand(0.8, 1.2), rand(0, 6)); }
-    for (let z = -6; z > -160; z -= 12) L.model('k/x-pumpkin', rand(-W + 1, W - 1), 0, z, 2.4, rand(0, 6));
+    // dark stone road with iron cemetery fences on both sides
+    L.floor(-W, W, 12, -172, 0, { model: 'Cube_Bricks' });
+    const fl = L.root.children[L.root.children.length - 1]; fl?.traverse((m) => { if (m.isMesh) { m.material = m.material.clone(); m.material.color.multiplyScalar(0.38); } });
+    for (const sx of [-1, 1]) { L.box(sx * (W + 0.3), 2, -80, 0.3, 2, 92); for (let z = 10; z > -172; z -= 2.2) L.model('k/gy-iron-fence', sx * (W + 0.4), 0, z, 2.2, sx > 0 ? -PI / 2 : PI / 2); }
+    // 4 zones, each closed by a gate that opens when its monsters are all dead
+    const theme = [['Tree', 'gy-gravestone-cross'], ['gy-lantern-candle', 'gy-crypt'], ['gy-coffin', 'gy-altar-stone'], ['gy-gravestone-cross', 'gy-crypt']];
+    this.zones = [];
+    for (let i = 0; i < 4; i++) {
+      const z0 = 6 - i * 40, z1 = z0 - 36, gz = z1 - 2;
+      // neat props outside the fences, graves in two tidy rows inside
+      for (let z = z0 - 3, k = 0; z > z1; z -= 6, k++) for (const sx of [-1, 1]) { const n = theme[i][k % 2], name = n.startsWith('gy-') ? 'k/' + n : n; L.model(name, sx * (W + 3), 0, z, n.startsWith('gy-') ? 2.4 : 1, sx > 0 ? -PI / 2 : PI / 2); }
+      const graves = []; for (let z = z0 - 8; z > z1 + 4; z -= 7) for (const sx of [-1, 1]) { const x = sx * (W - 2.2); L.model('k/gy-grave', x, 0.02, z, 2, 0); L.model('k/gy-gravestone-cross', x, 0, z - 1.4, 1.6, 0); graves.push({ x, z: z + 0.6 }); }
+      let gate = null;
+      if (i < 4) { const gm = []; for (let x = -W + 1.1; x < W; x += 2.2) gm.push(L.model('k/gy-fence-gate', x, 0, gz, 2.2, 0)); gate = { body: L.box(0, 2, gz, W, 2, 0.4), models: gm, open: false, y: 0 }; }
+      const lamp = new THREE.PointLight(0xffa040, 18, 26); lamp.position.set(0, 4, (z0 + z1) / 2); L.root.add(lamp);
+      this.zones.push({ z0, z1, graves, gate, started: false, mons: [] });
+    }
+    for (let z = -6; z > -150; z -= 13) L.model('k/x-pumpkin', (z % 2 ? 1 : -1) * (W - 1), 0, z, 2.4, 0);
     // boss arena: a round floor of dark coloured tiles that can crack and drop
     const cells = [], cols = [0x3a1f5c, 0x5c1020, 0x1f3a2a, 0x14204a, 0x5a2a10];
-    for (let x = -8; x <= 8; x++) for (let z = -8; z <= 8; z++) if (Math.hypot(x, z) < 8.6) cells.push({ x: x * 2, z: -190 + z * 2, color: cols[(Math.abs(x * 7 + z * 3)) % cols.length] });
+    for (let x = -8; x <= 8; x++) for (let z = -8; z <= 8; z++) if (Math.hypot(x, z) < 8.6) cells.push({ x: x * 2, z: -192 + z * 2, color: cols[(Math.abs(x * 7 + z * 3)) % cols.length] });
     this.g = makeTiles(L, cells);
-    L.floor(-3, 3, -170, -174); // the bridge into the arena
+    L.floor(-W, W, -172, -176, 0, { model: 'Cube_Bricks' });
     L.scenery(30, -230, 34);
-    this.mons = []; this.trig = [-4, -40, -78, -116, -150]; this.stage = 0; this.boss = null; this.won = false; this.dark = false; this.evT = 18; this.ev = null;
-    this.fly = [[0, 18, -200, 0, 0, -185], [0, 10, -60, 0, 0, -30], [0, 6, 16, 0, 1, 4]];
+    this.mons = []; this.zone = -1; this.boss = null; this.dark = false; this.evT = 18; this.ev = null;
+    this.fly = [[0, 18, -205, 0, 0, -190], [0, 10, -60, 0, 0, -30], [0, 6, 16, 0, 1, 4]];
+  },
+  hudInfo() {
+    const me = G.player, left = this.zone >= 0 && this.zone < 4 ? this.zones[this.zone].mons.filter((m) => !m.dead).length : this.boss && !this.boss.dead ? Math.max(0, this.boss.hp) : 0;
+    const where = this.boss ? t('Boss') : t('Zone {n}/{m}', { n: Math.max(1, this.zone + 1), m: 4 });
+    return { value: left, label: where + ' · ❤ ' + Math.max(0, Math.round(me?.hp ?? 100)) };
   },
   spawn(i) { return { x: -3 + i * 2, y: 0, z: 8, facing: PI }; },
   // night lighting while the round runs; put back on cleanup
@@ -117,20 +132,26 @@ const slasher = {
     if (r.isPlayer) { sfx.lose?.(); toast('❤ ' + Math.max(0, Math.round(r.hp)), 1); }
     if (r.hp <= 0) G.eliminate(r);
   },
-  wave(z) {
-    const L = G.level, list = [['zombie', 'zombie', 'skeleton', 'zombie'], ['copy', 'skeleton', 'copy', 'zombie', 'skeleton'], ['ghost', 'ghost', 'vampire', 'ghost', 'copy'], ['copy', 'copy', 'vampire', 'ghost', 'skeleton', 'zombie', 'copy']][this.stage - 1] || [];
-    for (const k of list) this.mons.push(new Monster(L, k, rand(-W + 1, W - 1), z - rand(8, 22)));
-  },
   update(dt) {
     this.setDark(true);
     const live = G.runners.filter((r) => !r.out);
     const lead = Math.min(...live.map((r) => r.pos.z));
-    // stages: crossing a line wakes the next group of monsters
-    while (this.stage < 4 && lead < this.trig[this.stage]) { this.stage++; this.wave(this.trig[this.stage - 1]); toast([t('The forest'), t('The empty streets'), t('The old house'), t('The prison yard')][this.stage - 1], 2.2); }
-    if (!this.boss && lead < -172) {
-      this.boss = new Boss(G.level, 0, -196, live.length); L_gate(G.level); toast(t('The Mad Prisoner!'), 3); sfx.boom();
-      // anyone left behind is pulled into the arena with the others
-      for (const r of live) if (r.pos.z > -170) r.reset(rand(-2, 2), 0.5, -176, PI);
+    // entering a zone wakes its monsters: they climb out of the graves
+    const names = [t('The forest'), t('The empty streets'), t('The old house'), t('The prison yard')];
+    const sets = [['zombie', 'zombie', 'zombie', 'zombie'], ['zombie', 'skeleton', 'skeleton', 'copy', 'zombie'], ['ghost', 'ghost', 'vampire', 'ghost', 'copy'], ['copy', 'copy', 'vampire', 'skeleton', 'skeleton', 'copy']];
+    for (let i = 0; i < 4; i++) {
+      const zn = this.zones[i];
+      if (!zn.started && lead < zn.z0 - 1) {
+        zn.started = true; this.zone = i; G.banner?.(names[i], true); setTimeout(() => toast(t('Kill all the monsters to open the gate'), 2.5), 900);
+        sets[i].forEach((k, j) => { const gr = zn.graves[j % zn.graves.length]; const m = new Monster(G.level, k, gr.x, gr.z); zn.mons.push(m); this.mons.push(m); });
+      }
+      const gt = zn.gate;
+      if (zn.started && gt && !gt.open && zn.mons.every((m) => m.dead)) { gt.open = true; gt.body.collisionResponse = false; gt.body.position.y = -40; toast(t('The gate is open!'), 2); sfx.win?.(); }
+      if (gt?.open && gt.y > -3) { gt.y -= dt * 2.5; gt.models.forEach((o) => { o.position.y = gt.y; }); }
+    }
+    if (!this.boss && lead < -174) {
+      this.boss = new Boss(G.level, 0, -198, live.length); L_gate(G.level); this.zone = 4; G.banner?.(t('The Mad Prisoner!'), false); sfx.boom();
+      for (const r of live) if (r.pos.z > -172) r.reset(rand(-2, 2), 0.5, -178, PI);
     }
     this.mons = this.mons.filter((m) => { const keep = m.update(dt, this); if (!keep) m.o.removeFromParent(); return keep; });
     this.g.update(dt);
@@ -147,11 +168,11 @@ const slasher = {
     // the chainsaw kills on touch
     if (mad) for (const r of live) { const fx_ = Math.sin(b.o.rotation.y), fz = Math.cos(b.o.rotation.y), rx = r.pos.x - (b.pos.x + fx_ * 1.4), rz = r.pos.z - (b.pos.z + fz * 1.4); if (Math.hypot(rx, rz) < 1.0 && Math.abs(r.pos.y - b.pos.y) < 1.6) this.damage(r, 999, fwd); }
     const face = (x, z) => { b.o.rotation.y = Math.atan2(x - b.pos.x, z - b.pos.z); };
-    const keepIn = () => { const ax = b.pos.x, az = b.pos.z + 190, l = Math.hypot(ax, az); if (l > 15) { b.pos.x = ax / l * 15; b.pos.z = az / l * 15 - 190; } };
+    const keepIn = () => { const ax = b.pos.x, az = b.pos.z + 192, l = Math.hypot(ax, az); if (l > 15) { b.pos.x = ax / l * 15; b.pos.z = az / l * 15 - 192; } };
     // arena mini-game events every ~25 s
     this.evT -= dt;
     if (this.evT <= 0) { this.evT = 25; const e = pick(mad ? ['drop', 'cannons', 'dark', 'drop'] : ['drop', 'cannons', 'dark']); this.startEvent(e); }
-    if (this.ev) { this.ev.t -= dt; if (this.ev.kind === 'cannons') { this.ev.fire -= dt; if (this.ev.fire <= 0) { this.ev.fire = 0.9; const a = rand(0, PI * 2); G.level.cannon(Math.cos(a) * 19, -190 + Math.sin(a) * 19, 0.2, -Math.cos(a), -Math.sin(a), 99, 0, 15); const c = G.level.cannons[G.level.cannons.length - 1]; G.level.fireCannon(c); } } if (this.ev.t <= 0) { if (this.ev.kind === 'dark') { hemi.intensity = 0.42; sun.intensity = 0.55; } this.ev = null; } }
+    if (this.ev) { this.ev.t -= dt; if (this.ev.kind === 'cannons') { this.ev.fire -= dt; if (this.ev.fire <= 0) { this.ev.fire = 0.9; const a = rand(0, PI * 2); G.level.cannon(Math.cos(a) * 19, -192 + Math.sin(a) * 19, 0.2, -Math.cos(a), -Math.sin(a), 99, 0, 15); const c = G.level.cannons[G.level.cannons.length - 1]; G.level.fireCannon(c); } } if (this.ev.t <= 0) { if (this.ev.kind === 'dark') { hemi.intensity = 0.42; sun.intensity = 0.55; } this.ev = null; } }
     switch (b.state) {
       case 'intro': if (b.st > 2.2) this.pickAttack(); break;
       case 'chase': { face(tg.pos.x, tg.pos.z); b.play('run'); if (d > 1.8) { b.pos.x += fwd.x * speed * dt; b.pos.z += fwd.z * speed * dt; } else if (!mad) { b.state = 'swing'; b.st = 0; b.play('punch', true); } if (b.st > 3.2) this.pickAttack(); break; }
@@ -250,7 +271,7 @@ const slasher = {
   },
 };
 // closes the way back once the boss fight starts
-function L_gate(L) { L.box(0, 1.5, -169.5, W, 1.5, 0.3); L.model('k/gy-fence-gate', 0, 0, -169.5, 3); }
+function L_gate(L) { L.box(0, 2, -173, W, 2, 0.4); for (let x = -W + 1.1; x < W; x += 2.2) L.model('k/gy-fence-gate', x, 0, -173, 2.2, 0); }
 
 // arena tiles that crack (glow purple), drop and come back a few seconds later
 function makeTiles(L, cells) {

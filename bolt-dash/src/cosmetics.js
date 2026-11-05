@@ -98,11 +98,47 @@ export const BATS = [
   { id: 'bat-gold', name: t('Golden Hammer'), price: 500, model: 'k/q_Hammer_Double_Golden', axis: 'y', grip: -1, len: 2.6, power: 5, speed: 4, reach: 4, special: 'legend', desc: t('The legendary one') },
 ].map((b) => ({ ...b, slot: 'bat' }));
 
-export const ITEMS = [...SKINS, ...ACCS, ...BATS];
+// pets: small creatures that follow you around, each with a little power
+export const PETS = [
+  { id: 'pet-dog', model: 'k/pet-Dog', name: t('Puppy'), price: 400, perk: 'coins', desc: t('+15% coins from every round') },
+  { id: 'pet-cat', model: 'k/pet-Cat', name: t('Kitty'), price: 400, perk: 'recover', desc: t('Get back up faster after a hit') },
+  { id: 'pet-chicken', model: 'k/pet-Chicken', name: t('Chick'), price: 350, perk: 'speed', desc: t('Run a little faster') },
+  { id: 'pet-birb', model: 'k/pet-Birb', name: t('Birb'), price: 350, perk: 'dive', desc: t('Dive further') },
+  { id: 'pet-pigeon', model: 'k/pet-Pigeon', name: t('Pigeon'), price: 300, perk: 'jump', desc: t('Jump a little higher') },
+  { id: 'pet-cactoro', model: 'k/pet-Cactoro', name: t('Cactoro'), price: 450, perk: 'noslow', desc: t('Sticky goo and slow-downs barely touch you') },
+  { id: 'pet-mushnub', model: 'k/pet-Mushnub', name: t('Mushnub'), price: 450, perk: 'xp', desc: t('+20% season XP') },
+  { id: 'pet-pinkblob', model: 'k/pet-PinkBlob', name: t('Pink Blob'), price: 500, perk: 'heavy', desc: t('Harder to push and knock over') },
+  { id: 'pet-greenblob', model: 'k/pet-GreenBlob', name: t('Green Blob'), price: 500, perk: 'thaw', desc: t('Freezes and dizziness wear off twice as fast') },
+  { id: 'pet-fish', model: 'k/pet-Fish', name: t('Fishy'), price: 400, perk: 'grip', desc: t('Slip much less on ice and bananas') },
+  { id: 'pet-glub', model: 'k/pet-Glub', name: t('Glub'), price: 700, perk: 'float', fly: true, desc: t('Fall a bit slower') },
+  { id: 'pet-armabee', model: 'k/pet-Armabee', name: t('Armabee'), price: 700, perk: 'shove', fly: true, desc: t('Push and grab recharge faster') },
+  { id: 'pet-alpaking', model: 'k/pet-Alpaking', name: t('Alpaking'), price: 1200, perk: 'royal', fly: true, desc: t('+10% coins and +10% XP') },
+].map((p) => ({ ...p, slot: 'pet' }));
+export const petPerk = (equip) => ITEM[equip?.pet]?.perk;
+// a pet that follows a character: walks behind it, hops when it is idle, flying pets bob in the air
+export function makePet(id) {
+  const it = ITEM[id]; if (!it || !M[it.model]) return null;
+  const o = SkeletonUtils.clone(M[it.model].scene); o.scale.setScalar(it.fly ? 0.22 : 0.26); o.traverse((m) => { if (m.isMesh) m.castShadow = true; });
+  const mixer = new THREE.AnimationMixer(o), an = M[it.model].animations, clip = (n) => an.find((a) => a.name === n);
+  const acts = { walk: clip(it.fly ? 'Fast_Flying' : 'Walk'), idle: clip(it.fly ? 'Flying_Idle' : 'Idle'), happy: clip(it.fly ? 'Yes' : 'Dance') };
+  let cur = null; const play = (k) => { const c = acts[k] || acts.idle; if (!c) return; const a = mixer.clipAction(c); if (cur === a) return; a.reset().fadeIn(0.2).play(); if (cur) cur.fadeOut(0.2); cur = a; };
+  play('idle');
+  return { o, it, mixer, play, t: Math.random() * 6,
+    update(dt, x, y, z, facing, moving) {
+      this.t += dt; mixer.update(dt);
+      const tx = x - Math.sin(facing) * 0.9 + Math.cos(facing) * 0.55, tz = z - Math.cos(facing) * 0.9 - Math.sin(facing) * 0.55, ty = y + (it.fly ? 1.1 + Math.sin(this.t * 3) * 0.12 : 0);
+      const dx = tx - o.position.x, dz = tz - o.position.z, d = Math.hypot(dx, dz);
+      if (d > 8) o.position.set(tx, ty, tz);
+      const k = Math.min(1, dt * 6); o.position.x += dx * k; o.position.z += dz * k; o.position.y += (ty - o.position.y) * Math.min(1, dt * 8);
+      if (d > 0.15) o.rotation.y = Math.atan2(dx, dz); else o.rotation.y = facing;
+      play(d > 0.3 || moving ? 'walk' : this.t % 9 < 1.6 ? 'happy' : 'idle');
+    } };
+}
+export const ITEMS = [...SKINS, ...ACCS, ...BATS, ...PETS];
 // the old plain gold skin was replaced by the radiant one: refund anyone who bought it
 if (save.owned.includes('skin-gold')) { save.owned = save.owned.filter((i) => i !== 'skin-gold'); save.coins += 400; if (save.equip.skin === 'skin-gold') save.equip.skin = 'skin-blue'; }
 export const ITEM = Object.fromEntries(ITEMS.map((i) => [i.id, i]));
-export const CATS = [['rare', t('Rare')], ['skin', t('Colors')], ['head', t('Head')], ['face', t('Face')], ['body', t('Body')], ['back', t('Back')], ['bat', t('Bats')]];
+export const CATS = [['rare', t('Rare')], ['skin', t('Colors')], ['head', t('Head')], ['face', t('Face')], ['body', t('Body')], ['back', t('Back')], ['bat', t('Bats')], ['pet', t('Pets')]];
 
 // bone frames at rest, so attachments line up with the model's own axes
 export const BONE_FIX = {};
@@ -244,7 +280,8 @@ export function holdItem(model, key, gun) {
 }
 export function randomEquip(withBat = true) {
   const e = { skin: pick(SKINS.filter((s) => !s.rare && !s.hidden && s.id !== 'skin-blue')).id };
-  for (const slot of SLOTS) if (Math.random() < 0.4) e[slot] = pick(ACCS.filter((a) => a.slot === slot)).id;
+  for (const slot of SLOTS) if (Math.random() < 0.4) e[slot] = pick(ACCS.filter((a) => a.slot === slot && !a.secret)).id;
+  if (Math.random() < 0.3) e.pet = pick(PETS).id;
   if (withBat) e.bat = pick(BATS).id;
   return e;
 }
@@ -278,6 +315,7 @@ export function makeThumbs() {
   for (const it of ITEMS) {
     if (it.slot === 'skin') THUMB[it.id] = skinThumb(it.id, shoot);
     else if (it.slot === 'bat') { const o = gripModel(it.model, it.axis, it.grip, it.len); o.rotation.z = -0.7; THUMB[it.id] = frame(o, 0.3); }
+    else if (it.slot === 'pet') { const o = SkeletonUtils.clone(M[it.model].scene); THUMB[it.id] = frame(o, -0.5); }
     else { const o = M[it.model].scene.clone(); if (it.r) o.rotation.set(...it.r); THUMB[it.id] = frame(o, it.slot === 'back' ? PI + 0.5 : -0.5); }
   }
   // portraits used by the player list while matchmaking

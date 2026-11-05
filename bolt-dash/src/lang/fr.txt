@@ -495,3 +495,34 @@ Tu cours plus vite
 Tu tombes lentement de haut et peux te diriger pour atterrir
 Saute encore une fois en l'air
 Tu sautes plus haut
+Boss
+Zone {n}/{m}
+Tue tous les monstres pour ouvrir la porte
+La porte est ouverte !
+Animaux
+Chiot
++15 % de pièces à chaque manche
+Chaton
+Tu te relèves plus vite après un coup
+Poussin
+Tu cours un peu plus vite
+Piaf
+Tu plonges plus loin
+Pigeon
+Tu sautes un peu plus haut
+Cactoro
+La glu et les ralentissements t'affectent à peine
+Mushnub
++20 % d'XP de saison
+Blob rose
+Plus dur à pousser et à renverser
+Blob vert
+Le gel et le vertige partent deux fois plus vite
+Poisson
+Tu glisses beaucoup moins sur la glace et les bananes
+Glub
+Tu tombes un peu plus lentement
+Armabeille
+Pousser et attraper se rechargent plus vite
+Alpaking
++10 % de pièces et +10 % d'XP

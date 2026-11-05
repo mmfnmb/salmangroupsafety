@@ -495,3 +495,34 @@ Run faster
 Fall slowly from high places and steer to land
 Jump again in the air
 Jump higher
+Boss
+Zone {n}/{m}
+Kill all the monsters to open the gate
+The gate is open!
+Pets
+Puppy
++15% coins from every round
+Kitty
+Get back up faster after a hit
+Chick
+Run a little faster
+Birb
+Dive further
+Pigeon
+Jump a little higher
+Cactoro
+Sticky goo and slow-downs barely touch you
+Mushnub
++20% season XP
+Pink Blob
+Harder to push and knock over
+Green Blob
+Freezes and dizziness wear off twice as fast
+Fishy
+Slip much less on ice and bananas
+Glub
+Fall a bit slower
+Armabee
+Push and grab recharge faster
+Alpaking
++10% coins and +10% XP

@@ -1,7 +1,7 @@
 // Game flow: lobby menu, matchmaking, show rounds, HUD, camera, input, build mode.
 import { THREE, CANNON, M, G, V, PI, rand, pick, clamp, damp, $, IS_TOUCH, store, save, persist, sfx, toast, renderer, scene, camera, canvas, sky, sun, world, puffs, confetti, fx, loadAssets, place, instanced, SkeletonUtils, renderScene, applyQuality } from './core.js';
 import { t, LANG, LANGS, setLang, translateDom } from './i18n.js';
-import { ITEMS, ITEM, CATS, SKINS, BATS, THUMB, computeBoneFix, dress, randomEquip, makeThumbs, holdItem, skinFx, updateGold } from './cosmetics.js';
+import { ITEMS, ITEM, CATS, SKINS, BATS, THUMB, computeBoneFix, dress, randomEquip, makeThumbs, holdItem, skinFx, updateGold, makePet } from './cosmetics.js';
 import { Runner, think } from './runner.js';
 import { MODES, MODE_LIST } from './modes.js';
 import { cardOvr, cardTier } from './sports.js';
@@ -217,13 +217,18 @@ function buildLobby() {
   }
   heroDress();
 }
-function heroDress(extra) { const e = { ...save.equip, ...(extra || {}) }; dress(lobby.hero, e, { bat: true }); }
+function heroDress(extra) {
+  const e = { ...save.equip, ...(extra || {}) }; dress(lobby.hero, e, { bat: true });
+  // the pet stands next to your character in the menu
+  if (lobby.petId !== e.pet) { lobby.pet?.o.removeFromParent(); lobby.pet = e.pet ? makePet(e.pet) : null; lobby.petId = e.pet; if (lobby.pet) { lobby.pet.o.scale.multiplyScalar(1.3); lobby.root.add(lobby.pet.o); } }
+}
 function fadeTo(n) { if (lobby.state !== 'dance') return; if (n === 'dance') { lobby.move = 'spin'; lobby.moveT = 0; return; } lobby.move = 'emote'; lobby.moveT = 0; playOn(lobby.rig, n); if (n === 'Jump') sfx.jump(); else sfx.click(); }
 function heroEmote() { fadeTo(pick(['Wave', 'Yes', 'No', 'Punch', 'dance'])); }
 const floorY = (x, z) => (Math.hypot(x, z) < 1.3 ? 0.5 : 0);
 function updateLobby(dt) {
   lobby.t += dt; lobby.st += dt; lobby.moveT += dt;
   const h = lobby.hero, R = lobby.rig, t = lobby.t;
+  if (lobby.pet) lobby.pet.update(dt, h.position.x, 0, h.position.z, h.rotation.y + PI * 0.75, false);
   R.mixer.update(dt); lobby.brig.mixer.update(dt);
   skinFx(h, dt, V(h.position.x + lobby.root.position.x, h.position.y, h.position.z + lobby.root.position.z), { moving: lobby.state === 'walk', puffs, scene });
   if (lobby.state === 'dance') {
@@ -791,7 +796,8 @@ G.endRound = () => {
   const isShow = flow.show.rounds.length > 1, crown = won && last && isShow;
   let earned = flow.coins + (won ? 40 : 10) + (won && last ? 150 : 0) + (crown ? 300 + 500 : 0);
   if (md.id === eventMode()) earned *= 2;
-  flow.show.coins += earned; save.coins += earned; save.xp += won ? 45 : 15;
+  { const pk = ITEM[save.equip.pet]?.perk; if (pk === 'coins') earned = Math.round(earned * 1.15); if (pk === 'royal') earned = Math.round(earned * 1.1); }
+  flow.show.coins += earned; save.coins += earned; { const pk = ITEM[save.equip.pet]?.perk; save.xp += Math.round((won ? 45 : 15) * (pk === 'xp' ? 1.2 : pk === 'royal' ? 1.1 : 1)); }
   const st = save.stats; st.rounds = (st.rounds || 0) + 1; st.earned = (st.earned || 0) + earned; if (won) st.qual = (st.qual || 0) + 1;
   st.modes = st.modes || []; if (!st.modes.includes(md.id)) { st.modes.push(md.id); track('modes'); }
   if (won) track('qualify');
@@ -862,8 +868,9 @@ function updateHud() {
     $('hPlace').textContent = `${order.indexOf(p) + 1}/${order.length}`; $('hPlaceLbl').textContent = md.laps ? t('Place · lap {n}/{m}', { n: Math.min(md.laps, (p.lap || 0) + 1), m: md.laps }) : t('Place · top {n} qualify', { n: flow.q });
     for (const r of G.runners) if (r.dot) r.dot.style.right = (md.progress(r) * 100) + '%';
   } else {
+    if (md.hudInfo) { const h = md.hudInfo(); $('hPlace').textContent = h.value; $('hPlaceLbl').textContent = h.label; } else {
     const left = G.runners.filter((r) => !r.out).length;
-    $('hPlace').textContent = left; $('hPlaceLbl').textContent = md.time != null ? t('Left · {n}s', { n: Math.max(0, Math.ceil(md.time)) }) : t('Left');
+    $('hPlace').textContent = left; $('hPlaceLbl').textContent = md.time != null ? t('Left · {n}s', { n: Math.max(0, Math.ceil(md.time)) }) : t('Left'); }
   }
   const w = p.weapon;
   show('wChip', !!w);

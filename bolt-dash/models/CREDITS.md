@@ -12,3 +12,5 @@ Kenney textures (colormap.png) were embedded into each .glb.
 - k/soccer-field: "Soccer Field" by tikodev (https://sketchfab.com/tikoavp), CC-BY-4.0, https://sketchfab.com/3d-models/soccer-field-4648dead5e1f4c97bcef826e40e6cfbe (via github.com/gonnabea/Metaverse-Jworld-Client)
 - k/bomb: Kenney Platformer Kit (CC0, kenney.nl), via github.com/foxssake/netfox
 - k/gy-*: Kenney Graveyard Kit (CC0, kenney.nl), via github.com/mashumafi/hunted_house_bbgj5
+- k/pet-*: Ultimate Monsters by Quaternius (CC0), via github.com/mika314/KitchenSink
+- acc/kk-*: KayKit Adventurers by Kay Lousberg (CC0), via github.com/Tamicktom/game-3d

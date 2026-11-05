@@ -495,3 +495,34 @@ Corres más rápido
 Caes despacio desde lo alto y puedes dirigirte para aterrizar
 Salta otra vez en el aire
 Saltas más alto
+Jefe
+Zona {n}/{m}
+Mata a todos los monstruos para abrir la puerta
+¡La puerta está abierta!
+Mascotas
+Cachorro
++15% monedas en cada ronda
+Gatito
+Te levantas más rápido tras un golpe
+Pollito
+Corres un poco más rápido
+Pajarito
+Te lanzas más lejos
+Paloma
+Saltas un poco más alto
+Cactoro
+El pegamento y las ralentizaciones casi no te afectan
+Mushnub
++20% XP de temporada
+Blob rosa
+Cuesta más empujarte y tirarte
+Blob verde
+La congelación y el mareo duran la mitad
+Pececito
+Resbalas mucho menos en hielo y plátanos
+Glub
+Caes un poco más despacio
+Armabeja
+Empujar y agarrar se recargan antes
+Alpaking
++10% monedas y +10% XP

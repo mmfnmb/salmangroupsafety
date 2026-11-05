@@ -1,6 +1,6 @@
 // The character: physics body, movement, status effects, animation, bot brain.
 import { THREE, CANNON, M, G, V, PI, rand, clamp, damp, scene, world, sfx, fx, puffs, SkeletonUtils, G_STATIC, G_RUNNER, G_HAZARD, G_BALL, G_PROJ, matRunner } from './core.js';
-import { dress, paint, holdItem, HAND, ITEM, skinFx, teamFlag } from './cosmetics.js';
+import { dress, paint, holdItem, HAND, ITEM, skinFx, teamFlag, makePet, petPerk } from './cosmetics.js';
 
 export const RUN = 10.5, AIR_ACC = 30, GROUND_ACC = 80, JUMP_V = 12.2, DIVE_V = 14.5;
 const ray = new CANNON.RaycastResult();
@@ -26,6 +26,7 @@ export class Runner {
     this.equip = { ...equip };
     dress(this.model, this.equip);
     if (team) teamFlag(this.model, team);
+    this.pet = equip.pet ? makePet(equip.pet) : null; if (this.pet) scene.add(this.pet.o); this.perk = petPerk(equip);
     this.mixer = new THREE.AnimationMixer(this.model);
     this.actions = {};
     for (const clip of M.Character.animations) { const n = clip.name.split('|').pop(); this.actions[n] = this.mixer.clipAction(clip); }
@@ -124,12 +125,13 @@ export class Runner {
     this.play('Jump_Land', 0.1);
   }
   // status effects
-  freeze(t) { if (this.out || this.finished) return; if (this.state === 'tumble') this.recover(); this.frozenT = t; paint(this.model, 0x9fe8ff); fx.burst(V(this.pos.x, this.pos.y + 1, this.pos.z), 0xbff3ff, 16, 5); if (this.isPlayer) sfx.freeze(); }
-  confuse(t) { this.confuseT = t; this.stars.visible = true; }
-  slow(t) { this.slowT = Math.max(this.slowT, t); }
-  slip(t) { this.slipT = Math.max(this.slipT, t); }
-  stun(t) { this.stunT = Math.max(this.stunT, t); this.stars.visible = true; }
-  knock(vec, doTumble = true) { if (doTumble) this.tumble(vec); else { const v = this.body.velocity; v.x += vec.x; v.y = Math.max(v.y, vec.y); v.z += vec.z; this.grounded = false; } }
+  freeze(t) { if (this.out || this.finished) return; if (this.state === 'tumble') this.recover(); this.frozenT = this.perk === 'thaw' ? t * 0.5 : t; paint(this.model, 0x9fe8ff); fx.burst(V(this.pos.x, this.pos.y + 1, this.pos.z), 0xbff3ff, 16, 5); if (this.isPlayer) sfx.freeze(); }
+  confuse(t) { if (this.perk === 'thaw') t *= 0.5; this.confuseT = t; this.stars.visible = true; }
+  slow(t) { if (this.perk === 'noslow') t *= 0.35; this.slowT = Math.max(this.slowT, t); }
+  slip(t) { if (this.perk === 'grip') t *= 0.35; this.slipT = Math.max(this.slipT, t); }
+  stun(t) { if (this.perk === 'recover') t *= 0.6; this.stunT = Math.max(this.stunT, t); this.stars.visible = true; }
+  knock(vec, doTumble = true) {
+    if (this.perk === 'heavy') { vec = { x: vec.x * 0.7, y: vec.y * 0.8, z: vec.z * 0.7 }; if (Math.random() < 0.35) doTumble = false; } if (doTumble) this.tumble(vec); else { const v = this.body.velocity; v.x += vec.x; v.y = Math.max(v.y, vec.y); v.z += vec.z; this.grounded = false; } }
   eliminate() {
     if (this.out) return;
     this.out = true; this.root.visible = false; world.removeBody(this.body);
@@ -173,7 +175,7 @@ export class Runner {
       }
       if (!dive) {
         const perk = ITEM[this.equip?.back]?.perk;
-        let speed = RUN * (this.isPlayer ? (G.modeObj?.playerSpeed?.() ?? 1) : this.ai.speed) * (perk === 'speed' ? 1.1 : 1) * (this.slowT > 0 ? 0.4 : 1) * (G.modeObj?.speedMul || 1);
+        let speed = RUN * (this.isPlayer ? (G.modeObj?.playerSpeed?.() ?? 1) : this.ai.speed) * (perk === 'speed' ? 1.1 : 1) * (this.perk === 'speed' ? 1.04 : 1) * (this.slowT > 0 ? 0.4 : 1) * (G.modeObj?.speedMul || 1);
         let tx = ix * speed + gvx + zx, tz = iz * speed + gvz + zz;
         if (this.boostT > 0) { tx += this.boostDir.x * 8; tz += this.boostDir.z * 8; if (Math.random() < dt * 25) puffs.emit({ pos: V(b.position.x, b.position.y + 0.3, b.position.z), vel: V(rand(-1, 1), rand(0.5, 1.5), rand(-1, 1)), life: 0.35, size: 0.14, drag: 2, color: 0xffd23f }); }
         const acc = (this.grounded ? (this.slipT > 0 ? 9 : GROUND_ACC) : AIR_ACC * (this.launchT > 0 ? 0.15 : 1)) * dt;
@@ -190,9 +192,10 @@ export class Runner {
       if (cape === 'double' && this.jumpBuf > 0 && this.coyote <= 0 && !this.grounded && !this.airJump && !dive && v.y < 6) {
         this.airJump = true; this.jumpBuf = 0; v.y = JUMP_V * 0.9; this.squash = 1.2; this.play('Jump', 0.05); fx.burst(V(b.position.x, b.position.y + 0.3, b.position.z), 0xff7ac0, 8, 3); if (this.isPlayer) sfx.jump();
       }
+      if (this.perk === 'float' && !this.grounded && v.y < -6) v.y = damp(v.y, -6, 6, dt);
       if (cape === 'glide' && !this.grounded && v.y < -3.2 && this.state === 'run') { v.y = damp(v.y, -3.2, 10, dt); if (Math.random() < dt * 12) puffs.emit({ pos: V(b.position.x, b.position.y + 0.9, b.position.z), vel: V(0, 0.6, 0), life: 0.4, size: 0.12, drag: 2, color: 0xffd0d0 }); }
       if (this.jumpBuf > 0 && this.coyote > 0 && !dive) {
-        v.y = JUMP_V * (cape === 'high' ? 1.18 : 1); this.coyote = 0; this.jumpBuf = 0; this.grounded = false; this.squash = 1.25;
+        v.y = JUMP_V * (cape === 'high' ? 1.18 : 1) * (this.perk === 'jump' ? 1.06 : 1); this.coyote = 0; this.jumpBuf = 0; this.grounded = false; this.squash = 1.25;
         this.play('Jump', 0.05);
         fx.dust(V(b.position.x, b.position.y + 0.1, b.position.z), 5);
         if (this.isPlayer) sfx.jump();
@@ -200,7 +203,7 @@ export class Runner {
       if (inp.dive && G.modeObj?.onDive?.(this)) inp.dive = false;
       if (inp.dive && !dive && !this.dived) {
         this.dived = true; this.state = 'dive'; this.stateT = 0;
-        v.x = Math.sin(this.facing) * DIVE_V; v.z = Math.cos(this.facing) * DIVE_V; v.y = Math.max(v.y, 5);
+        const dv = DIVE_V * (this.perk === 'dive' ? 1.15 : 1); v.x = Math.sin(this.facing) * dv; v.z = Math.cos(this.facing) * dv; v.y = Math.max(v.y, 5);
         this.play('Jump_Idle', 0.08);
         if (this.isPlayer) { sfx.dive(); G.onPlayerDive?.(); }
       }
@@ -252,7 +255,7 @@ export class Runner {
   }
   // Push: shove the player in front of you away
   doPush() {
-    if (this.pushCd > 0) return; this.pushCd = 0.9; this.swing();
+    if (this.pushCd > 0) return; this.pushCd = this.perk === 'shove' ? 0.55 : 0.9; this.swing();
     const o = this.nearest(1.8); if (!o) return;
     const a = Math.atan2(o.pos.x - this.pos.x, o.pos.z - this.pos.z), v = o.body.velocity;
     v.x = Math.sin(a) * 11; v.z = Math.cos(a) * 11; v.y = Math.max(v.y, 3.5); o.grounded = false; o.stun(0.35);
@@ -298,10 +301,11 @@ export class Runner {
       held.frame.rotation.x = held.key.startsWith('bat:') ? base + Math.sin(k * PI) * 1.9 : base;
     }
     if (this.model.userData.fx && !this.out) { const v = this.body.velocity; skinFx(this.model, dt, this.body.position, { moving: Math.hypot(v.x, v.z) > 1.5, grounded: this.grounded, puffs, scene }); }
+    if (this.pet) { const v = this.body.velocity; this.pet.o.visible = !this.out && this.root.visible; this.pet.update(dt, p.x, p.y, p.z, this.facing, Math.hypot(v.x, v.z) > 1.5); }
     this.squash = damp(this.squash, 1, 12, dt);
     const s = 0.42; this.model.scale.set(s / Math.sqrt(this.squash), s * this.squash, s / Math.sqrt(this.squash));
   }
-  dispose() { this.root.removeFromParent(); if (!this.out) world.removeBody(this.body); this.out = true; }
+  dispose() { this.pet?.o.removeFromParent(); this.root.removeFromParent(); if (!this.out) world.removeBody(this.body); this.out = true; }
 }
 
 // ---------------------------------------------------------------- bot brain (works on any map)
