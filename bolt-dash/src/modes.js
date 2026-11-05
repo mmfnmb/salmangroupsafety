@@ -205,7 +205,7 @@ const fall = {
   build() {
     const L = new Level({ killY: -39, pickupPool: [{ id: 'rpg', w: 3 }, { id: 'grenade', w: 3 }, { id: 'freeze', w: 3 }, { id: 'fly', w: 1 }] }); G.level = L;
     this.tiles = []; this.layers = [];
-    const R = 6, sx = 2.42, sz = 2.095, ys = [0, -7, -14, -21, -28];
+    const R = 8, sx = 2.42, sz = 2.095, ys = [0, -7, -14, -21, -28];
     ys.forEach((y, li) => {
       const cells = [];
       for (let q = -R; q <= R; q++) for (let r = Math.max(-R, -q - R); r <= Math.min(R, -q + R); r++) cells.push({ x: sx * (q + r / 2), z: sz * r });
@@ -230,7 +230,7 @@ const fall = {
     this.fly = [[0, 34, 30, 0, -12, 0], [26, 12, 0, 0, -8, 0], [0, 10, 20, 0, 0, 0]];
     this.mtx = new THREE.Matrix4(); this.tmp = new THREE.Matrix4();
   },
-  spawn(i, n) { const a = (i / n) * PI * 2; return { x: Math.cos(a) * 8.5, y: 0.5, z: Math.sin(a) * 8.5, facing: Math.atan2(-Math.cos(a), -Math.sin(a)) }; },
+  spawn(i, n) { const a = (i / n) * PI * 2; return { x: Math.cos(a) * 11, y: 0.5, z: Math.sin(a) * 11, facing: Math.atan2(-Math.cos(a), -Math.sin(a)) }; },
   setTile(t, y, s = 2.2) {
     const L = this.layers[t.li];
     this.mtx.compose(V(t.x, y - 1.1, t.z), new THREE.Quaternion(), V(s, s, s));
@@ -527,24 +527,25 @@ const cannons = {
   desc: t('Stay on the platform until time runs out. The cannons fire faster and faster'), weapons: t('Fly Blaster'),
   build() {
     const L = new Level({ killY: -12, pickupPool: [{ id: 'fly', w: 1 }] }); G.level = L;
-    const R = 16, tiles = [];
+    const R = 22, tiles = [];
     for (let x = -R + 1; x < R; x += 2) for (let z = -R + 1; z < R; z += 2) if (Math.hypot(x, z) < R) tiles.push({ x, y: -1, z });
     L.inst('Cube_Grass_Single', tiles);
     const b = new CANNON.Body({ type: CANNON.Body.STATIC, material: matGround, collisionFilterGroup: G_STATIC, collisionFilterMask: G_RUNNER | G_BALL | G_PROJ });
     b.addShape(new CANNON.Cylinder(R - 0.6, R - 0.6, 2, 24)); b.position.set(0, -1, 0); world.addBody(b); L.bodies.push(b);
     for (let k = 0; k < 8; k++) { if (k % 2) continue; const a0 = (k / 8) * PI * 2, a1 = ((k + 1) / 8) * PI * 2; L.fence(Math.cos(a0) * (R - 0.6), Math.sin(a0) * (R - 0.6), Math.cos(a1) * (R - 0.6), Math.sin(a1) * (R - 0.6), 0, 'fence-low-straight'); }
     for (let k = 0; k < 8; k++) {
-      const a = (k / 8) * PI * 2 + PI / 8, x = Math.cos(a) * 21, z = Math.sin(a) * 21;
+      const a = (k / 8) * PI * 2 + PI / 8, x = Math.cos(a) * 27, z = Math.sin(a) * 27;
       L.model('RockPlatforms_Medium', x, -2.6, z, 0.9, rand(0, 6)); L.box(x, -0.5, z, 2, 0.5, 2);
       L.cannon(x, z, 0, -Math.cos(a), -Math.sin(a), rand(2.6, 3.4), rand(0, 2.5), 16);
     }
-    L.sweeper(0, 0, 0, 8, 0.7, { cross: true });
-    for (const [x, z] of [[-7, 0], [7, 0], [0, 7]]) L.pickup(x, 0, z);
+    L.sweeper(0, 0, 0, 11, 0.7, { cross: true });
+    L.sweeper(-12, 8, 0, 5, -1.1); L.sweeper(12, -8, 0, 5, 1.1);
+    for (const [x, z] of [[-9, 0], [9, 0], [0, 9]]) L.pickup(x, 0, z);
     L.pickups.forEach((p) => { p.respawn = 10; });
     L.scenery(60, -60, 34, { towers: [[-40, -20, 3], [45, 10, 3]] });
     this.time = 60; this.fly = [[0, 32, 30, 0, 0, 0], [24, 8, 6, 0, 1, 0], [0, 9, 20, 0, 1, 0]];
   },
-  spawn(i, n) { const a = (i / n) * PI * 2; return { x: Math.cos(a) * 11, y: 0, z: Math.sin(a) * 11, facing: Math.atan2(-Math.cos(a), -Math.sin(a)) }; },
+  spawn(i, n) { const a = (i / n) * PI * 2; return { x: Math.cos(a) * 15, y: 0, z: Math.sin(a) * 15, facing: Math.atan2(-Math.cos(a), -Math.sin(a)) }; },
   update(dt) {
     this.time -= dt;
     const k = 1 - this.time / 60;
@@ -563,7 +564,7 @@ const cannons = {
       const perp = (rx * v.z - rz * v.x) / sp;
       if (Math.abs(perp) < 2) { const s = perp >= 0 ? 1 : -1; return { x: p.x + (v.z / sp) * s * 3, z: p.z - (v.x / sp) * s * 3, noJump: along > 2.5, dive: along < 2.5 }; }
     }
-    if (Math.hypot(p.x, p.z) > 10) return { x: 0, z: 0 };
+    if (Math.hypot(p.x, p.z) > 15) return { x: 0, z: 0 };
     return { x: ai.wander.x, z: ai.wander.z };
   },
 };
@@ -632,19 +633,19 @@ const arena = {
   build() {
     const L = new Level({ killY: -12, pickupPool: [{ id: 'rapid', w: 4 }, { id: 'homing', w: 2 }, { id: 'sticky', w: 3 }] }); G.level = L;
     this.cells = [];
-    const R = 11;
+    const R = 15;
     for (let x = -R + 1; x < R; x += 2) for (let z = -R + 1; z < R; z += 2) if (Math.hypot(x, z) < R) this.cells.push({ x, z, ring: Math.hypot(x, z) });
     const { meshes } = L.inst('Cube_Grass_Single', this.cells.map((c) => ({ x: c.x, y: -1, z: c.z })));
     meshes.forEach((m) => { m.frustumCulled = false; });
     this.meshes = meshes;
     this.cells.forEach((c, i) => { c.i = i; c.body = L.box(c.x, -1, c.z, 1, 1, 1); c.state = 0; });
-    for (const [x, z] of [[-6, 0], [6, 0], [0, -6], [0, 6], [-4, 4], [4, -4]]) L.pickup(x, 0, z);
+    for (const [x, z] of [[-8, 0], [8, 0], [0, -8], [0, 8], [-6, 6], [6, -6], [-10, -6], [10, 6]]) L.pickup(x, 0, z);
     L.pickups.forEach((p) => { p.respawn = 6; });
     L.scenery(60, -60, 30, { towers: [[-40, -20, 3], [40, 20, 3]] });
     this.time = 90; this.shrinkT = 25; this.mtx = new THREE.Matrix4(); this.tmp = new THREE.Matrix4();
     this.fly = [[0, 26, 26, 0, 0, 0], [17, 6, 4, 0, 1, 0], [0, 7, 16, 0, 1, 0]];
   },
-  spawn(i, n) { const a = (i / n) * PI * 2; return { x: Math.cos(a) * 7.5, y: 0, z: Math.sin(a) * 7.5, facing: Math.atan2(-Math.cos(a), -Math.sin(a)) }; },
+  spawn(i, n) { const a = (i / n) * PI * 2; return { x: Math.cos(a) * 10, y: 0, z: Math.sin(a) * 10, facing: Math.atan2(-Math.cos(a), -Math.sin(a)) }; },
   update(dt) {
     this.time -= dt; this.shrinkT -= dt;
     if (this.shrinkT <= 0) {
@@ -665,7 +666,7 @@ const arena = {
     if (r.weapon) { const f = WEAPON_TARGET(r); if (f) return { x: f.pos.x, z: f.pos.z, near: 5, avoidHoles: true }; }
     const box = G.level.pickups.filter((k) => k.on).sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0];
     if (box && !r.weapon) return { x: box.x, z: box.z, near: 0.2, avoidHoles: true };
-    ai.wanderT -= dt; if (!ai.wander || ai.wanderT <= 0) { ai.wander = { x: rand(-4, 4), z: rand(-4, 4) }; ai.wanderT = rand(1, 2); }
+    ai.wanderT -= dt; if (!ai.wander || ai.wanderT <= 0) { ai.wander = { x: rand(-6, 6), z: rand(-6, 6) }; ai.wanderT = rand(1, 2); }
     return { x: ai.wander.x, z: ai.wander.z, avoidHoles: true };
   },
 };
