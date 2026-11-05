@@ -563,7 +563,7 @@ function renderLocker() {
   else if (focus?.rare) $('batInfo').innerHTML = `<b>${focus.name} · ${focus.rare}</b><span>${{ gold: t('The ground turns gold behind you as you run'), void: t('A black hole swirls around you'), lava: t('Fire sparks fly off you'), galaxy: t('Stars twinkle around you'), crystal: t('Shiny and clear like a diamond'), rainbow: t('Your colour never stops changing'), bolt: t('Gold and black hole together: the exclusive character') }[focus.fx] || ''}</span>`;
   const p = locker.preview && ITEM[locker.preview];
   $('buybar').hidden = !p;
-  if (p) { $('buyName').textContent = p.name; const can = save.coins >= p.price && !p.secret; $('buyBtn').disabled = !can; $('buyBtn').textContent = p.secret ? t('Code only') : can ? t('Buy for {n}', { n: p.price.toLocaleString('en') }) : t('Need {n} more', { n: (p.price - save.coins).toLocaleString('en') }); }
+  if (p) { $('buyName').textContent = p.desc && p.slot === 'back' ? p.name + ' · ' + p.desc : p.name; const can = save.coins >= p.price && !p.secret; $('buyBtn').disabled = !can; $('buyBtn').textContent = p.secret ? t('Code only') : can ? t('Buy for {n}', { n: p.price.toLocaleString('en') }) : t('Need {n} more', { n: (p.price - save.coins).toLocaleString('en') }); }
 }
 function heroPreview() { const e = {}; if (locker.preview) { const p = ITEM[locker.preview]; e[p.slot] = p.id; } heroDress(e); }
 $('cats').addEventListener('click', (e) => { const b = e.target.closest('[data-cat]'); if (!b) return; sfx.click(); locker.cat = b.dataset.cat; locker.preview = null; heroPreview(); renderLocker(); });

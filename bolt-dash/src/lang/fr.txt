@@ -491,3 +491,7 @@ Cape marron
 Cape rouge
 Cape rose
 Cape verte
+Tu cours plus vite
+Tu tombes lentement de haut et peux te diriger pour atterrir
+Saute encore une fois en l'air
+Tu sautes plus haut

@@ -491,3 +491,7 @@ Capa marrón
 Capa roja
 Capa rosa
 Capa verde
+Corres más rápido
+Caes despacio desde lo alto y puedes dirigirte para aterrizar
+Salta otra vez en el aire
+Saltas más alto

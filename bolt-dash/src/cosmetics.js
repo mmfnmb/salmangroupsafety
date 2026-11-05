@@ -71,10 +71,10 @@ export const ACCS = [
   { id: 'h-knight', slot: 'head', name: t('Knight Helmet'), price: 220, noEars: true, model: 'acc/kk-Knight_Helmet', bone: 'Head', s: 1.75, p: [0, -2.17, -0.03] },
   { id: 'h-viking', slot: 'head', name: t('Bear Hat'), price: 240, noEars: true, model: 'acc/kk-Barbarian_Hat', bone: 'Head', s: 2.0, p: [0, -2.95, -0.14] },
   { id: 'h-wizard', slot: 'head', name: t('Wizard Hat'), price: 200, noEars: true, model: 'acc/kk-Mage_Hat', bone: 'Head', s: 1.11, p: [0, -1.15, 0.07] },
-  { id: 'c-hero', slot: 'back', name: t('Brown Cape'), price: 150, model: 'acc/kk-Barbarian_Cape', bone: 'Torso', s: 1.44, p: [0, -1.2, -0.38] },
-  { id: 'c-knight', slot: 'back', name: t('Red Cape'), price: 170, model: 'acc/kk-Knight_Cape', bone: 'Torso', s: 1.44, p: [0, -1.2, -0.38] },
-  { id: 'c-wizard', slot: 'back', name: t('Pink Cape'), price: 170, model: 'acc/kk-Mage_Cape', bone: 'Torso', s: 1.44, p: [0, -1.2, -0.38] },
-  { id: 'c-rogue', slot: 'back', name: t('Green Cape'), price: 150, model: 'acc/kk-Rogue_Cape', bone: 'Torso', s: 1.44, p: [0, -1.2, -0.38] },
+  { id: 'c-hero', slot: 'back', name: t('Brown Cape'), price: 150, model: 'acc/kk-Barbarian_Cape', bone: 'Torso', s: 1.44, p: [0, -1.45, -0.38], perk: 'speed', desc: t('Run faster') },
+  { id: 'c-knight', slot: 'back', name: t('Red Cape'), price: 170, model: 'acc/kk-Knight_Cape', bone: 'Torso', s: 1.44, p: [0, -1.45, -0.38], perk: 'glide', desc: t('Fall slowly from high places and steer to land') },
+  { id: 'c-wizard', slot: 'back', name: t('Pink Cape'), price: 170, model: 'acc/kk-Mage_Cape', bone: 'Torso', s: 1.44, p: [0, -1.45, -0.38], perk: 'double', desc: t('Jump again in the air') },
+  { id: 'c-rogue', slot: 'back', name: t('Green Cape'), price: 150, model: 'acc/kk-Rogue_Cape', bone: 'Torso', s: 1.44, p: [0, -1.45, -0.38], perk: 'high', desc: t('Jump higher') },
   { id: 'k-knight', slot: 'back', name: t('Knight Shield'), price: 180, model: 'acc/Shield_Heater', bone: 'Torso', s: 0.5, p: [0, 0.1, -0.62], r: [0, PI, 0] },
 ];
 

@@ -172,7 +172,8 @@ export class Runner {
         else if (zn.type === 'slime') this.slow(0.4);
       }
       if (!dive) {
-        let speed = RUN * (this.isPlayer ? (G.modeObj?.playerSpeed?.() ?? 1) : this.ai.speed) * (this.slowT > 0 ? 0.4 : 1) * (G.modeObj?.speedMul || 1);
+        const perk = ITEM[this.equip?.back]?.perk;
+        let speed = RUN * (this.isPlayer ? (G.modeObj?.playerSpeed?.() ?? 1) : this.ai.speed) * (perk === 'speed' ? 1.1 : 1) * (this.slowT > 0 ? 0.4 : 1) * (G.modeObj?.speedMul || 1);
         let tx = ix * speed + gvx + zx, tz = iz * speed + gvz + zz;
         if (this.boostT > 0) { tx += this.boostDir.x * 8; tz += this.boostDir.z * 8; if (Math.random() < dt * 25) puffs.emit({ pos: V(b.position.x, b.position.y + 0.3, b.position.z), vel: V(rand(-1, 1), rand(0.5, 1.5), rand(-1, 1)), life: 0.35, size: 0.14, drag: 2, color: 0xffd23f }); }
         const acc = (this.grounded ? (this.slipT > 0 ? 9 : GROUND_ACC) : AIR_ACC * (this.launchT > 0 ? 0.15 : 1)) * dt;
@@ -183,8 +184,15 @@ export class Runner {
       this.coyote = this.grounded ? 0.12 : Math.max(0, this.coyote - dt);
       this.jumpBuf = inp.jump ? 0.13 : Math.max(0, this.jumpBuf - dt);
       inp.jump = false;
+      // cape powers: double jump, higher jump, and a slow glide when falling
+      const cape = ITEM[this.equip?.back]?.perk;
+      if (this.grounded) this.airJump = false;
+      if (cape === 'double' && this.jumpBuf > 0 && this.coyote <= 0 && !this.grounded && !this.airJump && !dive && v.y < 6) {
+        this.airJump = true; this.jumpBuf = 0; v.y = JUMP_V * 0.9; this.squash = 1.2; this.play('Jump', 0.05); fx.burst(V(b.position.x, b.position.y + 0.3, b.position.z), 0xff7ac0, 8, 3); if (this.isPlayer) sfx.jump();
+      }
+      if (cape === 'glide' && !this.grounded && v.y < -3.2 && this.state === 'run') { v.y = damp(v.y, -3.2, 10, dt); if (Math.random() < dt * 12) puffs.emit({ pos: V(b.position.x, b.position.y + 0.9, b.position.z), vel: V(0, 0.6, 0), life: 0.4, size: 0.12, drag: 2, color: 0xffd0d0 }); }
       if (this.jumpBuf > 0 && this.coyote > 0 && !dive) {
-        v.y = JUMP_V; this.coyote = 0; this.jumpBuf = 0; this.grounded = false; this.squash = 1.25;
+        v.y = JUMP_V * (cape === 'high' ? 1.18 : 1); this.coyote = 0; this.jumpBuf = 0; this.grounded = false; this.squash = 1.25;
         this.play('Jump', 0.05);
         fx.dust(V(b.position.x, b.position.y + 0.1, b.position.z), 5);
         if (this.isPlayer) sfx.jump();

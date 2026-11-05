@@ -491,3 +491,7 @@ Brown Cape
 Red Cape
 Pink Cape
 Green Cape
+Run faster
+Fall slowly from high places and steer to land
+Jump again in the air
+Jump higher
