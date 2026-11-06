@@ -237,11 +237,11 @@ float gH(vec3 p){ return fract(sin(dot(p, vec3(12.9898,78.233,37.719))) * 43758.
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
 { vec3 c3 = floor(vGP * 650.0); float row = floor(gT * 2.0 + c3.y * 0.004); float sh = step(0.93, gH(vec3(c3.y, floor(gT * 8.0), 1.0))) * floor(gH(vec3(c3.y, floor(gT*8.0), 2.0)) * 5.0);
   vec3 c = vec3(c3.x + sh, c3.y, c3.z); float h = gH(c + floor(gT * 3.0) * step(0.8, gH(c)));
-  vec3 col = gBar(floor(h * 7.0) + row); vec3 f = fract(vGP * 650.0); float edge = step(0.12, f.x) * step(0.12, f.y) * step(0.12, f.z) + (1.0 - step(0.12, f.x * f.y * f.z + 0.12)) * 0.0;
+  vec3 col = gBar(floor(h * 7.0) + row); vec3 f = fract(vGP * 650.0); float edge = step(0.3, f.x) * step(0.3, f.y) * step(0.3, f.z); if (edge < 0.5) discard; // a gap between pixels, like a TV screen
   if (fract(gT * 0.2) > 0.95) col = vec3(gH(c + gT));
-  diffuseColor.rgb = col * mix(0.25, 1.0, edge); totalEmissiveRadiance += col * mix(0.1, 0.9, edge) * (0.8 + 0.2 * sin(gT * 20.0 + h * 30.0)); }`);
+  diffuseColor.rgb = col; totalEmissiveRadiance += col * 1.1 * (0.8 + 0.2 * sin(gT * 20.0 + h * 30.0)); }`);
   };
-  mat.needsUpdate = true;
+  mat.side = THREE.DoubleSide; mat.needsUpdate = true;
 }
 export function skinFx(model, dt, pos, opts = {}) {
   const u = model.userData; if (!u.fx) return;
