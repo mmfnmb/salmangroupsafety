@@ -225,6 +225,24 @@ const goldGeo = new THREE.CircleGeometry(0.55, 6); goldGeo.rotateX(-PI / 2);
 const goldMat = new THREE.MeshStandardMaterial({ color: 0xffc21a, metalness: 1, roughness: 0.2, emissive: 0x6a3a00, emissiveIntensity: 0.6, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
 let goldPool = null; const goldMarks = [];
 const tmpM = new THREE.Matrix4(), tmpQ = new THREE.Quaternion(), tmpS = new THREE.Vector3();
+// turns a material into small glowing squares (TV colour-bar colours) that flicker and slide over time
+function pixelate(mat, tU) {
+  mat.onBeforeCompile = (sh) => {
+    sh.uniforms.gT = tU;
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vGP;').replace('#include <project_vertex>', '#include <project_vertex>\nvGP = transformed;');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
+varying vec3 vGP; uniform float gT;
+vec3 gBar(float i){ i = mod(i, 7.0); return i < 1.0 ? vec3(.75) : i < 2.0 ? vec3(.75,.75,0.) : i < 3.0 ? vec3(0.,.75,.75) : i < 4.0 ? vec3(0.,.75,0.) : i < 5.0 ? vec3(.75,0.,.75) : i < 6.0 ? vec3(.75,0.,0.) : vec3(0.,0.,.75); }
+float gH(vec3 p){ return fract(sin(dot(p, vec3(12.9898,78.233,37.719))) * 43758.5453); }`)
+      .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+{ vec3 c3 = floor(vGP * 650.0); float row = floor(gT * 2.0 + c3.y * 0.004); float sh = step(0.93, gH(vec3(c3.y, floor(gT * 8.0), 1.0))) * floor(gH(vec3(c3.y, floor(gT*8.0), 2.0)) * 5.0);
+  vec3 c = vec3(c3.x + sh, c3.y, c3.z); float h = gH(c + floor(gT * 3.0) * step(0.8, gH(c)));
+  vec3 col = gBar(floor(h * 7.0) + row); vec3 f = fract(vGP * 650.0); float edge = step(0.12, f.x) * step(0.12, f.y) * step(0.12, f.z) + (1.0 - step(0.12, f.x * f.y * f.z + 0.12)) * 0.0;
+  if (fract(gT * 0.2) > 0.95) col = vec3(gH(c + gT));
+  diffuseColor.rgb = col * mix(0.25, 1.0, edge); totalEmissiveRadiance += col * mix(0.1, 0.9, edge) * (0.8 + 0.2 * sin(gT * 20.0 + h * 30.0)); }`);
+  };
+  mat.needsUpdate = true;
+}
 export function skinFx(model, dt, pos, opts = {}) {
   const u = model.userData; if (!u.fx) return;
   u.fxT = (u.fxT || 0) + dt; const t = u.fxT, moving = opts.moving, grounded = opts.grounded !== false;
@@ -232,10 +250,10 @@ export function skinFx(model, dt, pos, opts = {}) {
   const at = (dx, dy, dz) => V(pos.x + dx, pos.y + dy, pos.z + dz);
   // the owner's Glitch: TV test-pattern colour bars that keep sliding, cutting out to static and jumping a step
   if (u.fx === 'glitch') {
-    const BARS = [0xc0c0c0, 0xc0c000, 0x00c0c0, 0x00c000, 0xc000c0, 0xc00000, 0x0000c0], k = Math.floor(t * 7);
-    const staticOn = (t % 5) > 4.75, m = u.mats;
-    if (staticOn) { const g = Math.random(); m.Main?.mat.color.setRGB(g, g, g); m.Main2?.mat.color.setRGB(1 - g, 1 - g, 1 - g); }
-    else { m.Main?.mat.color.setHex(BARS[k % 7]); m.Main2?.mat.color.setHex(BARS[(k + 3) % 7]); m.Main_Light?.mat.color.setHex(BARS[(k + 5) % 7]); }
+    const BARS = [0xc0c0c0, 0xc0c000, 0x00c0c0, 0x00c000, 0xc000c0, 0xc00000, 0x0000c0];
+    // the body is drawn as a mosaic of tiny glowing squares in the test-pattern colours, flickering cell by cell
+    if (!u.glitchU) { u.glitchU = { value: 0 }; for (const k of ['Main', 'Main2', 'Main_Light']) { const mt = u.mats[k]?.mat; if (mt) pixelate(mt, u.glitchU); } }
+    u.glitchU.value = t;
     model.visible = !((t % 7) > 6.85);
     if (Math.random() < dt * (moving ? 22 : 8)) P.emit({ pos: at(rand(-0.5, 0.5), rand(0.2, 1.8), rand(-0.5, 0.5)), vel: V(0, 0.4, 0), life: 0.5, size: 0.1, color: BARS[Math.floor(Math.random() * 7)] });
   }
