@@ -44,14 +44,14 @@ const FRUIT = /apple|banana|orange|pear|grapes|cherries|strawberry|watermelon|pi
 const VEG = /tomato|carrot|corn$|broccoli|cauliflower|mushroom|eggplant|paprika|onion|pumpkin|radish|cabbage|beet|leek|celery|salad/;
 const foodKind = (n) => (SWEET.test(n) ? 'jump' : FRUIT.test(n) ? 'speed' : VEG.test(n) ? 'grip' : 'power');
 const nice = (n) => n.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-const FOOD = FOODS.map((n, i) => ({ id: 'f:' + n, model: n, name: nice(n), price: 20 + (i % 9) * 10, kind: foodKind(n), heavy: !SWEET.test(n) && !FRUIT.test(n) && !VEG.test(n) }));
+const FOOD = FOODS.map((n, i) => ({ id: 'f:' + n, model: n, name: t(nice(n)), price: 20 + (i % 9) * 10, kind: foodKind(n), heavy: !SWEET.test(n) && !FRUIT.test(n) && !VEG.test(n) }));
 // drinks: a handful of bottle/can/cup models, many drinks (generic names, no real brands)
 const DRINK_NAMES = [['Cola', 'soda-can', 'speed'], ['Diet Cola', 'can-small', 'speed'], ['Lemon Soda', 'soda-bottle', 'speed'], ['Orange Fizz', 'soda-can', 'speed'], ['Grape Fizz', 'soda', 'speed'], ['Cherry Pop', 'soda-glass', 'speed'], ['Ginger Ale', 'can', 'speed'], ['Root Beer', 'soda-bottle', 'power'], ['Cream Soda', 'soda-glass', 'jump'], ['Sparkling Water', 'soda-bottle', 'grip'],
   ['Orange Juice', 'carton', 'speed'], ['Apple Juice', 'carton-small', 'speed'], ['Mango Juice', 'carton', 'speed'], ['Guava Juice', 'carton-small', 'speed'], ['Strawberry Juice', 'glass', 'speed'], ['Lemonade', 'glass', 'speed'], ['Mint Lemonade', 'glass', 'grip'], ['Watermelon Juice', 'glass', 'speed'], ['Sugarcane Juice', 'glass', 'power'], ['Sobia', 'glass', 'jump'],
   ['Tamarind', 'glass', 'grip'], ['Licorice', 'glass', 'grip'], ['Hibiscus', 'glass', 'speed'], ['Dates Milk', 'carton-small', 'power'], ['Milk', 'carton', 'power'], ['Chocolate Milk', 'carton-small', 'jump'], ['Strawberry Milk', 'carton-small', 'jump'], ['Banana Milk', 'carton-small', 'power'], ['Yogurt Drink', 'carton-small', 'grip'], ['Smoothie', 'frappe', 'speed'],
   ['Milkshake', 'frappe', 'jump'], ['Frappe', 'frappe', 'recover'], ['Iced Coffee', 'frappe', 'recover'], ['Coffee', 'cup-coffee', 'recover'], ['Espresso', 'cup-saucer', 'recover'], ['Turkish Coffee', 'cup-saucer', 'recover'], ['Latte', 'mug', 'recover'], ['Cappuccino', 'mug', 'recover'], ['Hot Chocolate', 'mug', 'jump'], ['Tea', 'cup-tea', 'recover'],
   ['Mint Tea', 'cup-tea', 'grip'], ['Green Tea', 'cup-tea', 'grip'], ['Anise', 'cup-tea', 'grip'], ['Sahlab', 'mug', 'power'], ['Iced Tea', 'glass', 'speed'], ['Energy Bolt', 'can', 'speed'], ['Energy Bolt Zero', 'can-small', 'recover'], ['Sports Drink', 'soda-bottle', 'recover'], ['Coconut Water', 'coconut-half', 'grip'], ['Dizzy Drink', 'cocktail', 'dizzy']];
-const DRINK = DRINK_NAMES.map(([name, model, kind], i) => ({ id: 'd:' + i, model, name, price: 15 + (i % 7) * 8, kind }));
+const DRINK = DRINK_NAMES.map(([name, model, kind], i) => ({ id: 'd:' + i, model, name: t(name), price: 15 + (i % 7) * 8, kind }));
 const BUFF_TXT = () => ({ power: t('Hits harder in your next match'), jump: t('Jumps higher in your next match'), speed: t('Runs faster in your next match'), grip: t('Slips less in your next match'), recover: t('Gets up faster in your next match'), dizzy: t('Everything spins for a while') });
 export const NATIONS = [
   { id: 'azuria', name: 'Azuria', col: 0x3d8bff, game: 'football' }, { id: 'auria', name: 'Auria', col: 0xd4a017, game: 'race' },
@@ -206,7 +206,7 @@ const world = {
         saveLife(); ctx.refreshMenu?.();
       });
     } else if (kind === 'clothes') ctx.openWardrobe();
-    else if (kind === 'furniture') ctx.panel(t('Furniture shop'), FURN.map((n) => ({ id: n, name: nice(n.replace(/([A-Z])/g, ' $1')), sub: '', price: furnPrice(n), model: W('furniture-kit', n) })), (id) => { const pr = furnPrice(id); if (save.coins < pr) return toast(t('Need {n} more', { n: pr - save.coins })); save.coins -= pr; life.furn.push(id); saveLife(); sfx.coin(); toast(t('Delivered to your home: place it with Decorate'), 2.5); });
+    else if (kind === 'furniture') ctx.panel(t('Furniture shop'), FURN.map((n) => ({ id: n, name: t(nice(n.replace(/([A-Z])/g, ' $1'))), sub: '', price: furnPrice(n), model: W('furniture-kit', n) })), (id) => { const pr = furnPrice(id); if (save.coins < pr) return toast(t('Need {n} more', { n: pr - save.coins })); save.coins -= pr; life.furn.push(id); saveLife(); sfx.coin(); toast(t('Delivered to your home: place it with Decorate'), 2.5); });
   },
   estate() {
     const forSale = this.lots.filter((l) => l.home && !l.home.owner && !life.homes[l.home.id]);
@@ -245,7 +245,7 @@ const world = {
   steal(l) { l.taken = true; l.o.visible = false; save.coins += l.value; sfx.coin(); toast('+' + l.value, 1.2); const seen = this.witnessed(); this.crime(1, seen); if (!seen) toast(t('Nobody saw you... for now'), 2); },
   decorate() {
     const home = life.homes[this.inside.lot.home.id]; if (!life.furn.length) return toast(t('Buy furniture at the furniture shop first'), 2.5);
-    ctx.panel(t('Decorate'), life.furn.map((n, i) => ({ id: String(i), name: nice(n.replace(/([A-Z])/g, ' $1')), sub: t('Placed where you stand'), price: 0, model: W('furniture-kit', n) })), (id) => {
+    ctx.panel(t('Decorate'), life.furn.map((n, i) => ({ id: String(i), name: t(nice(n.replace(/([A-Z])/g, ' $1'))), sub: t('Placed where you stand'), price: 0, model: W('furniture-kit', n) })), (id) => {
       const n = life.furn.splice(+id, 1)[0], p = G.player.pos, it = { n, x: p.x - this.inside.cx, z: p.z - this.inside.cz, ry: G.player.facing + PI };
       home.items.push(it); placeF(n, p.x, 0, p.z, 1.9, it.ry, this.inside.g); G.player.reset(p.x, 0.5, p.z + 1.5, G.player.facing); saveLife();
     });
