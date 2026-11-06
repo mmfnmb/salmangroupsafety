@@ -14,3 +14,4 @@ Kenney textures (colormap.png) were embedded into each .glb.
 - k/gy-*: Kenney Graveyard Kit (CC0, kenney.nl), via github.com/mashumafi/hunted_house_bbgj5
 - k/pet-*: Ultimate Monsters by Quaternius (CC0), via github.com/mika314/KitchenSink
 - acc/kk-*: KayKit Adventurers by Kay Lousberg (CC0), via github.com/Tamicktom/game-3d
+- world/*.pack: Kenney City Kit (Commercial, Suburban, Roads), Car Kit, Food Kit, Mini Market, Furniture Kit (CC0, kenney.nl), via github.com/series-ai/jam-ready-assets

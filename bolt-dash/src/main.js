@@ -7,6 +7,7 @@ import { MODES, MODE_LIST } from './modes.js';
 import { cardOvr, cardTier } from './sports.js';
 import './party.js';
 import './slasher.js';
+import { world as worldMode, initWorld, vortex, loadPacks, need, useBuff, WORLD_MODELS, life, saveLife } from './world.js';
 import { WEAPONS, giveWeapon, fire, botFire, updateProjectiles, updatePickups, tickWeapons, clearProjectiles, dropWeapon } from './weapons.js';
 import { editor, customMode, getMap, PIECES, MAP_TYPES, piecesFor } from './build.js';
 import { comm, initCommunity, allMaps, featuredMaps, mapHash, publishMap, unpublishMap, recordPlay, liked, toggleLike, setFeatured, PUBLISH_PRICE, MAX_MAPS } from './community.js';
@@ -87,6 +88,7 @@ addEventListener('keydown', (e) => {
   if (e.code === 'Space') { ctl.jump = true; e.preventDefault(); }
   if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'KeyE') ctl.dive = true;
   if (e.code === 'KeyF' || e.code === 'Enter') { ctl.fire = true; ctl.held = true; }
+  if (e.code === 'KeyE' && G.modeObj?.id === 'world') { if (!worldMode.serve()) worldMode.act(); }
   if (e.code === 'KeyQ') ctl.push = true;
   if (e.code === 'KeyG') ctl.grab = true;
   if (e.code === 'Escape' && flow.state === 'play') togglePause();
@@ -632,6 +634,9 @@ async function playEpisode(i) {
   load();
 }
 $('mMovie').addEventListener('click', () => { sfx.click(); openMovies(); });
+$('mWorld').addEventListener('click', () => { sfx.click(); enterWorld(); });
+$('pWorld').addEventListener('click', () => { sfx.click(); G.paused = false; show('pause', false); vortex(() => { cleanupRound(); enterWorld(true); }); });
+$('wAct').addEventListener('click', () => { sfx.click(); if (!worldMode.serve()) worldMode.act(); });
 function playIntro(force) {
   if (!force && store.get('introSeen', false)) return;
   const v = $('introVid'), src = document.querySelector('meta[name="bolt-intro"]')?.content || './media/intro.mp4';
@@ -705,6 +710,7 @@ function startRound() {
     return r;
   });
   G.player = G.runners.find((r) => r.isPlayer);
+  if (md.id !== 'world' && G.player) { const b = useBuff(); if (b) { G.player.food = b.kind; setTimeout(() => toast(t('Food power for this match'), 2), 1500); } }
   const q = rd.q ?? (md.team ? null : 1);
   flow.q = md.team ? null : Math.min(q, G.runners.length - 1);
   flow.finishedCount = 0; flow.coins = 0; flow.roundT = 0; flow.endT = 0; flow.done = false;
@@ -823,6 +829,45 @@ G.endRound = () => {
   if (isShow) setTimeout(() => ceremony(qualified, () => showResult(won, last, qualified, earned)), 900);
   else setTimeout(() => showResult(won, last, qualified, earned), 700);
 };
+// ---------------------------------------------------------------- the open world
+async function enterWorld(quiet) {
+  sfx.unlock(); const go = async () => {
+    show('menu', false); show('pause', false); toast(t('Loading the city…'), 30);
+    try { await loadPacks(); await need(WORLD_MODELS); } catch (e) { toast(t('The city could not load. Open the game from its published link'), 4); toMenu(); return; }
+    flow.show = { choice: 'world', players: [{ name: save.name, equip: { ...save.equip }, isPlayer: true }], rounds: [{ m: 'world', q: 0 }], coins: 0 }; flow.round = 0;
+    startRound(); show('intro', false); beginPlay(); flow.state = 'play'; $('big').hidden = true; toast('', 0.01);
+    if (!life.gift) { life.gift = true; save.coins += 200; saveLife(); setTimeout(() => toast(t('Welcome to the city! Gift: 200 coins'), 3), 600); }
+  };
+  if (quiet) go(); else vortex(go);
+}
+G.enterWorld = enterWorld;
+function worldPanel(title, items, onPick) {
+  $('ovTitle').textContent = title;
+  $('ovBody').innerHTML = `<div class="wlist">${items.map((it) => `<button class="witem" data-id="${esc(it.id)}"><span class="wimg" data-m="${it.model || ''}"></span><b>${esc(it.name)}</b><span>${esc(it.sub || '')}</span>${it.price ? `<em>${icon('coin')}${it.price.toLocaleString('en')}</em>` : ''}</button>`).join('')}</div>`;
+  show('ov', true);
+  $('ovBody').querySelectorAll('[data-id]').forEach((b) => b.addEventListener('click', () => { sfx.click(); onPick(b.dataset.id); }));
+  // little pictures of each item, drawn one by one
+  (async () => { for (const el of $('ovBody').querySelectorAll('[data-m]')) { const m = el.dataset.m; if (!m) continue; await need([m.slice(2)]); const u = thumbOf(m); if (u) el.style.backgroundImage = `url(${u})`; await new Promise(requestAnimationFrame); if ($('ov').hidden) break; } })();
+}
+const thumbCache = {};
+function thumbOf(name) {
+  if (thumbCache[name]) return thumbCache[name]; if (!M[name]) return null;
+  const size = 96, rt = thumbOf.rt || (thumbOf.rt = new THREE.WebGLRenderTarget(size, size)), ts = thumbOf.sc || (thumbOf.sc = (() => { const s = new THREE.Scene(); s.add(new THREE.HemisphereLight(0xffffff, 0x8899bb, 2.6)); const d = new THREE.DirectionalLight(0xffffff, 2); d.position.set(2, 3, 4); s.add(d); return s; })());
+  const o = M[name].scene.clone(); ts.add(o); const b = new THREE.Box3().setFromObject(o), c = b.getCenter(V()), r = b.getSize(V()).length() || 1;
+  const cam = new THREE.PerspectiveCamera(30, 1, 0.01, 100); cam.position.set(c.x + r * 0.9, c.y + r * 0.7, c.z + r * 1.5); cam.lookAt(c);
+  renderer.setRenderTarget(rt); renderer.setClearColor(0x000000, 0); renderer.clear(); renderer.render(ts, cam);
+  const px = new Uint8Array(size * size * 4); renderer.readRenderTargetPixels(rt, 0, 0, size, size, px); renderer.setRenderTarget(null); ts.remove(o);
+  const cv = document.createElement('canvas'); cv.width = cv.height = size; const cx = cv.getContext('2d'), img = cx.createImageData(size, size);
+  for (let y = 0; y < size; y++) img.data.set(px.subarray((size - 1 - y) * size * 4, (size - y) * size * 4), y * size * 4);
+  cx.putImageData(img, 0, 0); return (thumbCache[name] = cv.toDataURL());
+}
+function worldClothes() {
+  const list = ITEMS.filter((i) => i.slot !== 'bat' && i.slot !== 'pet' && !i.hidden && !i.secret && !i.rare);
+  worldPanel(t('Clothes shop'), list.map((i) => ({ id: i.id, name: i.name, sub: save.owned.includes(i.id) ? t('Owned') : '', price: save.owned.includes(i.id) ? 0 : i.price, model: null })), (id) => {
+    const it = ITEM[id]; if (!save.owned.includes(id)) { if (save.coins < it.price) return toast(t('Need {n} more', { n: it.price - save.coins })); save.coins -= it.price; save.owned.push(id); sfx.coin(); }
+    save.equip[it.slot] = id; persist2(); if (G.player) dress(G.player.model, save.equip, { bat: false }); toast(t('You bought {x}', { x: it.name }), 1.5);
+  });
+}
 // between Show rounds: everyone stands on one big box split into squares (one per player).
 // The qualified ones celebrate; behind each loser a crate slides out and shoves them into the sea.
 const cer = { g: null, t: 0, list: [], done: null };
@@ -1164,6 +1209,15 @@ translateDom();
   show('loading', false);
   toMenu();
   frame();
+  // ---- the open world
+  initWorld({
+    showAct(label) { const b = $('wAct'); if (!label) { b.hidden = true; return; } b.hidden = false; if (b.textContent !== label) b.textContent = label; },
+    panel(title, items, onPick) { worldPanel(title, items, onPick); },
+    openWardrobe() { worldClothes(); },
+    goPlay(choice) { cleanupRound(); show('hud', false); startMatchmaking(choice); },
+    restartWorld() { cleanupRound(); enterWorld(true); },
+    refreshMenu,
+  });
   comm.onOwner = () => { heroDress(); refreshMenu(); toast(t('Glitch') + ' · ' + t('Owner'), 3); };
   playIntro(false); initCommunity();
   window.__boltdash = { G, flow, ctl, MODES, comm, setTab, save, camera, renderer, scene, render: (dt) => renderScene(dt), giveWeapon, startRound, startMatchmaking, toMenu, openBuild, editor, sim(sec, hook) { for (let i = 0; i < sec * 60; i++) { hook && hook(i / 60); if (flow.state === 'fly') { flow.flyT = 99; flyCam(1 / 60); } if (flow.state === 'count' || flow.state === 'play') { stepRound(1 / 60); playCam(1 / 60); } } } };

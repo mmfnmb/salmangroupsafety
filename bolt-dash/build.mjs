@@ -30,3 +30,7 @@ html = html.replace(/<script type="module" src="\.\/src\/main\.js"><\/script>/,
 mkdirSync('dist', { recursive: true });
 writeFileSync('dist/bolt-dash.html', html);
 console.log('dist/bolt-dash.html', (html.length / 1e6).toFixed(2), 'MB');
+
+// world packs (city models) are separate files next to the page; copy them for local testing
+import { cpSync, existsSync } from 'node:fs';
+if (existsSync('world')) cpSync('world', 'dist/world', { recursive: true });

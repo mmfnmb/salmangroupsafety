@@ -355,6 +355,14 @@ html[dir=rtl] svg:has(use[href="#i-back"]){transform:scaleX(-1)}
 .seg{display:flex;gap:4px;background:var(--lav);border-radius:14px;padding:4px}
 .seg button{flex:1;font-family:var(--body);font-weight:900;font-size:14px;padding:6px;border-radius:10px;background:transparent}
 .seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.vortex{position:fixed;inset:0;z-index:50;background:#0b0618;transition:opacity .6s;overflow:hidden}
+.vortex i{position:absolute;display:block;background-repeat:no-repeat;will-change:transform;box-shadow:0 0 12px rgba(160,120,255,.5)}
+.vortex b{position:absolute;left:50%;top:50%;width:140vmax;height:140vmax;border-radius:50%;background:conic-gradient(from 0deg,transparent,#8a5cff,#3dd6ff,transparent 30%,#ff7ac0,transparent 55%,#ffd23f,transparent 80%,#8a5cff);mix-blend-mode:screen;opacity:0;filter:blur(8px)}
+#wAct{position:fixed;left:50%;bottom:max(130px,calc(env(safe-area-inset-bottom,0px) + 110px));transform:translateX(-50%);z-index:6;font-size:18px;padding:12px 22px}
+.wlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;max-height:60vh;overflow:auto}
+.witem{display:grid;gap:2px;justify-items:center;text-align:center;background:var(--lav);border-radius:14px;padding:8px;font-size:12px}
+.witem b{font-size:13px}.witem em{font-style:normal;font-weight:800;display:flex;gap:3px;align-items:center}
+.wimg{width:72px;height:72px;background:center/contain no-repeat}
 .statg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .statg div{background:var(--lav);border-radius:14px;padding:8px;text-align:center;font-weight:800;font-size:12px}
 .statg b{display:block;font-family:var(--display);font-weight:400;font-size:26px}
@@ -458,6 +466,7 @@ html[dir=rtl] svg:has(use[href="#i-back"]){transform:scaleX(-1)}
       <div class="pill"><span class="dot pk"><svg class="i"><use href="#i-crown"/></svg></span><span id="mWins">0</span></div>
       <div class="topbtns">
         <button class="iconbtn" id="mMovie" aria-label="Movie"><svg class="i"><use href="#i-film"/></svg></button>
+        <button class="iconbtn" id="mWorld" aria-label="World"><svg class="i"><use href="#i-flag"/></svg></button>
         <button class="iconbtn" id="mWheel" aria-label="Lucky Wheel"><svg class="i"><use href="#i-wheel"/></svg><span class="badge" id="wheelBadge" hidden></span></button>
         <button class="iconbtn" id="mCode" aria-label="Redeem code"><svg class="i"><use href="#i-gift"/></svg></button>
         <button class="iconbtn" id="mSet" aria-label="Settings"><svg class="i"><use href="#i-gear"/></svg></button>
@@ -565,6 +574,7 @@ html[dir=rtl] svg:has(use[href="#i-back"]){transform:scaleX(-1)}
     <button class="act" id="bGrab" aria-label="Grab"><svg class="i"><use href="#i-wave"/></svg></button>
     <button class="act" id="bFire" aria-label="Hit" hidden><svg class="i"><use href="#i-fire"/></svg></button>
   </div>
+  <button class="btn" id="wAct" hidden></button>
   <div class="keys" id="keys">WASD: run · Space: jump · Shift: dive · F or click: hit (hold to charge) · Drag: turn the camera · Q: push · G (hold): grab</div>
 </div>
 <div id="big" hidden></div>
@@ -574,7 +584,7 @@ html[dir=rtl] svg:has(use[href="#i-back"]){transform:scaleX(-1)}
 <div id="ov" class="layer" hidden><div class="sheet"><header><h2 id="ovTitle"></h2><button id="ovClose" aria-label="Close">×</button></header><div class="body" id="ovBody"></div></div></div>
 <video id="introVid" playsinline hidden></video><div id="subLine" hidden></div><button class="btn alt skipbtn" id="introSkip" hidden>Skip</button>
 <div id="pause" class="layer veil" hidden>
-  <div class="card"><h2>Paused</h2><div class="btns"><button class="btn" id="pResume">Resume</button><button class="btn alt" id="pQuit">Menu</button></div></div>
+  <div class="card"><h2>Paused</h2><div class="btns"><button class="btn" id="pResume">Resume</button><button class="btn" id="pWorld">World</button><button class="btn alt" id="pQuit">Menu</button></div></div>
 </div>
 
 <div id="result" class="layer veil" hidden>
