@@ -56,3 +56,8 @@ Everything agreed so far, in one place. Done items are marked ✅.
 - Jobs: delivery first, then taxi, shop worker, coach, commentator, bodyguard, police/detective, pro player.
 - Phase 2 in the same batch: police and cameras, permadeath + revenge file, travel risk, business (build venues), fame ranking + statue.
 - Skins in the same batch: Cosmos (moving space on the body, 25,000 coins, Rare); owner-only Invisible (only worn clothes show; pet hides too). Half-ghost (eyes + small feathers) later.
+- 100 foods + 50 drinks (Kenney Food Kit and others; some drinks share a bottle with a different colour/label).
+- Enterable buildings: shops, restaurants, homes for sale, stadium, police station (others are decoration). Inside = a separate room scene built from furniture models.
+- Some NPC homes are left unlocked (they forgot the key); you can walk in.
+- Thief job: break into some homes (unlocked doors, climbing walls/windows); crimes raise your wanted level: alarms, neighbours calling, cameras, police chase.
+- Homes come furnished or empty: empty ones need furniture bought from a furniture shop (sofa, TV, bed, kitchen, decor) and placed with a grid like build mode.
