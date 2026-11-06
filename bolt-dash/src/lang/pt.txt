@@ -539,3 +539,89 @@ Cosmos
 Invisível
 Too heavy! You need to be healthy and strong (eat power food)
 Too heavy to lift: you drag it (eat power food to lift it)
+Hits harder in your next match
+Jumps higher in your next match
+Runs faster in your next match
+Slips less in your next match
+Gets up faster in your next match
+Everything spins for a while
+The World
+World
+Live in the city: eat, work, buy a home, travel
+Police station
+a car
+Go outside
+Take it
+Decorate
+Get out of the car
+Drive
+Restaurant
+Drinks shop
+Clothes shop
+Furniture shop
+Homes for sale
+Stadium
+Jobs
+Airport
+Business
+Go home
+The door is open...
+Climb in through the window
+Revenge! +1500 coins
+Driving! Press the action button to get out
+Too much heavy food! You will be a bit slower next match
+Delivered to your home: place it with Decorate
+Furnished house
+Empty house
+Sofa, TV, bed and kitchen included
+Buy furniture and place it yourself
+You bought a home! You will wake up here
+An alarm goes off!
+Nobody saw you... for now
+Buy furniture at the furniture shop first
+Placed where you stand
+Someone saw you! Wanted level up
+The police found the evidence. They are coming for you!
+Arrested! You paid a {n} coin fine
+Turn yourself in
+Pay a smaller fine and clear your wanted level
+Your record is clean
+You died. A new life begins... and a revenge file is open
+Delivery
+Take the parcel to the address before time runs out
+Taxi driver
+Get in a car, pick up the passenger, drive them home
+Shop worker
+Serve the customers at the till
+Police officer
+Catch the thief running through the city
+Pro player
+Play a Show match for a salary
+Deliver the parcel
+Pick up the passenger
+Serve 5 customers
+Catch the thief
+Get in a car first
+Passenger on board! Drive to the star
+Serve!
+Too late! Job failed
+Serve {n} more customers
+Job done! +{n} coins
+Play {x}
+The famous game of {x}
+Plane: safe and fast
+Ship: cheap, but storms happen
+A storm! You washed up on the shore and lost {n} coins
+Your {x} (earning)
+Building your {x}...
+Land for sale
+Collect your earnings
+Buy the land, then build an arena, cinema or restaurant
+Cinema
+Construction started! Come back in 10 minutes
+You collected {n} coins
+Your {x} is open!
+Food power for this match
+Loading the city…
+The city could not load. Open the game from its published link
+Welcome to the city! Gift: 200 coins
