@@ -45,3 +45,14 @@ Everything agreed so far, in one place. Done items are marked ✅.
 - Business: famous rich players buy land and build venues brick by brick (materials, motors, workers) and earn from visitors; host tournaments, sponsor teams. Fame ranking; the most famous player gets a personal skin and a statue.
 - Bolt Dash build mode stays free building; player maps are only promoted when players love them (record likes) ✅ (likes + promotion exist).
 - Online multiplayer needed for player-vs-player features; build with bots first.
+
+## Open world (agreed plan, all in one batch)
+- Separate model files that load only when entering the world (game start stays light).
+- **Entering the world:** from the menu a swirling vortex opens behind you, made of pieces of the menu; a beam of light pulls you in. From inside a game the same vortex shows pieces of that game's picture as you're pulled out.
+- City island: downtown, shops, stadium (doors = mini-games), park, beach, port; day/night; NPCs; drivable cars.
+- **Food (many, each with a small effect for the next match):** shawarma, burger, koshari, foul & taameya, pizza, feteer, hawawshi, liver sandwich, sushi, ice cream, kunafa, basbousa.
+- **Drinks (generic names, no real brands):** cola, orange juice, mango, sobia, tamarind, licorice, tea, coffee, energy drink, plus the fictional dizzy drink (reverses controls for a while).
+- Buy homes: flat → house → villa; home = spawn point, mirror wardrobe, garage.
+- Jobs: delivery first, then taxi, shop worker, coach, commentator, bodyguard, police/detective, pro player.
+- Phase 2 in the same batch: police and cameras, permadeath + revenge file, travel risk, business (build venues), fame ranking + statue.
+- Skins in the same batch: Cosmos (moving space on the body, 25,000 coins, Rare); owner-only Invisible (only worn clothes show; pet hides too). Half-ghost (eyes + small feathers) later.
