@@ -18,7 +18,8 @@ async function loadPacks(onProgress) {
   packsReady = (async () => {
     let n = 0;
     await Promise.all(PACKS.map(async (k) => {
-      const buf = await (await fetch(`./world/${k}.pack`)).arrayBuffer();
+      // packs are stored as base64 text (the host only serves text and media types)
+      const b64 = await (await fetch(`./world/${k}.pack.txt`)).text(), bin = atob(b64.trim()), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i); const buf = u8.buffer;
       const len = new DataView(buf).getUint32(0, true), idx = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 4, len)));
       packData[k] = { buf, base: 4 + len, idx }; onProgress?.(++n / PACKS.length);
     }));
