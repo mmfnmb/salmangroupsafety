@@ -229,19 +229,19 @@ const tmpM = new THREE.Matrix4(), tmpQ = new THREE.Quaternion(), tmpS = new THRE
 function pixelate(mat, tU) {
   mat.onBeforeCompile = (sh) => {
     sh.uniforms.gT = tU;
-    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vGP;').replace('#include <project_vertex>', '#include <project_vertex>\nvGP = transformed;');
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vGP; varying vec3 vGN;').replace('#include <project_vertex>', '#include <project_vertex>\nvGP = transformed; vGN = objectNormal;');
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
-varying vec3 vGP; uniform float gT;
+varying vec3 vGP; varying vec3 vGN; uniform float gT;
 vec3 gBar(float i){ i = mod(i, 7.0); return i < 1.0 ? vec3(.75) : i < 2.0 ? vec3(.75,.75,0.) : i < 3.0 ? vec3(0.,.75,.75) : i < 4.0 ? vec3(0.,.75,0.) : i < 5.0 ? vec3(.75,0.,.75) : i < 6.0 ? vec3(.75,0.,0.) : vec3(0.,0.,.75); }
 float gH(vec3 p){ return fract(sin(dot(p, vec3(12.9898,78.233,37.719))) * 43758.5453); }`)
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
 { vec3 c3 = floor(vGP * 650.0); float row = floor(gT * 2.0 + c3.y * 0.004); float sh = step(0.93, gH(vec3(c3.y, floor(gT * 8.0), 1.0))) * floor(gH(vec3(c3.y, floor(gT*8.0), 2.0)) * 5.0);
   vec3 c = vec3(c3.x + sh, c3.y, c3.z); float h = gH(c + floor(gT * 3.0) * step(0.8, gH(c)));
-  vec3 col = gBar(floor(h * 7.0) + row); vec3 f = fract(vGP * 650.0); float edge = step(0.3, f.x) * step(0.3, f.y) * step(0.3, f.z); if (edge < 0.5) discard; // a gap between pixels, like a TV screen
+  vec3 col = gBar(floor(h * 7.0) + row); vec3 f = fract(vGP * 650.0); vec3 an = abs(vGN); vec2 g2 = an.x > an.y && an.x > an.z ? f.yz : an.y > an.z ? f.xz : f.xy; float edge = step(0.22, g2.x) * step(0.22, g2.y); if (edge < 0.5) discard; // a gap between pixels, like a TV screen
   if (fract(gT * 0.2) > 0.95) col = vec3(gH(c + gT));
   diffuseColor.rgb = col; totalEmissiveRadiance += col * 1.1 * (0.8 + 0.2 * sin(gT * 20.0 + h * 30.0)); }`);
   };
-  mat.side = THREE.DoubleSide; mat.needsUpdate = true;
+  mat.side = THREE.FrontSide; mat.needsUpdate = true;
 }
 export function skinFx(model, dt, pos, opts = {}) {
   const u = model.userData; if (!u.fx) return;
@@ -252,7 +252,7 @@ export function skinFx(model, dt, pos, opts = {}) {
   if (u.fx === 'glitch') {
     const BARS = [0xc0c0c0, 0xc0c000, 0x00c0c0, 0x00c000, 0xc000c0, 0xc00000, 0x0000c0];
     // the body is drawn as a mosaic of tiny glowing squares in the test-pattern colours, flickering cell by cell
-    if (!u.glitchU) { u.glitchU = { value: 0 }; for (const k of ['Main', 'Main2', 'Main_Light']) { const mt = u.mats[k]?.mat; if (mt) pixelate(mt, u.glitchU); } }
+    if (!u.glitchU) { u.glitchU = { value: 0 }; for (const k in u.mats) { if (k === 'EyeColor') continue; const mt = u.mats[k]?.mat; if (mt) pixelate(mt, u.glitchU); } }
     u.glitchU.value = t;
     model.visible = !((t % 7) > 6.85);
     if (Math.random() < dt * (moving ? 22 : 8)) P.emit({ pos: at(rand(-0.5, 0.5), rand(0.2, 1.8), rand(-0.5, 0.5)), vel: V(0, 0.4, 0), life: 0.5, size: 0.1, color: BARS[Math.floor(Math.random() * 7)] });
