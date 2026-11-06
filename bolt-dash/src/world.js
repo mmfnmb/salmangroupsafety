@@ -295,9 +295,9 @@ const world = {
   crimeUpdate(dt, p) {
     if (life.evidence > 0) { this.evT = (this.evT ?? rand(60, 180)) - dt; if (this.evT <= 0) { life.wanted = Math.min(5, life.wanted + Math.ceil(life.evidence / 2)); life.evidence = 0; toast(t('The police found the evidence. They are coming for you!'), 3); saveLife(); } }
     // police cars chase you when you are wanted
-    while (this.police.length < life.wanted && !this.inside) { const o = place(W('car-kit', 'police'), p.pos.x + rand(-40, 40), 0, p.pos.z + rand(-40, 40), 2.3, 0, this.L.root); this.police.push({ o }); sfx.beep(); }
+    while (this.police.length < life.wanted && !this.inside) { const a = rand(0, PI * 2), o = place(W('car-kit', 'police'), p.pos.x + Math.cos(a) * 75, 0, p.pos.z + Math.sin(a) * 75, 2.3, 0, this.L.root); this.police.push({ o }); sfx.beep(); }
     for (const c of this.police) {
-      const dx = p.pos.x - c.o.position.x, dz = p.pos.z - c.o.position.z, d = Math.hypot(dx, dz) || 1, sp = 11 + life.wanted * 1.5;
+      const dx = p.pos.x - c.o.position.x, dz = p.pos.z - c.o.position.z, d = Math.hypot(dx, dz) || 1, sp = 8.5 + life.wanted * 1.2; // a bit slower than a car, so you can get away by driving
       if (!this.inside) { c.o.position.x += dx / d * sp * dt; c.o.position.z += dz / d * sp * dt; c.o.rotation.y = Math.atan2(dx, dz); }
       if (d < 2.6 && !this.inside) { this.arrest(); break; }
     }
