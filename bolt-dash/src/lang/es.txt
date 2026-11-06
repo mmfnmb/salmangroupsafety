@@ -533,3 +533,5 @@ Arrastra tu personaje para girarlo
 +15% monedas en cada ronda. Muerde a los enemigos cercanos
 Te levantas más rápido tras un golpe. Araña a los enemigos cercanos
 El pegamento y las ralentizaciones casi no te afectan. Canta y confunde a los que te rodean
+Glitch
+Dueño

@@ -533,3 +533,5 @@ Zieh an deinem Charakter, um ihn zu drehen
 +15 % Münzen in jeder Runde. Beißt Gegner in deiner Nähe
 Steh schneller auf. Kratzt Gegner in deiner Nähe
 Schleim und Verlangsamung treffen dich kaum. Singt und verwirrt alle um dich herum
+Glitch
+Besitzer

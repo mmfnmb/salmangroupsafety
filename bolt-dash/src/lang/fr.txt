@@ -533,3 +533,5 @@ Fais glisser ton personnage pour le tourner
 +15 % de pièces à chaque manche. Mord les ennemis proches
 Tu te relèves plus vite. Griffe les ennemis proches
 La glu et les ralentissements t'affectent à peine. Chante pour embrouiller ceux qui t'entourent
+Glitch
+Propriétaire

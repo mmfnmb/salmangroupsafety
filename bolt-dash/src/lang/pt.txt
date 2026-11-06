@@ -533,3 +533,5 @@ Arraste seu personagem para girá-lo
 +15% de moedas em cada rodada. Morde inimigos por perto
 Levante mais rápido depois de um golpe. Arranha inimigos por perto
 Gosma e lentidão quase não te afetam. Canta para confundir quem está perto
+Glitch
+Dono

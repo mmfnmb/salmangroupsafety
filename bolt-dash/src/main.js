@@ -1164,6 +1164,7 @@ translateDom();
   show('loading', false);
   toMenu();
   frame();
+  comm.onOwner = () => { heroDress(); refreshMenu(); toast(t('Glitch') + ' · ' + t('Owner'), 3); };
   playIntro(false); initCommunity();
   window.__boltdash = { G, flow, ctl, MODES, comm, setTab, save, camera, renderer, scene, render: (dt) => renderScene(dt), giveWeapon, startRound, startMatchmaking, toMenu, openBuild, editor, sim(sec, hook) { for (let i = 0; i < sec * 60; i++) { hook && hook(i / 60); if (flow.state === 'fly') { flow.flyT = 99; flyCam(1 / 60); } if (flow.state === 'count' || flow.state === 'play') { stepRound(1 / 60); playCam(1 / 60); } } } };
 })();

@@ -47,6 +47,8 @@ export const SKINS = [
   { id: 'mon-skel', name: 'Skeleton', price: 0, hidden: true, colors: { Main: 0xe9e3d2, Main2: 0xbdb59f, Main_Light: 0xf6f1e3, EyeColor: 0x15101a }, mat: { Main: { rough: 0.7 } } },
   { id: 'mon-ghost', name: 'Ghost', price: 0, hidden: true, colors: { Main: 0xe4ecff, Main2: 0xc4d2ff, Main_Light: 0xffffff, EyeColor: 0x1a1a40 }, mat: { Main: { emi: 0x8aa0ff, ei: 0.35, op: 0.6 }, Main2: { op: 0.6 }, Main_Light: { op: 0.6 } } },
   { id: 'mon-vamp', name: 'Vampire', price: 0, hidden: true, colors: { Main: 0x2b1733, Main2: 0x8a1020, Main_Light: 0xd9cdd2, EyeColor: 0xff1a1a }, mat: { EyeColor: { emi: 0xff0000, ei: 2.5 } } },
+  { id: 'skin-glitch', name: t('Glitch'), price: 0, rare: t('Owner'), secret: true, fx: 'glitch', colors: { Main: 0xc0c0c0, Main2: 0x2020c0, Main_Light: 0xffffff, EyeColor: 0xffffff },
+    mat: { Main: { emi: 0x222222, ei: 0.6 }, EyeColor: { emi: 0xffffff, ei: 2.5 } } },
   { id: 'skin-ref', name: t('Referee'), price: 0, hidden: true, colors: { Main: 0xffffff, Main2: 0xe8202a, Main_Light: 0xffe0c0 } },
   { id: 'skin-bolt', name: t('Original Bolt'), price: 0, rare: t('Exclusive'), secret: true, fx: 'bolt', colors: { Main: 0xffc21a, Main2: 0x08050f, Main_Light: 0x2a0f55 },
     mat: { Main: { metal: 1, rough: 0.16, emi: 0x7a4a00, ei: 0.5 }, Main2: { emi: 0x7a2cff, ei: 1.8 }, Main_Light: { emi: 0xb06cff, ei: 2.4 } } },
@@ -228,6 +230,15 @@ export function skinFx(model, dt, pos, opts = {}) {
   u.fxT = (u.fxT || 0) + dt; const t = u.fxT, moving = opts.moving, grounded = opts.grounded !== false;
   const P = opts.puffs; if (!P) return;
   const at = (dx, dy, dz) => V(pos.x + dx, pos.y + dy, pos.z + dz);
+  // the owner's Glitch: TV test-pattern colour bars that keep sliding, cutting out to static and jumping a step
+  if (u.fx === 'glitch') {
+    const BARS = [0xc0c0c0, 0xc0c000, 0x00c0c0, 0x00c000, 0xc000c0, 0xc00000, 0x0000c0], k = Math.floor(t * 7);
+    const staticOn = (t % 5) > 4.75, m = u.mats;
+    if (staticOn) { const g = Math.random(); m.Main?.mat.color.setRGB(g, g, g); m.Main2?.mat.color.setRGB(1 - g, 1 - g, 1 - g); }
+    else { m.Main?.mat.color.setHex(BARS[k % 7]); m.Main2?.mat.color.setHex(BARS[(k + 3) % 7]); m.Main_Light?.mat.color.setHex(BARS[(k + 5) % 7]); }
+    model.visible = !((t % 7) > 6.85);
+    if (Math.random() < dt * (moving ? 22 : 8)) P.emit({ pos: at(rand(-0.5, 0.5), rand(0.2, 1.8), rand(-0.5, 0.5)), vel: V(0, 0.4, 0), life: 0.5, size: 0.1, color: BARS[Math.floor(Math.random() * 7)] });
+  }
   if (u.fx === 'rainbow') { const c = new THREE.Color().setHSL((t * 0.25) % 1, 0.85, 0.55); u.mats.Main?.mat.color.copy(c); if (Math.random() < dt * 10) P.emit({ pos: at(rand(-0.5, 0.5), rand(0.3, 1.8), rand(-0.5, 0.5)), vel: V(0, 0.6, 0), life: 0.6, size: 0.12, color: c.getHex() }); }
   if (u.fx === 'crystal' && Math.random() < dt * 8) P.emit({ pos: at(rand(-0.6, 0.6), rand(0.2, 2), rand(-0.6, 0.6)), vel: V(0, 0.3, 0), life: 0.7, size: 0.1, color: 0xe8fbff });
   if (u.fx === 'lava' && Math.random() < dt * 14) P.emit({ pos: at(rand(-0.4, 0.4), rand(0.3, 1.5), rand(-0.4, 0.4)), vel: V(rand(-0.4, 0.4), rand(1, 2.5), rand(-0.4, 0.4)), life: rand(0.5, 0.9), size: rand(0.08, 0.15), color: [0xff4a10, 0xffb02e, 0xff7a1f][Math.floor(rand(0, 3))] });
