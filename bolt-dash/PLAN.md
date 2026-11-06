@@ -61,3 +61,6 @@ Everything agreed so far, in one place. Done items are marked ✅.
 - Some NPC homes are left unlocked (they forgot the key); you can walk in.
 - Thief job: break into some homes (unlocked doors, climbing walls/windows); crimes raise your wanted level: alarms, neighbours calling, cameras, police chase.
 - Homes come furnished or empty: empty ones need furniture bought from a furniture shop (sofa, TV, bed, kitchen, decor) and placed with a grid like build mode.
+- Street outfits (hoodies, caps, jackets, sneakers, national kits) in the clothes shop; street people (NPCs) each with their own look.
+- 8 nations to travel to, each with its own look, famous game and venue: Azuria (Blue, founded by Egypt), Auria (Gold), Sunland (Yellow), Terrano (Brown), Noira (Black/White), Frostia (Orange/Red), Grisia, Islar.
+- Thief: sneaking (crouch, stay out of sight and cameras) can get you away at first, but crimes are never forgotten: evidence piles up (camera footage, witnesses, fingerprints) and sooner or later someone finds out and the police come for you.
