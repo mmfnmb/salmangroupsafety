@@ -22,6 +22,7 @@ export async function initCommunity() {
     if (!db || !user) { comm.state = 'off'; comm.onChange(); return; }
     comm.db = db; comm.uid = await user.id(); comm.owner = !!(await user.isOwner?.());
     // the game's owner gets the Glitch character, worn the first time
+    if (comm.owner && !save.owned.includes('skin-ghost')) save.owned.push('skin-ghost');
     if (comm.owner && !save.owned.includes('skin-glitch')) { save.owned.push('skin-glitch'); save.equip.skin = 'skin-glitch'; store.set('owned', save.owned); store.set('equip', save.equip); comm.onOwner?.(); }
     comm.canWrite = (await user.can?.('data.write')) !== false && !!comm.uid;
     comm.ready = true; comm.state = 'loading'; comm.onChange();

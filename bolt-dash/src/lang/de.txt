@@ -535,3 +535,5 @@ Steh schneller auf. Kratzt Gegner in deiner Nähe
 Schleim und Verlangsamung treffen dich kaum. Singt und verwirrt alle um dich herum
 Glitch
 Besitzer
+Kosmos
+Unsichtbar

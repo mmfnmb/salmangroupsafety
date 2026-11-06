@@ -535,3 +535,5 @@ Get back up faster after a hit. Scratches enemies near you
 Sticky goo and slow-downs barely touch you. Sings to confuse everyone around you
 Glitch
 Owner
+Cosmos
+Invisible

@@ -314,7 +314,8 @@ export class Runner {
       this.stars.rotation.y += dt * 8; this.stars.position.set(0, 1.85, 0);
       this.stars.children.forEach((s, k) => { const a = k * 2.09; s.position.set(Math.cos(a) * 0.55, Math.sin(G.t * 6 + k) * 0.08, Math.sin(a) * 0.55); });
     }
-    if (this.marker) { this.marker.rotation.y += dt * 2.5; this.marker.position.y = 2.35 + Math.sin(G.t * 4) * 0.1; this.marker.visible = this.state !== 'tumble'; }
+    if (this.marker && this.model.userData.invisible) this.marker.visible = false;
+    else if (this.marker) { this.marker.rotation.y += dt * 2.5; this.marker.position.y = 2.35 + Math.sin(G.t * 4) * 0.1; this.marker.visible = this.state !== 'tumble'; }
     const held = this.model.userData.held;
     if (held?.frame) {
       const k = this.swingT > 0 ? 1 - this.swingT / 0.32 : 0;
@@ -322,7 +323,7 @@ export class Runner {
       held.frame.rotation.x = held.key.startsWith('bat:') ? base + Math.sin(k * PI) * 1.9 : base;
     }
     if (this.model.userData.fx && !this.out) { const v = this.body.velocity; skinFx(this.model, dt, this.body.position, { moving: Math.hypot(v.x, v.z) > 1.5, grounded: this.grounded, puffs, scene }); }
-    if (this.pet) { const v = this.body.velocity; this.pet.o.visible = !this.out && this.root.visible; this.pet.update(dt, p.x, p.y, p.z, this.facing, Math.hypot(v.x, v.z) > 1.5); this.petAct(dt); }
+    if (this.pet) { const v = this.body.velocity; this.pet.o.visible = !this.out && this.root.visible && !this.model.userData.invisible; this.pet.update(dt, p.x, p.y, p.z, this.facing, Math.hypot(v.x, v.z) > 1.5); this.petAct(dt); }
     this.squash = damp(this.squash, 1, 12, dt);
     const s = 0.42; this.model.scale.set(s / Math.sqrt(this.squash), s * this.squash, s / Math.sqrt(this.squash));
   }

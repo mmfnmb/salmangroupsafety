@@ -47,6 +47,9 @@ export const SKINS = [
   { id: 'mon-skel', name: 'Skeleton', price: 0, hidden: true, colors: { Main: 0xe9e3d2, Main2: 0xbdb59f, Main_Light: 0xf6f1e3, EyeColor: 0x15101a }, mat: { Main: { rough: 0.7 } } },
   { id: 'mon-ghost', name: 'Ghost', price: 0, hidden: true, colors: { Main: 0xe4ecff, Main2: 0xc4d2ff, Main_Light: 0xffffff, EyeColor: 0x1a1a40 }, mat: { Main: { emi: 0x8aa0ff, ei: 0.35, op: 0.6 }, Main2: { op: 0.6 }, Main_Light: { op: 0.6 } } },
   { id: 'mon-vamp', name: 'Vampire', price: 0, hidden: true, colors: { Main: 0x2b1733, Main2: 0x8a1020, Main_Light: 0xd9cdd2, EyeColor: 0xff1a1a }, mat: { EyeColor: { emi: 0xff0000, ei: 2.5 } } },
+  { id: 'skin-cosmos', name: t('Cosmos'), price: 25000, rare: t('Legendary'), fx: 'cosmos', colors: { Main: 0x120a2a, Main2: 0x1a1040, Main_Light: 0x2a1a5a, EyeColor: 0xffffff },
+    mat: { EyeColor: { emi: 0xffffff, ei: 3 } } },
+  { id: 'skin-ghost', name: t('Invisible'), price: 0, rare: t('Owner'), secret: true, invisible: true, colors: { Main: 0xffffff } },
   { id: 'skin-glitch', name: t('Glitch'), price: 0, rare: t('Owner'), secret: true, fx: 'glitch', colors: { Main: 0xc0c0c0, Main2: 0x2020c0, Main_Light: 0xffffff, EyeColor: 0xffffff },
     mat: { Main: { emi: 0x222222, ei: 0.6 }, EyeColor: { emi: 0xffffff, ei: 2.5 } } },
   { id: 'skin-ref', name: t('Referee'), price: 0, hidden: true, colors: { Main: 0xffffff, Main2: 0xe8202a, Main_Light: 0xffe0c0 } },
@@ -201,8 +204,9 @@ export function dress(model, equip, opts = {}) {
     u.acc[slot] = { id, obj: attach(model, it.bone, o) };
   }
   // full-head items (the pumpkin) hide the ears
-  const noEars = SLOTS.some((sl) => ITEM[equip[sl]]?.noEars);
-  model.traverse((o) => { if (o.isMesh && /^Ears/.test(o.name)) o.visible = !noEars; });
+  const noEars = SLOTS.some((sl) => ITEM[equip[sl]]?.noEars), inv = !!ITEM[equip.skin]?.invisible;
+  model.traverse((o) => { if (!o.isSkinnedMesh) return; if (/^Ears/.test(o.name)) o.visible = !noEars && !inv; else if (/^(Body|Head|Arms)/.test(o.name)) o.visible = !inv; });
+  u.invisible = inv;
   holdItem(model, opts.bat && equip.bat ? 'bat:' + equip.bat : null);
 }
 export function paint(model, tint) {
@@ -243,12 +247,36 @@ float gH(vec3 p){ return fract(sin(dot(p, vec3(12.9898,78.233,37.719))) * 43758.
   };
   mat.side = THREE.FrontSide; mat.needsUpdate = true;
 }
+// the body becomes a window onto moving space: drifting nebula clouds, twinkling stars, a spinning galaxy and passing comets
+function cosmos(mat, tU) {
+  mat.onBeforeCompile = (sh) => {
+    sh.uniforms.cT = tU;
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vCP;').replace('#include <project_vertex>', '#include <project_vertex>\nvCP = transformed;');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
+varying vec3 vCP; uniform float cT;
+float cH(vec3 p){ return fract(sin(dot(p, vec3(12.9898,78.233,37.719))) * 43758.5453); }
+float cN(vec3 p){ vec3 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
+  return mix(mix(mix(cH(i), cH(i+vec3(1,0,0)), f.x), mix(cH(i+vec3(0,1,0)), cH(i+vec3(1,1,0)), f.x), f.y), mix(mix(cH(i+vec3(0,0,1)), cH(i+vec3(1,0,1)), f.x), mix(cH(i+vec3(0,1,1)), cH(i+vec3(1,1,1)), f.x), f.y), f.z); }
+float cF(vec3 p){ float v = 0.0, a = 0.5; for (int i = 0; i < 5; i++) { v += a * cN(p); p *= 2.03; a *= 0.5; } return v; }`)
+      .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+{ vec3 p = vCP * 160.0; vec3 q = p + vec3(cT * 0.5, cT * 0.22, -cT * 0.3);
+  float n1 = cF(q), n2 = cF(q * 1.9 + 4.0 + cT * 0.15);
+  vec3 neb = vec3(0.005, 0.0, 0.02) + vec3(0.5, 0.08, 0.75) * pow(smoothstep(0.45, 0.85, n1), 1.5) + vec3(0.05, 0.4, 1.0) * pow(smoothstep(0.55, 0.9, n2), 1.5) * 0.9 + vec3(1.0, 0.3, 0.55) * smoothstep(0.75, 0.95, n1 * n2 * 1.7) * 0.8;
+  vec3 sc = floor(p * 14.0 + vec3(cT * 3.0, 0.0, 0.0)); float sh = cH(sc); float st = step(0.975, sh) * (0.5 + 0.5 * sin(cT * 7.0 + sh * 60.0));
+  vec3 sc2 = floor(p * 6.0 - vec3(cT * 1.0, 0.0, 0.0)); float st2 = step(0.993, cH(sc2 + 7.0)) * 1.8;
+  vec2 g = vec2(vCP.x, vCP.y - 0.026) * 160.0; float r = length(g) * 0.25, ang = atan(g.y, g.x) + cT * 0.8; float gal = smoothstep(1.0, 0.0, r) * pow(0.5 + 0.5 * sin(ang * 2.0 - r * 10.0), 3.0);
+  vec3 col = neb + vec3(st + st2) + vec3(1.0, 0.85, 1.0) * gal * 0.9;
+  diffuseColor.rgb = vec3(0.0); totalEmissiveRadiance = col * 1.3; }`);
+  };
+  mat.needsUpdate = true;
+}
 export function skinFx(model, dt, pos, opts = {}) {
   const u = model.userData; if (!u.fx) return;
   u.fxT = (u.fxT || 0) + dt; const t = u.fxT, moving = opts.moving, grounded = opts.grounded !== false;
   const P = opts.puffs; if (!P) return;
   const at = (dx, dy, dz) => V(pos.x + dx, pos.y + dy, pos.z + dz);
   // the owner's Glitch: TV test-pattern colour bars that keep sliding, cutting out to static and jumping a step
+  if (u.fx === 'cosmos') { if (!u.cosU) { u.cosU = { value: 0 }; for (const k in u.mats) { if (k === 'EyeColor') continue; const mt = u.mats[k]?.mat; if (mt) cosmos(mt, u.cosU); } } u.cosU.value = t; }
   if (u.fx === 'glitch') {
     const BARS = [0xc0c0c0, 0xc0c000, 0x00c0c0, 0x00c000, 0xc000c0, 0xc00000, 0x0000c0];
     // the body is drawn as a mosaic of tiny glowing squares in the test-pattern colours, flickering cell by cell
