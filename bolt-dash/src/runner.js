@@ -1,5 +1,5 @@
 // The character: physics body, movement, status effects, animation, bot brain.
-import { THREE, CANNON, M, G, V, PI, rand, pick, clamp, damp, scene, world, sfx, fx, puffs, SkeletonUtils, G_STATIC, G_RUNNER, G_HAZARD, G_BALL, G_PROJ, matRunner } from './core.js';
+import { THREE, CANNON, M, G, V, PI, rand, pick, clamp, boneOffset, damp, scene, world, sfx, fx, puffs, SkeletonUtils, G_STATIC, G_RUNNER, G_HAZARD, G_BALL, G_PROJ, matRunner } from './core.js';
 import { dress, paint, holdItem, HAND, ITEM, skinFx, teamFlag, makePet, petPerk } from './cosmetics.js';
 
 export const RUN = 10.5, AIR_ACC = 30, GROUND_ACC = 80, JUMP_V = 12.2, DIVE_V = 14.5;
@@ -324,6 +324,8 @@ export class Runner {
     }
     if (this.model.userData.fx && !this.out) { const v = this.body.velocity; skinFx(this.model, dt, this.body.position, { moving: Math.hypot(v.x, v.z) > 1.5, grounded: this.grounded, puffs, scene }); }
     if (this.pet) { const v = this.body.velocity; this.pet.o.visible = !this.out && this.root.visible && !this.model.userData.invisible; this.pet.update(dt, p.x, p.y, p.z, this.facing, Math.hypot(v.x, v.z) > 1.5); this.petAct(dt); }
+    // reaching out: arms stretch forward while grabbing or carrying something
+    { this.armB ||= ['UpperArmL', 'UpperArmR'].map((n) => this.model.getObjectByName(n)); const on = this.input.grab || this.carrying, up = !on ? 0 : this.carrying === 'lift' ? 1.9 : this.carrying === 'drag' ? 1.0 : 1.4; boneOffset(this.armB[0], 'z', -up); boneOffset(this.armB[1], 'z', up); }
     this.squash = damp(this.squash, 1, 12, dt);
     const s = 0.42; this.model.scale.set(s / Math.sqrt(this.squash), s * this.squash, s / Math.sqrt(this.squash));
   }

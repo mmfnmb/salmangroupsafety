@@ -537,3 +537,5 @@ Puck Rush
 오너
 코스모스
 투명 인간
+Too heavy! You need to be healthy and strong (eat power food)
+Too heavy to lift: you drag it (eat power food to lift it)

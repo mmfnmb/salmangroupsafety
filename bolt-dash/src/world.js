@@ -2,7 +2,7 @@
 // homes to buy (furnished or empty) and furnish, jobs (delivery, taxi, shop, thief, police), crime that
 // catches up with you, permadeath with a revenge file, travel to 8 nations, businesses and fame.
 // The city's models live in separate packs (world/*.pack) and load only when you enter the world.
-import { THREE, CANNON, M, G, V, PI, rand, pick, clamp, damp, scene, camera, renderer, save, persist, store, sfx, fx, toast, place, hemi, sun, sky } from './core.js';
+import { THREE, CANNON, M, G, V, PI, rand, pick, clamp, damp, scene, camera, renderer, save, persist, store, sfx, fx, toast, place, instanced, hemi, sun, sky, sea } from './core.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { t } from './i18n.js';
 import { Level } from './level.js';
@@ -60,8 +60,9 @@ export const NATIONS = [
 ];
 const FURN = ['loungeSofa', 'loungeSofaCorner', 'loungeChair', 'tableCoffee', 'televisionModern', 'cabinetTelevision', 'bedDouble', 'bedSingle', 'kitchenFridge', 'kitchenStove', 'kitchenSink', 'kitchenCabinet', 'table', 'chair', 'bookcaseOpen', 'lampRoundFloor', 'rugRectangle', 'pottedPlant', 'plantSmall1', 'desk', 'chairDesk', 'computerScreen', 'speaker', 'radio', 'bathtub', 'toilet', 'washer', 'sideTable', 'coatRackStanding', 'bear'];
 const furnPrice = (n) => 60 + (n.length % 7) * 40;
-const FURNISHED = [['loungeSofa', -3, 2, 0], ['tableCoffee', -3, 0.4, 0], ['televisionModern', -3, -1.6, PI], ['cabinetTelevision', -3, -2.2, PI], ['bedDouble', 3, -2.2, 0], ['kitchenFridge', 4.4, 3.2, -PI / 2], ['kitchenStove', 4.4, 1.8, -PI / 2], ['kitchenSink', 4.4, 0.6, -PI / 2], ['rugRectangle', -3, 0.4, 0], ['pottedPlant', -4.6, 3.6, 0], ['lampRoundFloor', 1.2, 3.6, 0], ['bookcaseOpen', 0, -3.8, 0]];
+const FURNISHED = [['rugRectangle', -2.8, 0.2, 0], ['loungeSofa', -2.8, 2.0, PI], ['tableCoffee', -2.8, 0.2, 0], ['cabinetTelevision', -2.8, -3.9, 0], ['televisionModern', -2.8, -3.9, 0, 1.0], ['bedDouble', 2.6, -2.6, 0], ['sideTable', 4.7, -3.8, 0], ['kitchenFridge', 4.8, 3.9, -PI / 2], ['kitchenStove', 4.8, 2.3, -PI / 2], ['kitchenSink', 4.8, 0.8, -PI / 2], ['pottedPlant', -4.9, 4.4, 0], ['lampRoundFloor', -4.9, -3.9, 0], ['bookcaseOpen', 0, -3.9, 0]];
 const LOOT = ['laptop', 'radio', 'televisionVintage', 'speakerSmall', 'computerScreen'];
+const LIGHT = /laptop|radio|books|speaker|plant|lamp|computer|television|pillow|bear|chair$|chairDesk|toaster|Blender|cardboard|rug|sideTable|coatRack|trashcan|CoffeeMachine|Microwave/;
 
 // ---------------------------------------------------------------- persistent life state
 const life = save.life = save.life || store.get('life', null) || { name: 'Bolt', cash: 0, homes: {}, furn: [], buff: null, fame: 0, hall: [], revenge: null, wanted: 0, evidence: 0, nation: 'azuria', biz: {}, gift: false, deaths: 0 };
@@ -147,7 +148,7 @@ const world = {
     const p = G.player; if (!p) return; this.t += dt;
     // day and night (a full day lasts 8 minutes)
     this.day = (this.day + dt / 480) % 1; const sunUp = Math.max(0, Math.sin(this.day * PI * 2));
-    if (!this.inside) { hemi.intensity = 0.3 + sunUp * 0.8; sun.intensity = 0.2 + sunUp * 1.9; } scene.fog.color.setHSL(0.58, 0.45, 0.12 + sunUp * 0.5); scene.fog.near = 60; scene.fog.far = 260;
+    if (!this.inside) { hemi.intensity = 0.3 + sunUp * 0.8; sun.intensity = 0.2 + sunUp * 1.9; } if (!this.inside) { scene.fog.color.setHSL(0.58, 0.45, 0.12 + sunUp * 0.5); scene.fog.near = 60; scene.fog.far = 260; }
     // traffic and people
     const ring = HALF - 0.01, per = (d) => { d = ((d % 1) + 1) % 1; const s = d * 4, side = Math.floor(s), f = s - side, a = -ring + f * ring * 2; return side === 0 ? [a, -ring, PI / 2] : side === 1 ? [ring, a, 0] : side === 2 ? [-a, ring, -PI / 2] : [-ring, -a, PI]; };
     this.hitCd = Math.max(0, (this.hitCd || 0) - dt);
@@ -159,7 +160,7 @@ const world = {
     // interaction prompt
     const near = this.nearest(p); ctx.showAct(near ? near.label : null);
     if (this.dizzy > 0) { this.dizzy -= dt; p.confuse(0.2); }
-    this.jobUpdate(dt, p); this.crimeUpdate(dt, p); this.bizUpdate(dt);
+    this.carryUpdate(dt, p); this.jobUpdate(dt, p); this.crimeUpdate(dt, p); this.bizUpdate(dt);
     if (this.hp <= 0) this.die(this.killer || t('a car'));
   },
   cleanup() { hemi.intensity = 1.35; sun.intensity = 2.6; scene.fog.color.setHex(0xbfe6ff); scene.fog.near = 150; scene.fog.far = 420; ctx?.showAct(null); },
@@ -217,20 +218,25 @@ const world = {
   async enter(lot, mine) {
     const L = this.L, cx = 400 + Object.keys(this.homes).length * 30, cz = 400; await need(['furniture-kit/wall', 'furniture-kit/floorFull', 'furniture-kit/wallDoorway', ...FURNISHED.map((f) => 'furniture-kit/' + f[0]), ...FURN.map((n) => 'furniture-kit/' + n), ...LOOT.map((n) => 'furniture-kit/' + n)]);
     const g = new THREE.Group(); L.root.add(g); const fs = 1.6;
-    const fl = []; for (let x = -5; x < 5; x += 1.6) for (let z = -4; z < 4.8; z += 1.6) fl.push({ x: cx + x, y: 0, z: cz + z, s: fs }); L.inst(W('furniture-kit', 'floorFull'), fl);
+    const fl = []; for (let x = -5.6; x < 5.6; x += 1.6) for (let z = -4.6; z < 5.2; z += 1.6) fl.push({ x: cx + x, y: 0, z: cz + z, s: fs }); // floor tiles start at their corner
     L.box(cx, -0.5, cz, 6, 0.5, 5.5); for (const [x, z, hx, hz] of [[0, -4.6, 6, 0.2], [0, 5.2, 6, 0.2], [-5.6, 0, 0.2, 5.5], [5.6, 0, 0.2, 5.5]]) { L.box(cx + x, 1.6, cz + z, hx, 1.6, hz); }
-    for (let x = -4.8; x <= 4.8; x += 1.6) { place(W('furniture-kit', 'wall'), cx + x, 0, cz - 4.6, fs, 0, g); place(W('furniture-kit', Math.abs(x) < 0.9 ? 'wallDoorway' : 'wall'), cx + x, 0, cz + 5.2, fs, PI, g); }
-    for (let z = -4; z <= 4.6; z += 1.6) { place(W('furniture-kit', 'wall'), cx - 5.6, 0, cz + z, fs, PI / 2, g); place(W('furniture-kit', 'wall'), cx + 5.6, 0, cz + z, fs, -PI / 2, g); }
-    const lamp = new THREE.PointLight(0xfff0d0, 5, 16); lamp.position.set(cx, 3.2, cz); g.add(lamp);
-    this.saveLight = [hemi.intensity, sun.intensity]; hemi.intensity = 0.55; sun.intensity = 0.15;
+    const wsz = [fs, 2.6, fs];
+    for (let x = -5.6; x <= 5.61; x += 1.6) { place(W('furniture-kit', 'wall'), cx + x, 0, cz - 4.6, wsz, 0, g); place(W('furniture-kit', Math.abs(x) < 0.9 ? 'wallDoorway' : 'wall'), cx + x, 0, cz + 5.2, wsz, PI, g); }
+    for (let z = -4.6; z <= 5.21; z += 1.6) { place(W('furniture-kit', 'wall'), cx - 5.6, 0, cz + z, wsz, PI / 2, g); place(W('furniture-kit', 'wall'), cx + 5.6, 0, cz + z, wsz, -PI / 2, g); }
+    const ceil = []; for (let x = -5.6; x < 5.6; x += 1.6) for (let z = -4.6; z < 5.2; z += 1.6) ceil.push({ x: cx + x, y: 3.6, z: cz + z + 1.6, s: fs, rx: PI }); instanced(W('furniture-kit', 'floorFull'), [...fl, ...ceil], g);
+    // inside you only see the room: the sea, the sky and the city outside are hidden
+    this.outside = { bg: scene.background }; sky.visible = false; sea.visible = false; scene.background = new THREE.Color(0x1c1410); scene.fog.near = 1e4; scene.fog.far = 2e4; L.root.children.forEach((c) => { if (c !== g && !c.isLight) { c.userData.wasVis = c.visible; c.visible = false; } });
+    const lamp = new THREE.PointLight(0xfff0d0, 2.2, 14); lamp.position.set(cx, 3.2, cz); g.add(lamp);
+    this.saveLight = [hemi.intensity, sun.intensity, hemi.groundColor.getHex()]; hemi.intensity = 0.95; sun.intensity = 0.1; hemi.groundColor.setHex(0xb0a090); this.exp = renderer.toneMappingExposure; renderer.toneMappingExposure = 0.95;
+    g.traverse((m) => { if (m.isMesh && m.material?.color) { m.material = m.material.clone(); m.material.color.multiplyScalar(0.8); } });
     const home = mine ? life.homes[lot.home.id] : null, inside = { lot, g, exit: { x: cx, z: cz + 4.4 }, cx, cz, mine: !!home, loot: [] };
     const furnish = !mine ? FURNISHED : (home.furnished ? FURNISHED : []);
-    const ff = 2.5; for (const [n, x, z, ry] of furnish) place(W('furniture-kit', n), cx + x, 0, cz + z, ff, ry, g);
-    if (home) for (const it of home.items) place(W('furniture-kit', it.n), cx + it.x, 0, cz + it.z, ff, it.ry, g);
-    if (!mine) for (let k = 0; k < 3; k++) { const n = pick(LOOT), x = rand(-3.5, 3.5), z = rand(-3, 2); const o = place(W('furniture-kit', n), cx + x, 0.8, cz + z, ff, 0, g); inside.loot.push({ o, x: cx + x, z: cz + z, value: pick([80, 120, 200, 300]) }); }
+    const ff = 1.9; inside.objs = []; for (const [n, x, z, ry, y] of furnish) inside.objs.push({ n, o: placeF(n, cx + x, y || 0, cz + z, ff, ry, g) });
+    if (home) for (const it of home.items) inside.objs.push({ n: it.n, o: placeF(it.n, cx + it.x, 0, cz + it.z, ff, it.ry, g), item: it });
+    if (!mine) for (const [x, z] of [[0.6, 1.8], [2.2, 0.6], [-0.6, -1.4]]) { const n = pick(LOOT); const o = placeF(n, cx + x, 0, cz + z, ff, 0, g); const l = { o, x: cx + x, z: cz + z, value: pick([80, 120, 200, 300]), n }; inside.loot.push(l); inside.objs.push({ n, o, loot: l }); }
     this.inside = inside; G.player.reset(cx, 0.5, cz + 3.4, PI); sfx.click();
   },
-  leave() { const i = this.inside; i.g.removeFromParent(); this.inside = null; if (this.saveLight) [hemi.intensity, sun.intensity] = this.saveLight; G.player.reset(i.lot.door.x, 0.5, i.lot.door.z + (i.lot.ry === 0 ? 1.5 : -1.5), 0); },
+  leave() { const i = this.inside; const cl = this.carry?.loot; if (cl && !cl.taken) { this.steal(cl); } this.drop(true); i.g.removeFromParent(); this.inside = null; if (this.outside) { sky.visible = true; sea.visible = true; scene.background = this.outside.bg; scene.fog.near = 60; scene.fog.far = 260; this.L.root.children.forEach((c) => { if (c.userData.wasVis !== undefined) { c.visible = c.userData.wasVis; delete c.userData.wasVis; } }); } if (this.saveLight) { [hemi.intensity, sun.intensity] = this.saveLight; hemi.groundColor.setHex(this.saveLight[2]); if (this.exp) renderer.toneMappingExposure = this.exp; } G.player.reset(i.lot.door.x, 0.5, i.lot.door.z + (i.lot.ry === 0 ? 1.5 : -1.5), 0); },
   climbIn(lot) { // a break-in: noisy, maybe an alarm
     if (Math.random() < 0.3) { toast(t('An alarm goes off!'), 2); this.crime(2, true); } else this.crime(1, false);
     this.enter(lot, false);
@@ -240,8 +246,38 @@ const world = {
     const home = life.homes[this.inside.lot.home.id]; if (!life.furn.length) return toast(t('Buy furniture at the furniture shop first'), 2.5);
     ctx.panel(t('Decorate'), life.furn.map((n, i) => ({ id: String(i), name: nice(n.replace(/([A-Z])/g, ' $1')), sub: t('Placed where you stand'), price: 0, model: W('furniture-kit', n) })), (id) => {
       const n = life.furn.splice(+id, 1)[0], p = G.player.pos, it = { n, x: p.x - this.inside.cx, z: p.z - this.inside.cz, ry: G.player.facing + PI };
-      home.items.push(it); place(W('furniture-kit', n), p.x, 0, p.z, 2.5, it.ry, this.inside.g); G.player.reset(p.x, 0.5, p.z + 1.5, G.player.facing); saveLife();
+      home.items.push(it); placeF(n, p.x, 0, p.z, 1.9, it.ry, this.inside.g); G.player.reset(p.x, 0.5, p.z + 1.5, G.player.facing); saveLife();
     });
+  },
+  // ---------------------------------------------------------------- picking things up
+  // light things anyone can lift; heavy ones only if you are healthy and strong (power food or the pink blob pet)
+  carryUpdate(dt, p) {
+    const grab = p.input.grab;
+    if (grab && !this.carry && this.inside && !this.grabWas) {
+      let best = null, bd = 2.2; for (const ob of this.inside.objs || []) { if (ob.loot?.taken) continue; const op = ob.o.getWorldPosition(V()), d = Math.hypot(op.x - p.pos.x, op.z - p.pos.z); if (d < bd) { bd = d; best = ob; } }
+      if (best) {
+        const heavy = !LIGHT.test(best.n), strong = this.hp >= 70 && (p.food === 'power' || p.perk === 'heavy' || life.buff?.kind === 'power');
+        // light: carried in your hands; heavy: lifted with both arms if you are strong, otherwise dragged along the floor
+        this.carry = { ...best, heavy, how: !heavy ? 'hold' : strong ? 'lift' : 'drag' }; p.carrying = this.carry.how === 'hold' ? true : this.carry.how; sfx.pickup?.();
+        if (heavy && !strong) toast(t('Too heavy to lift: you drag it (eat power food to lift it)'), 2.2);
+      }
+    }
+    this.grabWas = grab;
+    const c = this.carry; if (!c) return;
+    if (!grab) { this.drop(false); return; }
+    const f = { x: Math.sin(p.facing), z: Math.cos(p.facing) }, h = c.how === 'drag' ? 0 : c.how === 'lift' ? 1.15 : 0.7, d = c.how === 'drag' ? 1.3 : 0.9;
+    const tx = p.pos.x + f.x * d, tz = p.pos.z + f.z * d; c.o.rotation.y = p.facing; c.o.position.set(tx, p.pos.y + h, tz); c.o.updateMatrixWorld(true);
+    const cc = new THREE.Box3().setFromObject(c.o).getCenter(V()); c.o.position.x += tx - cc.x; c.o.position.z += tz - cc.z; // centred between the hands
+    if (c.how !== 'hold') p.slow(c.how === 'drag' ? 0.3 : 0.2);
+    if (c.how === 'drag' && Math.random() < dt * 8) fx.dust(V(c.o.position.x, 0.05, c.o.position.z), 1, 0xd9c8a0, 1);
+  },
+  drop(silent) {
+    const c = this.carry; if (!c) return; this.carry = null; if (G.player) G.player.carrying = false;
+    // it falls to the floor (with a little bounce) instead of hanging in the air
+    { const o = c.o; let vy = 0, b = 0; const fall = () => { vy -= 22 / 60; o.position.y += vy / 60; if (o.position.y <= 0) { o.position.y = 0; if (Math.abs(vy) > 3 && b < 2) { vy = -vy * 0.3; b++; } else return; } requestAnimationFrame(fall); }; if (o.position.y > 0.01) fall(); }
+    if (c.loot) { c.loot.x = c.o.position.x; c.loot.z = c.o.position.z; }
+    if (c.item && this.inside) { c.item.x = c.o.position.x - this.inside.cx; c.item.z = c.o.position.z - this.inside.cz; c.item.ry = c.o.rotation.y; saveLife(); }
+    if (!silent) sfx.land?.();
   },
   // ---------------------------------------------------------------- crime and police
   witnessed() {
@@ -334,6 +370,10 @@ const world = {
 export const WORLD_MODELS = [...'abcdefghijklmn'.split('').map((c) => 'city-kit-commercial/building-' + c), ...['a', 'b', 'c', 'd', 'e'].map((c) => 'city-kit-commercial/building-skyscraper-' + c), ...'abcdefghijklmnopqrstu'.split('').map((c) => 'city-kit-suburban/building-type-' + c),
   'city-kit-suburban/planter', 'city-kit-suburban/tree-large', 'city-kit-suburban/tree-small', 'city-kit-roads/road-straight', 'city-kit-roads/light-square', 'city-kit-roads/tile-high',
   ...['sedan', 'suv', 'hatchback-sports', 'van', 'taxi', 'sedan-sports', 'suv-luxury', 'truck', 'police', 'delivery'].map((n) => 'car-kit/' + n)];
+function placeF(n, x, y, z, s, ry, parent) {
+  const o = place(W('furniture-kit', n), x, y, z, s, ry, parent); o.updateMatrixWorld(true);
+  const c = new THREE.Box3().setFromObject(o).getCenter(V()); o.position.x += x - c.x; o.position.z += z - c.z; return o;
+}
 const dx = (l) => (l.x > 0 ? 'e' : 'w') + (l.z > 0 ? 's' : 'n');
 MODES.world = world;
 export { world, life, saveLife, loadPacks, need, FOOD, DRINK };

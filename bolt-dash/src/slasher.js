@@ -1,7 +1,7 @@
 // Slasher Night: one long night map in 5 stages full of monsters and copies of the Mad Prisoner,
 // then a boss fight against him. You fight with your bat; die once and you are out.
 // Beat him while still alive and you unlock his skin (Mad Prisoner) as an achievement.
-import { THREE, M, G, V, PI, rand, pick, clamp, scene, fx, sfx, toast, save, persist, place, hemi, sun, rim, sky, SkeletonUtils } from './core.js';
+import { THREE, M, G, V, PI, rand, pick, clamp, boneOffset, scene, fx, sfx, toast, save, persist, place, hemi, sun, rim, sky, SkeletonUtils } from './core.js';
 import { t } from './i18n.js';
 import { Level } from './level.js';
 import { MODES, MODE_LIST } from './modes.js';
@@ -34,7 +34,7 @@ class Monster {
     dress(this.o, k.look, { bat: true });
     const an = M.Character.animations; this.mixer = new THREE.AnimationMixer(this.o);
     this.run = clipBy(an, [k.anim]); this.atk = clipBy(an, ['Punch']); this.die = clipBy(an, ['Death']);
-    this.arms = kind === 'zombie' || kind === 'ghost' ? ['UpperArm.L', 'UpperArm.R'].map((n) => this.o.getObjectByName(n)).filter(Boolean) : [];
+    this.arms = kind === 'zombie' || kind === 'ghost' ? ['UpperArmL', 'UpperArmR'].map((n) => this.o.getObjectByName(n)).filter(Boolean) : [];
     this.cur = null; this.play(this.run); this.rise = 1; this.o.position.y = -1.3;
   }
   play(c, once) { if (!c) return; const a = this.mixer.clipAction(c); if (this.cur === a && !once) return; if (once) { a.reset(); a.setLoop(THREE.LoopOnce, 1); a.clampWhenFinished = true; } a.play(); if (this.cur && this.cur !== a) this.cur.fadeOut(0.12); a.fadeIn(0.12); this.cur = a; }
@@ -47,7 +47,7 @@ class Monster {
   update(dt, mode) {
     this.mixer.update(dt);
     // zombies and ghosts walk with their arms stretched out in front
-    if (!this.dead) for (const a of this.arms) { a.rotation.x -= 1.25; a.rotation.z *= 0.3; }
+    if (!this.dead) this.arms.forEach((a, i) => boneOffset(a, 'z', i === 0 ? -1.35 : 1.35));
     if (this.dead) { this.deadT += dt; if (this.deadT > 1.6) this.o.position.y -= dt * 1.2; return this.deadT < 3; }
     if (this.rise > 0) { this.rise -= dt; this.o.position.y = -1.3 * Math.max(0, this.rise); if (Math.random() < dt * 10) fx.dust(V(this.pos.x, 0.1, this.pos.z), 1, 0x5a4a3a, 1.5); return true; }
     this.hitT -= dt; this.atkCd -= dt;

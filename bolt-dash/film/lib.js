@@ -1,6 +1,6 @@
 // Shared toolkit for the series episodes: cast, smart camera, lighting presets, subtitles, crowds and the shot engine.
 // Every episode (film/epN.js) builds on this so all scenes look and move the same way.
-import { THREE, M, G, V, PI, rand, clamp, scene, camera, renderer, renderScene, puffs, confetti, fx, sun, hemi, SkeletonUtils, place, loadAssets, save, applyQuality, bloom } from '../src/core.js';
+import { THREE, M, G, V, PI, rand, clamp, boneOffset, scene, camera, renderer, renderScene, puffs, confetti, fx, sun, hemi, SkeletonUtils, place, loadAssets, save, applyQuality, bloom } from '../src/core.js';
 import { computeBoneFix, dress, skinFx, updateGold, teamFlag, ITEM } from '../src/cosmetics.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 export { THREE, M, G, V, PI, rand, clamp, scene, camera, puffs, confetti, fx, place, teamFlag, dress };
@@ -82,7 +82,7 @@ export class Actor {
   }
   tick(dt) {
     this.mixer.update(dt);
-    if (this.sitting) for (const side of ['L', 'R']) { const u = this.bones['UpperLeg.' + side], l = this.bones['LowerLeg.' + side]; if (u) u.rotation.x -= PI / 2; if (l) l.rotation.x += PI / 2; }
+    for (const side of ['L', 'R']) { boneOffset(this.bones['UpperLeg' + side], 'x', this.sitting ? -PI / 2 : 0); boneOffset(this.bones['LowerLeg' + side], 'x', this.sitting ? PI / 2 : 0); }
     const p = this.m.position, moving = p.distanceTo(this.lastPos) > dt * 1.2; this.lastPos.copy(p);
     if (this.m.visible) skinFx(this.m, dt, p, { moving, grounded: this.grounded !== false, puffs, scene });
   }

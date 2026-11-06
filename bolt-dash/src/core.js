@@ -342,6 +342,12 @@ world.addContactMaterial(new CANNON.ContactMaterial(matRunner, matRunner, { fric
 world.addContactMaterial(new CANNON.ContactMaterial(matBall, matGround, { friction: 0.2, restitution: 0.45 }));
 world.addContactMaterial(new CANNON.ContactMaterial(matBall, matRunner, { friction: 0.1, restitution: 0.4 }));
 world.defaultContactMaterial.friction = 0.1;
+// add a pose offset to a bone without it piling up frame after frame (animations don't always reset every bone)
+export function boneOffset(b, axis, off) {
+  if (!b) return; const u = b.userData, k = 'o' + axis, cur = b.rotation[axis];
+  const base = u[k + 'last'] !== undefined && Math.abs(cur - u[k + 'last']) < 1e-6 ? cur - (u[k] || 0) : cur;
+  b.rotation[axis] = base + off; u[k] = off; u[k + 'last'] = b.rotation[axis];
+}
 export function addBox(x, y, z, hx, hy, hz, opts = {}) {
   const b = new CANNON.Body({ type: opts.type ?? CANNON.Body.STATIC, mass: 0, material: matGround, collisionFilterGroup: opts.group ?? G_STATIC, collisionFilterMask: opts.mask ?? (G_RUNNER | G_BALL | G_PROJ) });
   b.addShape(new CANNON.Box(new CANNON.Vec3(hx, hy, hz)));
