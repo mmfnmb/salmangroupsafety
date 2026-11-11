@@ -24,3 +24,6 @@ Kenney textures (colormap.png) were embedded into each .glb.
   (https://github.com/rhasspy/piper, MIT), via the sherpa-onnx model releases:
   - Arabic: ar_JO "kareem" (medium). Dataset: https://github.com/AliMokhammad/arabicttstrain/ (license: see that URL)
   - English: en_US "libritts_r" (medium), speakers 3 and 9. Dataset: LibriTTS-R, CC BY 4.0
+- Live announcer voice (world/voice/): the same Piper voices (8-bit), run in the page with ONNX Runtime Web
+  (MIT) and Piper's phonemizer from @mintplex-labs/piper-tts-web / @diffusionstudio/piper-wasm (MIT), which
+  includes espeak-ng data (GPL-3.0), trimmed to Arabic and English.

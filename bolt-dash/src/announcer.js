@@ -5,6 +5,7 @@
 // The text always shows on screen too, as a TV-style caption.
 import { G, save, store } from './core.js';
 import { LANG, LANGS, t } from './i18n.js';
+import { ultNamesOf } from './abilities.js';
 
 const AR = LANG === 'ar';
 const rnd = (a) => a[Math.floor(Math.random() * a.length)];
@@ -80,7 +81,9 @@ Use the placeholders {p}, {n}, {team}, {u} exactly as written where they fit.`;
       const arr = Array.isArray(data?.[ev]) ? data[ev] : [];
       next[ev] = arr.filter((s) => typeof s === 'string' && s.length > 1 && s.length < 160).map((s) => s.replace(/[<>]/g, '').trim()).sort(() => Math.random() - 0.5);
     }
-    pool = next;
+    // keep local lines where Claude wrote none
+    for (const ev of EVENTS) if (!next[ev].length) next[ev] = pool[ev] || [];
+    pool = next; plan();
   } catch (e) { if (['not_granted', 'rate_limited', 'unavailable'].includes(e?.code)) aiOff = true; }
   finally { aiBusy = false; }
 }
@@ -137,6 +140,86 @@ async function speakBank(ev, d) {
   return true;
 }
 
+// ---------------------------------------------------------------- the live voice, made on this device
+// A neural voice model (Piper) runs inside the page (world/voice/voice.js, in a worker when the page allows it), so
+// the commentators can say this match's own lines, written by Claude, with the players' names. Lines are made in
+// the background as soon as the match's lines are known, and played the moment something happens.
+const LIVE = { ar: 1, en: 1 }, ME_EVENTS = new Set(['outMe', 'win', 'lose', 'crown']);
+let lv = null, liveMode = '', meName = '', curMode = '';
+const segCache = new Map(), jobs = [], queued = new Set();
+const whoOf = (ev) => (ev === 'lull' || ev === 'quip' ? 1 : 0);
+const hasWords = (x) => /[\p{L}\p{N}]/u.test(x);
+function liveStart() {
+  if (lv || !LIVE[LANG]) return; lv = { ready: false, n: 0, wait: new Map(), worker: null };
+  const viaPage = () => {
+    if (lv.worker) { try { lv.worker.terminate(); } catch { /* */ } lv.worker = null; }
+    const go = () => globalThis.__BD_VOICE.init(LANG).then(() => { lv.ready = true; liveMode = 'page'; pump(); }).catch(() => { liveMode = 'failed'; });
+    if (globalThis.__BD_VOICE) return go();
+    const sc = document.createElement('script'); sc.src = './world/voice/voice.js'; sc.onload = go; sc.onerror = () => { liveMode = 'failed'; }; document.head.appendChild(sc);
+  };
+  try {
+    const w = new Worker('./world/voice/voice.js'); lv.worker = w;
+    w.onmessage = ({ data: m }) => { const cb = lv.wait.get(m.id); lv.wait.delete(m.id); cb?.(m); };
+    w.onerror = () => { if (!lv.ready) viaPage(); };
+    const id = ++lv.n; lv.wait.set(id, (m) => { if (m.ok) { lv.ready = true; liveMode = 'worker'; pump(); } else viaPage(); }); w.postMessage({ id, cmd: 'init', lang: LANG });
+  } catch { viaPage(); }
+}
+function synthOne(text, who) {
+  if (lv.worker) return new Promise((res, rej) => { const id = ++lv.n; lv.wait.set(id, (m) => (m.ok ? res(m) : rej(new Error(m.err)))); lv.worker.postMessage({ id, cmd: 'synth', text, who }); });
+  return globalThis.__BD_VOICE.synth(text, who).then((r) => ({ pcm: Float32Array.from(r.pcm), rate: r.rate }));
+}
+let busy = false, playingNow = false;
+async function pump() {
+  if (busy || !lv?.ready || !jobs.length) return;
+  if (liveMode === 'page' && playingNow) return; // on the page itself, only between rounds so the game never stutters
+  busy = true; const j = jobs.shift();
+  try { if (!segCache.has(j.key)) segCache.set(j.key, await synthOne(j.text, j.who)); } catch { /* skip this one */ }
+  busy = false; setTimeout(pump, 0);
+}
+function queue(text, who, front) { const t2 = text.trim(), key = who + '|' + t2; if (!hasWords(t2) || segCache.has(key) || queued.has(key)) return; queued.add(key); const j = { key, text: t2, who }; if (front) jobs.unshift(j); else jobs.push(j); pump(); }
+// a line cut into pieces: the fixed words, and the names / numbers that change from moment to moment
+function pieces(ev, tpl, d) {
+  let s = tpl.replace(/\{mode\}/g, curMode); if (ME_EVENTS.has(ev)) s = s.replace(/\{p\}/g, meName);
+  return s.split(/(\{p\}|\{n\}|\{team\}|\{u\})/).map((x) => (x === '{p}' ? d?.p : x === '{n}' ? (d?.n != null ? String(d.n) : null) : x === '{team}' ? d?.team : x === '{u}' ? d?.u : x)).map((x) => (x == null ? null : x.trim())).filter((x) => x === null || hasWords(x));
+}
+// once the match's lines are known: make the common ones first, then the names
+function plan() {
+  if (!lv) return; jobs.length = 0; queued.clear();
+  const order = ['intro', 'go', 'quip', 'out', 'outMe', 'win', 'lose', 'first', 'finish', 'left', 'goal', 'point', 'ult', 'arena', 'lull', 'crown'];
+  const names = (G.runners || []).map((r) => r.name).filter(Boolean), ults = new Set();
+  for (const r of G.runners || []) for (const n of ultNamesOf(r.kk?.id || 'bolt')) ults.add(n);
+  const dyn = () => { for (const n of names) queue(n, 0); for (const x of [t('Red'), t('Blue')]) queue(x, 0); for (let i = 1; i <= Math.min(12, names.length); i++) queue(String(i), 0); for (const u of ults) queue(u, 0); };
+  order.forEach((ev, k) => { const list = pool[ev] || []; for (let i = list.length - 1; i >= Math.max(0, list.length - 3); i--) for (const x of pieces(ev, list[i], null)) if (x) queue(x, whoOf(ev)); if (k === 2) dyn(); });
+  // the rest of each list after that
+  for (const ev of order) { const list = pool[ev] || []; for (let i = list.length - 4; i >= 0; i--) for (const x of pieces(ev, list[i], null)) if (x) queue(x, whoOf(ev)); }
+}
+function playPcm(parts, who) {
+  const ctx = audio(); if (!ctx) return 0; const rate = parts[0].rate, gap = Math.round(rate * 0.06), n = parts.reduce((a, p) => a + p.pcm.length + gap, 0);
+  const b = ctx.createBuffer(1, n, rate), ch = b.getChannelData(0); let o = 0; for (const p of parts) { ch.set(p.pcm, o); o += p.pcm.length + gap; }
+  try { src?.stop(); } catch { /* already over */ }
+  const s = ctx.createBufferSource(), g = ctx.createGain(); g.gain.value = 1.2; s.buffer = b;
+  if (who === 1 && LANG === 'ar') s.playbackRate.value = 0.9; // the second commentator: same voice, deeper
+  s.connect(g).connect(ctx.destination); s.start(); src = s; return b.duration / s.playbackRate.value;
+}
+function liveLine(ev, d) {
+  if (!lv?.ready) return null; const list = pool[ev]; if (!list?.length) return null;
+  for (let i = list.length - 1; i >= 0; i--) {
+    const tpl = list[i]; if (/\{u\}/.test(tpl) && !d.u) continue;
+    const ps = pieces(ev, tpl, d); if (ps.some((x) => x == null)) continue;
+    const who = whoOf(ev), got = ps.map((x) => segCache.get(who + '|' + x) || segCache.get('0|' + x));
+    if (got.every(Boolean)) { list.splice(i, 1); return { text: ps.join(' '), parts: got, who }; }
+    ps.forEach((x) => queue(x, who, true));
+  }
+  return null;
+}
+async function speakLive(ev, d) {
+  const l = liveLine(ev, d); if (!l) return false;
+  caption(l.who, l.text); const dur = playPcm(l.parts, l.who); if (!dur) return false;
+  speaking = 1; clearTimeout(ann._safe); ann._safe = setTimeout(() => { speaking = 0; curPri = 0; }, dur * 1000 + 200);
+  if (ev !== 'lull' && ev !== 'quip' && Math.random() < 0.3) setTimeout(() => { if (!ann.on) return; const q = liveLine('quip', d); if (q) { caption(1, q.text); const d2 = playPcm(q.parts, 1); clearTimeout(ann._safe); ann._safe = setTimeout(() => { speaking = 0; curPri = 0; }, d2 * 1000 + 200); } }, dur * 1000 + 250);
+  return true;
+}
+
 // ---------------------------------------------------------------- the voices
 let heard = false, broken = false, voiceErr = '', tts = null, ttsTried = false, ttsOff = false, denied = false, nextLull = 15, speaking = 0, curPri = 0, lastAt = 0, quietT = 0;
 async function getTts() {
@@ -149,7 +232,7 @@ const synth = () => (typeof speechSynthesis !== 'undefined' ? speechSynthesis : 
 let needTap = false, unlocked = false, lastLines = null;
 // phones only let a page speak after the player touches it: on the first touch or key press, wake both voices up
 function wake() {
-  getTts(); audio(); loadBank();
+  getTts(); audio(); loadBank(); if (ann.on) liveStart();
   const s = synth(); if (s && !unlocked) { unlocked = true; try { s.getVoices(); const u = new SpeechSynthesisUtterance(' '); u.volume = 0; s.speak(u); } catch { /* no voice here */ } }
   // the voice was stopped (Esc or the Stop button): it may only start again from a touch, so say the last line now
   if (needTap && tts && ann.on && lastLines) { needTap = false; tts.speak(lastLines, { language: LANG }).catch(() => {}); }
@@ -179,7 +262,12 @@ export const ann = {
   get on() { return save.announcer !== false && !save.muted; },
   set(v) { save.announcer = !!v; store.set('announcer', save.announcer); if (!v) this.stop(); },
   // a new match: let Claude write this match's lines while the camera flies over the course
-  match(ctx) { pool = {}; quietT = 0; if (this.on) { writeLines(ctx); loadBank(); } },
+  match(ctx) {
+    pool = {}; quietT = 0; meName = ctx.me || ''; curMode = ctx.mode || '';
+    // lines from the local phrase generator until (or unless) Claude's arrive
+    for (const ev of EVENTS) { const set = new Set(); for (let i = 0; i < 12 && set.size < 5; i++) { const x = localLine(ev); if (x) set.add(x); } pool[ev] = [...set]; }
+    if (this.on) { writeLines(ctx); loadBank(); liveStart(); plan(); }
+  },
   stop() { speaking = 0; curPri = 0; try { src?.stop(); } catch { /* already over */ } try { tts?.stop(); } catch { /* not speaking */ } synth()?.cancel(); if (capEl) capEl.hidden = true; },
   // something happened: pri 1 chatter, 2 normal, 3 big moment (always gets through)
   async say(ev, d = {}, pri = 2) {
@@ -188,7 +276,7 @@ export const ann = {
     if (pri < 3 && now - lastAt < (pri === 1 ? 6000 : 1800)) return;
     // no working Claude voice here: the recorded voices
     const tt0 = ttsOff || broken ? null : await getTts();
-    if (!tt0 && BANK[LANG] && !denied) { curPri = pri; lastAt = now; quietT = 0; if (await speakBank(ev, d)) return; }
+    if (!tt0 && !denied) { curPri = pri; lastAt = now; quietT = 0; if (await speakLive(ev, d)) return; if (BANK[LANG] && await speakBank(ev, d)) return; }
     const text = lineFor(ev, d); if (!text) return;
     const lines = [{ who: 0, text }];
     // the second commentator chips in now and then
@@ -200,7 +288,7 @@ export const ann = {
     const tt = tt0;
     if (tt) {
       // if the Claude voice doesn't actually start on this device, switch to the recorded voices for good
-      if (!heard && BANK[LANG]) setTimeout(() => { if (!heard && !broken) { broken = true; try { tt.stop(); } catch { /* */ } speakBank(ev, d); } }, 4000);
+      if (!heard && BANK[LANG]) setTimeout(() => { if (!heard && !broken) { broken = true; try { tt.stop(); } catch { /* */ } speakLive(ev, d).then((ok) => ok || speakBank(ev, d)); } }, 4000);
       lastLines = lines.map((l) => ({ text: l.text, voice: VOICE[l.who].v, rate: VOICE[l.who].rate }));
       tt.speak(lines.map((l) => ({ text: l.text, voice: VOICE[l.who].v, rate: VOICE[l.who].rate })), { language: LANG }).catch((e) => {
         speaking = 0; curPri = 0;
@@ -216,6 +304,7 @@ export const ann = {
   async status() {
     const tt = denied ? null : await getTts();
     if (tt && !broken) return { kind: 'claude', err: voiceErr };
+    if (lv?.ready && !denied) return { kind: 'live', err: liveMode };
     if (BANK[LANG] && !denied) return { kind: 'recorded', err: '' };
     if (denied) return { kind: 'off', err: voiceErr };
     const s = synth(); if (!s) return { kind: 'none', err: voiceErr };
@@ -225,6 +314,7 @@ export const ann = {
   test() { wake(); speaking = 0; curPri = 0; lastAt = 0; return this.say('intro', { mode: 'Bolt Dash' }, 3); },
   // per frame: hide the caption, fill quiet moments with chatter
   update(dt, playing) {
+    playingNow = playing; if (!playing) pump();
     if (capT > 0 && (capT -= dt) <= 0 && capEl) capEl.hidden = true;
     if (!playing || !this.on) return; quietT += dt;
     if (quietT > nextLull) { nextLull = 12 + Math.random() * 14; const rs = (G.runners || []).filter((r) => !r.out); const r = rs[Math.floor(Math.random() * rs.length)]; if (r) this.say('lull', { p: r.name }, 1); quietT = 0; }

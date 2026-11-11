@@ -66,3 +66,6 @@ for (const f of ['gfx', 'life']) {
   });
 }
 console.log('dist/world/gfx.js + life.js');
+// the announcers' live voice (loaded only when the announcer talks)
+await build({ entryPoints: ['src/extras/voice.js'], bundle: true, minify: true, format: 'iife', outfile: 'dist/world/voice/voice.js', target: 'es2020', external: ['fs', 'path', 'crypto', 'worker_threads', 'url', 'module'] });
+

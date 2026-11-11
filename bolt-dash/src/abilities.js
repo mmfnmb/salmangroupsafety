@@ -43,6 +43,7 @@ const ULTS = {
   'ch-cap': { name: t('Golden Kick'), pose: 'Idle', color: 0xffd23f, type: 'ball', script: 'kick', dur: 2.6, desc: t('Kicks a flaming football that bounces from player to player') },
   'ch-vet': { name: t('Hydrant Blast'), pose: 'Idle', color: 0x4cc9f0, type: 'water', script: 'hydrant', dur: 2.6, desc: t('Opens a fire hydrant and the water blasts everyone in front away') },
 };
+export const ultNamesOf = (charId) => { const u = ULTS[charId] || ULTS.bolt; return (Array.isArray(u) ? u : [u]).map((x) => x.name); };
 export const ultOf = (charId) => { const u = ULTS[charId] || ULTS.bolt; return Array.isArray(u) ? pick(u) : u; }
 const ultDesc = (charId) => { const u = ULTS[charId] || ULTS.bolt; return Array.isArray(u) ? u.map((x) => x.name + ': ' + x.desc).join(' · ') : u.name + ': ' + u.desc; };
 // who has what (Bolt is the default character)
