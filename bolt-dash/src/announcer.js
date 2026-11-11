@@ -92,7 +92,7 @@ function lineFor(ev, d) {
 }
 
 // ---------------------------------------------------------------- the voices
-let tts = null, ttsTried = false, ttsOff = false, denied = false, nextLull = 15, speaking = 0, curPri = 0, lastAt = 0, quietT = 0;
+let voiceErr = '', tts = null, ttsTried = false, ttsOff = false, denied = false, nextLull = 15, speaking = 0, curPri = 0, lastAt = 0, quietT = 0;
 async function getTts() {
   if (ttsTried) return tts; ttsTried = true;
   try { tts = window.claude?.use ? await window.claude.use('tts') : null; } catch { tts = null; }
@@ -100,11 +100,20 @@ async function getTts() {
   return tts;
 }
 const synth = () => (typeof speechSynthesis !== 'undefined' ? speechSynthesis : null);
+let needTap = false, unlocked = false, lastLines = null;
+// phones only let a page speak after the player touches it: on the first touch or key press, wake both voices up
+function wake() {
+  getTts();
+  const s = synth(); if (s && !unlocked) { unlocked = true; try { s.getVoices(); const u = new SpeechSynthesisUtterance(' '); u.volume = 0; s.speak(u); } catch { /* no voice here */ } }
+  // the voice was stopped (Esc or the Stop button): it may only start again from a touch, so say the last line now
+  if (needTap && tts && ann.on && lastLines) { needTap = false; tts.speak(lastLines, { language: LANG }).catch(() => {}); }
+}
+if (typeof window !== 'undefined') { for (const ev of ['pointerdown', 'keydown', 'touchstart']) window.addEventListener(ev, wake, { capture: true, passive: true }); try { synth()?.addEventListener?.('voiceschanged', () => {}); } catch { /* old browser */ } }
 function browserVoice() {
   const vs = synth()?.getVoices() || []; return vs.filter((v) => v.lang?.toLowerCase().startsWith(LANG)).sort((a, b) => (b.localService ? 0 : 1) - (a.localService ? 0 : 1));
 }
 function speakBrowser(lines) {
-  const s = synth(); if (!s) return; s.cancel(); const vs = browserVoice();
+  const s = synth(); if (!s) { voiceErr = 'no_voice'; return; } s.cancel(); const vs = browserVoice(); if (!vs.length) voiceErr = 'no_lang_voice';
   lines.forEach((l, i) => {
     const u = new SpeechSynthesisUtterance(l.text); u.lang = LANG; const V_ = VOICE[l.who];
     if (vs.length) u.voice = vs[Math.min(l.who, vs.length - 1)]; u.rate = V_.rate; u.pitch = V_.pitch; u.volume = 1;
@@ -141,14 +150,27 @@ export const ann = {
     if (lines[1]) setTimeout(() => { if (speaking) caption(1, lines[1].text); }, 900 + text.length * 55);
     const tt = ttsOff ? null : await getTts();
     if (tt) {
+      lastLines = lines.map((l) => ({ text: l.text, voice: VOICE[l.who].v, rate: VOICE[l.who].rate }));
       tt.speak(lines.map((l) => ({ text: l.text, voice: VOICE[l.who].v, rate: VOICE[l.who].rate })), { language: LANG }).catch((e) => {
         speaking = 0; curPri = 0;
         // the viewer turned reading aloud off: respect it, keep the captions only
+        voiceErr = e?.code || 'error';
         if (e?.code === 'not_granted') { ttsOff = true; denied = true; }
+        else if (e?.code === 'no_gesture') { needTap = true; }
         else if (e?.code === 'rate_limited' || e?.code === 'unavailable') { ttsOff = true; setTimeout(() => { ttsOff = false; }, 60000); }
       });
     } else if (!denied) speakBrowser(lines); // this view has no Claude voice (or it's resting): the browser's own voice
   },
+  // which voice this device uses, for the Settings screen
+  async status() {
+    const tt = denied ? null : await getTts();
+    if (tt) return { kind: 'claude', err: voiceErr };
+    if (denied) return { kind: 'off', err: voiceErr };
+    const s = synth(); if (!s) return { kind: 'none', err: voiceErr };
+    return { kind: browserVoice().length ? 'device' : 'device-nolang', err: voiceErr };
+  },
+  // from a button press, so phones allow it
+  test() { wake(); speaking = 0; curPri = 0; lastAt = 0; ttsOff = false; return this.say('intro', { mode: 'Bolt Dash' }, 3); },
   // per frame: hide the caption, fill quiet moments with chatter
   update(dt, playing) {
     if (capT > 0 && (capT -= dt) <= 0 && capEl) capEl.hidden = true;

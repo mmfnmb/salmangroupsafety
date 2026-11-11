@@ -97,7 +97,7 @@ addEventListener('keydown', (e) => {
   if (e.code === 'KeyC') ctl.ab = true;
   if (e.code === 'KeyV') ctl.ult = true;
   if (e.code === 'KeyG') ctl.grab = true;
-  if (e.code === 'Escape' && flow.state === 'play') togglePause();
+  if (e.code === 'Escape' && flow.state === 'play') { e.preventDefault(); togglePause(); } // claimed, so it doesn't also stop the announcer's voice
 });
 addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'KeyF' || e.code === 'Enter') ctl.held = false; if (e.code === 'KeyG') ctl.grab = false; });
 addEventListener('blur', () => keys.clear());
@@ -454,11 +454,15 @@ async function openOv(kind) {
     B.innerHTML = `<b>${t('Graphics')}</b>${seg('sQ', [['low', t('Light')], ['med', t('Medium')], ['high', t('Fantasy')]], save.quality)}
       <b>${t('Sound')}</b>${seg('sS', [['on', t('On')], ['off', t('Off')]], save.muted ? 'off' : 'on')}
       <b>${t('Announcer')}</b>${seg('sA', [['on', t('On')], ['off', t('Off')]], save.announcer !== false ? 'on' : 'off')}
+      <div class="annRow"><button class="btn alt" id="sAT">${t('Test the announcer voice')}</button><small id="sAS"></small></div>
       <b>${t('Camera speed')}</b>${seg('sC', [[0.6, t('Slow')], [1, t('Normal')], [1.6, t('Fast')]], save.sens)}
       <b>${t('Language')}</b><select id="sLang">${LANGS.filter(([c]) => c === 'en' || (globalThis.__BD_LANG?.langs || {})[c]).map(([c, n]) => `<option value="${c}" ${c === LANG ? 'selected' : ''}>${n}</option>`).join('')}</select>
     <button class="btn alt" id="sIntro">${t('Watch the intro film again')}</button>`;
     const bind = (id, fn) => $(id).addEventListener('click', (e) => { const b = e.target.closest('[data-v]'); if (!b) return; fn(b.dataset.v); persist2(); sfx.click(); openOv('settings'); });
     bind('sQ', (v) => { save.quality = v; applyQuality(); }); bind('sS', (v) => { save.muted = v === 'off'; }); bind('sC', (v) => { save.sens = parseFloat(v); }); bind('sA', (v) => { ann.set(v === 'on'); if (v === 'on') ann.say('quip', {}, 3); });
+    $('sAT').addEventListener('click', () => { if (!ann.on) ann.set(true); ann.test(); setTimeout(showVoice, 2500); });
+    const showVoice = () => ann.status().then((st) => { const el = $('sAS'); if (!el) return; el.textContent = { claude: t('Voice: Claude'), device: t('Voice: this device'), 'device-nolang': t('This device has no voice for this language'), off: t('Reading aloud is turned off for this game in its Permissions menu'), none: t('This device can\'t speak: captions only') }[st.kind] + (st.err && st.kind === 'claude' ? ' (' + st.err + ')' : ''); });
+    showVoice();
     $('sLang').addEventListener('change', (e) => setLang(e.target.value));
     $('sIntro').addEventListener('click', () => { closeOv(); playIntro(true); });
   } else if (kind === 'profile') {
