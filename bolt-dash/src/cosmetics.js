@@ -145,7 +145,7 @@ export function makePet(id) {
     } };
 }
 // whole characters you play as (see chars.js)
-export const CHAR_ITEMS = CHARS.map((c) => ({ id: c.id, slot: 'char', name: c.name, price: c.price, tier: c.tier, char: c }));
+export const CHAR_ITEMS = CHARS.map((c) => ({ id: c.id, slot: 'char', name: c.name, price: c.price, tier: c.tier, char: c, ...(c.secret ? { secret: true, rare: t('Owner') } : {}) }));
 export const ITEMS = [...CHAR_ITEMS, ...SKINS, ...ACCS, ...BATS, ...PETS];
 // the old plain gold skin was replaced by the radiant one: refund anyone who bought it
 if (save.owned.includes('skin-gold')) { save.owned = save.owned.filter((i) => i !== 'skin-gold'); save.coins += 400; if (save.equip.skin === 'skin-gold') save.equip.skin = 'skin-blue'; }

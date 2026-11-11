@@ -28,6 +28,8 @@ export const CHARS = [
   { id: 'ch-skater', file: 'Protagonist_A', name: t('Skater Girl'), tier: 1, price: 1500 },
   { id: 'ch-cap', file: 'Protagonist_B', name: t('Cap Kid'), tier: 1, price: 1500 },
   { id: 'ch-vet', file: 'Survivalist', name: t('Veteran'), tier: 1, price: 1500 },
+  // the game owner's own character: made to look like him (big curly black hair, grey-green hoodie with a black X, black joggers)
+  { id: 'ch-me', file: 'Me', name: t('The Owner'), tier: 4, price: 0, secret: true, hair: true },
 ];
 export const CHAR = Object.fromEntries(CHARS.map((c) => [c.id, c]));
 export const TIER = () => [null, t('Common'), t('Rare'), t('Epic'), t('Legendary')];
@@ -74,12 +76,31 @@ export function makeBody(equip) {
   if (c && CLIPS && M['ch/' + c.file]) {
     const m = SkeletonUtils.clone(M['ch/' + c.file].scene); m.scale.setScalar(scale);
     m.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
+    if (c.hair) addHair(m);
     m.userData.kk = c.id; return { model: m, clips: CLIPS, base: scale, kk: c };
   }
   const m = SkeletonUtils.clone(M.Character.scene); m.scale.setScalar(0.42);
   m.traverse((o) => { if (o.isMesh) o.castShadow = true; });
   return { model: m, clips: M.Character.animations, base: 0.42, kk: null };
 }
+// big curly hair: puffy cloud shapes (Quaternius, CC0) in dark brown, clustered on the head bone so they move with it
+// [prop, x, y, z, size, turn] in head space (metres of the character before scaling; y up, z forward)
+export const HAIR = [
+  ['hair_a', 0, 0.62, -0.05, 0.62, 0], ['hair_b', 0.2, 0.56, 0.02, 0.48, 1.2], ['hair_b', -0.2, 0.56, 0.02, 0.48, -1.9],
+  ['hair_a', 0.26, 0.4, -0.08, 0.42, 2.4], ['hair_a', -0.26, 0.4, -0.08, 0.42, -0.6], ['hair_b', 0, 0.48, -0.24, 0.5, 3.1],
+  ['hair_a', 0.08, 0.5, 0.22, 0.38, 0.3], ['hair_a', -0.12, 0.47, 0.24, 0.34, 2.0],
+];
+const hairMat = new THREE.MeshStandardMaterial({ color: 0x1f1714, roughness: 0.9 });
+function addHair(m) {
+  if (!M['pr/hair_a']) return; m.updateMatrixWorld(true); let head = null; m.traverse((o) => { if (o.isBone && o.name === 'head') head = o; }); if (!head) return;
+  const g = new THREE.Group(); g.quaternion.copy(head.getWorldQuaternion(new THREE.Quaternion()).invert()); g.scale.setScalar(1 / head.getWorldScale(new THREE.Vector3()).x); head.add(g);
+  for (const [k, x, y, z, sz, ry] of HAIR) {
+    const src = M['pr/' + k]; if (!src) continue; const o = src.scene.clone(); o.traverse((c) => { if (c.isMesh) { c.material = hairMat; c.castShadow = true; } });
+    const b = new THREE.Box3().setFromObject(o), w = Math.max(b.max.x - b.min.x, b.max.z - b.min.z) || 1; o.scale.setScalar(sz / w);
+    o.position.set(x, y, z); o.rotation.y = ry; g.add(o);
+  }
+}
+globalThis.__BD_makeBody = makeBody;
 // bone frames at rest for the shared rig, so held things line up with the hands (like BONE_FIX for Bolt)
 export const KK_FIX = {};
 export function kkBoneFix() {
