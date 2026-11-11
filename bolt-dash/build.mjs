@@ -27,6 +27,23 @@ let html = readFileSync('index.html', 'utf8');
 html = html.replace(/<script type="importmap">[\s\S]*?<\/script>\s*/, '');
 html = html.replace(/<script type="module" src="\.\/src\/main\.js"><\/script>/,
   () => `<script>window.__BD_MODELS=${JSON.stringify(models)};window.__BD_LANG=${JSON.stringify({ keys, langs }).replace(/<\//g, '<\\/')};</script>\n<script>${js}</script>`);
+// the loading screen: a squad of characters waving flags (half Arab countries, half others, picked at random each time)
+{
+  const ld = 'assets/loading', chars = readdirSync(ld).filter((f) => f.endsWith('.webp')).sort().map((f) => 'data:image/webp;base64,' + readFileSync(`${ld}/${f}`).toString('base64'));
+  const flags = {}; for (const f of readdirSync(`${ld}/flags`)) flags[f.slice(0, -4)] = 'data:image/svg+xml;base64,' + readFileSync(`${ld}/flags/${f}`).toString('base64');
+  const art = `<script>(()=>{const C=${JSON.stringify(chars)},F=${JSON.stringify(flags)};
+const AR=['eg','sa','ae','ma','dz','iq','jo','tn','ps','kw','qa','lb','om','ly'],FO=['br','jp','fr','de','it','tr','gb','kr','ar','ng','ca','pt','nl','in','se'];
+const pick=(a,n)=>{a=a.slice();const o=[];while(o.length<n&&a.length)o.push(a.splice(Math.random()*a.length|0,1)[0]);return o};
+const fl=[...pick(AR,7),...pick(FO,7)].sort(()=>Math.random()-.5);
+// one in front, then two behind, two behind them and two more at the back, each row a little smaller and wider
+const rows=[[0,0,36,0],[-1,1,29,15],[1,1,29,15],[-1,2,24,28],[1,2,24,28],[-1,3,20,39],[1,3,20,39]];
+const sq=document.getElementById('squad');if(!sq)return;let k=0;
+rows.slice().reverse().forEach(([side,row,w,up],i)=>{const d=document.createElement('div');d.className='ch';d.style.width=w+'%';d.style.left=(50+side*(10+row*5)-w/2)+'%';d.style.bottom=up+'%';d.style.zIndex=10-row;d.style.animationDelay=(-i*0.17)+'s';d.style.filter='brightness('+(1-row*0.07)+')';
+const im=document.createElement('img');im.src=C[(row*2+(side>0?1:0))%C.length];im.alt='';d.appendChild(im);
+for(const [x,tilt] of [[26,-14],[74,14]]){const p=document.createElement('div');p.className='pole';p.style.left=(x-1.5)+'%';p.style.top='-5%';p.style.transform='rotate('+tilt+'deg)';const f=document.createElement('div');f.className='flag';f.style.backgroundImage='url('+F[fl[k++%fl.length]]+')';if(tilt<0){f.style.right='100%';f.style.transformOrigin='100% 50%'}else f.style.left='100%';f.style.animationDelay=(-k*0.23)+'s';p.appendChild(f);d.appendChild(p)}
+sq.appendChild(d)})})();</script>`;
+  html = html.replace('<!--LOADART-->', art);
+}
 mkdirSync('dist', { recursive: true });
 writeFileSync('dist/bolt-dash.html', html);
 console.log('dist/bolt-dash.html', (html.length / 1e6).toFixed(2), 'MB');

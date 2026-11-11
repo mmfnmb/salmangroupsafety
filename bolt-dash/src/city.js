@@ -403,26 +403,69 @@ export class Traffic {
 }
 
 // ---------------------------------------------------------------- people walking around the blocks
+// They walk the pavements, step aside or stumble back when you bump into them, fall over when you hit them (and
+// get up again), run away when they see trouble, sometimes hit you back, and stop to talk and wave.
+const ANIM = { walk: 'Walk', run: 'Run', idle: 'Idle', hit: 'HitReact', down: 'Death', wave: 'Wave', no: 'No', yes: 'Yes', punch: 'Punch', duck: 'Duck' };
 export class Walkers {
-  constructor(city, list) { this.city = city; this.list = list; }
+  constructor(city, list) {
+    this.city = city; this.list = list; this.onPunch = null;
+    for (const n of list) {
+      n.acts = {}; for (const [k, name] of Object.entries(ANIM)) { const c = n.clips?.find((a) => a.name.endsWith('|' + name)); if (c) { const a = n.mixer.clipAction(c); if (k === 'down' || k === 'hit' || k === 'punch' || k === 'wave' || k === 'no' || k === 'yes') { a.setLoop(THREE.LoopOnce, 1); a.clampWhenFinished = true; } n.acts[k] = a; } }
+      n.state = 'walk'; n.cur = null; this.play(n, 'walk');
+    }
+  }
+  play(n, k, fade = 0.2) { const a = n.acts[k]; if (!a || n.cur === a) return; a.reset().play(); if (n.cur) n.cur.crossFadeTo(a, fade, false); n.cur = a; }
   place(n, px, pz, far) {
     const near = this.city.blocks.filter((b) => { const d = Math.hypot(b.cx - px, b.cz - pz); return d < 150 && (!far || d > 70); });
     const b = near[Math.floor(Math.random() * near.length)] || this.city.blocks[0]; if (!b) return;
-    Object.assign(n, { cx: b.cx, cz: b.cz, hs: 30.9 + (Math.random() - 0.5) * 1.6, d: Math.random(), dir: Math.random() < 0.5 ? 1 : -1, down: 0 });
+    Object.assign(n, { cx: b.cx, cz: b.cz, hs: 30.9 + (Math.random() - 0.5) * 1.6, d: Math.random(), dir: Math.random() < 0.5 ? 1 : -1, state: 'walk', t: 0 });
+    n.o.rotation.x = 0; n.o.position.y = 0; this.play(n, 'walk', 0);
   }
-  update(dt, p, player) {
+  path(n) {
+    const s = ((n.d % 1) + 1) % 1 * 4, side = Math.floor(s), f = s - side, h = n.hs, a = -h + f * h * 2;
+    const [x, z, ry] = side === 0 ? [a, -h, PI / 2] : side === 1 ? [h, a, 0] : side === 2 ? [-a, h, -PI / 2] : [-h, -a, PI];
+    return [n.cx + x, n.cz + z, n.dir > 0 ? ry : ry + PI];
+  }
+  // free movement (off the pavement loop), pushed out of walls
+  move(n, vx, vz, dt) { n.x += vx * dt; n.z += vz * dt; const r = this.city.st.resolve(n.x, n.z, 0.45); if (r) { n.x += r.x; n.z += r.z; } if (Math.abs(vx) + Math.abs(vz) > 0.1) n.face = Math.atan2(vx, vz); }
+  off(n, state, t) { if (n.state === 'walk') { n.x = n.o.position.x; n.z = n.o.position.z; } n.state = state; n.t = t; }
+  // what can happen to them
+  bump(n, dx, dz, hard) { if (n.state === 'down') return; this.off(n, 'react', hard ? 0.9 : 0.6); const k = hard ? 4.5 : 2.2; n.vx = dx * k; n.vz = dz * k; n.face = Math.atan2(-dx, -dz); this.play(n, hard ? 'hit' : 'no', 0.1); }
+  hit(n, dx, dz, power = 1) { if (n.state === 'down') return; this.off(n, 'down', 3.2 + Math.random() * 1.5); n.vx = dx * 7 * power; n.vz = dz * 7 * power; n.face = Math.atan2(-dx, -dz); n.angry = Math.random() < 0.25; this.play(n, 'down', 0.08); fx.burst(n.o.position.clone().setY(1), 0xffffff, 10, 5); }
+  knock(n, dx, dz) { this.hit(n, dx, dz, 1.6); }
+  scare(x, z, r) { for (const n of this.list) if (n.state === 'walk' || n.state === 'talk') { const d = Math.hypot(n.o.position.x - x, n.o.position.z - z); if (d < r && d > 0.5) { this.off(n, 'flee', 4 + Math.random() * 3); n.from = [x, z]; this.play(n, 'run', 0.15); } } }
+  talk(n, px, pz) { if (n.state !== 'walk' && n.state !== 'return') return false; this.off(n, 'talk', 2.6); n.face = Math.atan2(px - n.x, pz - n.z); this.play(n, Math.random() < 0.6 ? 'wave' : 'yes', 0.2); return true; }
+  nearest(x, z, r) { let best = null, bd = r; for (const n of this.list) { if (n.cx === undefined) continue; const d = Math.hypot(n.o.position.x - x, n.o.position.z - z); if (d < bd) { bd = d; best = n; } } return best; }
+  update(dt, p, player, pv) {
     for (const n of this.list) {
       if (n.cx === undefined || Math.hypot(n.o.position.x - p.x, n.o.position.z - p.z) > 170) { this.place(n, p.x, p.z, n.cx !== undefined); if (n.cx === undefined) continue; }
-      if (n.down > 0) { n.down -= dt; if (n.down <= 0) { n.o.rotation.x = 0; n.o.position.y = 0; } continue; }
-      n.mixer.update(dt);
-      const per = n.hs * 8, s = ((n.d % 1) + 1) % 1 * 4, side = Math.floor(s), f = s - side, h = n.hs, a = -h + f * h * 2;
-      const [x, z, ry] = side === 0 ? [a, -h, PI / 2] : side === 1 ? [h, a, 0] : side === 2 ? [-a, h, -PI / 2] : [-h, -a, PI];
-      const X = n.cx + x, Z = n.cz + z, blocked = player && Math.hypot(player.x - X, player.z - Z) < 1.3;
-      if (!blocked) n.d += n.dir * n.sp * dt / per;
-      n.o.position.set(X, 0, Z); n.o.rotation.y = n.dir > 0 ? ry : ry + PI;
+      n.mixer.update(dt); n.t -= dt;
+      const dxp = player ? n.o.position.x - player.x : 99, dzp = player ? n.o.position.z - player.z : 99, dp = Math.hypot(dxp, dzp) || 1;
+      if (n.state === 'walk') {
+        // you walk into them: they step back (and stumble if you were running)
+        if (player && dp < 0.85) { const fast = Math.hypot(pv?.x || 0, pv?.z || 0) > 6; this.bump(n, dxp / dp, dzp / dp, fast); continue; }
+        const blocked = player && dp < 1.6;
+        if (!blocked) { n.d += n.dir * n.sp * dt / (n.hs * 8); this.play(n, 'walk'); } else this.play(n, 'idle');
+        const [X, Z, ry] = this.path(n); n.o.position.set(X, 0, Z); n.o.rotation.y = blocked ? Math.atan2(-dxp, -dzp) : ry; continue;
+      }
+      if (n.state === 'react') { this.move(n, n.vx, n.vz, dt); n.vx *= Math.exp(-dt * 5); n.vz *= Math.exp(-dt * 5); if (n.t <= 0) { n.state = 'return'; this.play(n, 'walk'); } }
+      else if (n.state === 'down') {
+        this.move(n, n.vx, n.vz, dt); n.vx *= Math.exp(-dt * 4); n.vz *= Math.exp(-dt * 4);
+        if (n.t <= 0) { n.state = 'getup'; n.t = 0.7; this.play(n, 'idle', 0.5); }
+      } else if (n.state === 'getup') { if (n.t <= 0) { if (n.angry && player) { n.state = 'fight'; n.t = 7; this.play(n, 'run'); } else { n.state = 'flee'; n.t = 4; n.from = player ? [player.x, player.z] : [n.x, n.z]; this.play(n, 'run'); } } }
+      else if (n.state === 'flee') { const fx_ = n.x - n.from[0], fz = n.z - n.from[1], l = Math.hypot(fx_, fz) || 1; this.move(n, fx_ / l * 5.2, fz / l * 5.2, dt); if (n.t <= 0) { n.state = 'return'; this.play(n, 'walk'); } }
+      else if (n.state === 'fight') {
+        if (!player || n.t <= 0) { n.state = 'return'; this.play(n, 'walk'); }
+        else if (dp > 1.3) { this.move(n, -dxp / dp * 4.6, -dzp / dp * 4.6, dt); this.play(n, 'run'); }
+        else { n.face = Math.atan2(-dxp, -dzp); n.hitCd = (n.hitCd || 0) - dt; if (n.hitCd <= 0) { n.hitCd = 1.1; n.cur = null; this.play(n, 'punch', 0.05); setTimeout(() => { if (n.state === 'fight' && this.onPunch) this.onPunch(n); }, 280); } }
+      } else if (n.state === 'talk') { if (n.t <= 0) { n.state = 'return'; this.play(n, 'walk'); } }
+      else if (n.state === 'return') {
+        const [X, Z] = this.path(n), rx = X - n.x, rz = Z - n.z, l = Math.hypot(rx, rz);
+        if (l < 0.4) n.state = 'walk'; else { this.move(n, rx / l * 1.6, rz / l * 1.6, dt); this.play(n, 'walk'); }
+      }
+      n.o.position.set(n.x, 0, n.z); n.o.rotation.y = n.face ?? n.o.rotation.y; n.o.rotation.x = 0;
     }
   }
-  knock(n, dx, dz) { n.down = 5; n.o.rotation.x = -PI / 2; n.o.position.x += dx * 2.5; n.o.position.z += dz * 2.5; n.o.position.y = 0.3; fx.burst(n.o.position.clone().setY(1), 0xffffff, 10, 5); }
 }
 
 // ---------------------------------------------------------------- minimap (top left, turns with the camera)

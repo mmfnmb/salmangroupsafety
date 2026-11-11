@@ -15,3 +15,6 @@ Kenney textures (colormap.png) were embedded into each .glb.
 - k/pet-*: Ultimate Monsters by Quaternius (CC0), via github.com/mika314/KitchenSink
 - acc/kk-*: KayKit Adventurers by Kay Lousberg (CC0), via github.com/Tamicktom/game-3d
 - world/*.pack: Kenney City Kit (Commercial, Suburban, Roads), Car Kit, Food Kit, Mini Market, Furniture Kit (CC0, kenney.nl), via github.com/series-ai/jam-ready-assets
+
+## Loading screen flags
+- Country flags from **flag-icons** by Panayiotis Lipiridis — https://github.com/lipis/flag-icons — MIT License.

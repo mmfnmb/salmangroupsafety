@@ -277,6 +277,7 @@ export class Runner {
   // Push: shove the player in front of you away
   doPush() {
     if (this.pushCd > 0) return; this.pushCd = this.perk === 'shove' ? 0.55 : 0.9; this.swing();
+    if (this.isPlayer) G.modeObj?.onPush?.(this);
     const o = this.nearest(1.8); if (!o) return;
     const a = Math.atan2(o.pos.x - this.pos.x, o.pos.z - this.pos.z), v = o.body.velocity;
     const pw = this.food === 'power' ? 13.5 : 11; v.x = Math.sin(a) * pw; v.z = Math.cos(a) * pw; v.y = Math.max(v.y, 3.5); o.grounded = false; o.stun(0.35);

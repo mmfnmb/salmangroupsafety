@@ -112,8 +112,9 @@ const world = {
     this.traffic = new Traffic(L, this.st, 24);
     // people walking on the pavements
     this.npcs = [];
-    for (let k = 0; k < 22; k++) { const o = place('Character', 0, -50, 0, 0.42, 0, L.root); const eq = { skin: pick(['skin-straw', 'skin-mint', 'skin-lemon', 'skin-grape', 'skin-orange', 'skin-melon', 'skin-snow', 'skin-night', 'skin-blue']), head: Math.random() < 0.5 ? pick(['h-crown', 'h-cone', 'h-wizard', 'h-knight']) : undefined, back: Math.random() < 0.3 ? 'k-pack' : undefined }; dress(o, eq); const mixer = new THREE.AnimationMixer(o); const c = M.Character.animations.find((a) => a.name.endsWith('|Walk')); if (c) mixer.clipAction(c).play(); this.npcs.push({ o, mixer, sp: rand(1.1, 1.7), seen: 0 }); }
+    for (let k = 0; k < 22; k++) { const o = place('Character', 0, -50, 0, 0.42, 0, L.root); const eq = { skin: pick(['skin-straw', 'skin-mint', 'skin-lemon', 'skin-grape', 'skin-orange', 'skin-melon', 'skin-snow', 'skin-night', 'skin-blue']), head: Math.random() < 0.5 ? pick(['h-crown', 'h-cone', 'h-wizard', 'h-knight']) : undefined, back: Math.random() < 0.3 ? 'k-pack' : undefined }; dress(o, eq); this.npcs.push({ o, mixer: new THREE.AnimationMixer(o), clips: M.Character.animations, sp: rand(1.1, 1.7), seen: 0 }); }
     this.walkers = new Walkers(city, this.npcs);
+    this.walkers.onPunch = () => { if (this.driving || this.inside) return; this.hp -= 8; this.killer = t('an angry man'); sfx.hit?.(); G.player.stun?.(0.3); fx.burst(V(G.player.pos.x, 1.2, G.player.pos.z), 0xffffff, 8, 4); };
     // the statue of the most famous player, in the park in the middle of the city
     this.statue = place('Character', 0, 3, 0, 1.4, PI, L.root); dress(this.statue, { skin: 'film-gold' }); L.model(W('city-kit-roads', 'tile-high'), 0, 0, 0, 4); L.box(0, 1.5, 0, 2, 1.5, 2);
     this.coinObjs = new Map(); life.found = life.found || []; life.cars = life.cars || []; life.str = life.str || 0;
@@ -137,7 +138,7 @@ const world = {
     // traffic and people
     const live = this.traffic.cars.filter((c) => c.live), cars = [...live, ...this.police, ...this.cars];
     this.traffic.update(dt, this.t, pp, cars, this.driving || this.inside ? null : pp, this.police);
-    this.walkers.update(dt, pp, this.driving ? null : pp);
+    this.walkers.update(dt, pp, this.driving || this.inside ? null : pp, p.body.velocity);
     this.hitCd = Math.max(0, (this.hitCd || 0) - dt);
     if (!this.driving && !this.inside && this.hitCd <= 0) for (const c of live) {
       const fx_ = Math.sin(c.h), fz = Math.cos(c.h), rx = pp.x - c.x, rz = pp.z - c.z;
@@ -178,7 +179,7 @@ const world = {
     const crash = carStep(c, wantH, thr, brake || p.jumpBuf > 0, dt, this.st, cars);
     if (crash > 6) { sfx.hit?.(); fx.burst(V(c.x - Math.sin(c.h) * c.hl * -1, 1, c.z + Math.cos(c.h) * c.hl), 0xdddddd, 12, 5); if (crash > 14) { this.hp -= Math.round(crash / 3); this.killer = t('a car crash'); } }
     // running people over is a crime
-    if (Math.abs(c.v) > 3) for (const n of this.npcs) if (!n.down && Math.hypot(n.o.position.x - c.x, n.o.position.z - c.z) < c.hl + 0.3) { this.walkers.knock(n, Math.sin(c.h), Math.cos(c.h)); this.crime(2, this.witnessed()); }
+    if (Math.abs(c.v) > 3) for (const n of this.npcs) if (n.state !== 'down' && Math.hypot(n.o.position.x - c.x, n.o.position.z - c.z) < c.hl + 0.3) { this.walkers.knock(n, Math.sin(c.h), Math.cos(c.h)); this.walkers.scare(c.x, c.z, 25); this.crime(2, this.witnessed()); }
     const rv = this.revengeTarget; if (rv && !rv.dead && Math.abs(c.v) > 6 && Math.hypot(rv.o.position.x - c.x, rv.o.position.z - c.z) < c.hl) { rv.hp = 0; rv.dead = true; rv.o.rotation.x = -PI / 2; life.revenge = null; save.coins += 1500; saveLife(); toast(t('Revenge! +1500 coins'), 3); }
     c.o.position.set(c.x, 0, c.z); c.o.rotation.y = c.h; if (c.body) c.body.position.set(0, -50, 0);
     p.body.position.set(c.x, this.driveY, c.z); p.body.velocity.set(0, 0, 0); p.facing = c.h; p.root.visible = false;
@@ -194,6 +195,7 @@ const world = {
     if (this.inside) { add(Math.hypot(pp.x - this.inside.exit.x, pp.z - this.inside.exit.z), t('Go outside'), () => this.leave()); for (const l of this.inside.loot || []) if (!l.taken) add(Math.hypot(pp.x - l.x, pp.z - l.z), t('Take it'), () => this.steal(l)); if (this.inside.mine) add(Math.hypot(pp.x - this.inside.cx, pp.z - this.inside.cz) < 9 ? 3 : 9, t('Decorate'), () => this.decorate()); return best; }
     if (this.driving) return { label: t('Get out of the car'), fn: () => this.exitCar() };
     for (const c of this.cars) add(Math.hypot(pp.x - c.x, pp.z - c.z) - c.hw - 0.4, t('Drive'), () => this.enterCar(c));
+    { const n = this.walkers.nearest(pp.x, pp.z, 2.2); if (n && (n.state === 'walk' || n.state === 'return')) add(Math.hypot(n.o.position.x - pp.x, n.o.position.z - pp.z) + 0.6, t('Talk'), () => this.talkTo(n)); }
     for (const pc of this.parked) if (!pc.taken && Math.abs(pc.x - pp.x) < 6 && Math.abs(pc.z - pp.z) < 6) add(Math.hypot(pp.x - pc.x, pp.z - pc.z) - 1.6, t('Drive'), () => this.takeParked(pc));
     for (const c of this.traffic.cars) if (c.live && c.v < 1.5 && Math.abs(c.x - pp.x) < 6 && Math.abs(c.z - pp.z) < 6) add(Math.hypot(pp.x - c.x, pp.z - c.z) - c.hw - 0.4, t('Steal the car'), () => this.hijack(c));
     for (const d of this.doors) {
@@ -216,8 +218,16 @@ const world = {
   act() { const n = this.nearest(G.player); if (n) n.fn(); },
   hitNear(r) {
     // punching people is a crime too
-    for (const n of this.npcs) if (Math.hypot(n.o.position.x - r.pos.x, n.o.position.z - r.pos.z) < 1.8) { this.crime(2, true); fx.burst(V(n.o.position.x, 1, n.o.position.z), 0x2ec45a, 8, 4); n.sp *= 2.5; }
+    const fx_ = Math.sin(r.facing), fz = Math.cos(r.facing);
+    for (const n of this.npcs) { const dx = n.o.position.x - r.pos.x, dz = n.o.position.z - r.pos.z, d = Math.hypot(dx, dz); if (d < 2.1 && (dx * fx_ + dz * fz) / (d || 1) > -0.2 && n.state !== 'down') { this.walkers.hit(n, dx / (d || 1), dz / (d || 1), r.batPower || 1); this.walkers.scare(n.o.position.x, n.o.position.z, 18); this.crime(2, true); sfx.bat?.(); } }
     const rv = this.revengeTarget; if (rv && !rv.dead && Math.hypot(rv.o.position.x - r.pos.x, rv.o.position.z - r.pos.z) < 2) { rv.hp--; fx.burst(V(rv.o.position.x, 1, rv.o.position.z), 0x111111, 10, 4); if (rv.hp <= 0) { rv.dead = true; rv.o.rotation.x = -PI / 2; life.revenge = null; save.coins += 1500; saveLife(); toast(t('Revenge! +1500 coins'), 3); } }
+  },
+  // the push button shoves the person in front of you
+  onPush(r) { const n = this.walkers?.nearest(r.pos.x + Math.sin(r.facing) * 0.8, r.pos.z + Math.cos(r.facing) * 0.8, 1.6); if (!n || this.driving) return; this.walkers.bump(n, Math.sin(r.facing), Math.cos(r.facing), true); if (Math.random() < 0.35) { n.angry = true; } fx.burst(V(n.o.position.x, 1, n.o.position.z), 0xffffff, 8, 4); },
+  talkTo(n) {
+    const p = G.player.pos; if (!this.walkers.talk(n, p.x, p.z)) return;
+    const famous = life.fame >= 10, lines = famous ? [t('Wow, it is you! Can I get a selfie?'), t('My kids love your matches!'), t('You are the famous one!')] : [t('Nice day, right?'), t('Watch out for the police around here.'), t('Have you tried the food shop?'), t('The street race is crazy fun!'), t('I am late for work!'), t('Have you found the hidden coins?')];
+    toast(pick(lines), 2.5); if (famous && Math.random() < 0.3) { life.fame++; saveLife(); }
   },
   // ---------------------------------------------------------------- cars
   freeCar(n, o, x, z, h) { const { hw, hl } = carSize(n), body = this.L.kin(new CANNON.Box(new CANNON.Vec3(hw, 1, hl)), x, 1, z, 'car'); const c = { n, o, hw, hl, x, z, h, v: 0, body }; this.cars.push(c); return c; },
