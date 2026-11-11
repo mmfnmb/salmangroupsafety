@@ -53,6 +53,7 @@ const P = AR ? {
 };
 function localLine(ev) {
   const p = P[ev]; if (!p) return null;
+  if (typeof p[0] === 'string') return rnd(p); // a plain list (the second commentator's quips)
   const parts = p.map((o) => rnd(o)).filter(Boolean);
   if (Math.random() < 0.25 && ev !== 'intro') parts.unshift(rnd(P.hype));
   return parts.join(' ').replace(/\s+/g, ' ').trim();

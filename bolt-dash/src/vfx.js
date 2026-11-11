@@ -38,6 +38,10 @@ export const vfx = {
   bolt(pos, color) { const p = sprite('bolt', pos.clone().add(V(0, 5, 0)), color, 10, 0.3, { rot: 0 }); if (p) p.o.scale.set(3, 10, 1); this.flash(pos, color, 3, 0.25); },
   // a slash arc in front of someone
   slash(pos, color, size = 3) { sprite('slash', pos, color, size, 0.25, { grow: 1.4, spin: 6 }); },
+  // a drop of water flying out (hydrants, splashes)
+  drop(pos, vel) { return sprite('glow', pos.clone(), 0x2f7fff, rand(0.35, 0.6), rand(0.5, 0.8), { vel, g: 14, grow: 1.6 }); },
+  // fire and smoke puffs (campfires, jetpacks)
+  fire(pos, n = 2, color = 0xff8a3d) { for (let i = 0; i < n; i++) sprite('fire', pos.clone().add(V(rand(-0.15, 0.15), 0, rand(-0.15, 0.15))), color, rand(0.4, 0.8), rand(0.3, 0.6), { vel: V(rand(-0.3, 0.3), rand(1.2, 2.4), rand(-0.3, 0.3)), grow: 0.4 }); },
   hearts(pos, n = 6) { for (let i = 0; i < n; i++) sprite('heart', pos.clone(), 0xff5fb8, rand(0.5, 0.9), rand(0.7, 1.1), { vel: V(rand(-1, 1), rand(1, 2), rand(-1, 1)).multiplyScalar(2.5), grow: 0.6 }); },
 };
 export function vfxUpdate(dt) {
