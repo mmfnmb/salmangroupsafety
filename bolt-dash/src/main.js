@@ -1,5 +1,6 @@
 // Game flow: lobby menu, matchmaking, show rounds, HUD, camera, input, build mode.
 import { THREE, CANNON, M, G, V, PI, rand, pick, clamp, damp, $, IS_TOUCH, store, save, persist, sfx, toast, renderer, scene, camera, canvas, sky, sun, world, puffs, confetti, fx, loadAssets, place, instanced, SkeletonUtils, renderScene, applyQuality, loadExtras } from './core.js';
+import { useAbility, abilitiesOn, abilityText, clearAbilities } from './abilities.js';
 import { makeBody, loadChars, charsReady, kkBoneFix, TIER, CHAR } from './chars.js';
 import { t, LANG, LANGS, setLang, translateDom } from './i18n.js';
 import { ITEMS, ITEM, CATS, SKINS, BATS, THUMB, computeBoneFix, dress, randomEquip, makeThumbs, holdItem, skinFx, updateGold, makePet } from './cosmetics.js';
@@ -91,6 +92,8 @@ addEventListener('keydown', (e) => {
   if (e.code === 'KeyF' || e.code === 'Enter') { ctl.fire = true; ctl.held = true; }
   if (e.code === 'KeyE' && G.modeObj?.id === 'world') { if (!worldMode.serve()) worldMode.act(); }
   if (e.code === 'KeyQ') ctl.push = true;
+  if (e.code === 'KeyC') ctl.ab = true;
+  if (e.code === 'KeyV') ctl.ult = true;
   if (e.code === 'KeyG') ctl.grab = true;
   if (e.code === 'Escape' && flow.state === 'play') togglePause();
 });
@@ -149,6 +152,8 @@ function readPlayerInput(r) {
   if (ctl.jump) { r.input.jump = true; ctl.jump = false; }
   if (ctl.dive) { r.input.dive = true; ctl.dive = false; }
   if (ctl.push) { r.input.push = true; ctl.push = false; }
+  if (ctl.ab) { r.input.ab = true; ctl.ab = false; }
+  if (ctl.ult) { r.input.ult = true; ctl.ult = false; }
   r.input.grab = !!ctl.grab;
   if (G.modeObj?.bats || G.modeObj?.charge) batCharge(r);
   else if (ctl.fire) { r.input.fire = true; ctl.fire = false; }
@@ -579,8 +584,9 @@ function renderLocker() {
     const rt = it.rare || (it.tier ? TIER()[it.tier] : '');
     return `<button class="item${on ? ' on' : ''}${locker.preview === it.id ? ' sel' : ''}${it.tier ? ' t' + it.tier : ''}" data-id="${it.id}">${rt ? `<span class="rtag">${rt}</span>` : ''}<img alt="" src="${THUMB[it.id] || ''}"><span>${it.name}</span>${tag}</button>`;
   }).join('');
-  const focus = ITEM[locker.preview] || (locker.cat === 'bat' && !isShop ? ITEM[save.equip.bat] : null);
+  const focus = ITEM[locker.preview] || (locker.cat === 'bat' && !isShop ? ITEM[save.equip.bat] : null) || (locker.cat === 'char' && !isShop ? ITEM[save.equip.char] : null);
   $('batInfo').hidden = !(focus && (focus.slot === 'bat' || focus.rare));
+  if (focus?.slot === 'char') { const k = abilityText(focus.id); $('batInfo').hidden = false; $('batInfo').innerHTML = `<b>${focus.name}</b><span>⚡ ${k.ab}</span><span>💥 ${k.ult}</span>`; }
   if (focus?.slot === 'bat') $('batInfo').innerHTML = `<b>${focus.name}</b><span>${focus.desc}</span><div class="stats3"><div>${t('Power')} ${pips(focus.power)}</div><div>${t('Speed')} ${pips(focus.speed)}</div><div>${t('Reach')} ${pips(focus.reach)}</div></div>`;
   else if (focus?.rare) $('batInfo').innerHTML = `<b>${focus.name} · ${focus.rare}</b><span>${{ gold: t('The ground turns gold behind you as you run'), void: t('A black hole swirls around you'), lava: t('Fire sparks fly off you'), galaxy: t('Stars twinkle around you'), crystal: t('Shiny and clear like a diamond'), rainbow: t('Your colour never stops changing'), bolt: t('Gold and black hole together: the exclusive character') }[focus.fx] || ''}</span>`;
   const p = locker.preview && ITEM[locker.preview];
@@ -786,6 +792,7 @@ function beginPlay() {
   buildHud();
 }
 function cleanupRound() {
+  clearAbilities(); $('abil').hidden = true;
   for (const r of G.runners) r.dispose(); G.runners = []; G.player = null;
   G.modeObj?.cleanup?.(); clearProjectiles(); G.level?.dispose(); G.level = null; G.modeObj = null;
   puffs.clear(); confetti.clear();
@@ -971,7 +978,14 @@ function buildHud() {
   $('bFire').hidden = !md.bats && !md.charge;
   $('bFire').innerHTML = md.bats ? icon('bat') : md.charge ? icon('ball') : icon('fire');
 }
+function updateAbil() {
+  const p = G.player, on = flow.state === 'play' && !!p && !p.out && abilitiesOn(); $('abil').hidden = !on; if (!on) return;
+  const kit = abilityText(p.kk?.id); $('bAb').title = kit.ab; $('bUlt').title = kit.ult;
+  $('bAb').style.setProperty('--cd', (p.abCd || 0) > 0 ? Math.min(1, p.abCd / 9) : 0); $('bUlt').style.setProperty('--p', p.ultCharge || 0); $('bUlt').classList.toggle('ready', (p.ultCharge || 0) >= 1);
+}
+for (const [id, k] of [['bAb', 'ab'], ['bUlt', 'ult']]) $(id).addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); ctl[k] = true; });
 function updateHud() {
+  updateAbil();
   const md = G.modeObj, p = G.player; if (!md || !p) return;
   if (md.team && md.teams) { const h = md.hud(), col = { red: '#ff5a6e', blue: '#6fb0ff', green: '#4be37a', yellow: '#ffd23f' }; $('hRed').innerHTML = md.teams.slice(0, 2).map((k) => `<span style="color:${col[k]}">${h[k]}</span>`).join(' '); $('hBlue').innerHTML = md.teams.slice(2).map((k) => `<span style="color:${col[k]}">${h[k]}</span>`).join(' '); $('hTime').textContent = Math.max(0, Math.ceil(h.time)); }
   else if (md.team) { const h = md.hud(); $('hRed').textContent = h.red; $('hBlue').textContent = h.blue; $('hTime').textContent = Math.max(0, Math.ceil(h.time)); }
@@ -1235,7 +1249,10 @@ translateDom();
     restartWorld() { cleanupRound(); enterWorld(true); },
     refreshMenu,
   });
-  comm.onOwner = () => { heroDress(); refreshMenu(); toast(t('Glitch') + ' · ' + t('Owner'), 3); };
+  // the owner (you) never runs out of coins: topped up whenever they drop
+  const ownerCoins = () => { if (comm.owner && save.coins < 5e8) { save.coins = 999999999; persist2?.(); refreshMenu(); } };
+  comm.onOwner = () => { ownerCoins(); heroDress(); refreshMenu(); toast(t('Glitch') + ' · ' + t('Owner'), 3); };
+  setInterval(ownerCoins, 1000);
   playIntro(false); initCommunity();
   // after the menu is up, quietly download the rest (the open world, the quality files, the radio); the films stream when you watch them
   setTimeout(backgroundLoad, 2500);

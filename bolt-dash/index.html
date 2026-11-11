@@ -264,6 +264,18 @@ html[dir=rtl] svg:has(use[href="#i-back"]){transform:scaleX(-1)}
 #bPush{right:max(214px,calc(env(safe-area-inset-right,0px) + 188px));bottom:max(30px,env(safe-area-inset-bottom,0px));width:58px;height:58px;background:#ff9f43}
 #bGrab{right:max(140px,calc(env(safe-area-inset-right,0px) + 114px));bottom:max(104px,calc(env(safe-area-inset-bottom,0px) + 82px));width:58px;height:58px;background:#a78bfa}
 #bPush svg.i,#bGrab svg.i{width:26px;height:26px}
+#abil{position:fixed;right:max(18px,env(safe-area-inset-right,0px));bottom:max(150px,calc(env(safe-area-inset-bottom,0px) + 150px));display:flex;flex-direction:column;gap:12px;z-index:6;pointer-events:none}
+#abil button{pointer-events:auto;position:relative;width:60px;height:60px;border-radius:50%;border:3px solid #fff;background:#3d8bff;color:#fff;font-size:26px;display:grid;place-items:center;box-shadow:0 5px 0 rgba(33,18,74,.3);overflow:hidden}
+#abil button span{position:relative;z-index:2}
+#abil button i{position:absolute;inset:0;background:conic-gradient(rgba(20,22,40,.65) calc(var(--cd,0)*1turn),transparent 0);z-index:1}
+#abil #bUlt{width:72px;height:72px;background:conic-gradient(#ffd23f calc(var(--p,0)*1turn),#5b5470 0)}
+#abil #bUlt.ready{background:#ffd23f;animation:ultPulse .8s ease-in-out infinite}
+#abil #bUlt i{display:none}
+#abil em{position:absolute;bottom:2px;right:8px;font:800 11px system-ui;font-style:normal;z-index:3;opacity:.85}
+.touchdev #abil em{display:none}
+@keyframes ultPulse{50%{transform:scale(1.1);box-shadow:0 0 22px #ffd23f}}
+@media (max-width:700px){#abil{bottom:max(190px,calc(env(safe-area-inset-bottom,0px) + 190px))}}
+
 .act.on{transform:translateY(4px);box-shadow:0 2px 0 rgba(33,18,74,.3)}
 .keys{position:fixed;left:50%;bottom:max(64px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--veil);color:var(--paper);border-radius:12px;padding:5px 12px;font-weight:800;font-size:13px;white-space:nowrap;pointer-events:none}
 
@@ -587,6 +599,7 @@ html[dir=rtl] svg:has(use[href="#i-back"]){transform:scaleX(-1)}
     <button class="act" id="bFire" aria-label="Hit" hidden><svg class="i"><use href="#i-fire"/></svg></button>
   </div>
   <button class="btn" id="wAct" hidden></button>
+  <div id="abil" hidden><button id="bAb" aria-label="Ability"><span>⚡</span><i></i><em>C</em></button><button id="bUlt" aria-label="Knockout"><span>💥</span><i></i><em>V</em></button></div>
   <div class="keys" id="keys">WASD: run · Space: jump · Shift: dive · F or click: hit (hold to charge) · Drag: turn the camera · Q: push · G (hold): grab</div>
 </div>
 <div id="big" hidden></div>

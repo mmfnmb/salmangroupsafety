@@ -1,5 +1,6 @@
 // The character: physics body, movement, status effects, animation, bot brain.
 import { THREE, CANNON, M, G, V, PI, rand, pick, clamp, boneOffset, damp, scene, world, sfx, fx, puffs, SkeletonUtils, G_STATIC, G_RUNNER, G_HAZARD, G_BALL, G_PROJ, matRunner } from './core.js';
+import { abilityUpdate, useAbility, useUlt } from './abilities.js';
 import { makeBody } from './chars.js';
 import { dress, paint, holdItem, HAND, ITEM, skinFx, teamFlag, makePet, petPerk } from './cosmetics.js';
 
@@ -57,7 +58,7 @@ export class Runner {
     this.facing = facing; this.squash = 1; this.hitCool = 0; this.dived = false;
     this.frozenT = 0; this.confuseT = 0; this.slowT = 0; this.slipT = 0; this.stunT = 0; this.boostT = 0; this.launchT = 0; this.swingT = 0; this.swingCd = 0;
     this.boostDir = { x: 0, z: -1 }; this.groundBody = null;
-    this.input = { x: 0, z: 0, jump: false, dive: false, fire: false, push: false, grab: false };
+    this.input = { x: 0, z: 0, jump: false, dive: false, fire: false, push: false, grab: false, ab: false, ult: false };
     this.stars.visible = false; this.model.rotation.set(0, 0, 0); this.model.position.set(0, 0, 0); this.root.quaternion.identity();
     this.ai = this.ai || { lane: rand(-4, 4), laneT: rand(1, 3), skill: rand(0.78, 0.99), speed: rand(0.93, 1.03), think: 0, lastP: null, stuck: 0, wander: null, wanderT: 0, aimT: 0 };
     this.play('Idle', 0);
@@ -140,6 +141,7 @@ export class Runner {
     const b = this.body, v = b.velocity, inp = this.input, L = G.level;
     this.stateT += dt; this.hitCool = Math.max(0, this.hitCool - dt);
     for (const k of ['boostT', 'launchT', 'confuseT', 'slowT', 'slipT', 'stunT', 'swingT', 'swingCd']) this[k] = Math.max(0, this[k] - dt);
+    abilityUpdate(this, dt);
     if (this.frozenT > 0) { this.frozenT -= dt; if (this.frozenT <= 0) { this.frozenT = 0; paint(this.model); } }
     if (!this.confuseT && !this.stunT && this.state !== 'tumble') this.stars.visible = false;
     this.checkGround();
@@ -224,6 +226,8 @@ export class Runner {
       }
       if (inp.fire) { inp.fire = false; G.onFire?.(this); }
       if (inp.push) { inp.push = false; this.doPush(); }
+      if (inp.ab) { inp.ab = false; useAbility(this); }
+      if (inp.ult) { inp.ult = false; useUlt(this); }
       this.grabUpdate(dt, inp.grab);
 
       if (this.grounded && !this.wasGrounded) {
