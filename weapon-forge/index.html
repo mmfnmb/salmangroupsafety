@@ -165,12 +165,18 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
           <button class="tool" id="bPaint" aria-pressed="false">ارسم على الوش</button>
         </div>
         <div class="btools bottom">
-          <button class="tool" id="bDup">نسخ</button>
+          <button class="tool" id="bMulti" aria-pressed="false">تحديد كذا</button>
+          <button class="tool" id="bAll">حدد الكل</button>
+          <button class="tool" id="bCopy">نسخ</button>
+          <button class="tool" id="bPaste">لصق</button>
+          <button class="tool" id="bDup">كرّر</button>
           <button class="tool" id="bMir">مرآة</button>
           <button class="tool" id="bDel">امسح</button>
           <button class="tool" id="bUndo">رجوع</button>
         </div>
       </div>
+      <div class="desc" id="bSelInfo" aria-live="polite"></div>
+      <div class="desc">اختصارات: Ctrl+C نسخ · Ctrl+V لصق · Ctrl+D كرّر · Delete امسح · Ctrl+Z رجوع · 1 تحريك · 2 تكبير · 3 لف · 4 رسم · Shift+كليك تحديد كذا مكعب</div>
       <div class="label">لون المكعب (أو لون الريشة لما ترسم على الوش)</div>
       <div class="pal" id="bpal"></div>
       <div class="label">ابدأ من وحش جاهز</div>
@@ -194,7 +200,7 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
     </div>
     <div class="paint" id="paintBox" hidden>
       <div class="pcard"><b id="paintT">ارسم على الوش</b><canvas id="paintCv" width="320" height="320"></canvas>
-        <div class="acts"><button class="btn alt" id="paintErase">ممحاة</button><button class="btn alt" id="paintClear">امسح الوش</button><button class="btn" id="paintDone">تمام</button></div></div>
+        <div class="acts"><button class="btn alt" id="paintCopy">انسخ الرسمة</button><button class="btn alt" id="paintPaste">الصق الرسمة</button><button class="btn alt" id="paintErase">ممحاة</button><button class="btn alt" id="paintClear">امسح الوش</button><button class="btn" id="paintDone">تمام</button></div></div>
     </div>
   </section>
 
@@ -609,17 +615,33 @@ function beastStats(def) {
   return { hp, spd, dmg, el, weak: WEAK[el], resist: el, height: Math.max(0.5, height), V, power, rar, cubes: def.cubes.length };
 }
 // pixels drawn on a face become a little texture: the cube's colour underneath, the drawing on top
-const texCache = new Map();
+// pixel style: every face is made of square pixels of the same size (8 per unit), each a slightly different shade of the
+// cube's colour with darker edge pixels, like block games; drawings sit on top, pixel for pixel
+const PPU = 8, texCache = new Map();
+function faceDims(q, i) { const [w, h, d] = q.s, a = i < 2 ? [d, h] : i < 4 ? [w, d] : [w, h]; return a.map((v) => Math.max(1, Math.min(48, Math.round(v * PPU)))); }
+function hash3(a, b, c) { let h = Math.imul(a + 0x9e37, 374761393) ^ Math.imul(b + 0x7f4a, 668265263) ^ Math.imul(c + 0x1234, 2246822519); h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967295; }
+// a face drawing: "w,h:" then one character per pixel ('.' = none, else a palette index in base 36). Old drawings were plain 8x8.
+function parsePaint(f) { if (!f) return null; const m = /^(\d+),(\d+):(.*)$/.exec(f); return m ? { w: +m[1], h: +m[2], d: m[3] } : { w: 8, h: 8, d: f }; }
+function resample(pt, w, h) { const out = []; for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) out.push(pt ? pt.d[Math.floor(y * pt.h / h) * pt.w + Math.floor(x * pt.w / w)] || '.' : '.'); return out; }
+const _hsl = {};
 function faceMat(q, i) {
-  const f = q.f[i]; if (!f) return new THREE.MeshLambertMaterial({ color: q.c });
-  const key = q.c + f; let t = texCache.get(key);
-  if (!t) { const c = document.createElement('canvas'); c.width = c.height = 8; const g = c.getContext('2d'); g.fillStyle = q.c; g.fillRect(0, 0, 8, 8); for (let k = 0; k < 64; k++) { const ch = f[k]; if (ch && ch !== '.') { g.fillStyle = BPAL[parseInt(ch, 36)] || '#000'; g.fillRect(k % 8, (k / 8) | 0, 1, 1); } } t = new THREE.CanvasTexture(c); t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestFilter; texCache.set(key, t); }
+  const [w, h] = faceDims(q, i), seed = q.seed || 1, key = [q.c, w, h, seed, i, q.f[i]].join('|'); let t = texCache.get(key);
+  if (!t) {
+    const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'), img = g.createImageData(w, h), col = new THREE.Color(), pt = parsePaint(q.f[i]), cells = pt ? resample(pt, w, h) : null;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const ch = cells ? cells[y * w + x] : '.', base = ch !== '.' ? BPAL[parseInt(ch, 36)] || q.c : q.c; col.set(base).getHSL(_hsl);
+      let l = _hsl.l + (hash3(x, y, seed * 7 + i) - 0.5) * 0.1; if (ch === '.' && (x === 0 || y === 0 || x === w - 1 || y === h - 1)) l -= 0.07;
+      col.setHSL(_hsl.h, _hsl.s, Math.max(0, Math.min(1, l))); const k = (y * w + x) * 4; img.data[k] = col.r * 255; img.data[k + 1] = col.g * 255; img.data[k + 2] = col.b * 255; img.data[k + 3] = 255;
+    }
+    g.putImageData(img, 0, 0); t = new THREE.CanvasTexture(c); t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; texCache.set(key, t);
+    if (texCache.size > 4000) texCache.clear();
+  }
   return new THREE.MeshLambertMaterial({ map: t });
 }
-function cubeMesh(q) { const m = new THREE.Mesh(box, [0, 1, 2, 3, 4, 5].map((i) => faceMat(q, i))); m.position.fromArray(q.p); m.scale.fromArray(q.s); m.rotation.set(...q.r); m.castShadow = true; m.userData.q = q; return m; }
+function cubeMesh(q) { if (!q.seed) q.seed = 1 + ((Math.random() * 1e6) | 0); const m = new THREE.Mesh(box, [0, 1, 2, 3, 4, 5].map((i) => faceMat(q, i))); m.position.fromArray(q.p); m.scale.fromArray(q.s); m.rotation.set(...q.r); m.castShadow = true; m.userData.q = q; return m; }
 function buildBeast(def) { const g = new THREE.Group(); for (const q of def.cubes) g.add(cubeMesh(q)); return g; }
 
-const BE = { R: null, scene: null, cam: null, orbit: null, tc: null, root: null, def: null, sel: null, mode: 'translate', undo: [], color: '#46c96b', mine: store.get('beasts', []) };
+const BE = { R: null, scene: null, cam: null, orbit: null, tc: null, root: null, def: null, sel: null, sels: [], pivot: null, multi: false, clip: null, mode: 'translate', undo: [], color: '#46c96b', mine: store.get('beasts', []) };
 function beastInit() {
   if (BE.R) return; const st = $('bstage'), R3 = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true }); R3.setPixelRatio(Math.min(2, devicePixelRatio)); st.prepend(R3.domElement); BE.R = R3;
   const sc = new THREE.Scene(); BE.scene = sc; BE.cam = new THREE.PerspectiveCamera(40, 1, 0.1, 200); BE.cam.position.set(7, 6, 9);
@@ -628,52 +650,88 @@ function beastInit() {
   BE.orbit = new THREE.OrbitControls(BE.cam, R3.domElement); BE.orbit.target.set(0, 1.5, 0); BE.orbit.enableDamping = true; BE.orbit.update();
   BE.tc = new THREE.TransformControls(BE.cam, R3.domElement); BE.tc.setTranslationSnap(0.25); BE.tc.setRotationSnap(Math.PI / 12); BE.tc.setScaleSnap(0.25); BE.tc.setSize(0.9); sc.add(BE.tc);
   BE.tc.addEventListener('dragging-changed', (e) => { BE.orbit.enabled = !e.value; if (e.value) pushUndo(); else commitSel(); });
-  BE.tc.addEventListener('objectChange', () => { const m = BE.sel; if (!m) return; m.scale.set(Math.max(0.1, Math.abs(m.scale.x)), Math.max(0.1, Math.abs(m.scale.y)), Math.max(0.1, Math.abs(m.scale.z))); });
+  BE.tc.addEventListener('objectChange', () => { const m = BE.sels.length === 1 ? BE.sel : null; if (!m) return; m.scale.set(Math.max(0.1, Math.abs(m.scale.x)), Math.max(0.1, Math.abs(m.scale.y)), Math.max(0.1, Math.abs(m.scale.z))); });
   // tap a cube to select it (or a face, in paint mode); a tap on empty space lets go
   let down = null; R3.domElement.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY }; });
   R3.domElement.addEventListener('pointerup', (e) => { if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6 || BE.tc.dragging) return; down = null; pick(e); });
   new ResizeObserver(() => { const w = st.clientWidth, h = st.clientHeight; R3.setSize(w, h, false); BE.cam.aspect = w / h; BE.cam.updateProjectionMatrix(); }).observe(st);
-  BPAL.forEach((hex, i) => { const b = document.createElement('button'); b.className = 'sw'; b.setAttribute('aria-pressed', String(hex === BE.color)); b.setAttribute('aria-label', 'لون ' + (i + 1)); b.innerHTML = `<i style="background:${hex}"></i>`; b.onclick = () => { BE.color = hex; PNT.ink = i; PNT.erase = false; $('bpal').querySelectorAll('.sw').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); if (BE.sel && !$('paintBox').hidden) return; if (BE.sel) { pushUndo(); BE.sel.userData.q.c = hex; rebuild(); } }; $('bpal').appendChild(b); });
+  BPAL.forEach((hex, i) => { const b = document.createElement('button'); b.className = 'sw'; b.setAttribute('aria-pressed', String(hex === BE.color)); b.setAttribute('aria-label', 'لون ' + (i + 1)); b.innerHTML = `<i style="background:${hex}"></i>`; b.onclick = () => { BE.color = hex; PNT.ink = i; PNT.erase = false; $('bpal').querySelectorAll('.sw').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); if (BE.sel && !$('paintBox').hidden) return; if (BE.sels.length) { pushUndo(); for (const m of BE.sels) m.userData.q.c = hex; rebuild(); } }; $('bpal').appendChild(b); });
   for (const k in BEASTS) { const b = document.createElement('button'); b.className = 'temp'; b.textContent = BEASTS[k].name; b.onclick = () => { pushUndo(); loadBeast(clone(BEASTS[k]), true); }; $('btemps').appendChild(b); }
   loadBeast(clone(BEASTS.slime), true); renderMyBeasts();
 }
 const clone = (o) => JSON.parse(JSON.stringify(o));
-function loadBeast(def, fresh) { BE.def = def; if (fresh) { bNameTouched = false; $('bFly').checked = !!def.fly; } rebuild(); select(null); }
+function loadBeast(def, fresh) { BE.def = def; BE.sels = []; if (fresh) { bNameTouched = false; $('bFly').checked = !!def.fly; } rebuild(); select(null); }
 function rebuild() {
-  const keep = BE.sel?.userData.q; if (BE.root) { BE.scene.remove(BE.root); } BE.root = buildBeast(BE.def); BE.scene.add(BE.root);
-  BE.sel = null; if (keep) { const m = BE.root.children.find((x) => x.userData.q === keep); if (m) select(m); else select(null); } else BE.tc.detach();
-  bcard();
+  const keep = BE.sels.map((m) => m.userData.q); release(); if (BE.root) BE.scene.remove(BE.root); BE.root = buildBeast(BE.def); BE.scene.add(BE.root);
+  BE.sels = BE.root.children.filter((x) => keep.includes(x.userData.q)); BE.sel = BE.sels[0] || null; gizmo(); bcard();
 }
-function select(m) { BE.sel = m; if (m && BE.mode !== 'paint') { BE.tc.setMode(BE.mode); BE.tc.attach(m); } else BE.tc.detach(); for (const c of BE.root?.children || []) for (const mt of c.material) mt.emissive?.setHex(c === m ? 0x2a1a0a : 0); }
-function commitSel() { const m = BE.sel; if (!m) return; const q = m.userData.q; q.p = m.position.toArray().map((v) => +v.toFixed(3)); q.s = m.scale.toArray().map((v) => +Math.max(0.1, v).toFixed(3)); q.r = [m.rotation.x, m.rotation.y, m.rotation.z].map((v) => +v.toFixed(4)); bcard(); }
+// several cubes move together inside a pivot; when they are let go, their places are written back into the monster
+function release() { if (!BE.pivot) return; BE.tc.detach(); for (const m of [...BE.pivot.children]) BE.root.attach(m); BE.root.remove(BE.pivot); BE.pivot = null; }
+function gizmo() {
+  release(); for (const c of BE.root?.children || []) for (const mt of c.material) mt.emissive?.setHex(BE.sels.includes(c) ? 0x3a2410 : 0);
+  if (!BE.sels.length || BE.mode === 'paint') { BE.tc.detach(); return; }
+  BE.tc.setMode(BE.mode);
+  if (BE.sels.length === 1) { BE.tc.attach(BE.sels[0]); return; }
+  const c = new THREE.Vector3(); for (const m of BE.sels) c.add(m.position); c.divideScalar(BE.sels.length);
+  BE.pivot = new THREE.Group(); BE.pivot.position.copy(c); BE.root.add(BE.pivot); BE.root.updateMatrixWorld(true); for (const m of BE.sels) BE.pivot.attach(m); BE.tc.attach(BE.pivot);
+  $('bSelInfo').textContent = BE.sels.length + ' مكعبات متحددين';
+}
+function select(m, add) {
+  if (add && m) { BE.sels = BE.sels.includes(m) ? BE.sels.filter((x) => x !== m) : [...BE.sels, m]; } else BE.sels = m ? [m] : [];
+  BE.sel = BE.sels[0] || null; $('bSelInfo').textContent = BE.sels.length > 1 ? BE.sels.length + ' مكعبات متحددين' : ''; gizmo();
+}
+const _inv = new THREE.Matrix4(), _mx = new THREE.Matrix4(), _p = new THREE.Vector3(), _q = new THREE.Quaternion(), _s = new THREE.Vector3(), _e = new THREE.Euler();
+function commitSel() {
+  if (!BE.sels.length) return; BE.root.updateMatrixWorld(true); _inv.copy(BE.root.matrixWorld).invert();
+  for (const m of BE.sels) { const q = m.userData.q; _mx.multiplyMatrices(_inv, m.matrixWorld).decompose(_p, _q, _s); _e.setFromQuaternion(_q);
+    q.p = _p.toArray().map((v) => +v.toFixed(3)); q.s = _s.toArray().map((v) => +Math.max(0.125, Math.abs(v)).toFixed(3)); q.r = [_e.x, _e.y, _e.z].map((v) => +v.toFixed(4)); }
+  rebuild();
+}
 function pushUndo() { BE.undo.push(JSON.stringify(BE.def)); if (BE.undo.length > 60) BE.undo.shift(); }
 const ray = new THREE.Raycaster();
 function pick(e) {
   const r = BE.R.domElement.getBoundingClientRect(); ray.setFromCamera({ x: (e.clientX - r.left) / r.width * 2 - 1, y: -((e.clientY - r.top) / r.height) * 2 + 1 }, BE.cam);
-  const hit = ray.intersectObjects(BE.root.children, false)[0];
-  if (!hit) { select(null); return; } select(hit.object);
-  if (BE.mode === 'paint') openPaint(hit.object, hit.face.materialIndex);
+  const hit = ray.intersectObjects(BE.root.children, true).find((h) => h.object.userData.q);
+  if (!hit) { if (!BE.multi && !e.shiftKey) select(null); return; }
+  if (BE.mode === 'paint') { select(hit.object); openPaint(hit.object, hit.face.materialIndex); return; }
+  select(hit.object, BE.multi || e.shiftKey || e.ctrlKey || e.metaKey);
 }
-const setMode = (m) => { BE.mode = m; for (const [id, k] of [['bMove', 'translate'], ['bSize', 'scale'], ['bTurn', 'rotate'], ['bPaint', 'paint']]) $(id).setAttribute('aria-pressed', String(m === k)); if (m === 'paint') { BE.tc.detach(); toast('دوس على وش أي مكعب عشان ترسم عليه'); } else if (BE.sel) { BE.tc.attach(BE.sel); BE.tc.setMode(m); } };
+const setMode = (m) => { BE.mode = m; for (const [id, k] of [['bMove', 'translate'], ['bSize', 'scale'], ['bTurn', 'rotate'], ['bPaint', 'paint']]) $(id).setAttribute('aria-pressed', String(m === k)); if (m === 'paint') toast('دوس على وش أي مكعب عشان ترسم عليه'); gizmo(); };
 $('bMove').onclick = () => setMode('translate'); $('bSize').onclick = () => setMode('scale'); $('bTurn').onclick = () => setMode('rotate'); $('bPaint').onclick = () => setMode('paint');
-$('bAdd').onclick = () => { pushUndo(); const q = Q(0, 1.5, 0, 1, 1, 1, BE.color); if (BE.sel) { const o = BE.sel.userData.q; q.p = [o.p[0] + o.s[0] / 2 + 0.5, o.p[1], o.p[2]]; } BE.def.cubes.push(q); rebuild(); select(BE.root.children[BE.root.children.length - 1]); if (BE.mode === 'paint') setMode('translate'); };
-$('bDup').onclick = () => { if (!BE.sel) return toast('اختار مكعب الأول'); pushUndo(); const q = clone(BE.sel.userData.q); q.p[0] += 0.5; BE.def.cubes.push(q); rebuild(); select(BE.root.children[BE.root.children.length - 1]); };
-$('bMir').onclick = () => { if (!BE.sel) return toast('اختار مكعب الأول'); pushUndo(); const o = BE.sel.userData.q, q = { ...clone(o), p: [-o.p[0], o.p[1], o.p[2]], r: [o.r[0], -o.r[1], -o.r[2]] }; if (Math.abs(o.p[0]) < 0.05) q.p[0] = -(o.s[0] + 0.25); BE.def.cubes.push(q); rebuild(); toast('اتعمل نسخة في الناحية التانية'); };
-$('bDel').onclick = () => { if (!BE.sel) return toast('اختار مكعب الأول'); if (BE.def.cubes.length <= 1) return toast('الوحش لازم يبقى فيه مكعب واحد على الأقل'); pushUndo(); BE.def.cubes.splice(BE.def.cubes.indexOf(BE.sel.userData.q), 1); BE.sel = null; rebuild(); };
-$('bUndo').onclick = () => { if (!BE.undo.length) return; BE.def = JSON.parse(BE.undo.pop()); BE.sel = null; rebuild(); };
+function addCubes(list) { pushUndo(); BE.def.cubes.push(...list); BE.sels = []; rebuild(); BE.sels = BE.root.children.filter((x) => list.includes(x.userData.q)); BE.sel = BE.sels[0] || null; if (BE.mode === 'paint') setMode('translate'); else gizmo(); }
+const needSel = () => { if (!BE.sels.length) { toast('اختار مكعب الأول'); return false; } return true; };
+$('bAdd').onclick = () => { const q = Q(0, 1.5, 0, 1, 1, 1, BE.color); if (BE.sel) { const o = BE.sel.userData.q; q.p = [o.p[0] + o.s[0] / 2 + 0.5, o.p[1], o.p[2]]; } addCubes([q]); };
+function copySel() { if (!needSel()) return; BE.clip = BE.sels.map((m) => clone(m.userData.q)); toast(BE.clip.length > 1 ? `اتنسخ ${BE.clip.length} مكعبات` : 'المكعب اتنسخ'); }
+function pasteClip() { if (!BE.clip) return toast('انسخ حاجة الأول'); const list = BE.clip.map((q) => ({ ...clone(q), p: [q.p[0] + 0.5, q.p[1], q.p[2] + 0.5], seed: 0 })); BE.clip = list.map(clone); addCubes(list); }
+$('bCopy').onclick = copySel; $('bPaste').onclick = pasteClip;
+$('bDup').onclick = () => { if (!needSel()) return; addCubes(BE.sels.map((m) => { const q = clone(m.userData.q); q.p[0] += 0.5; q.seed = 0; return q; })); };
+$('bMir').onclick = () => { if (!needSel()) return; addCubes(BE.sels.map((m) => { const o = m.userData.q, q = { ...clone(o), p: [Math.abs(o.p[0]) < 0.05 ? -(o.s[0] + 0.25) : -o.p[0], o.p[1], o.p[2]], r: [o.r[0], -o.r[1], -o.r[2]], seed: 0 }; return q; })); toast('اتعمل نسخة في الناحية التانية'); };
+$('bDel').onclick = () => { if (!needSel()) return; if (BE.def.cubes.length - BE.sels.length < 1) return toast('الوحش لازم يبقى فيه مكعب واحد على الأقل'); pushUndo(); const gone = BE.sels.map((m) => m.userData.q); BE.def.cubes = BE.def.cubes.filter((q) => !gone.includes(q)); BE.sels = []; rebuild(); };
+$('bMulti').onclick = () => { BE.multi = !BE.multi; $('bMulti').setAttribute('aria-pressed', String(BE.multi)); toast(BE.multi ? 'دوس على كذا مكعب عشان تحددهم مع بعض' : 'تحديد مكعب واحد'); };
+$('bAll').onclick = () => { release(); BE.sels = [...BE.root.children.filter((x) => x.userData.q)]; BE.sel = BE.sels[0]; $('bSelInfo').textContent = BE.sels.length + ' مكعبات متحددين'; gizmo(); };
+addEventListener('keydown', (e) => {
+  if ($('vBeast').hidden || !$('paintBox').hidden || /INPUT|TEXTAREA/.test(document.activeElement?.tagName || '')) return; const mod = e.ctrlKey || e.metaKey, k = e.key.toLowerCase();
+  if (mod && k === 'c') { e.preventDefault(); copySel(); } else if (mod && k === 'v') { e.preventDefault(); pasteClip(); } else if (mod && k === 'd') { e.preventDefault(); $('bDup').click(); }
+  else if (mod && k === 'z') { e.preventDefault(); $('bUndo').click(); } else if (mod && k === 'a') { e.preventDefault(); $('bAll').click(); } else if (k === 'delete' || k === 'backspace') { e.preventDefault(); $('bDel').click(); }
+  else if (!mod && k === '1') setMode('translate'); else if (!mod && k === '2') setMode('scale'); else if (!mod && k === '3') setMode('rotate'); else if (!mod && k === '4') setMode('paint');
+});
+$('bUndo').onclick = () => { if (!BE.undo.length) return; release(); BE.def = JSON.parse(BE.undo.pop()); BE.sels = []; BE.sel = null; rebuild(); };
 $('bFly').onchange = () => { BE.def.fly = $('bFly').checked; bcard(); };
-// painting one face of a cube on an 8x8 grid
-const PNT = { m: null, i: 0, ink: 3, erase: false, cells: null };
+// painting one face, pixel for pixel: the grid has as many pixels as the face shows on the cube
+const PNT = { m: null, i: 0, ink: 3, erase: false, cells: null, w: 8, h: 8, clip: null };
 function openPaint(m, i) {
-  PNT.m = m; PNT.i = i; const q = m.userData.q; PNT.cells = (q.f[i] || '.'.repeat(64)).split(''); pushUndo();
-  $('paintT').textContent = 'ارسم على الوش ' + ['اليمين', 'الشمال', 'اللي فوق', 'اللي تحت', 'اللي قدام', 'اللي ورا'][i]; $('paintBox').hidden = false; drawPaint();
+  PNT.m = m; PNT.i = i; const q = m.userData.q; [PNT.w, PNT.h] = faceDims(q, i); PNT.cells = resample(parsePaint(q.f[i]), PNT.w, PNT.h); pushUndo();
+  const c = $('paintCv'), sc = Math.max(4, Math.floor(320 / Math.max(PNT.w, PNT.h))); c.width = PNT.w * sc; c.height = PNT.h * sc; c.style.aspectRatio = PNT.w + '/' + PNT.h;
+  $('paintT').textContent = `ارسم على الوش ${['اليمين', 'الشمال', 'اللي فوق', 'اللي تحت', 'اللي قدام', 'اللي ورا'][i]} (${PNT.w}×${PNT.h} بكسل)`; $('paintBox').hidden = false; drawPaint();
 }
-function drawPaint() { const c = $('paintCv'), g = c.getContext('2d'), s = c.width / 8, q = PNT.m.userData.q; g.fillStyle = q.c; g.fillRect(0, 0, c.width, c.height); PNT.cells.forEach((ch, k) => { if (ch !== '.') { g.fillStyle = BPAL[parseInt(ch, 36)]; g.fillRect((k % 8) * s, ((k / 8) | 0) * s, s, s); } }); g.strokeStyle = '#0003'; for (let k = 1; k < 8; k++) { g.beginPath(); g.moveTo(k * s, 0); g.lineTo(k * s, c.height); g.moveTo(0, k * s); g.lineTo(c.width, k * s); g.stroke(); } }
-{ const c = $('paintCv'); let on = false; const at = (e) => { const r = c.getBoundingClientRect(), x = Math.floor((e.clientX - r.left) / r.width * 8), y = Math.floor((e.clientY - r.top) / r.height * 8); if (x < 0 || y < 0 || x > 7 || y > 7) return; PNT.cells[y * 8 + x] = PNT.erase ? '.' : PNT.ink.toString(36); drawPaint(); };
+function drawPaint() { const c = $('paintCv'), g = c.getContext('2d'), s2 = c.width / PNT.w, q = PNT.m.userData.q; g.fillStyle = q.c; g.fillRect(0, 0, c.width, c.height); PNT.cells.forEach((ch, k) => { if (ch !== '.') { g.fillStyle = BPAL[parseInt(ch, 36)]; g.fillRect((k % PNT.w) * s2, ((k / PNT.w) | 0) * s2, s2, s2); } }); g.strokeStyle = '#0003'; g.beginPath(); for (let k = 1; k < PNT.w; k++) { g.moveTo(k * s2, 0); g.lineTo(k * s2, c.height); } for (let k = 1; k < PNT.h; k++) { g.moveTo(0, k * s2); g.lineTo(c.width, k * s2); } g.stroke(); }
+{ const c = $('paintCv'); let on = false; const at = (e) => { const r = c.getBoundingClientRect(), x = Math.floor((e.clientX - r.left) / r.width * PNT.w), y = Math.floor((e.clientY - r.top) / r.height * PNT.h); if (x < 0 || y < 0 || x >= PNT.w || y >= PNT.h) return; PNT.cells[y * PNT.w + x] = PNT.erase ? '.' : PNT.ink.toString(36); drawPaint(); };
   c.addEventListener('pointerdown', (e) => { on = true; c.setPointerCapture(e.pointerId); at(e); }); c.addEventListener('pointermove', (e) => on && at(e)); c.addEventListener('pointerup', () => { on = false; }); }
 $('paintErase').onclick = () => { PNT.erase = !PNT.erase; $('paintErase').textContent = PNT.erase ? 'قلم' : 'ممحاة'; };
-$('paintClear').onclick = () => { PNT.cells = '.'.repeat(64).split(''); drawPaint(); };
-$('paintDone').onclick = () => { const s2 = PNT.cells.join(''); PNT.m.userData.q.f[PNT.i] = /[^.]/.test(s2) ? s2 : ''; $('paintBox').hidden = true; rebuild(); };
+$('paintClear').onclick = () => { PNT.cells = PNT.cells.map(() => '.'); drawPaint(); };
+$('paintCopy').onclick = () => { PNT.clip = { w: PNT.w, h: PNT.h, d: PNT.cells.join('') }; toast('الرسمة اتنسخت، افتح وش تاني والصقها'); };
+$('paintPaste').onclick = () => { if (!PNT.clip) return toast('انسخ رسمة الأول'); PNT.cells = resample(PNT.clip, PNT.w, PNT.h); drawPaint(); };
+$('paintDone').onclick = () => { const d = PNT.cells.join(''); PNT.m.userData.q.f[PNT.i] = /[^.]/.test(d) ? `${PNT.w},${PNT.h}:${d}` : ''; $('paintBox').hidden = true; rebuild(); };
 let bNameTouched = false; $('bName').addEventListener('input', () => { bNameTouched = true; });
 function beastName(st) { const pick = (l) => l[Math.floor(Math.random() * l.length)]; return `${pick(['الوحش', 'المخلوق', 'الكائن', 'الغول', 'العملاق'])} ${pick(EL[st.el].words)} ${pick(['الرهيب', 'الغضبان', 'الجعان', 'المجنون', 'الكبير', 'اللي محدش يقدر عليه'])}`; }
 $('bNameGo').onclick = () => { $('bName').value = beastName(beastStats(BE.def)); bNameTouched = true; };
@@ -697,6 +755,7 @@ function renderMyBeasts() {
     d.insertAdjacentHTML('beforeend', `<b></b><small>${st.rar.name} · ${EL[st.el].name} · الصحة ${st.hp}</small>`); d.querySelector('b').textContent = def.name;
     const r = document.createElement('div'); r.className = 'row'; const mk = (t, fn, alt) => { const b = document.createElement('button'); b.className = 'btn' + (alt ? ' alt' : ''); b.textContent = t; b.onclick = () => fn(b); r.appendChild(b); };
     mk('افتح', () => { pushUndo(); loadBeast(clone(def), true); $('bName').value = def.name; bNameTouched = true; }); mk('حاربه', () => fightBeast(def), true);
+    mk('نسخة', () => { const c2 = { ...clone(def), id: Date.now().toString(36), name: def.name + ' 2' }; BE.mine.unshift(c2); store.set('beasts', BE.mine); renderMyBeasts(); toast('اتعملت نسخة من الوحش'); }, true);
     mk('امسح', (b) => { if (!b.dataset.arm) { b.dataset.arm = 1; b.textContent = 'متأكد؟'; return; } BE.mine.splice(i, 1); store.set('beasts', BE.mine); renderMyBeasts(); }, true);
     d.appendChild(r); L.appendChild(d); });
 }
