@@ -1,5 +1,6 @@
 // The character: physics body, movement, status effects, animation, bot brain.
 import { THREE, CANNON, M, G, V, PI, rand, pick, clamp, boneOffset, damp, scene, world, sfx, fx, puffs, SkeletonUtils, G_STATIC, G_RUNNER, G_HAZARD, G_BALL, G_PROJ, matRunner } from './core.js';
+import { makeBody } from './chars.js';
 import { dress, paint, holdItem, HAND, ITEM, skinFx, teamFlag, makePet, petPerk } from './cosmetics.js';
 
 export const RUN = 10.5, AIR_ACC = 30, GROUND_ACC = 80, JUMP_V = 12.2, DIVE_V = 14.5;
@@ -19,9 +20,7 @@ export class Runner {
   constructor({ i, isPlayer, equip, team = null, name = '' }) {
     this.i = i; this.isPlayer = isPlayer; this.team = team; this.name = name;
     this.root = new THREE.Group(); scene.add(this.root);
-    this.model = SkeletonUtils.clone(M.Character.scene);
-    this.model.scale.setScalar(0.42);
-    this.model.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+    const body = makeBody(equip); this.model = body.model; this.base = body.base; this.kk = body.kk; this.clips = body.clips;
     this.root.add(this.model);
     this.equip = { ...equip };
     dress(this.model, this.equip);
@@ -29,8 +28,8 @@ export class Runner {
     this.pet = equip.pet ? makePet(equip.pet) : null; if (this.pet) scene.add(this.pet.o); this.perk = petPerk(equip);
     this.mixer = new THREE.AnimationMixer(this.model);
     this.actions = {};
-    for (const clip of M.Character.animations) { const n = clip.name.split('|').pop(); this.actions[n] = this.mixer.clipAction(clip); }
-    for (const n of ['Jump', 'Jump_Land', 'HitReact', 'Wave', 'Yes', 'No', 'Punch', 'Death']) if (this.actions[n]) { this.actions[n].setLoop(THREE.LoopOnce, 1); this.actions[n].clampWhenFinished = true; }
+    for (const clip of this.clips) { const n = clip.name.split('|').pop(); this.actions[n] = this.mixer.clipAction(clip); }
+    for (const n of ['Jump', 'Jump_Land', 'HitReact', 'Wave', 'Yes', 'No', 'Punch', 'Death', 'Throw', 'Kick', 'Spin', 'Smash', 'JumpChop', 'Transform', 'Taunt', 'Dodge', 'Interact', 'Cheer']) if (this.actions[n]) { this.actions[n].setLoop(THREE.LoopOnce, 1); this.actions[n].clampWhenFinished = true; }
     this.cur = null; this.play('Idle');
 
     this.stars = new THREE.Group(); this.stars.visible = false; this.root.add(this.stars);
@@ -326,9 +325,9 @@ export class Runner {
     if (this.model.userData.fx && !this.out) { const v = this.body.velocity; skinFx(this.model, dt, this.body.position, { moving: Math.hypot(v.x, v.z) > 1.5, grounded: this.grounded, puffs, scene }); }
     if (this.pet) { const v = this.body.velocity; this.pet.o.visible = !this.out && this.root.visible && !this.model.userData.invisible; this.pet.update(dt, p.x, p.y, p.z, this.facing, Math.hypot(v.x, v.z) > 1.5); this.petAct(dt); }
     // reaching out: arms stretch forward while grabbing or carrying something
-    { this.armB ||= ['UpperArmL', 'UpperArmR'].map((n) => this.model.getObjectByName(n)); const on = this.input.grab || this.carrying, up = !on ? 0 : this.carrying === 'lift' ? 1.9 : this.carrying === 'drag' ? 1.0 : 1.4; boneOffset(this.armB[0], 'z', -up); boneOffset(this.armB[1], 'z', up); }
+    if (!this.kk) { this.armB ||= ['UpperArmL', 'UpperArmR'].map((n) => this.model.getObjectByName(n)); const on = this.input.grab || this.carrying, up = !on ? 0 : this.carrying === 'lift' ? 1.9 : this.carrying === 'drag' ? 1.0 : 1.4; boneOffset(this.armB[0], 'z', -up); boneOffset(this.armB[1], 'z', up); }
     this.squash = damp(this.squash, 1, 12, dt);
-    const s = 0.42; this.model.scale.set(s / Math.sqrt(this.squash), s * this.squash, s / Math.sqrt(this.squash));
+    const s = this.base; this.model.scale.set(s / Math.sqrt(this.squash), s * this.squash, s / Math.sqrt(this.squash));
   }
   dispose() { this.pet?.o.removeFromParent(); this.root.removeFromParent(); if (!this.out) world.removeBody(this.body); this.out = true; }
 }

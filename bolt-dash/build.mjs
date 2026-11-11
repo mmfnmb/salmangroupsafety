@@ -43,6 +43,9 @@ const im=document.createElement('img');im.src=C[(row*2+(side>0?1:0))%C.length];i
 for(const [x,tilt] of [[26,-14],[74,14]]){const p=document.createElement('div');p.className='pole';p.style.left=(x-1.5)+'%';p.style.top='-5%';p.style.transform='rotate('+tilt+'deg)';const f=document.createElement('div');f.className='flag';f.style.backgroundImage='url('+F[fl[k++%fl.length]]+')';if(tilt<0){f.style.right='100%';f.style.transformOrigin='100% 50%'}else f.style.left='100%';f.style.animationDelay=(-k*0.23)+'s';p.appendChild(f);d.appendChild(p)}
 sq.appendChild(d)})})();</script>`;
   html = html.replace('<!--LOADART-->', art);
+  // small pictures of the characters, so the wardrobe shows them before their models have loaded
+  const ct = {}; for (const f of readdirSync('assets/chars')) if (f.endsWith('.webp')) ct[f.slice(0, -5)] = 'data:image/webp;base64,' + readFileSync('assets/chars/' + f).toString('base64');
+  html = html.replace('<script>window.__BD_MODELS=', `<script>window.__BD_CHARTHUMBS=${JSON.stringify(ct)};</script>\n<script>window.__BD_MODELS=`);
 }
 mkdirSync('dist', { recursive: true });
 writeFileSync('dist/bolt-dash.html', html);

@@ -1,5 +1,6 @@
 // Game flow: lobby menu, matchmaking, show rounds, HUD, camera, input, build mode.
 import { THREE, CANNON, M, G, V, PI, rand, pick, clamp, damp, $, IS_TOUCH, store, save, persist, sfx, toast, renderer, scene, camera, canvas, sky, sun, world, puffs, confetti, fx, loadAssets, place, instanced, SkeletonUtils, renderScene, applyQuality, loadExtras } from './core.js';
+import { makeBody, loadChars, charsReady, kkBoneFix, TIER, CHAR } from './chars.js';
 import { t, LANG, LANGS, setLang, translateDom } from './i18n.js';
 import { ITEMS, ITEM, CATS, SKINS, BATS, THUMB, computeBoneFix, dress, randomEquip, makeThumbs, holdItem, skinFx, updateGold, makePet } from './cosmetics.js';
 import { Runner, think } from './runner.js';
@@ -178,12 +179,11 @@ G.botFire = (r) => botFire(r);
 
 // ---------------------------------------------------------------- lobby: your character dances; now and then someone runs in and knocks it over
 const lobby = { root: new THREE.Group(), hero: null, mixer: null, acts: {}, floaters: [], view: 'play', t: 0, state: 'dance', st: 0, move: 'groove', moveT: 0, nextHit: 7, vel: V(), hx: 0, hz: 0 };
-const clipOf = (n) => M.Character.animations.find((a) => a.name.endsWith('|' + n));
-function rig(model) {
+function rig(model, clips = M.Character.animations) {
   const mixer = new THREE.AnimationMixer(model), acts = {};
-  for (const n of ['Idle', 'Wave', 'Yes', 'No', 'Punch', 'Jump', 'Jump_Idle', 'Jump_Land', 'Run', 'Walk', 'HitReact', 'Duck']) {
-    const c = clipOf(n); if (!c) continue; acts[n] = mixer.clipAction(c);
-    if (!['Idle', 'Run', 'Walk', 'Jump_Idle'].includes(n)) { acts[n].setLoop(THREE.LoopOnce, 1); acts[n].clampWhenFinished = true; }
+  for (const n of ['Idle', 'Wave', 'Yes', 'No', 'Punch', 'Jump', 'Jump_Idle', 'Jump_Land', 'Run', 'Walk', 'HitReact', 'Duck', 'Spin', 'Taunt', 'Cheer', 'Kick', 'Throw', 'Transform', 'Smash', 'PushUps', 'Sit', 'Dodge']) {
+    const c = clips.find((a) => a.name.endsWith('|' + n)); if (!c) continue; acts[n] = mixer.clipAction(c);
+    if (!['Idle', 'Run', 'Walk', 'Jump_Idle', 'PushUps', 'Sit'].includes(n)) { acts[n].setLoop(THREE.LoopOnce, 1); acts[n].clampWhenFinished = true; }
   }
   return { mixer, acts, cur: null };
 }
@@ -203,10 +203,7 @@ function buildLobby() {
   for (const [x, z, n] of [[-5.4, 7.4, 'k/candy-cane-red'], [5.6, 7.2, 'k/candy-cane-green'], [-11.5, -2.5, 'k/candy-cane-green'], [11.5, -2.5, 'k/candy-cane-red']]) place(n, x, 0, z, 5, rand(0, 6), g);
   for (const [x, z] of [[-3, -9], [3, -9]]) place('k/flagCheckers', x, 0, z, 3, 0, g);
   for (const [x, z] of [[-6.5, -3], [6.5, -3]]) place('z/Launchpad', x, 0, z, 1.4, rand(0, 6), g);
-  lobby.hero = SkeletonUtils.clone(M.Character.scene); lobby.hero.scale.setScalar(0.75); lobby.hero.position.set(0, 1.4, 0); g.add(lobby.hero);
-  lobby.hero.traverse((o) => { if (o.isMesh) o.castShadow = true; });
-  lobby.rig = rig(lobby.hero); playOn(lobby.rig, 'Idle', 0);
-  lobby.rig.mixer.addEventListener('finished', () => { if (lobby.state === 'dance') playOn(lobby.rig, 'Idle'); });
+  makeHero(save.equip);
   // the troublemaker who runs in now and then
   lobby.bully = SkeletonUtils.clone(M.Character.scene); lobby.bully.scale.setScalar(0.7); lobby.bully.visible = false; g.add(lobby.bully);
   lobby.bully.traverse((o) => { if (o.isMesh) o.castShadow = true; });
@@ -220,8 +217,17 @@ function buildLobby() {
   }
   heroDress();
 }
+// the character in the menu (Bolt or the one you picked), 0.75/0.42 times its size in the game
+function makeHero(e) {
+  const old = lobby.hero, b = makeBody(e); lobby.hero = b.model; lobby.heroChar = b.kk ? b.kk.id : null; lobby.hero.scale.multiplyScalar(0.75 / 0.42);
+  if (old) { lobby.hero.position.copy(old.position); lobby.hero.rotation.copy(old.rotation); old.removeFromParent(); } else lobby.hero.position.set(0, 1.4, 0);
+  lobby.root.add(lobby.hero); lobby.rig = rig(lobby.hero, b.clips); playOn(lobby.rig, 'Idle', 0);
+  lobby.rig.mixer.addEventListener('finished', () => { if (lobby.state === 'dance') playOn(lobby.rig, 'Idle'); });
+}
 function heroDress(extra) {
-  const e = { ...save.equip, ...(extra || {}) }; dress(lobby.hero, e, { bat: true });
+  const e = { ...save.equip, ...(extra || {}) };
+  if ((charsReady() && e.char && CHAR[e.char] ? e.char : null) !== lobby.heroChar) makeHero(e);
+  dress(lobby.hero, e, { bat: true });
   // the pet stands next to your character in the menu
   if (lobby.petId !== e.pet) { lobby.pet?.o.removeFromParent(); lobby.pet = e.pet ? makePet(e.pet) : null; lobby.petId = e.pet; if (lobby.pet) { lobby.pet.o.scale.multiplyScalar(1.3); lobby.root.add(lobby.pet.o); } }
 }
@@ -570,7 +576,8 @@ function renderLocker() {
   $('grid').innerHTML = !list.length ? `<p class="empty">${t('You bought everything! Come back tomorrow for new deals.')}</p>` : list.map((it) => {
     const owned = save.owned.includes(it.id), on = save.equip[it.slot] === it.id;
     const tag = on ? `<span class="tag on">${t('Wearing')}</span>` : owned ? `<span class="tag own">${t('Owned')}</span>` : `<span class="tag">${icon('coin')}${it.price.toLocaleString('en')}</span>`;
-    return `<button class="item${on ? ' on' : ''}${locker.preview === it.id ? ' sel' : ''}" data-id="${it.id}">${it.rare ? `<span class="rtag">${it.rare}</span>` : ''}<img alt="" src="${THUMB[it.id] || ''}"><span>${it.name}</span>${tag}</button>`;
+    const rt = it.rare || (it.tier ? TIER()[it.tier] : '');
+    return `<button class="item${on ? ' on' : ''}${locker.preview === it.id ? ' sel' : ''}${it.tier ? ' t' + it.tier : ''}" data-id="${it.id}">${rt ? `<span class="rtag">${rt}</span>` : ''}<img alt="" src="${THUMB[it.id] || ''}"><span>${it.name}</span>${tag}</button>`;
   }).join('');
   const focus = ITEM[locker.preview] || (locker.cat === 'bat' && !isShop ? ITEM[save.equip.bat] : null);
   $('batInfo').hidden = !(focus && (focus.slot === 'bat' || focus.rare));
@@ -836,7 +843,7 @@ function backgroundLoad() {
   loadExtras();
   const btn = $('mWorld'); let badge = null;
   const show_ = (f) => { if (!btn) return; if (!badge) { badge = document.createElement('span'); badge.className = 'dlBadge'; Object.assign(badge.style, { position: 'absolute', bottom: '-6px', left: '50%', transform: 'translateX(-50%)', font: '800 10px system-ui', color: '#fff', background: 'rgba(20,22,40,.8)', borderRadius: '8px', padding: '1px 5px', pointerEvents: 'none' }); if (getComputedStyle(btn).position === 'static') btn.style.position = 'relative'; btn.appendChild(badge); } badge.textContent = f >= 1 ? '✓' : Math.round(f * 100) + '%'; if (f >= 1) setTimeout(() => badge?.remove(), 2500); };
-  prefetchWorld(show_).then(() => { for (const f of ['radio-drive', 'radio-dance', 'radio-swing', 'radio-chill']) fetch(`./world/audio/${f}.mp3`).then((r) => r.blob()).catch(() => {}); });
+  loadChars().then(() => { kkBoneFix(); if (lobby.hero) heroDress(); if (!$('vLocker').hidden) renderLocker(); }).then(() => prefetchWorld(show_)).then(() => { for (const f of ['radio-drive', 'radio-dance', 'radio-swing', 'radio-chill']) fetch(`./world/audio/${f}.mp3`).then((r) => r.blob()).catch(() => {}); });
 }
 async function enterWorld(quiet) {
   loadExtras();
@@ -890,8 +897,8 @@ function ceremony(qualified, done) {
   const pal = [0xffd23f, 0x7fb8ff, 0xff7ab8, 0x5fe0b0];
   meshes.forEach((m) => { cells.forEach((c, i) => m.setColorAt(i, new THREE.Color(pal[i % 4]))); m.instanceColor.needsUpdate = true; });
   all.forEach((r, i) => {
-    const o = SkeletonUtils.clone(M.Character.scene); o.scale.setScalar(0.42); o.position.set(cells[i].x, 0, cells[i].z); g.add(o);
-    dress(o, r.equip || {}, { bat: false }); const rg = rig(o); playOn(rg, 'Idle');
+    const bd = makeBody(r.equip || {}), o = bd.model; o.position.set(cells[i].x, 0, cells[i].z); g.add(o);
+    dress(o, r.equip || {}, { bat: false }); const rg = rig(o, bd.clips); playOn(rg, 'Idle');
     const win = keep.has(r), crate = win ? null : place('Cube_Crate', cells[i].x, 0.6, cells[i].z - 2.4, 1.1, 0, g);
     cer.list.push({ o, rg, win, crate, x: cells[i].x, z: cells[i].z, vy: 0, fell: false, me: r.isPlayer, delay: 1.1 + Math.random() * 0.6 });
   });
@@ -1232,5 +1239,5 @@ translateDom();
   playIntro(false); initCommunity();
   // after the menu is up, quietly download the rest (the open world, the quality files, the radio); the films stream when you watch them
   setTimeout(backgroundLoad, 2500);
-  window.__boltdash = { G, flow, ctl, MODES, comm, setTab, save, camera, renderer, scene, render: (dt) => renderScene(dt), giveWeapon, startRound, startMatchmaking, toMenu, openBuild, editor, sim(sec, hook) { for (let i = 0; i < sec * 60; i++) { hook && hook(i / 60); if (flow.state === 'fly') { flow.flyT = 99; flyCam(1 / 60); } if (flow.state === 'count' || flow.state === 'play') { stepRound(1 / 60); playCam(1 / 60); } } } };
+  window.__boltdash = { lobby, G, flow, ctl, MODES, comm, setTab, save, camera, renderer, scene, render: (dt) => renderScene(dt), giveWeapon, startRound, startMatchmaking, toMenu, openBuild, editor, sim(sec, hook) { for (let i = 0; i < sec * 60; i++) { hook && hook(i / 60); if (flow.state === 'fly') { flow.flyT = 99; flyCam(1 / 60); } if (flow.state === 'count' || flow.state === 'play') { stepRound(1 / 60); playCam(1 / 60); } } } };
 })();

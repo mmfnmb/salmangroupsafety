@@ -1,5 +1,6 @@
 // Skins, accessories, bats and how they attach to the character.
 import { THREE, M, SkeletonUtils, renderer, scene, V, PI, pick, rand, save } from './core.js';
+import { CHARS, TIER, charThumb, charsReady, KK_FIX, KK_BONE } from './chars.js';
 import { t } from './i18n.js';
 
 export const SLOTS = ['head', 'face', 'body', 'back'];
@@ -143,11 +144,13 @@ export function makePet(id) {
       play(d > 0.3 || moving ? 'walk' : this.t % 9 < 1.6 ? 'happy' : 'idle');
     } };
 }
-export const ITEMS = [...SKINS, ...ACCS, ...BATS, ...PETS];
+// whole characters you play as (see chars.js)
+export const CHAR_ITEMS = CHARS.map((c) => ({ id: c.id, slot: 'char', name: c.name, price: c.price, tier: c.tier, char: c }));
+export const ITEMS = [...CHAR_ITEMS, ...SKINS, ...ACCS, ...BATS, ...PETS];
 // the old plain gold skin was replaced by the radiant one: refund anyone who bought it
 if (save.owned.includes('skin-gold')) { save.owned = save.owned.filter((i) => i !== 'skin-gold'); save.coins += 400; if (save.equip.skin === 'skin-gold') save.equip.skin = 'skin-blue'; }
 export const ITEM = Object.fromEntries(ITEMS.map((i) => [i.id, i]));
-export const CATS = [['rare', t('Rare')], ['skin', t('Colors')], ['head', t('Head')], ['face', t('Face')], ['body', t('Body')], ['back', t('Back')], ['bat', t('Bats')], ['pet', t('Pets')]];
+export const CATS = [['char', t('Characters')], ['rare', t('Rare')], ['skin', t('Colors')], ['head', t('Head')], ['face', t('Face')], ['body', t('Body')], ['back', t('Back')], ['bat', t('Bats')], ['pet', t('Pets')]];
 
 // bone frames at rest, so attachments line up with the model's own axes
 export const BONE_FIX = {};
@@ -180,6 +183,8 @@ export const HAND = { p: [0, 0.05, 0.1], r: [0.55, 0, 0] }; // items point up an
 
 export function dress(model, equip, opts = {}) {
   const u = model.userData;
+  // the other characters come as they are: no colours or clothes, but they hold the bat
+  if (u.kk) { if (!u.bones) { u.bones = {}; u.acc = {}; model.traverse((o) => { if (o.isBone) u.bones[o.name] = o; }); } u.equip = { ...equip }; holdItem(model, opts.bat && equip.bat ? 'bat:' + equip.bat : null); return; }
   if (!u.mats) {
     u.mats = {}; u.bones = {}; u.acc = {};
     model.traverse((o) => {
@@ -310,7 +315,8 @@ export function updateGold(dt) {
   goldPool.count = goldMarks.length; goldPool.instanceMatrix.needsUpdate = true;
 }
 function attach(model, boneName, obj) {
-  const u = model.userData, fix = BONE_FIX[boneName], bone = u.bones[boneName];
+  const u = model.userData; if (u.kk) boneName = KK_BONE[boneName] || boneName;
+  const fix = (u.kk ? KK_FIX : BONE_FIX)[boneName] || { s: 1, q: new THREE.Quaternion() }, bone = u.bones[boneName] || model;
   const holder = new THREE.Group(); holder.scale.setScalar(fix.s); holder.quaternion.copy(fix.q);
   obj.traverse((x) => { if (x.isMesh) x.castShadow = true; });
   holder.add(obj); bone.add(holder); return holder;
@@ -344,6 +350,7 @@ export function randomEquip(withBat = true) {
   for (const slot of SLOTS) if (Math.random() < 0.4) e[slot] = pick(ACCS.filter((a) => a.slot === slot && !a.secret)).id;
   if (Math.random() < 0.3) e.pet = pick(PETS).id;
   if (withBat) e.bat = pick(BATS).id;
+  if (charsReady() && Math.random() < 0.45) e.char = pick(CHARS).id; // some bots are other characters
   return e;
 }
 
@@ -374,6 +381,7 @@ export function makeThumbs() {
     return shoot(g, c, r * 1.55, r * 0.35);
   };
   for (const it of ITEMS) {
+    if (it.slot === 'char') { THUMB[it.id] = charThumb(it.id); continue; }
     if (it.slot === 'skin') THUMB[it.id] = skinThumb(it.id, shoot);
     else if (it.slot === 'bat') { const o = gripModel(it.model, it.axis, it.grip, it.len); o.rotation.z = -0.7; THUMB[it.id] = frame(o, 0.3); }
     else if (it.slot === 'pet') { const o = SkeletonUtils.clone(M[it.model].scene); THUMB[it.id] = frame(o, -0.5); }
