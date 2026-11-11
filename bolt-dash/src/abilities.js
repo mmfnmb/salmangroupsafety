@@ -179,7 +179,7 @@ export const CINE = {
   // the hands they are balls again. Then he drops them all, catches his own ball, squeezes it... and it explodes
   juggle(c, dt) {
     const r = c.r, b = bones(r), t = c.t, f = V(Math.sin(r.facing), 0, Math.cos(r.facing)), right = V(Math.cos(r.facing), 0, -Math.sin(r.facing)), up = V(0, 1, 0);
-    if (!c.objs) { c.objs = [0, 1, 2].map((k) => ({ balls: COLS.map((cl) => sized('pr/ball_' + cl, 0.32)), pins: COLS.map((cl) => sized('pr/juggling_pin_' + cl, 0.55)), mode: null, col: -1, vy: 0, pos: null })); c.big = sized('pr/clown_ball', 0.45); }
+    if (!c.objs) { c.objs = [0, 1, 2].map((k) => ({ balls: COLS.map((cl) => sized('pr/ball_' + cl, 0.32)), pins: COLS.map((cl) => sized('pr/juggling_pin_' + cl, 0.55)), mode: null, col: -1, vy: 0, pos: null })); c.big = sized('pr/clown_ball', 0.3); }
     const HL = handPos(r, 'l'), HR = handPos(r, 'r');
     if (t < 2.2) {
       // arms bob up and down like a juggler's
@@ -206,7 +206,7 @@ export const CINE = {
       if (c.big) {
         c.big.visible = t > 2.3; c.big.position.copy(handPos(r, 'r')).add(V(0, 0.12, 0));
         // squeezed: it wobbles, swells and glows
-        const sq = Math.max(0, t - 2.75), wob = 1 + sq * 2.2 + Math.sin(t * 60) * 0.06 * (sq > 0 ? 1 : 0);
+        const sq = Math.max(0, t - 2.75), wob = 1 + sq * 0.7 + Math.sin(t * 60) * 0.05 * (sq > 0 ? 1 : 0);
         c.big.scale.set(c.big.userData.base * wob * 1.15, c.big.userData.base * wob * 0.85, c.big.userData.base * wob * 1.15);
         if (sq > 0 && Math.random() < 0.5) vfx.flash(c.big.position.clone(), 0xffd23f, 1.2, 0.15);
       }
