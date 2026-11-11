@@ -1,0 +1,392 @@
+<title>ورشة السلاح</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lalezar&family=Cairo:wght@400;600;800&family=Silkscreen&display=swap">
+<style>
+/* Layout: a smithy at night. Left, the drawing anvil (pixel grid); right, the weapon glowing on its stand and its card. */
+:root{
+  --coal:#14110f; --iron:#211c19; --plate:#2c2622; --edge:#41372f; --ash:#a89a8c; --bone:#f3e9dc;
+  --ember:#ff7a2f; --ember-2:#ffb347; --steel:#9fb4c6;
+  --r-common:#a4a9ae; --r-rare:#4aa3ff; --r-epic:#b07cff; --r-legend:#ff9a3d; --r-myth:#ff4d6d;
+  --display:"Lalezar","Cairo",system-ui,sans-serif; --body:"Cairo",system-ui,sans-serif; --pix:"Silkscreen",ui-monospace,monospace;
+  color-scheme:dark;
+}
+html,body{background:var(--coal);color:var(--bone)}
+body{font-family:var(--body);font-size:15px;line-height:1.55;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 40px;
+  background:radial-gradient(1200px 500px at 70% -10%,#3a1d0e66,transparent 70%),var(--coal)}
+*{box-sizing:border-box}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--ember-2);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(34px,6vw,54px);line-height:1.35;margin:0;padding-top:4px;letter-spacing:.5px;
+  background:linear-gradient(180deg,var(--ember-2),var(--ember) 60%,#c2410c);-webkit-background-clip:text;background-clip:text;color:transparent;text-wrap:balance}
+.tag{color:var(--ash);margin:4px 0 0;font-size:14px}
+nav{display:flex;gap:4px;background:var(--iron);border:1px solid var(--edge);border-radius:12px;padding:4px}
+nav button{background:transparent;border:0;border-radius:9px;padding:7px 16px;font-weight:800;color:var(--ash)}
+nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-shadow:inset 0 -2px 0 var(--ember)}
+.forge{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:860px){.forge{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--iron);border:1px solid var(--edge);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.label{font-size:12px;letter-spacing:.4px;color:var(--ash);font-weight:800}
+.anvil{position:relative;width:100%;max-width:520px;margin:0 auto;aspect-ratio:1}
+#grid{width:100%;height:100%;display:block;border-radius:8px;touch-action:none;cursor:crosshair;image-rendering:pixelated;box-shadow:0 0 0 1px var(--edge),0 10px 30px #0008}
+.tools{display:flex;flex-wrap:wrap;gap:6px}
+.tool{display:flex;align-items:center;gap:6px;background:var(--plate);border:1px solid var(--edge);border-radius:10px;padding:6px 11px;font-weight:700;font-size:14px}
+.tool[aria-pressed="true"]{border-color:var(--ember);background:#3a2417;color:var(--ember-2)}
+.tool svg{width:17px;height:17px;flex:none}
+.pal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.sw{position:relative;border:2px solid transparent;border-radius:9px;padding:0;height:44px;background:var(--plate);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.sw i{display:block;width:22px;height:22px;border-radius:4px;box-shadow:inset 0 -3px 0 #0003}
+.sw span{font-size:10px;color:var(--ash);line-height:1}
+.sw[aria-pressed="true"]{border-color:var(--bone)}
+.temps{display:flex;flex-wrap:wrap;gap:6px}
+.temp{background:transparent;border:1px dashed var(--edge);border-radius:9px;padding:5px 10px;font-size:13px;color:var(--ash)}
+.temp:hover{border-color:var(--ember);color:var(--bone)}
+.stage{position:relative;width:100%;aspect-ratio:4/3;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 70%,#3b2416,#120e0c 70%);box-shadow:inset 0 0 0 1px var(--edge)}
+.stage canvas{display:block;width:100%;height:100%}
+.pops{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.pop{position:absolute;font-family:var(--pix);font-size:22px;font-weight:700;text-shadow:0 2px 0 #000,0 0 8px #000;animation:rise 1s ease-out forwards;white-space:nowrap}
+.pop.crit{font-size:28px;color:var(--ember-2)}
+@keyframes rise{from{transform:translate(-50%,0) scale(1.3);opacity:1}to{transform:translate(-50%,-70px) scale(1);opacity:0}}
+.hint{position:absolute;inset-inline-start:12px;bottom:10px;font-size:12px;color:var(--ash)}
+.card{border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;background:linear-gradient(160deg,var(--plate),var(--iron));border:2px solid var(--rc,var(--edge))}
+.nameRow{display:flex;gap:8px}
+.nameRow input{flex:1;min-width:0;background:var(--coal);border:1px solid var(--edge);border-radius:10px;padding:8px 12px;color:var(--bone);font:800 18px var(--body)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip{border-radius:999px;padding:2px 10px;font-size:12px;font-weight:800;border:1px solid var(--edge);background:var(--coal)}
+.chip.rar{border-color:var(--rc);color:var(--rc)}
+.power{margin-inline-start:auto;font-family:var(--pix);font-size:22px;color:var(--rc)}
+.stats{display:grid;grid-template-columns:auto minmax(0,1fr) 3ch;gap:6px 10px;align-items:center;font-size:13px}
+.bar{height:8px;border-radius:4px;background:var(--coal);overflow:hidden}
+.bar b{display:block;height:100%;border-radius:4px;background:var(--steel);transition:width .35s}
+.num{font-family:var(--pix);font-size:12px;text-align:end;font-variant-numeric:tabular-nums}
+.desc{color:var(--ash);font-size:13px;margin:0}
+.acts{display:flex;flex-wrap:wrap;gap:8px}
+.btn{border:0;border-radius:11px;padding:9px 16px;font-weight:800;background:linear-gradient(180deg,var(--ember-2),var(--ember));color:#2a1406}
+.btn.alt{background:var(--plate);color:var(--bone);border:1px solid var(--edge)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--plate);border:1px solid var(--ember);border-radius:12px;padding:9px 16px;font-weight:700;z-index:20}
+.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.item{background:var(--iron);border:2px solid var(--rc,var(--edge));border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.item canvas{width:100%;aspect-ratio:1;image-rendering:pixelated;background:var(--coal);border-radius:8px}
+.item b{font-size:15px;overflow-wrap:anywhere}
+.item small{color:var(--ash);font-size:12px}
+.item .row{display:flex;gap:6px;flex-wrap:wrap}
+.item .row button{font-size:12px;padding:5px 9px}
+.empty{color:var(--ash);text-align:center;padding:40px 10px;border:1px dashed var(--edge);border-radius:12px}
+.who{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.who input{background:var(--coal);border:1px solid var(--edge);border-radius:9px;padding:6px 10px;color:var(--bone);font:700 14px var(--body);width:180px;max-width:100%}
+@media (prefers-reduced-motion:reduce){.pop{animation-duration:.01s}.bar b{transition:none}}
+</style>
+
+<div class="wrap" dir="rtl">
+  <header>
+    <div>
+      <h1>ورشة السلاح</h1>
+      <p class="tag">ارسم سلاحك بكسل بكسل، والورشة تطرقه 3D وتقولّك قوته.</p>
+    </div>
+    <nav aria-label="الأقسام">
+      <button id="tForge" aria-pressed="true">الورشة</button>
+      <button id="tMine" aria-pressed="false">سلاحي</button>
+      <button id="tGal" aria-pressed="false">المعرض</button>
+    </nav>
+  </header>
+
+  <section id="vForge" class="forge">
+    <div class="panel">
+      <div class="anvil"><canvas id="grid" width="480" height="480" aria-label="شبكة الرسم"></canvas></div>
+      <div class="tools" role="toolbar" aria-label="الأدوات">
+        <button class="tool" id="toPen" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20l4-1 11-11-3-3L5 16z"/></svg>قلم</button>
+        <button class="tool" id="toErase" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 21h10M5 15l8-8 6 6-6 6H9z"/></svg>ممحاة</button>
+        <button class="tool" id="toFill" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 11l7-7 7 7-7 7z"/><path d="M20 16c0 2-1 3-2 3s-2-1-2-3 2-4 2-4 2 2 2 4z"/></svg>جردل</button>
+        <button class="tool" id="toMirror" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M8 7l-4 5 4 5M16 7l4 5-4 5"/></svg>مرآة</button>
+        <button class="tool" id="toUndo" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></svg>رجوع</button>
+        <button class="tool" id="toClear" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg><span>امسح</span></button>
+      </div>
+      <div class="label">الألوان: كل لون معدن أو عنصر</div>
+      <div class="pal" id="pal"></div>
+      <div class="label">ابدأ من سلاح جاهز</div>
+      <div class="temps" id="temps"></div>
+    </div>
+
+    <div class="panel">
+      <div class="stage" id="stage"><div class="pops" id="pops"></div><span class="hint">اسحب عشان تلف السلاح</span></div>
+      <div class="card" id="card">
+        <div class="nameRow"><input id="wName" maxlength="28" aria-label="اسم السلاح"><button class="btn alt" id="bName">اقترح اسم</button></div>
+        <div class="chips"><span class="chip rar" id="cRar"></span><span class="chip" id="cType"></span><span class="chip" id="cEl"></span><span class="power" id="cPow" title="القوة الكلية"></span></div>
+        <div class="stats" id="stats"></div>
+        <p class="desc" id="cDesc"></p>
+        <div class="acts">
+          <button class="btn" id="bTest">جرّب على الدمية</button>
+          <button class="btn alt" id="bSave">احفظ في سلاحي</button>
+          <button class="btn alt" id="bPub">انشر في المعرض</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="vMine" hidden>
+    <div class="list" id="mine"></div>
+  </section>
+
+  <section id="vGal" hidden>
+    <div class="who"><span class="label">اسمك في المعرض</span><input id="nick" maxlength="20" aria-label="اسمك في المعرض"><small class="desc" id="galState"></small></div>
+    <div class="list" id="gal" style="margin-top:12px"></div>
+  </section>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+const $ = (id) => document.getElementById(id);
+const N = 24;
+// the palette: what each colour is made of. el = the element it gives the weapon
+const PAL = [
+  { c: '.', hex: null },
+  { c: 'S', hex: '#cfd8e2', name: 'فولاذ', d: 1.0 },
+  { c: 's', hex: '#6f7b89', name: 'حديد', d: 1.1 },
+  { c: 'k', hex: '#24262b', name: 'أسود', d: 1.2 },
+  { c: 'w', hex: '#8a5a35', name: 'خشب', d: 0.5 },
+  { c: 'G', hex: '#e2b043', name: 'دهب', d: 1.4 },
+  { c: 'W', hex: '#f6f3ea', name: 'نور', d: 0.6, el: 'light' },
+  { c: 'r', hex: '#e5484d', name: 'نار', d: 0.7, el: 'fire' },
+  { c: 'o', hex: '#ff8a3d', name: 'جمر', d: 0.7, el: 'fire' },
+  { c: 'b', hex: '#3d8bff', name: 'تلج', d: 0.7, el: 'ice' },
+  { c: 'c', hex: '#9ae6ff', name: 'صقيع', d: 0.7, el: 'ice' },
+  { c: 'y', hex: '#ffe14d', name: 'برق', d: 0.7, el: 'bolt' },
+  { c: 'g', hex: '#46c96b', name: 'سم', d: 0.7, el: 'poison' },
+  { c: 'p', hex: '#9b5cff', name: 'ظل', d: 0.7, el: 'shadow' },
+];
+const CI = Object.fromEntries(PAL.map((p, i) => [p.c, i]));
+const EL = {
+  fire: { name: 'نار', col: '#ff7a2f', words: ['اللهب', 'البركان', 'الجمر'], fx: 'يولّع في اللي يضربه ويفضل يحرق' },
+  ice: { name: 'تلج', col: '#7cc8ff', words: ['الصقيع', 'الجليد', 'الشتا'], fx: 'يجمّد اللي يضربه ويبطّأه' },
+  bolt: { name: 'برق', col: '#ffe14d', words: ['البرق', 'الرعد', 'العاصفة'], fx: 'البرق بينط منه لأقرب عدو' },
+  poison: { name: 'سم', col: '#46c96b', words: ['الأفعى', 'السم', 'المستنقع'], fx: 'يسمّم اللي يضربه وينزل منه شوية شوية' },
+  shadow: { name: 'ظل', col: '#a77bff', words: ['الظل', 'الليل', 'الكسوف'], fx: 'يسرق شوية من طاقة اللي يضربه' },
+  light: { name: 'نور', col: '#fff6d6', words: ['النور', 'الفجر', 'الشمس'], fx: 'يعمي اللي يضربه ثانية' },
+  none: { name: 'معدن', col: '#cfd8e2', words: ['الحديد', 'الفولاذ', 'المحارب'], fx: 'ضربة صافية من غير سحر' },
+};
+const RAR = [
+  { min: 0, name: 'عادي', col: 'var(--r-common)' }, { min: 160, name: 'نادر', col: 'var(--r-rare)' }, { min: 200, name: 'ملحمي', col: 'var(--r-epic)' },
+  { min: 235, name: 'أسطوري', col: 'var(--r-legend)' }, { min: 265, name: 'خرافي', col: 'var(--r-myth)' },
+];
+const TEMPS = {"sword": ["...........SS...........", "..........Sors..........", "..........Sros..........", "..........Sors..........", "..........Sros..........", "..........Sors..........", "..........Sros..........", "..........Sors..........", "..........Sros..........", "..........Sors..........", "..........Sros..........", "..........Sors..........", "..........Sros..........", "..........Sors..........", ".......G..Sros..G.......", ".......GGGGGGGGGG.......", "........GGGGGGGG........", "...........wk...........", "...........kw...........", "...........wk...........", "...........kw...........", "..........GGGG..........", "...........rr...........", "........................"], "axe": ["........................", "............ssss........", ".........ccSSww.........", ".......ccSSSSww.........", ".....ccSSSSSSwkss.......", "....cbSSSSSSSwwsss......", "...cbSSSSSSSSwwsss......", "...cbSSSSSSSSwwsss......", "....cbSSSSSSSwkss.......", ".....ccSSSSSSww.........", ".......ccSSSSww.........", ".........ccSSww.........", ".............wk.........", ".............ww.........", ".............ww.........", ".............ww.........", ".............wk.........", ".............ww.........", ".............ww.........", ".............ww.........", ".............wk.........", ".............ww.........", "............kkkk........", "........................"], "hammer": ["........................", "........................", ".....SSSSSSSSSSSSSS.....", "....kSsssysssssssssk....", "....kSssssysyssssssk....", "....kSsssssysysssssk....", "....kSssssssssyssssk....", "....kSsssssssssysssk....", ".....Ssssssssssssss.....", "..........GGGG..........", "...........ww...........", "...........ww...........", "...........wk...........", "...........ww...........", "...........ww...........", "...........wk...........", "...........ww...........", "...........ww...........", "...........wk...........", "...........ww...........", "...........ww...........", "...........wk...........", "..........GGGG..........", "........................"], "staff": ["........................", "..........p..p..........", ".........p.pp.p.........", "..........pWpp..........", "........p.ppkp.p........", "..........pppp..........", "........Gp.pp.pG........", ".........GGGGGG.........", "...........ww...........", "...........ww...........", "...........kw...........", "...........ww...........", "...........ww...........", "...........ww...........", "...........ww...........", "...........kw...........", "...........ww...........", "...........ww...........", "...........ww...........", "...........ww...........", "...........kw...........", "...........ww...........", "...........ww...........", "...........GG..........."]};
+const TEMP_NAMES = { sword: 'سيف نار', axe: 'فأس تلج', hammer: 'مطرقة برق', staff: 'عصاية ظل' };
+const store = { get(k, d) { try { const v = localStorage.getItem('forge.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } }, set(k, v) { try { localStorage.setItem('forge.' + k, JSON.stringify(v)); } catch { /* storage blocked */ } } };
+
+// ---------------------------------------------------------------- the drawing
+let grid = new Uint8Array(N * N), color = CI.r, tool = 'pen', mirror = true, undo = [];
+const enc = (g) => Array.from(g, (v) => PAL[v].c).join('');
+const dec = (s) => { const g = new Uint8Array(N * N); for (let i = 0; i < N * N; i++) g[i] = CI[s[i]] || 0; return g; };
+const fromRows = (rows) => dec(rows.join(''));
+const cv = $('grid'), cx = cv.getContext('2d');
+function drawGrid() {
+  const s = cv.width / N; cx.clearRect(0, 0, cv.width, cv.height);
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { cx.fillStyle = (x + y) % 2 ? '#1b1715' : '#211c19'; cx.fillRect(x * s, y * s, s, s); }
+  if (mirror) { cx.fillStyle = '#ff7a2f22'; cx.fillRect(cv.width / 2 - 1, 0, 2, cv.height); }
+  for (let i = 0; i < N * N; i++) { const v = grid[i]; if (!v) continue; const x = i % N, y = (i / N) | 0; cx.fillStyle = PAL[v].hex; cx.fillRect(x * s, y * s, s, s); cx.fillStyle = '#0000002a'; cx.fillRect(x * s, y * s + s - 3, s, 3); }
+  cx.strokeStyle = '#ffffff10'; cx.lineWidth = 1; cx.beginPath(); for (let i = 1; i < N; i++) { cx.moveTo(i * s + 0.5, 0); cx.lineTo(i * s + 0.5, cv.height); cx.moveTo(0, i * s + 0.5); cx.lineTo(cv.width, i * s + 0.5); } cx.stroke();
+}
+function cellAt(e) { const r = cv.getBoundingClientRect(); const x = Math.floor((e.clientX - r.left) / r.width * N), y = Math.floor((e.clientY - r.top) / r.height * N); return x >= 0 && y >= 0 && x < N && y < N ? [x, y] : null; }
+function paint(x, y) { const v = tool === 'erase' ? 0 : color; grid[y * N + x] = v; if (mirror) grid[y * N + (N - 1 - x)] = v; }
+function fill(x, y) {
+  const v = color, from = grid[y * N + x]; if (from === v) return; const st = [[x, y]];
+  while (st.length) { const [a, b] = st.pop(); if (a < 0 || b < 0 || a >= N || b >= N || grid[b * N + a] !== from) continue; grid[b * N + a] = v; st.push([a + 1, b], [a - 1, b], [a, b + 1], [a, b - 1]); }
+}
+let drawing = false;
+cv.addEventListener('pointerdown', (e) => { const c = cellAt(e); if (!c) return; cv.setPointerCapture(e.pointerId); undo.push(grid.slice()); if (undo.length > 60) undo.shift(); if (tool === 'fill') { fill(...c); changed(); return; } drawing = true; paint(...c); changed(); });
+cv.addEventListener('pointermove', (e) => { if (!drawing) return; const c = cellAt(e); if (c) { paint(...c); changed(); } });
+const stop = () => { drawing = false; }; cv.addEventListener('pointerup', stop); cv.addEventListener('pointercancel', stop);
+const setTool = (t) => { tool = t; for (const [id, k] of [['toPen', 'pen'], ['toErase', 'erase'], ['toFill', 'fill']]) $(id).setAttribute('aria-pressed', String(t === k)); };
+$('toPen').onclick = () => setTool('pen'); $('toErase').onclick = () => setTool('erase'); $('toFill').onclick = () => setTool('fill');
+$('toMirror').onclick = () => { mirror = !mirror; $('toMirror').setAttribute('aria-pressed', String(mirror)); drawGrid(); };
+$('toUndo').onclick = () => { if (undo.length) { grid = undo.pop(); changed(); } };
+let clearArm = 0;
+$('toClear').onclick = () => { const sp = $('toClear').querySelector('span'); if (!clearArm) { clearArm = setTimeout(() => { clearArm = 0; sp.textContent = 'امسح'; }, 2500); sp.textContent = 'متأكد؟'; return; } clearTimeout(clearArm); clearArm = 0; sp.textContent = 'امسح'; undo.push(grid.slice()); grid = new Uint8Array(N * N); changed(); };
+const pal = $('pal');
+PAL.forEach((p, i) => { if (!i) return; const b = document.createElement('button'); b.className = 'sw'; b.setAttribute('aria-pressed', String(i === color)); b.setAttribute('aria-label', p.name); b.innerHTML = `<i style="background:${p.hex}"></i><span>${p.name}</span>`; b.onclick = () => { color = i; if (tool === 'erase') setTool('pen'); pal.querySelectorAll('.sw').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); }; pal.appendChild(b); });
+for (const k in TEMPS) { const b = document.createElement('button'); b.className = 'temp'; b.textContent = TEMP_NAMES[k]; b.onclick = () => { undo.push(grid.slice()); grid = fromRows(TEMPS[k]); $('wName').value = ''; nameTouched = false; changed(); }; $('temps').appendChild(b); }
+
+// ---------------------------------------------------------------- what the drawing is worth
+function analyse(g) {
+  const cells = []; for (let i = 0; i < N * N; i++) if (g[i]) cells.push([i % N, (i / N) | 0, g[i]]);
+  const n = cells.length; if (!n) return null;
+  let weight = 0, metal = 0, gold = 0; const elc = {};
+  for (const [, , v] of cells) { const p = PAL[v]; weight += p.d; if ('Ssk'.includes(p.c)) metal++; if (p.c === 'G') gold++; if (p.el) elc[p.el] = (elc[p.el] || 0) + 1; }
+  // the long axis (works for diagonal blades too)
+  let mx = 0, my = 0; for (const [x, y] of cells) { mx += x; my += y; } mx /= n; my /= n;
+  let sxx = 0, syy = 0, sxy = 0; for (const [x, y] of cells) { sxx += (x - mx) ** 2; syy += (y - my) ** 2; sxy += (x - mx) * (y - my); }
+  // snapped to straight or diagonal, the way people draw weapons
+  const ang = Math.round(0.5 * Math.atan2(2 * sxy, sxx - syy) / (Math.PI / 4)) * (Math.PI / 4), ax = [Math.cos(ang), Math.sin(ang)], px = [-ax[1], ax[0]];
+  let a0 = 1e9, a1 = -1e9; const proj = cells.map(([x, y]) => { const a = (x - mx) * ax[0] + (y - my) * ax[1], b = (x - mx) * px[0] + (y - my) * px[1]; a0 = Math.min(a0, a); a1 = Math.max(a1, a); return [a, b]; });
+  const L = a1 - a0 + 1;
+  // width along the axis, in 5 slices
+  const sl = [0, 0, 0, 0, 0].map(() => ({ lo: 1e9, hi: -1e9, n: 0, sb: 0, el: 0 }));
+  proj.forEach(([a, b], i) => { const k = Math.min(4, Math.floor((a - a0) / L * 5)); const s = sl[k]; s.lo = Math.min(s.lo, b); s.hi = Math.max(s.hi, b); s.n++; s.sb += b; if (PAL[cells[i][2]].el) s.el++; });
+  const wid = sl.map((s) => (s.n ? s.hi - s.lo + 1 : 0)), sorted = [...wid].sort((a, b) => a - b), shaft = Math.max(1, sorted[1] || 1), headW = Math.max(wid[0], wid[4]);
+  const headEnd = wid[0] >= wid[4] ? 0 : 4, hs = sl[headEnd], headFill = hs.n / Math.max(1, wid[headEnd] * (L / 5));
+  const shaftSl = sl.map((x, k) => [x, wid[k]]).filter(([x]) => x.n).sort((p, q) => p[1] - q[1]).slice(0, 2).map(([x]) => x), mid = shaftSl.length ? shaftSl.reduce((t, x) => t + x.sb, 0) / shaftSl.reduce((t, x) => t + x.n, 0) : 0;
+  const sideA = Math.max(0.5, mid - hs.lo), sideB = Math.max(0.5, hs.hi - mid), headAsym = Math.max(sideA, sideB) / Math.min(sideA, sideB), headEl = hs.n ? hs.el / hs.n : 0;
+  // sharp tips: pixels with at most 2 neighbours
+  let tips = 0; const has = (x, y) => x >= 0 && y >= 0 && x < N && y < N && g[y * N + x];
+  for (const [x, y] of cells) { let k = 0; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if ((dx || dy) && has(x + dx, y + dy)) k++; if (k <= 2) tips++; }
+  // symmetry around the drawing's own middle
+  let minx = 99, maxx = -1; for (const [x] of cells) { minx = Math.min(minx, x); maxx = Math.max(maxx, x); } let sym = 0;
+  for (const [x, y] of cells) if (has(minx + maxx - x, y)) sym++; sym /= n;
+  let el = 'none', ec = 0, etot = 0; for (const k in elc) { etot += elc[k]; if (elc[k] > ec) { ec = elc[k]; el = k; } }
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, Math.round(v)));
+  const thin = L / Math.max(1, shaft);
+  const dmg = clamp(10 + Math.sqrt(weight) * 6 + tips * 1.5 + (metal / n) * 10, 1, 99);
+  const spd = clamp(108 - Math.sqrt(weight) * 7 + (thin > 5 ? 8 : 0), 5, 99);
+  const reach = clamp(L / N * 100, 5, 100);
+  const crit = clamp(tips * 4 + (shaft <= 3 ? 10 : 0), 0, 60);
+  const elp = el === 'none' ? 0 : clamp(etot / n * 160, 5, 100);
+  let type;
+  if (n < 30 || L < 9) type = 'خنجر';
+  else if (headEl > 0.45 && shaft <= 3) type = 'عصاية سحر';
+  else if (headW >= 2.6 * shaft && headAsym > 1.8) type = 'فأس';
+  else if (headW >= 2.6 * shaft) type = 'مطرقة';
+  else if (shaft <= 2 && el !== 'none' && L >= 14) type = 'عصاية سحر';
+  else if (shaft <= 2 && L >= 16) type = 'رمح';
+  else type = 'سيف';
+  const power = Math.round(dmg * 1.1 + spd * 0.45 + reach * 0.4 + crit * 0.8 + elp * 0.7 + sym * 18 + Math.min(15, gold * 0.6));
+  const rar = [...RAR].reverse().find((r) => power >= r.min);
+  return { n, dmg, spd, reach, crit, elp, el, type, power, rar, sym };
+}
+function nameFor(a) {
+  const e = EL[a.el], fem = ['مطرقة', 'عصاية سحر'].includes(a.type);
+  const adj = (fem ? { 'عادي': ['الصغيرة', 'الطيبة', 'بتاعة الحتة'], 'نادر': ['الحادة', 'السريعة', 'اللامعة'], 'ملحمي': ['الملكية', 'المرعبة', 'العنيدة'], 'أسطوري': ['الأسطورية', 'اللي ملهاش حل', 'العظيمة'], 'خرافي': ['الخرافية', 'اللي هزّت الأرض', 'نهاية العالم'] } : { 'عادي': ['الصغير', 'الطيب', 'بتاع الحتة'], 'نادر': ['الحاد', 'السريع', 'اللامع'], 'ملحمي': ['الملكي', 'المرعب', 'العنيد'], 'أسطوري': ['الأسطوري', 'اللي ملوش حل', 'العظيم'], 'خرافي': ['الخرافي', 'اللي هزّ الأرض', 'نهاية العالم'] })[a.rar.name];
+  const pick = (l) => l[Math.floor(Math.random() * l.length)];
+  return `${a.type} ${pick(e.words)} ${pick(adj)}`;
+}
+let nameTouched = false, A = null;
+$('wName').addEventListener('input', () => { nameTouched = true; });
+$('bName').onclick = () => { if (A) { $('wName').value = nameFor(A); nameTouched = true; } };
+function renderCard() {
+  A = analyse(grid); const card = $('card');
+  for (const id of ['bTest', 'bSave', 'bPub']) $(id).disabled = !A;
+  if (!A) { card.style.setProperty('--rc', 'var(--edge)'); $('cRar').textContent = 'ارسم سلاحك'; $('cType').textContent = ''; $('cEl').textContent = ''; $('cPow').textContent = ''; $('stats').innerHTML = ''; $('cDesc').textContent = 'اختار لون وارسم على الشبكة، أو ابدأ من سلاح جاهز.'; return; }
+  card.style.setProperty('--rc', A.rar.col);
+  if (!nameTouched) $('wName').value = nameFor(A);
+  $('cRar').textContent = A.rar.name; $('cType').textContent = A.type; $('cEl').textContent = 'العنصر: ' + EL[A.el].name; $('cEl').style.color = EL[A.el].col; $('cPow').textContent = A.power;
+  const rows = [['الضرر', A.dmg, '#ff8a5c'], ['السرعة', A.spd, '#7cd4ff'], ['المدى', A.reach, '#b9e27c'], ['الضربة الحرجة', A.crit, '#ffd166'], ['قوة العنصر', A.elp, EL[A.el].col]];
+  $('stats').innerHTML = rows.map(([k, v, c]) => `<span>${k}</span><span class="bar"><b style="width:${Math.min(100, v)}%;background:${c}"></b></span><span class="num">${v}</span>`).join('');
+  $('cDesc').textContent = `${EL[A.el].fx}. ${A.spd > 60 ? 'خفيف وسريع.' : A.dmg > 75 ? 'تقيل وضربته بتهدّ.' : 'متوازن.'} ${A.crit >= 30 ? 'أطرافه المدببة بتجيب ضربات حرجة كتير.' : ''}`;
+}
+
+// ---------------------------------------------------------------- the weapon in 3D
+const stage = $('stage'), R = new THREE.WebGLRenderer({ antialias: true, alpha: true }); R.setPixelRatio(Math.min(2, devicePixelRatio)); stage.prepend(R.domElement);
+const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(35, 4 / 3, 0.1, 400); cam.position.set(0, 2, 44);
+scene.add(new THREE.HemisphereLight(0xffe8d0, 0x2a1a10, 1.1)); const key = new THREE.DirectionalLight(0xffffff, 1.1); key.position.set(-20, 30, 40); scene.add(key); const rim = new THREE.PointLight(0xff7a2f, 1.4, 120); rim.position.set(18, -6, 20); scene.add(rim);
+const holder = new THREE.Group(), spin = new THREE.Group(); holder.add(spin); scene.add(holder);
+const box = new THREE.BoxGeometry(1, 1, 1);
+let solid = null, glow = null, parts = null, center = new THREE.Vector3(), handle = new THREE.Vector3();
+const dot = (() => { const c = document.createElement('canvas'); c.width = c.height = 32; const g = c.getContext('2d'), gr = g.createRadialGradient(16, 16, 0, 16, 16, 16); gr.addColorStop(0, '#fff'); gr.addColorStop(1, '#fff0'); g.fillStyle = gr; g.fillRect(0, 0, 32, 32); return new THREE.CanvasTexture(c); })();
+function build() {
+  for (const m of [solid, glow, parts]) if (m) { spin.remove(m); m.geometry !== box && m.geometry.dispose(); m.material.dispose(); }
+  solid = glow = parts = null; const cs = [], gs = [];
+  let sx = 0, sy = 0, n = 0, hx = 0, hy = 0, hn = 0;
+  for (let i = 0; i < N * N; i++) { const v = grid[i]; if (!v) continue; const x = i % N, y = (i / N) | 0; (PAL[v].el ? gs : cs).push([x, y, v]); sx += x; sy += y; n++; if ('wk'.includes(PAL[v].c)) { hx += x; hy += y; hn++; } }
+  if (!n) return; center.set(sx / n, sy / n, 0); handle.set(hn ? hx / hn : center.x, hn ? hy / hn : N - 2, 0);
+  const mk = (list, mat) => { if (!list.length) return null; const m = new THREE.InstancedMesh(box, mat, list.length), o = new THREE.Object3D(), c = new THREE.Color();
+    list.forEach(([x, y, v], i) => { o.position.set(x - center.x, -(y - center.y), 0); o.scale.set(1, 1, PAL[v].c === 'w' ? 0.8 : 1.2); o.updateMatrix(); m.setMatrixAt(i, o.matrix); m.setColorAt(i, c.set(PAL[v].hex)); }); spin.add(m); return m; };
+  solid = mk(cs, new THREE.MeshStandardMaterial({ metalness: 0.35, roughness: 0.45 }));
+  glow = mk(gs, new THREE.MeshBasicMaterial());
+  const a = analyse(grid); if (a && a.el !== 'none') {
+    const P = 70, pos = new Float32Array(P * 3), g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    const src = gs.length ? gs : cs; parts = new THREE.Points(g, new THREE.PointsMaterial({ map: dot, color: EL[a.el].col, size: 1.6, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    parts.userData = { el: a.el, src, life: new Float32Array(P).map(() => Math.random()) }; spin.add(parts);
+  }
+}
+let yaw = 0.5, drag = null, auto = true;
+R.domElement.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, y0: yaw }; auto = false; R.domElement.setPointerCapture(e.pointerId); });
+R.domElement.addEventListener('pointermove', (e) => { if (drag) yaw = drag.y0 + (e.clientX - drag.x) * 0.012; });
+R.domElement.addEventListener('pointerup', () => { drag = null; setTimeout(() => { auto = true; }, 2500); });
+function size() { const w = stage.clientWidth, h = stage.clientHeight; R.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); }
+new ResizeObserver(size).observe(stage); size();
+
+// the training dummy (also pixels)
+const DUMMY = ['....wwww....', '...wyyyyw...', '..wyykykyw..', '..wyyyyyyw..', '..wyykkyyw..', '...wyyyyw...', '....wwww....', '.wwwwwwwwww.', 'wyyyyyyyyyyw', 'wyyrrrrrryyw', 'wyyyyyyyyyyw', '.wwyyyyyyww.', '...wyyyyw...', '...wyyyyw...', '....wkkw....', '.....ww.....', '.....ww.....', '...wwwwww...'];
+const DCOL = { w: '#7a5230', y: '#d9b25c', k: '#2a2420', r: '#c23b3b' };
+const dummy = (() => { const list = []; DUMMY.forEach((row, y) => [...row].forEach((ch, x) => { if (ch !== '.') list.push([x, y, ch]); })); const m = new THREE.InstancedMesh(box, new THREE.MeshStandardMaterial({ roughness: 0.9 }), list.length), o = new THREE.Object3D(), c = new THREE.Color();
+  list.forEach(([x, y, ch], i) => { o.position.set(x - 5.5, -(y - 9), 0); o.updateMatrix(); m.setMatrixAt(i, o.matrix); m.setColorAt(i, c.set(DCOL[ch])); }); const g = new THREE.Group(); g.add(m); g.visible = false; g.position.set(14, -2, 0); scene.add(g); g.userData.mesh = m; return g; })();
+
+let test = null, t0 = performance.now();
+function pop(text, crit, col) { const v = dummy.position.clone().add(new THREE.Vector3((Math.random() - 0.5) * 6, 8, 0)).project(cam); const el = document.createElement('div'); el.className = 'pop' + (crit ? ' crit' : ''); el.textContent = text; el.style.left = ((v.x + 1) / 2 * 100) + '%'; el.style.top = ((1 - v.y) / 2 * 100) + '%'; if (col && !crit) el.style.color = col; $('pops').appendChild(el); setTimeout(() => el.remove(), 1000); }
+let actx = null; function clank(f = 220) { try { actx ||= new (window.AudioContext || window.webkitAudioContext)(); const o = actx.createOscillator(), g = actx.createGain(); o.type = 'square'; o.frequency.setValueAtTime(f, actx.currentTime); o.frequency.exponentialRampToValueAtTime(f / 3, actx.currentTime + 0.18); g.gain.setValueAtTime(0.12, actx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 0.2); o.connect(g).connect(actx.destination); o.start(); o.stop(actx.currentTime + 0.22); } catch { /* no sound here */ } }
+$('bTest').onclick = () => { if (!A) return; test = { t: 0, hits: 0, a: A }; dummy.visible = true; auto = false; yaw = 0; };
+function frame(now) {
+  const dt = Math.min(0.05, (now - t0) / 1000); t0 = now;
+  if (test) {
+    test.t += dt; const k = test.t % 0.9; holder.position.lerp(new THREE.Vector3(-6, 0, 0), 0.1); cam.position.lerp(new THREE.Vector3(4, 2, 58), 0.08);
+    // wind up, then swing down onto the dummy
+    spin.rotation.set(0, 0, k < 0.45 ? 0.9 * (k / 0.45) : 0.9 - 2.4 * Math.min(1, (k - 0.45) / 0.15));
+    if (k >= 0.6 && test.lastHit !== Math.floor(test.t / 0.9)) {
+      test.lastHit = Math.floor(test.t / 0.9); test.hits++; const crit = Math.random() * 100 < test.a.crit, d = Math.round(test.a.dmg * (0.85 + Math.random() * 0.3) * (crit ? 2 : 1));
+      pop((crit ? 'حرجة! ' : '') + d, crit); clank(crit ? 330 : 200); dummy.userData.shake = 0.35;
+      if (test.a.el !== 'none') setTimeout(() => pop('+' + Math.round(test.a.elp / 6 + 3) + ' ' + EL[test.a.el].name, false, EL[test.a.el].col), 300);
+      if (test.hits >= 3) setTimeout(() => { test = null; dummy.visible = false; auto = true; }, 900);
+    }
+  } else { holder.position.lerp(new THREE.Vector3(0, 0, 0), 0.1); cam.position.lerp(new THREE.Vector3(0, 2, 44), 0.08); spin.rotation.z *= 0.85; }
+  if (auto && !test) yaw += dt * 0.6; holder.rotation.y += (yaw - holder.rotation.y) * 0.15;
+  if (dummy.userData.shake > 0) { dummy.userData.shake -= dt; dummy.rotation.z = Math.sin(now / 25) * dummy.userData.shake * 0.4; } else dummy.rotation.z = 0;
+  if (parts) { const u = parts.userData, pos = parts.geometry.attributes.position, s = u.src;
+    for (let i = 0; i < u.life.length; i++) { u.life[i] += dt * (u.el === 'bolt' ? 3 : 0.8); if (u.life[i] >= 1) { u.life[i] = 0; const [x, y] = s[(Math.random() * s.length) | 0]; pos.setXYZ(i, x - center.x + (Math.random() - 0.5), -(y - center.y), (Math.random() - 0.5) * 2); }
+      const l = u.life[i], up = u.el === 'fire' ? 3 : u.el === 'poison' ? 1.2 : u.el === 'ice' ? -0.4 : u.el === 'shadow' ? 0.5 : 0.8;
+      pos.setY(i, pos.getY(i) + up * dt * 4); if (u.el === 'bolt') pos.setX(i, pos.getX(i) + (Math.random() - 0.5) * 0.8); if (u.el === 'shadow') pos.setX(i, pos.getX(i) + Math.sin(now / 300 + i) * dt * 2); }
+    pos.needsUpdate = true; parts.material.opacity = u.el === 'bolt' ? (Math.random() < 0.7 ? 1 : 0.2) : 0.9; }
+  rim.intensity = 1.2 + Math.sin(now / 400) * 0.25;
+  cam.lookAt(holder.position.x * 0.4, 0, 0); R.render(scene, cam); requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+let ct = 0; function changed() { drawGrid(); clearTimeout(ct); ct = setTimeout(() => { renderCard(); build(); }, 90); }
+
+// ---------------------------------------------------------------- your weapons (this device) and the shared gallery
+let toastT = 0; function toast(s) { const t = $('toast'); t.textContent = s; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 2200); }
+let mine = store.get('mine', []);
+function thumb(code) { const c = document.createElement('canvas'); c.width = c.height = N; const g = c.getContext('2d'); for (let i = 0; i < N * N; i++) { const p = PAL[CI[code[i]] || 0]; if (!p.hex) continue; g.fillStyle = p.hex; g.fillRect(i % N, (i / N) | 0, 1, 1); } return c; }
+function item(w, btns) { const a = analyse(dec(w.g)), d = document.createElement('div'); d.className = 'item'; if (a) d.style.setProperty('--rc', a.rar.col); d.appendChild(thumb(w.g)); const b = document.createElement('b'); b.textContent = w.name; d.appendChild(b); const s = document.createElement('small'); s.textContent = a ? `${a.rar.name} · ${a.type} · ${EL[a.el].name} · القوة ${a.power}` : ''; d.appendChild(s); const r = document.createElement('div'); r.className = 'row'; for (const [t, fn, alt] of btns) { const x = document.createElement('button'); x.className = 'btn' + (alt ? ' alt' : ''); x.textContent = t; x.onclick = () => fn(x); r.appendChild(x); } d.appendChild(r); return d; }
+function openW(w) { undo.push(grid.slice()); grid = dec(w.g); $('wName').value = w.name; nameTouched = true; changed(); show('forge'); }
+function renderMine() { const L = $('mine'); L.innerHTML = ''; if (!mine.length) { L.innerHTML = '<div class="empty">لسه مفيش أسلحة محفوظة. ارسم سلاح في الورشة ودوس "احفظ في سلاحي".</div>'; return; }
+  mine.forEach((w, i) => L.appendChild(item(w, [['افتح', () => openW(w)], ['انشر', () => publish(w), true], ['امسح', (x) => { if (!x.dataset.arm) { x.dataset.arm = 1; x.textContent = 'متأكد؟'; return; } mine.splice(i, 1); store.set('mine', mine); renderMine(); }, true]]))); }
+$('bSave').onclick = () => { if (!A) return; const w = { id: Date.now().toString(36), name: $('wName').value.trim() || nameFor(A), g: enc(grid), at: Date.now() }; mine.unshift(w); mine = mine.slice(0, 40); store.set('mine', mine); toast('اتحفظ في سلاحك'); };
+
+// shared gallery: every smith's published weapons live in their own document; likes too
+const gal = { db: null, uid: null, docs: [], likes: [], ready: false };
+$('nick').value = store.get('nick', 'حداد ' + Math.floor(100 + Math.random() * 900)); $('nick').addEventListener('change', () => store.set('nick', $('nick').value.trim()));
+async function initGallery() {
+  $('galState').textContent = 'بيحمّل المعرض…';
+  const c = window.claude; const [db, user] = c?.use ? await Promise.all([c.use('db'), c.use('user')]) : [null, null];
+  if (!db || !user) { $('galState').textContent = 'المعرض بيشتغل لما تفتح الورشة من اللينك المنشور وإنت مسجّل دخول.'; renderGal(); return; }
+  gal.db = db; gal.uid = await user.id(); const timer = setTimeout(() => { if (!gal.ready) $('galState').textContent = 'المعرض لسه مش بيرد، استنّى شوية.'; }, 10000);
+  db.collection('armory').onSnapshot((s) => { clearTimeout(timer); gal.ready = true; gal.docs = s.docs.map((d) => ({ uid: d.id, ...d.data() })); $('galState').textContent = ''; renderGal(); }, () => { clearTimeout(timer); $('galState').textContent = 'المعرض مش متاح دلوقتي.'; });
+  db.collection('likes').onSnapshot((s) => { gal.likes = s.docs.map((d) => ({ uid: d.id, ...d.data() })); renderGal(); }, () => {});
+}
+const likeCount = (key) => gal.likes.filter((l) => l.k && l.k[key]).length;
+const iLike = (key) => !!gal.likes.find((l) => l.uid === gal.uid)?.k?.[key];
+function renderGal() {
+  const L = $('gal'); L.innerHTML = ''; const all = [];
+  for (const d of gal.docs) for (const w of d.list || []) all.push({ ...w, key: d.uid + ':' + w.id, author: d.author || 'حداد', mine: d.uid === gal.uid });
+  all.sort((a, b) => likeCount(b.key) - likeCount(a.key) || b.at - a.at);
+  if (!all.length) { L.innerHTML = '<div class="empty">المعرض فاضي. ارسم أول سلاح وانشره، وهيظهر هنا لكل اللي بيفتحوا الورشة.</div>'; return; }
+  for (const w of all) { const it = item(w, [[`♥ ${likeCount(w.key)}`, () => like(w.key), !iLike(w.key)], ['افتح نسخة', () => openW(w), true], ...(w.mine ? [['شيله', () => unpublish(w.id), true]] : [])]); const by = document.createElement('small'); by.textContent = 'بإيد ' + w.author; it.insertBefore(by, it.querySelector('.row')); L.appendChild(it); }
+}
+async function publish(w) {
+  if (!gal.db) { toast('المعرض مش متاح هنا'); return; } const me = gal.docs.find((d) => d.uid === gal.uid) || { list: [] };
+  const list = [{ id: w.id, name: w.name, g: w.g, at: Date.now() }, ...(me.list || []).filter((x) => x.id !== w.id)].slice(0, 12);
+  try { await gal.db.collection('armory').doc(gal.uid).set({ author: ($('nick').value.trim() || 'حداد').slice(0, 20), list }); toast('اتنشر في المعرض'); } catch { toast('النشر مانفعش، جرّب تاني'); }
+}
+async function unpublish(id) { const me = gal.docs.find((d) => d.uid === gal.uid); if (!me) return; try { await gal.db.collection('armory').doc(gal.uid).set({ author: me.author, list: (me.list || []).filter((x) => x.id !== id) }); } catch { toast('مانفعش، جرّب تاني'); } }
+async function like(key) { if (!gal.db) return; const cur = { ...(gal.likes.find((l) => l.uid === gal.uid)?.k || {}) }; if (cur[key]) delete cur[key]; else cur[key] = 1; try { await gal.db.collection('likes').doc(gal.uid).set({ k: cur }); } catch { toast('مانفعش، جرّب تاني'); } }
+$('bPub').onclick = () => { if (!A) return; const w = { id: Date.now().toString(36), name: $('wName').value.trim() || nameFor(A), g: enc(grid) }; publish(w); };
+
+function show(v) { for (const [k, id, sec] of [['forge', 'tForge', 'vForge'], ['mine', 'tMine', 'vMine'], ['gal', 'tGal', 'vGal']]) { $(id).setAttribute('aria-pressed', String(k === v)); $(sec).hidden = k !== v; } if (v === 'mine') renderMine(); if (v === 'gal') renderGal(); if (v === 'forge') size(); }
+$('tForge').onclick = () => show('forge'); $('tMine').onclick = () => show('mine'); $('tGal').onclick = () => show('gal');
+
+grid = fromRows(TEMPS.sword); changed(); initGallery();
+})();
+</script>
