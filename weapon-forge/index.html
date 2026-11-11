@@ -107,6 +107,13 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
 .abForm input,.abForm select{background:var(--iron);color:var(--bone);border:1px solid var(--edge);border-radius:8px;padding:5px 8px;font:700 13px var(--body);min-width:0}
 .shapeBar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#3a2417;border:1px solid var(--ember);border-radius:10px;padding:8px 12px}
 .shapeBar span{color:var(--ash);font-size:13px;flex:1}
+.wtabs{display:flex;gap:6px;flex-wrap:wrap}
+.wtabs button{background:var(--plate);border:1px solid var(--edge);border-radius:9px;padding:5px 11px;font-weight:800;font-size:13px}
+.wtabs button[aria-pressed="true"]{border-color:var(--ember);color:var(--ember-2)}
+.items{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:6px}
+.it{display:flex;flex-direction:column;align-items:center;gap:3px;background:var(--plate);border:2px solid transparent;border-radius:10px;padding:6px 4px;font-size:11px;font-weight:700;color:var(--ash)}
+.it i{width:26px;height:26px;border-radius:5px;box-shadow:inset 0 -4px 0 #0004}
+.it[aria-pressed="true"]{border-color:var(--bone);color:var(--bone)}
 .chk{display:flex;gap:8px;align-items:center;font-weight:700;font-size:14px}
 .paint{position:fixed;inset:0;z-index:30;background:#000a;display:flex;align-items:center;justify-content:center;padding:16px}
 .pcard{background:var(--iron);border:1px solid var(--edge);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;max-width:360px;width:100%}
@@ -124,12 +131,13 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
   <header>
     <div>
       <h1>ورشة السلاح</h1>
-      <p class="tag">ارسم سلاحك بكسل بكسل، وابني وحوشك مكعب مكعب، وانزل الساحة حاربهم.</p>
+      <p class="tag">ارسم سلاحك بكسل بكسل، وابني وحوشك مكعب مكعب، واعمل عوالمك ولعبتك بنفسك.</p>
     </div>
     <nav aria-label="الأقسام">
       <button id="tForge" aria-pressed="true">الورشة</button>
       <button id="tBeast" aria-pressed="false">الوحوش</button>
       <button id="tArena" aria-pressed="false">الساحة</button>
+      <button id="tWorld" aria-pressed="false">اصنع لعبتك</button>
       <button id="tMine" aria-pressed="false">سلاحي</button>
       <button id="tGal" aria-pressed="false">المعرض</button>
     </nav>
@@ -263,11 +271,36 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
     </div>
   </section>
 
+  <section id="vWorld" class="forge" hidden>
+    <div class="panel">
+      <div class="wtabs" id="wTabs"></div>
+      <div class="bstage" id="wstage">
+        <div class="btools" role="toolbar" aria-label="أدوات العالم">
+          <button class="tool" id="wtPlace" aria-pressed="true">حط</button>
+          <button class="tool" id="wtSel" aria-pressed="false">اختار</button>
+          <button class="tool" id="wtErase" aria-pressed="false">امسح</button>
+          <button class="tool" id="wtTurn">لف</button>
+        </div>
+      </div>
+      <div class="label">مكعبات</div><div class="items" id="wBlocks"></div>
+      <div class="label">أرضيات</div><div class="items" id="wTiles"></div>
+      <div class="label">حاجات بتعمل حاجات</div><div class="items" id="wSmart"></div>
+      <div class="label">وحوش</div><div class="items" id="wMons"></div>
+    </div>
+    <div class="panel">
+      <div class="nameRow"><input id="gName" maxlength="28" aria-label="اسم اللعبة" placeholder="اسم لعبتك"><button class="btn" id="gPlay">العب</button></div>
+      <div class="card" id="wProps"><b id="wpT">اختار حاجة في العالم عشان تعدّلها</b><div class="abForm" id="wpF"></div></div>
+      <div class="acts"><button class="btn alt" id="gSave">احفظ اللعبة</button><button class="btn alt" id="gNew">لعبة جديدة</button><button class="btn alt" id="gClear">فضّي العالم ده</button></div>
+      <p class="desc">حط مكعبات وحاجات على الأرض. الصندوق البلّاع بيدخّلك عالم تاني من عوالم لعبتك، وتطلع منه لما تخلّص وحوشه أو توصل للعلم. لو حطيت علم، الوصول ليه بيكسّبك. لو مفيش علم، بتكسب لما الوحوش تخلص.</p>
+      <div class="label">ألعابي</div><div class="list" id="myGames"></div>
+    </div>
+  </section>
+
   <section id="vArena" hidden>
     <div class="arena" id="arena">
       <div class="pops" id="apops"></div>
       <div class="hud"><span id="aWave"></span><span class="hp"><b id="aHp"></b></span><span id="aScore"></span></div>
-      <div class="ov" id="aOv"><h2 id="aOvT">ساحة الوحوش</h2><p id="aOvP">انزل بالسلاح اللي في الورشة واصمد قدام موجات الوحوش. كل وحش ليه عنصر بيضعف قدامه.</p><button class="btn" id="aGo">ابدأ</button></div>
+      <div class="ov" id="aOv"><h2 id="aOvT">ساحة الوحوش</h2><p id="aOvP">انزل بالسلاح اللي في الورشة واصمد قدام موجات الوحوش. كل وحش ليه عنصر بيضعف قدامه.</p><div class="acts" style="justify-content:center"><button class="btn" id="aGo">ابدأ</button><button class="btn alt" id="aEdit" hidden>ارجع عدّل العالم</button></div></div>
       <div class="joy" id="joy"><i id="joyK"></i></div>
       <button class="hit" id="aHit" aria-label="اضرب">اضرب</button>
     </div>
@@ -501,6 +534,7 @@ function frame(now) {
   rim.intensity = 1.2 + Math.sin(now / 400) * 0.25;
   if (!$('vForge').hidden) { cam.lookAt(holder.position.x * 0.4, 0, 0); R.render(scene, cam); }
   if (!$('vArena').hidden && AR.R) { arenaStep(dt, now); AR.R.render(AR.scene, AR.cam); }
+  if (!$('vWorld').hidden && WE.R) { WE.orbit.update(); WE.R.render(WE.scene, WE.cam); }
   if (!$('vBeast').hidden && BE.R) { previewStep(dt); BE.orbit.update(); BE.R.render(BE.scene, BE.cam); }
   requestAnimationFrame(frame);
 }
@@ -543,12 +577,14 @@ function arenaInit() {
   // a pixel floor: stone tiles in a ring, torches of ember light around it
   const t = document.createElement('canvas'); t.width = t.height = 16; const g = t.getContext('2d'); for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) { g.fillStyle = ['#3a302a', '#342b25', '#40352e', '#2e2620'][(x * 7 + y * 13 + ((x / 4 | 0) + (y / 4 | 0)) * 5) % 4]; g.fillRect(x, y, 1, 1); }
   const tex = new THREE.CanvasTexture(t); tex.magFilter = THREE.NearestFilter; tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(17, 17);
-  const floor = new THREE.Mesh(new THREE.CircleGeometry(30, 64), new THREE.MeshLambertMaterial({ map: tex })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; sc.add(floor);
-  for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2, x = Math.cos(a) * 30.5, z = Math.sin(a) * 30.5; const post = voxels(['o', 'y', 's', 's', 's'], SPR, 0.6); post.position.set(x, 0, z); sc.add(post); const l = new THREE.PointLight(0xff8a3d, 0.7, 14); l.position.set(x, 3, z); sc.add(l); }
+  AR.ring = new THREE.Group(); sc.add(AR.ring); AR.world = new THREE.Group(); sc.add(AR.world); AR.boxes = []; AR.mode = 'waves';
+  const floor = new THREE.Mesh(new THREE.CircleGeometry(30, 64), new THREE.MeshLambertMaterial({ map: tex })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; AR.ring.add(floor);
+  for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2, x = Math.cos(a) * 30.5, z = Math.sin(a) * 30.5; const post = voxels(['o', 'y', 's', 's', 's'], SPR, 0.6); post.position.set(x, 0, z); AR.ring.add(post); const l = new THREE.PointLight(0xff8a3d, 0.7, 14); l.position.set(x, 3, z); AR.ring.add(l); }
   // stone pillars and rocks, made of pixel cubes, to hide behind
   AR.walls = []; const rnd = (k) => hash3(k, 7, 3);
   for (let i = 0; i < 12; i++) { const a = rnd(i) * Math.PI * 2, r = 7 + rnd(i + 40) * 17, x = Math.cos(a) * r, z = Math.sin(a) * r, h = 1.5 + rnd(i + 80) * 3, w = 1.4 + rnd(i + 120) * 1.4;
-    const col = ['#6f6a64', '#7a736b', '#5d5852'][i % 3], m = cubeMesh({ p: [x, h / 2, z], s: [w, h, w], r: [0, rnd(i + 9) * 1.5, 0], c: col, f: ['', '', '', '', '', ''], seed: 100 + i }); m.receiveShadow = true; sc.add(m); AR.walls.push({ x, z, r: w * 0.62 }); }
+    const col = ['#6f6a64', '#7a736b', '#5d5852'][i % 3], m = cubeMesh({ p: [x, h / 2, z], s: [w, h, w], r: [0, rnd(i + 9) * 1.5, 0], c: col, f: ['', '', '', '', '', ''], seed: 100 + i }); m.receiveShadow = true; AR.ring.add(m); AR.walls.push({ x, z, r: w * 0.62 }); }
+  AR.ringWalls = AR.walls;
   AR.hero = new THREE.Group(); const hv = voxels(ART.hero, SPR, 0.15); AR.body = new THREE.Group(); AR.body.add(hv); AR.hero.add(AR.body); AR.hand = new THREE.Group(); AR.hand.position.set(0.62, 0.9, 0.35); AR.body.add(AR.hand); sc.add(AR.hero);
   new ResizeObserver(() => { const w = AR.el.clientWidth, h = AR.el.clientHeight; R2.setSize(w, h, false); AR.cam.aspect = w / h; AR.cam.updateProjectionMatrix(); }).observe(AR.el);
   if (matchMedia('(pointer:coarse)').matches) AR.el.classList.add('touch');
@@ -578,7 +614,7 @@ function startArena() {
   arenaInit(); beastInit(); heldWeapon(); for (const m of AR.mons) AR.scene.remove(m.o); AR.mons = []; for (const x of AR.shots) AR.scene.remove(x.o); AR.shots = [];
   const a = withOv(analyse(grid)); if (!a) { show('forge'); toast('ارسم سلاح الأول'); return; }
   G2 = { a, hp: 100, max: 100, wave: 0, score: 0, cd: 0, swingT: 0, face: new THREE.Vector3(0, 0, -1), pos: new THREE.Vector3(), between: 1.2 };
-  AR.hero.position.set(0, 0, 0); $('aOv').hidden = true; AR.on = true; hud();
+  AR.mode = 'waves'; AR.ring.visible = true; AR.walls = AR.ringWalls; clearWorld(); AR.hero.position.set(0, 0, 0); $('aOv').hidden = true; AR.on = true; hud();
 }
 function arenaPool() {
   const def = Object.keys(MON).map((k) => ({ def: BEASTS[k], M: MON[k] }));
@@ -602,7 +638,7 @@ function spawnWave() {
   else for (let i = 0; i < 3 + n; i++) addBeast(pickOne());
   pop2(boss ? 'البوس وصل!' : `الموجة ${n}`, new THREE.Vector3(0, 2, 0), '#ffb347', true); hud();
 }
-function hud() { $('aWave').textContent = `الموجة ${G2?.wave || 0}`; $('aScore').textContent = `النقط ${G2?.score || 0} · أحسن موجة ${AR.best}`; $('aHp').style.width = Math.max(0, G2 ? G2.hp / G2.max * 100 : 100) + '%'; }
+function hud() { if (AR.mode === 'world' && G2?.world) { $('aWave').textContent = G2.world.label; $('aScore').textContent = `الوحوش ${AR.mons.length} · النقط ${G2.score}`; $('aHp').style.width = Math.max(0, G2.hp / G2.max * 100) + '%'; return; } $('aWave').textContent = `الموجة ${G2?.wave || 0}`; $('aScore').textContent = `النقط ${G2?.score || 0} · أحسن موجة ${AR.best}`; $('aHp').style.width = Math.max(0, G2 ? G2.hp / G2.max * 100 : 100) + '%'; }
 function pop2(text, pos, col, big) { const v = pos.clone().project(AR.cam), el = document.createElement('div'); el.className = 'pop' + (big ? ' crit' : ''); el.textContent = text; el.style.left = ((v.x + 1) / 2 * 100) + '%'; el.style.top = ((1 - v.y) / 2 * 100) + '%'; if (col) el.style.color = col; $('apops').appendChild(el); setTimeout(() => el.remove(), 1000); }
 function swing() {
   if (!AR.on || !G2 || G2.cd > 0) return; const a = G2.a; G2.cd = 0.25 + (100 - a.spd) / 100 * 0.85; G2.swingT = 0.22;
@@ -612,6 +648,7 @@ function swing() {
   if (tgt && best < reach + 1.5) G2.face.copy(tgt.o.position).sub(P).setY(0).normalize();
   let hits = 0;
   for (const m of [...AR.mons]) { const to = m.o.position.clone().sub(P).setY(0), d = to.length() - m.M.size * 0.5; if (d > reach) continue; if (d > 0.6 && to.normalize().dot(G2.face) < 0.35) continue; hit(m, 1); hits++; if (a.el === 'bolt') { const near = AR.mons.filter((x) => x !== m && x.o.position.distanceTo(m.o.position) < 4).slice(0, 2); near.forEach((x) => hit(x, 0.5)); } }
+  if (AR.mode === 'world') hits += worldSwing(P, reach);
   clank(hits ? 240 : 160);
 }
 function hit(m, mult) {
@@ -684,6 +721,7 @@ function abilitiesTick(m, d, dt) {
 function onMonsterEvent(m, kind) { for (const a of m.ab) if (a.when.k === kind && !a.done && a.t <= 0) { useAbility(m, a); a.t = a.cd; if (a.cd <= 0) a.done = true; } }
 
 AR.debris = [];
+function pushBoxes(p, rad) { for (const b of AR.boxes) { if (b.gone) continue; const cx = Math.max(b.x0, Math.min(b.x1, p.x)), cz = Math.max(b.z0, Math.min(b.z1, p.z)), dx = p.x - cx, dz = p.z - cz, d = Math.hypot(dx, dz); if (d < rad) { if (d > 1e-4) { p.x = cx + dx / d * rad; p.z = cz + dz / d * rad; } else { const l = p.x - b.x0, r_ = b.x1 - p.x, f = p.z - b.z0, k = b.z1 - p.z, m = Math.min(l, r_, f, k); if (m === l) p.x = b.x0 - rad; else if (m === r_) p.x = b.x1 + rad; else if (m === f) p.z = b.z0 - rad; else p.z = b.z1 + rad; } } } }
 function pushOut(p, rad) { for (const w of AR.walls || []) { const dx = p.x - w.x, dz = p.z - w.z, d = Math.hypot(dx, dz), min = w.r + rad; if (d < min && d > 0.001) { p.x = w.x + dx / d * min; p.z = w.z + dz / d * min; } } }
 function shatter(m) {
   m.o.updateMatrixWorld(true); const list = []; m.o.traverse((x) => { if (x.isMesh) list.push(x); });
@@ -701,14 +739,14 @@ function arenaStep(dt, now) {
   // move
   let mx = 0, mz = 0; const K = AR.keys; if (K.KeyA || K.ArrowLeft) mx -= 1; if (K.KeyD || K.ArrowRight) mx += 1; if (K.KeyW || K.ArrowUp) mz -= 1; if (K.KeyS || K.ArrowDown) mz += 1; if (AR.joy) { mx += AR.joy.x; mz += AR.joy.y; }
   const l = Math.hypot(mx, mz); if (l > 0.1) { const sp = (5 + a.spd / 30) * dt / Math.max(1, l); P.x += mx * sp; P.z += mz * sp; if (G2.swingT <= 0) G2.face.set(mx, 0, mz).normalize(); }
-  const pl = Math.hypot(P.x, P.z); if (pl > 28) { P.x *= 28 / pl; P.z *= 28 / pl; } pushOut(P, 0.5);
+  if (AR.mode === 'world') { P.x = Math.max(-WS + 0.5, Math.min(WS - 0.5, P.x)); P.z = Math.max(-WS + 0.5, Math.min(WS - 0.5, P.z)); } else { const pl = Math.hypot(P.x, P.z); if (pl > 28) { P.x *= 28 / pl; P.z *= 28 / pl; } } pushOut(P, 0.5); pushBoxes(P, 0.45);
   AR.hero.quaternion.copy(AR.cam.quaternion); if (Math.abs(G2.face.x) > 0.2) AR.body.scale.x = G2.face.x < 0 ? -1 : 1; AR.hero.position.y = l > 0.1 ? Math.abs(Math.sin(now / 90)) * 0.12 : 0;
   G2.cd -= dt; G2.swingT -= dt; if (AR.blade) AR.hand.rotation.z = G2.swingT > 0 ? -1.9 + (G2.swingT / 0.22) * 2.6 : 0.25;
   // monsters
   for (const m of [...AR.mons]) {
     const o = m.o, to = P.clone().sub(o.position).setY(0), d = to.length();
     if (m.burn > 0) { m.burn -= dt; m.hp -= a.elp / 10 * dt * 3; } if (m.poison > 0) { m.poison -= dt; m.hp -= a.elp / 12 * dt * 3; } if ((m.burn > 0 || m.poison > 0) && m.hp <= 0) { kill(m); continue; }
-    if (m.dead) continue; if (m.ab.length && abilitiesTick(m, d, dt)) continue;
+    if (m.dead) continue; if (m.sleep) continue; if (m.ab.length && abilitiesTick(m, d, dt)) continue;
     m.stun -= dt; m.slow -= dt; m.hitT -= dt;
     const go = m.stun <= 0 && !m.fuse && !(m.slamT > 0) && !(m.dashT > 0) && d > m.M.size * 0.5 + 0.7; if (go) o.position.addScaledVector(to.normalize(), m.M.spd * (m.slow > 0 ? 0.45 : 1) * dt); m.moving += ((go ? 1 : 0) - m.moving) * Math.min(1, dt * 6);
     if (!(m.slamT > 0)) o.position.y = m.M.fly ? 1.4 + Math.sin(now / 200 + m.bob) * 0.4 : 0;
@@ -716,15 +754,17 @@ function arenaStep(dt, now) {
     if (!m.fuse) { const em = m.shieldT > 0 ? 0x1a4a7a : m.hitT > 0 ? 0xffffff : m.burn > 0 ? 0x661800 : m.slow > 0 ? 0x10304a : m.poison > 0 ? 0x0a3a12 : 0; if (m.em !== em) { m.em = em; for (const mt of m.mats) mt.emissive.setHex(em); } }
     m.atk -= dt; if (d < m.M.size * 0.5 + 0.9 && m.atk <= 0 && m.stun <= 0) { m.atk = 0.9; m.attT = 0.4; G2.hp -= m.M.dmg; pop2('-' + m.M.dmg, P.clone().add(new THREE.Vector3(0, 2, 0)), '#ff5a5a'); hud(); clank(110); }
   }
-  for (const m of AR.mons) if (!m.M.fly) pushOut(m.o.position, m.M.size * 0.45);
+  for (const m of AR.mons) if (!m.M.fly) { pushOut(m.o.position, m.M.size * 0.45); pushBoxes(m.o.position, m.M.size * 0.4); }
   // monsters keep a little apart
   for (let i = 0; i < AR.mons.length; i++) for (let j = i + 1; j < AR.mons.length; j++) { const A_ = AR.mons[i].o.position, B_ = AR.mons[j].o.position, d = A_.distanceTo(B_), min = (AR.mons[i].M.size + AR.mons[j].M.size) * 0.45; if (d < min && d > 0.001) { const push = B_.clone().sub(A_).setY(0).normalize().multiplyScalar((min - d) / 2); A_.sub(push); B_.add(push); } }
+  if (AR.mode === 'world') { worldTick(dt, now); if (!AR.on) return; }
+  if (G2.hp <= 0 && AR.mode === 'world') { AR.on = false; worldOver(false); return; }
   if (G2.hp <= 0) { AR.on = false; if (G2.wave > AR.best) { AR.best = G2.wave; store.set('best', AR.best); } $('aOvT').textContent = 'وقعت!'; $('aOvP').textContent = `وصلت للموجة ${G2.wave} وجمعت ${G2.score} نقطة. ارجع الورشة وقوّي سلاحك، أو ادخل تاني.`; $('aGo').textContent = 'العب تاني'; $('aOv').hidden = false; hud(); return; }
-  if (!AR.mons.length) { G2.between -= dt; if (G2.between <= 0) { if (G2.wave) { G2.hp = Math.min(G2.max, G2.hp + 25); pop2('+25', P.clone().add(new THREE.Vector3(0, 2, 0)), '#46c96b'); } spawnWave(); G2.between = 2; } }
+  if (AR.mode === 'waves' && !AR.mons.length) { G2.between -= dt; if (G2.between <= 0) { if (G2.wave) { G2.hp = Math.min(G2.max, G2.hp + 25); pop2('+25', P.clone().add(new THREE.Vector3(0, 2, 0)), '#46c96b'); } spawnWave(); G2.between = 2; } }
   AR.cam.position.lerp(new THREE.Vector3(P.x, 11, P.z + 10), 0.1); AR.cam.lookAt(P.x, 0.5, P.z); if (AR.shake > 0) { AR.shake = Math.max(0, AR.shake - dt * 2); AR.cam.position.x += (Math.random() - 0.5) * AR.shake; AR.cam.position.y += (Math.random() - 0.5) * AR.shake; }
 }
 $('aGo').onclick = () => { clank(260); startArena(); };
-$('tArena').addEventListener('click', () => { AR.focus = null; });
+$('tArena').addEventListener('click', () => { AR.focus = null; if (AR.mode === 'world') { AR.on = false; AR.mode = 'waves'; $('aOvT').textContent = 'ساحة الوحوش'; $('aGo').textContent = 'ابدأ'; $('aEdit').hidden = true; $('aOv').hidden = false; } });
 
 
 // ---------------------------------------------------------------- the monster workshop: monsters made of cubes, like a block modeller
@@ -1075,6 +1115,189 @@ $('bNew').onclick = () => { pushUndo(); loadBeast({ name: '', fly: false, cubes:
 $('bFightB').onclick = () => { commitSel(); const def = clone(BE.def); def.name = $('bName').value.trim() || beastName(beastStats(def)); fightBeast(def); };
 function fightBeast(def) { if (!analyse(grid)) { show('forge'); toast('ارسم سلاح الأول، وبعدين ارجع حارب'); return; } AR.focus = def; show('arena'); startArena(); }
 
+
+// ---------------------------------------------------------------- make your own game: worlds of pixel blocks and things that do things
+const WS = 16; // a world is 32 x 32 cells, from -16 to 16
+const plain = () => ['', '', '', '', '', ''];
+const C1 = (p, s, c, f) => ({ p, s, r: [0, 0, 0], c, f: f || plain() });
+const ITEMS = {
+  // blocks you can't walk through (they stack)
+  stone: { n: 'حجر', c: '#7a736b', kind: 'block' }, dirt: { n: 'تراب', c: '#7a5230', kind: 'block' }, grass: { n: 'نجيلة', c: '#4f9a3a', kind: 'block' }, wood: { n: 'خشب', c: '#a0703c', kind: 'block' },
+  brick: { n: 'طوب', c: '#b04a3a', kind: 'block' }, ice: { n: 'تلج', c: '#9ae6ff', kind: 'block' }, gold: { n: 'دهب', c: '#e2b043', kind: 'block' }, night: { n: 'حجر أسود', c: '#2a2236', kind: 'block' },
+  // floors you walk on
+  lava: { n: 'حمم', c: '#ff6a1f', kind: 'tile', fx: 'بتحرق اللي يمشي عليها' }, spikes: { n: 'شوك', c: '#8a8f99', kind: 'tile', fx: 'بتجرح اللي يدوس عليها' },
+  pad: { n: 'نطّاطة', c: '#46c96b', kind: 'tile', fx: 'بتطيّرك لقدام' }, heal: { n: 'قلب', c: '#ff6fb5', kind: 'tile', fx: 'بترجّعلك صحة مرة واحدة' },
+  // things that do things
+  tnt: { n: 'TNT', c: '#e5484d', kind: 'smart', pr: { trig: 'hit', fuse: 1.5, rad: 3.5, dmg: 40 } },
+  chest: { n: 'صندوق بلسان', c: '#8a5a35', kind: 'smart', pr: { hp: 80, dmg: 14 } },
+  swallow: { n: 'صندوق بلّاع', c: '#6b3fa0', kind: 'smart', pr: { to: 1 } },
+  spawner: { n: 'بيطلّع وحوش', c: '#3a3f4a', kind: 'smart', pr: { who: 'slime', every: 4, max: 4 } },
+  door: { n: 'باب', c: '#6f5434', kind: 'smart', pr: {} },
+  flag: { n: 'علم الفوز', c: '#ffe14d', kind: 'smart', pr: {} },
+  start: { n: 'مكان البداية', c: '#4aa3ff', kind: 'smart', pr: {} },
+  mon: { n: 'وحش', c: '#46c96b', kind: 'mon', pr: { who: 'slime' } },
+};
+const MIMIC = { name: 'صندوق بلسان', fly: false, cubes: [C1([0, 0.35, 0], [1.2, 0.7, 1], '#8a5a35'), { ...C1([0, 0.9, 0], [1.24, 0.4, 1.04], '#7a5230'), role: 'head' }, { ...C1([0, 0.78, 0.53], [0.22, 0.26, 0.08], '#e2b043'), role: 'head' },
+  { ...C1([0, 0.62, 0.45], [0.5, 0.08, 0.5], '#e5484d', null), role: 'jaw' }, { ...C1([0.3, 0.72, 0.48], [0.1, 0.14, 0.06], '#f2efe6'), role: 'head' }, { ...C1([-0.3, 0.72, 0.48], [0.1, 0.14, 0.06], '#f2efe6'), role: 'head' }],
+  abil: [{ name: 'عضّة', when: { k: 'near', v: 1.6 }, act: { k: 'dash', dmg: 14 }, cd: 1.6 }] };
+// what a placed thing looks like: pixel cubes again
+function itemMesh(it) {
+  const D = ITEMS[it.t], g = new THREE.Group(), y = it.y || 0; let cubes;
+  if (D.kind === 'block') cubes = [C1([0, 0.5, 0], [1, 1, 1], D.c)];
+  else if (it.t === 'lava') cubes = [C1([0, 0.04, 0], [1, 0.08, 1], D.c), C1([0.2, 0.09, -0.1], [0.3, 0.04, 0.3], '#ffe14d')];
+  else if (it.t === 'spikes') cubes = [C1([0, 0.04, 0], [1, 0.08, 1], '#5d5852'), ...[[-0.25, -0.25], [0.25, -0.25], [-0.25, 0.25], [0.25, 0.25]].map(([x, z]) => C1([x, 0.25, z], [0.14, 0.4, 0.14], '#cfd8e2'))];
+  else if (it.t === 'pad') cubes = [C1([0, 0.06, 0], [1, 0.12, 1], '#2f8f4e'), C1([0, 0.14, 0.1], [0.5, 0.06, 0.16], '#b9e27c'), C1([0, 0.14, -0.15], [0.16, 0.06, 0.4], '#b9e27c')];
+  else if (it.t === 'heal') cubes = [C1([0, 0.04, 0], [1, 0.08, 1], '#7a5230'), C1([0, 0.5, 0], [0.5, 0.4, 0.2], D.c), C1([-0.13, 0.75, 0], [0.24, 0.16, 0.2], D.c), C1([0.13, 0.75, 0], [0.24, 0.16, 0.2], D.c)];
+  else if (it.t === 'tnt') cubes = TNT.map((q) => ({ ...q, p: [q.p[0], q.p[1] * 0.67, q.p[2]], s: q.s.map((v) => v * 0.67) }));
+  else if (it.t === 'chest') cubes = MIMIC.cubes.filter((q) => q.role !== 'jaw' && q.c !== '#f2efe6');
+  else if (it.t === 'swallow') cubes = [C1([0, 0.5, 0], [1, 1, 1], D.c), C1([0, 0.5, 0.51], [0.7, 0.3, 0.04], '#24262b'), C1([0.25, 0.8, 0.51], [0.15, 0.15, 0.04], '#ffe14d'), C1([-0.25, 0.8, 0.51], [0.15, 0.15, 0.04], '#ffe14d'), C1([0, 0.38, 0.52], [0.3, 0.06, 0.04], '#e5484d')];
+  else if (it.t === 'spawner') cubes = [C1([0, 0.06, 0], [1, 0.12, 1], '#24262b'), ...[[-0.42, -0.42], [0.42, -0.42], [-0.42, 0.42], [0.42, 0.42]].map(([x, z]) => C1([x, 0.55, z], [0.12, 1, 0.12], D.c)), C1([0, 1.05, 0], [1, 0.1, 1], D.c), C1([0, 0.5, 0], [0.4, 0.4, 0.4], '#ff4d6d')];
+  else if (it.t === 'door') cubes = [C1([0, 1, 0], [1, 2, 0.3], D.c), C1([0.3, 1, 0.16], [0.1, 0.1, 0.06], '#e2b043')];
+  else if (it.t === 'flag') cubes = [C1([0, 1.1, 0], [0.1, 2.2, 0.1], '#cfd8e2'), C1([0.35, 1.9, 0], [0.6, 0.4, 0.06], D.c)];
+  else if (it.t === 'start') cubes = [C1([0, 0.04, 0], [0.9, 0.08, 0.9], D.c), C1([0, 0.1, 0.15], [0.3, 0.06, 0.4], '#f2efe6')];
+  else if (it.t === 'mon') { const def = whoDef(it.pr?.who); const R_ = buildRig(def); const bx = new THREE.Box3().setFromObject(R_.root), h = Math.max(0.3, bx.max.y - bx.min.y); R_.root.scale.setScalar(1.4 / h); R_.root.position.y = -bx.min.y * 1.4 / h; g.add(R_.root); }
+  for (const q of cubes || []) g.add(cubeMesh({ ...q, seed: 7 + ((it.x * 31 + it.z * 17) & 255) }));
+  g.position.set(it.x + 0.5, y, it.z + 0.5); g.rotation.y = (it.r || 0) * Math.PI / 2; g.userData.it = it; g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); return g;
+}
+function whoDef(w) { if (w?.startsWith?.('m:')) return BE.mine.find((d) => d.id === w.slice(2)) || BEASTS.slime; return BEASTS[w] || BEASTS.slime; }
+function whoEntry(w) { const def = whoDef(w); const pool = arenaPool(); return pool.find((e) => e.def === def) || (() => { const st = beastStats(def); return { def, M: { name: def.name, hp: st.hp, spd: st.spd, dmg: st.dmg, size: Math.max(0.8, Math.min(3.4, st.height * 0.45)), fly: !!def.fly, weak: st.weak, resist: st.resist } }; })(); }
+
+// ---- the editor
+const WE = { R: null, scene: null, cam: null, orbit: null, root: null, tool: 'place', item: 'stone', sel: null, wi: 0, g: null, games: store.get('games', []) };
+const newGame = () => ({ id: Date.now().toString(36), name: '', worlds: [{ items: sampleWorld() }] });
+function sampleWorld() { const L = []; for (let i = -6; i <= 6; i++) { L.push({ t: 'stone', x: i, z: -7, y: 0 }); L.push({ t: 'stone', x: i, z: 6, y: 0 }); } for (let i = -6; i <= 5; i++) { L.push({ t: 'brick', x: -7, z: i, y: 0 }); L.push({ t: 'brick', x: 7, z: i, y: 0 }); }
+  L.push({ t: 'start', x: 0, z: 4, y: 0 }, { t: 'tnt', x: -3, z: -2, y: 0, pr: { trig: 'hit', fuse: 1.5, rad: 3.5, dmg: 40 } }, { t: 'tnt', x: -4, z: -2, y: 0, pr: { trig: 'hit', fuse: 1.5, rad: 3.5, dmg: 40 } }, { t: 'chest', x: 3, z: -3, y: 0, pr: { hp: 80, dmg: 14 } }, { t: 'mon', x: 0, z: -4, y: 0, pr: { who: 'slime' } }, { t: 'lava', x: 2, z: 1, y: 0 }, { t: 'lava', x: 3, z: 1, y: 0 }, { t: 'heal', x: -5, z: 3, y: 0 }, { t: 'pad', x: 5, z: 3, y: 0 });
+  return L; }
+function worldInit() {
+  if (WE.R) return; const st = $('wstage'), R4 = new THREE.WebGLRenderer({ antialias: true }); R4.setPixelRatio(Math.min(2, devicePixelRatio)); R4.shadowMap.enabled = true; st.prepend(R4.domElement); WE.R = R4;
+  const sc = new THREE.Scene(); sc.background = new THREE.Color(0x15110f); WE.scene = sc; WE.cam = new THREE.PerspectiveCamera(45, 1, 0.1, 300); WE.cam.position.set(0, 22, 18);
+  sc.add(new THREE.HemisphereLight(0xfff4e8, 0x40302a, 1.3)); const d = new THREE.DirectionalLight(0xffffff, 0.8); d.position.set(-8, 20, 10); d.castShadow = true; Object.assign(d.shadow.camera, { left: -20, right: 20, top: 20, bottom: -20 }); sc.add(d);
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(WS * 2, WS * 2), new THREE.MeshLambertMaterial({ map: floorTex('#3f5a2e') })); ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; ground.userData.ground = true; sc.add(ground); WE.ground = ground;
+  const gh = new THREE.GridHelper(WS * 2, WS * 2, 0x000000, 0x000000); gh.material.opacity = 0.18; gh.material.transparent = true; gh.position.y = 0.01; sc.add(gh);
+  WE.orbit = new THREE.OrbitControls(WE.cam, R4.domElement); WE.orbit.target.set(0, 0, 0); WE.orbit.maxPolarAngle = 1.35; WE.orbit.enableDamping = true; WE.orbit.update();
+  let down = null; R4.domElement.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY }; }); R4.domElement.addEventListener('pointerup', (e) => { if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 7) worldTap(e); down = null; });
+  new ResizeObserver(() => { const w = st.clientWidth, h = st.clientHeight; R4.setSize(w, h, false); WE.cam.aspect = w / h; WE.cam.updateProjectionMatrix(); }).observe(st);
+  const btn = (k, host) => { const D = ITEMS[k], b = document.createElement('button'); b.className = 'it'; b.dataset.k = k; b.setAttribute('aria-pressed', String(k === WE.item)); b.innerHTML = `<i style="background:${D.c}"></i><span></span>`; b.querySelector('span').textContent = D.n; b.onclick = () => { WE.item = k; setWTool('place'); document.querySelectorAll('.it').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); }; host.appendChild(b); };
+  for (const k in ITEMS) btn(k, $(ITEMS[k].kind === 'block' ? 'wBlocks' : ITEMS[k].kind === 'tile' ? 'wTiles' : ITEMS[k].kind === 'mon' ? 'wMons' : 'wSmart'));
+  WE.g = store.get('gameDraft', null) || newGame(); $('gName').value = WE.g.name || ''; renderWorld(); renderTabs(); renderGames();
+}
+function floorTex(col) { const t = document.createElement('canvas'); t.width = t.height = 8; const g = t.getContext('2d'), c = new THREE.Color(col), h = {}; c.getHSL(h); for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) { c.setHSL(h.h, h.s, h.l + (hash3(x, y, 5) - 0.5) * 0.1); g.fillStyle = '#' + c.getHexString(); g.fillRect(x, y, 1, 1); } const tx = new THREE.CanvasTexture(t); tx.magFilter = THREE.NearestFilter; tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.repeat.set(WS * 2, WS * 2); return tx; }
+const W_ = () => WE.g.worlds[WE.wi];
+function renderWorld() { if (WE.root) WE.scene.remove(WE.root); WE.root = new THREE.Group(); for (const it of W_().items) { const m = itemMesh(it); if (it === WE.sel) m.traverse((o) => { if (o.isMesh) for (const mt of [].concat(o.material)) mt.emissive?.setHex(0x3a2410); }); WE.root.add(m); } WE.scene.add(WE.root); saveDraft(); }
+function renderTabs() { const T = $('wTabs'); T.innerHTML = ''; WE.g.worlds.forEach((w, i) => { const b = document.createElement('button'); b.textContent = i ? `عالم ${i + 1}` : 'العالم الأساسي'; b.setAttribute('aria-pressed', String(i === WE.wi)); b.onclick = () => { WE.wi = i; WE.sel = null; renderWorld(); renderTabs(); props(); }; T.appendChild(b); });
+  const add = document.createElement('button'); add.textContent = '+ عالم جديد'; add.onclick = () => { if (WE.g.worlds.length >= 6) return toast('أقصى حاجة 6 عوالم'); WE.g.worlds.push({ items: [{ t: 'start', x: 0, z: 4, y: 0 }] }); WE.wi = WE.g.worlds.length - 1; renderWorld(); renderTabs(); toast('عالم جديد. حط فيه وحوش، والصندوق البلّاع هيوديك هنا'); }; T.appendChild(add); }
+function setWTool(t) { WE.tool = t; for (const [id, k] of [['wtPlace', 'place'], ['wtSel', 'select'], ['wtErase', 'erase']]) $(id).setAttribute('aria-pressed', String(t === k)); }
+$('wtPlace').onclick = () => setWTool('place'); $('wtSel').onclick = () => setWTool('select'); $('wtErase').onclick = () => setWTool('erase');
+$('wtTurn').onclick = () => { if (!WE.sel) return toast('اختار حاجة الأول'); WE.sel.r = ((WE.sel.r || 0) + 1) % 4; renderWorld(); };
+const wray = new THREE.Raycaster();
+function worldTap(e) {
+  const r = WE.R.domElement.getBoundingClientRect(); wray.setFromCamera({ x: (e.clientX - r.left) / r.width * 2 - 1, y: -((e.clientY - r.top) / r.height) * 2 + 1 }, WE.cam);
+  const hits = wray.intersectObjects([...WE.root.children, WE.ground], true); const h = hits[0]; if (!h) return;
+  let o = h.object; while (o && !o.userData.it && !o.userData.ground) o = o.parent; const it = o?.userData.it;
+  if (WE.tool === 'erase') { if (it) { W_().items.splice(W_().items.indexOf(it), 1); if (WE.sel === it) WE.sel = null; renderWorld(); props(); } return; }
+  if (WE.tool === 'select') { WE.sel = it || null; renderWorld(); props(); return; }
+  // place: on the ground cell, or on top of a block
+  let x, z, y = 0;
+  if (it && ITEMS[it.t].kind === 'block' && h.face && h.face.normal.y > 0.5) { x = it.x; z = it.z; y = (it.y || 0) + 1; }
+  else if (it && ITEMS[it.t].kind === 'block' && h.face) { const n = h.face.normal.clone().applyQuaternion(o.quaternion); x = it.x + Math.round(n.x); z = it.z + Math.round(n.z); y = it.y || 0; }
+  else { x = Math.floor(h.point.x); z = Math.floor(h.point.z); }
+  if (x < -WS || z < -WS || x >= WS || z >= WS || y > 6) return;
+  const D = ITEMS[WE.item]; if (D.kind !== 'block' && y > 0) y = 0;
+  const L = W_().items; for (let i = L.length - 1; i >= 0; i--) if (L[i].x === x && L[i].z === z && (L[i].y || 0) === y) L.splice(i, 1);
+  if (WE.item === 'start') for (let i = L.length - 1; i >= 0; i--) if (L[i].t === 'start') L.splice(i, 1);
+  const nu = { t: WE.item, x, z, y, r: 0, pr: D.pr ? clone(D.pr) : undefined }; if (WE.item === 'swallow') nu.pr.to = Math.min(WE.g.worlds.length - 1, Math.max(1, WE.wi === 0 ? 1 : 0)); L.push(nu); WE.sel = nu; renderWorld(); props();
+}
+// the selected thing's settings
+function props() {
+  const it = WE.sel, F = $('wpF'); F.innerHTML = ''; if (!it) { $('wpT').textContent = 'اختار حاجة في العالم عشان تعدّلها'; return; } const D = ITEMS[it.t]; $('wpT').textContent = D.n + (D.fx ? ' · ' + D.fx : '');
+  const field = (label, html, on) => { const l = document.createElement('label'); l.innerHTML = `<span></span>${html}`; l.querySelector('span').textContent = label; const inp = l.querySelector('input,select'); inp.onchange = () => { on(inp.value); renderWorld(); }; F.appendChild(l); return inp; };
+  const num = (label, k, min, max, step = 1) => { const i = field(label, `<input type="number" min="${min}" max="${max}" step="${step}">`, (v) => { it.pr[k] = Math.max(min, Math.min(max, +v || 0)); }); i.value = it.pr[k]; };
+  const monOpts = () => [...Object.keys(BEASTS).map((k) => [k, BEASTS[k].name]), ...BE.mine.map((d) => ['m:' + d.id, d.name + ' (وحشك)'])].map(([k, n]) => `<option value="${k}">${n}</option>`).join('');
+  if (it.t === 'tnt') { const s1 = field('بتتفرقع إمتى', '<select><option value="hit">لما تضربها</option><option value="near">لما حد يقرّب</option><option value="touch">لما تلمسها</option></select>', (v) => { it.pr.trig = v; }); s1.value = it.pr.trig; num('وقت الفتيل', 'fuse', 0, 6, 0.1); num('نص قطر الانفجار', 'rad', 1, 10, 0.5); num('الضرر', 'dmg', 1, 200); }
+  if (it.t === 'chest') { num('صحته', 'hp', 10, 600, 10); num('قوة العضّة', 'dmg', 1, 80); }
+  if (it.t === 'swallow') { const s1 = field('بيوديك فين', `<select>${WE.g.worlds.map((w, i) => (i === WE.wi ? '' : `<option value="${i}">${i ? 'عالم ' + (i + 1) : 'العالم الأساسي'}</option>`)).join('')}<option value="new">عالم جديد</option></select>`, (v) => { if (v === 'new') { WE.g.worlds.push({ items: [{ t: 'start', x: 0, z: 4, y: 0 }, { t: 'mon', x: 0, z: -3, y: 0, pr: { who: 'imp' } }] }); it.pr.to = WE.g.worlds.length - 1; renderTabs(); props(); } else it.pr.to = +v; }); s1.value = it.pr.to; }
+  if (it.t === 'spawner') { const s1 = field('بيطلّع مين', `<select>${monOpts()}</select>`, (v) => { it.pr.who = v; }); s1.value = it.pr.who; num('كل كام ثانية', 'every', 1, 30, 0.5); num('أقصى عدد في نفس الوقت', 'max', 1, 12); }
+  if (it.t === 'mon') { const s1 = field('الوحش', `<select>${monOpts()}</select>`, (v) => { it.pr.who = v; }); s1.value = it.pr.who; }
+  if (!F.children.length) F.innerHTML = '<span class="desc">الحاجة دي ملهاش إعدادات.</span>';
+}
+function saveDraft() { WE.g.name = $('gName').value.trim(); store.set('gameDraft', WE.g); }
+$('gName').addEventListener('input', saveDraft);
+$('gSave').onclick = () => { saveDraft(); const g = clone(WE.g); g.name = g.name || 'لعبتي ' + (WE.games.length + 1); const i = WE.games.findIndex((x) => x.id === g.id); if (i >= 0) WE.games[i] = g; else WE.games.unshift(g); WE.games = WE.games.slice(0, 20); store.set('games', WE.games); renderGames(); toast('اللعبة اتحفظت'); };
+$('gNew').onclick = () => { WE.g = newGame(); WE.g.worlds = [{ items: [{ t: 'start', x: 0, z: 4, y: 0 }] }]; WE.wi = 0; WE.sel = null; $('gName').value = ''; renderWorld(); renderTabs(); props(); };
+let clearArm2 = 0; $('gClear').onclick = () => { if (!clearArm2) { $('gClear').textContent = 'متأكد؟'; clearArm2 = setTimeout(() => { clearArm2 = 0; $('gClear').textContent = 'فضّي العالم ده'; }, 2500); return; } clearTimeout(clearArm2); clearArm2 = 0; $('gClear').textContent = 'فضّي العالم ده'; W_().items = [{ t: 'start', x: 0, z: 4, y: 0 }]; WE.sel = null; renderWorld(); props(); };
+function renderGames() { const L = $('myGames'); L.innerHTML = ''; if (!WE.games.length) { L.innerHTML = '<div class="empty">لسه محفظتش ألعاب.</div>'; return; }
+  WE.games.forEach((g, i) => { const d = document.createElement('div'); d.className = 'item'; d.innerHTML = '<b></b><small></small><div class="row"></div>'; d.querySelector('b').textContent = g.name; d.querySelector('small').textContent = `${g.worlds.length} عوالم`;
+    const r = d.querySelector('.row'), mk = (t, fn, alt) => { const b = document.createElement('button'); b.className = 'btn' + (alt ? ' alt' : ''); b.textContent = t; b.onclick = () => fn(b); r.appendChild(b); };
+    mk('العب', () => { WE.g = clone(g); playGame(); }); mk('عدّل', () => { WE.g = clone(g); WE.wi = 0; WE.sel = null; $('gName').value = g.name; renderWorld(); renderTabs(); props(); }, true);
+    mk('امسح', (b) => { if (!b.dataset.arm) { b.dataset.arm = 1; b.textContent = 'متأكد؟'; return; } WE.games.splice(i, 1); store.set('games', WE.games); renderGames(); }, true); L.appendChild(d); }); }
+$('gPlay').onclick = () => { saveDraft(); playGame(); };
+
+// ---- playing a world in the arena
+function clearWorld() { if (!AR.world) return; while (AR.world.children.length) AR.world.remove(AR.world.children[0]); AR.boxes = []; AR.objs = []; AR.tiles = new Map(); }
+function playGame() { if (!analyse(grid) && !WOV) { show('forge'); toast('ارسم سلاح الأول، وبعدين العب لعبتك'); return; } show('arena'); $('aOv').hidden = true; $('aEdit').hidden = true; loadWorld(0, null); }
+function loadWorld(wi, back) {
+  arenaInit(); beastInit(); heldWeapon(); for (const m of AR.mons) AR.scene.remove(m.o); AR.mons = []; for (const x of AR.shots) AR.scene.remove(x.o); AR.shots = [];
+  const a = withOv(analyse(grid)) || { dmg: 30, spd: 50, reach: 50, crit: 10, elp: 0, el: 'none', sym: 0 };
+  const keepHp = G2?.world ? G2.hp : 100, stack = back ? [...(G2.world.stack || []), back] : (G2?.world?.stack && wi !== 0 ? G2.world.stack : []);
+  G2 = { a, hp: keepHp, max: 100, wave: 0, score: G2?.world ? G2.score : 0, cd: 0, swingT: 0, face: new THREE.Vector3(0, 0, -1), pos: new THREE.Vector3(), world: { wi, stack, label: wi ? `عالم ${wi + 1}` : (WE.g.name || 'لعبتي'), hadMon: false, won: false } };
+  AR.mode = 'world'; AR.ring.visible = false; AR.walls = []; clearWorld();
+  const W = WE.g.worlds[wi]; const floor = new THREE.Mesh(new THREE.PlaneGeometry(WS * 2, WS * 2), new THREE.MeshLambertMaterial({ map: floorTex(wi ? '#3a2f45' : '#3f5a2e') })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; AR.world.add(floor);
+  let start = { x: 0, z: 4 };
+  for (const it of W.items) {
+    const D = ITEMS[it.t]; if (!D) continue; const cx = it.x + 0.5, cz = it.z + 0.5;
+    if (it.t === 'start') { start = { x: cx, z: cz }; continue; }
+    if (it.t === 'mon') { addBeast(whoEntry(it.pr?.who)); AR.mons[AR.mons.length - 1].o.position.set(cx, 0, cz); G2.world.hadMon = true; continue; }
+    if (it.t === 'chest') { const e = { def: MIMIC, M: { name: 'صندوق بلسان', hp: it.pr.hp, spd: 3.8, dmg: it.pr.dmg, size: 0.75, weak: 'fire', resist: 'none' } }; addBeast(e); const m = AR.mons[AR.mons.length - 1]; m.o.position.set(cx, 0, cz); m.sleep = true; m.ab.forEach((x) => { x.act.dmg = it.pr.dmg; }); G2.world.hadMon = true; continue; }
+    const m = itemMesh(it); AR.world.add(m);
+    if (D.kind === 'block' || it.t === 'door') { const b = { x0: it.x, x1: it.x + 1, z0: it.z, z1: it.z + 1, m, door: it.t === 'door' }; AR.boxes.push(b); }
+    if (D.kind === 'tile') AR.tiles.set(it.x + ',' + it.z, { t: it.t, m, used: false, cd: 0 });
+    if (['tnt', 'swallow', 'spawner', 'flag', 'door'].includes(it.t)) { const o = { t: it.t, pr: it.pr || {}, m, x: cx, z: cz, timer: 1, hp: 60 }; if (it.t === 'tnt' || it.t === 'spawner') { o.box = { x0: it.x + 0.15, x1: it.x + 0.85, z0: it.z + 0.15, z1: it.z + 0.85 }; AR.boxes.push(o.box); } if (it.t === 'door') o.box = AR.boxes[AR.boxes.length - 1]; AR.objs.push(o); if (it.t === 'spawner') G2.world.hadMon = true; }
+  }
+  if (back === null && G2.world.stack.length && G2.world.returnTo) start = G2.world.returnTo;
+  AR.hero.position.set(start.x, 0, start.z); AR.cam.position.set(start.x, 11, start.z + 10); AR.on = true; hud();
+  pop2(G2.world.label, new THREE.Vector3(start.x, 2, start.z), '#ffb347', true);
+}
+function worldSwing(P, reach) { let n = 0; for (const o of AR.objs) { if (o.gone) continue; const d = Math.hypot(o.x - P.x, o.z - P.z); if (d > reach + 0.5) continue;
+  if (o.t === 'tnt' && !o.fuse) { o.fuse = o.pr.fuse || 0.05; n++; }
+  if (o.t === 'spawner') { o.hp -= G2.a.dmg * 0.6; o.m.position.y = 0.08; setTimeout(() => { o.m.position.y = 0; }, 80); n++; if (o.hp <= 0) { o.gone = true; AR.world.remove(o.m); if (o.box) o.box.gone = true; boom(new THREE.Vector3(o.x, 0.5, o.z), 0, 0); } } } return n; }
+function worldTick(dt, now) {
+  const P = AR.hero.position, W = G2.world;
+  // floors under your feet
+  const tile = AR.tiles.get(Math.floor(P.x) + ',' + Math.floor(P.z));
+  if (tile && !tile.used) { tile.cd -= dt;
+    if (tile.t === 'lava' && tile.cd <= 0) { hurtPlayer(8, '#ff8a3d'); tile.cd = 0.5; }
+    if (tile.t === 'spikes' && tile.cd <= 0) { hurtPlayer(10); tile.cd = 0.8; }
+    if (tile.t === 'heal') { G2.hp = Math.min(G2.max, G2.hp + 35); pop2('+35', P.clone().add(new THREE.Vector3(0, 2, 0)), '#46c96b'); tile.used = true; AR.world.remove(tile.m); hud(); }
+    if (tile.t === 'pad' && tile.cd <= 0) { G2.launch = 0.35; tile.cd = 0.6; clank(400); } }
+  if (G2.launch > 0) { G2.launch -= dt; P.addScaledVector(G2.face, dt * 22); AR.hero.position.y = Math.sin((0.35 - G2.launch) / 0.35 * Math.PI) * 2; }
+  // monsters standing on lava burn too
+  for (const m of AR.mons) { const t2 = AR.tiles.get(Math.floor(m.o.position.x) + ',' + Math.floor(m.o.position.z)); if (t2?.t === 'lava' && !m.M.fly) { m.hp -= 10 * dt; if (m.hp <= 0) kill(m); } }
+  // a sleeping chest wakes up when you come close
+  for (const m of AR.mons) if (m.sleep) { const d = m.o.position.distanceTo(P); if (d < 3.2) { m.sleep = false; pop2('!', m.o.position.clone().add(new THREE.Vector3(0, 1.8, 0)), '#ffe14d', true); clank(320); } }
+  for (const o of AR.objs) { if (o.gone) continue; const d = Math.hypot(o.x - P.x, o.z - P.z);
+    if (o.t === 'tnt') { if (!o.fuse && ((o.pr.trig === 'near' && d < 2.2) || (o.pr.trig === 'touch' && d < 1.1) || AR.mons.some((m) => o.pr.trig === 'near' && Math.hypot(m.o.position.x - o.x, m.o.position.z - o.z) < 1.6))) o.fuse = o.pr.fuse || 0.05;
+      if (o.fuse) { o.fuse -= dt; const f = Math.sin(now / (o.fuse < 0.5 ? 35 : 80)) > 0; o.m.traverse((x) => { if (x.isMesh) for (const mt of x.material) mt.emissive.setHex(f ? 0xffffff : 0); }); o.m.scale.setScalar(1 + Math.max(0, 1 - o.fuse) * 0.2);
+        if (o.fuse <= 0) { o.gone = true; AR.world.remove(o.m); if (o.box) o.box.gone = true; boom(new THREE.Vector3(o.x, 0.4, o.z), o.pr.rad, o.pr.dmg, null, 'fire');
+          for (const x of AR.objs) if (x.t === 'tnt' && !x.gone && Math.hypot(x.x - o.x, x.z - o.z) < o.pr.rad) x.fuse = x.fuse ? Math.min(x.fuse, 0.3) : 0.3; // chain reaction
+          for (const b of AR.boxes) if (!b.gone && !b.door && b.m && Math.hypot(b.x0 + 0.5 - o.x, b.z0 + 0.5 - o.z) < o.pr.rad * 0.6) { b.gone = true; AR.world.remove(b.m); boom(new THREE.Vector3(b.x0 + 0.5, 0.5, b.z0 + 0.5), 0, 0); } } } }
+    if (o.t === 'spawner') { o.timer -= dt; if (o.timer <= 0) { o.timer = o.pr.every; if ((o.kids || (o.kids = [])).filter((m) => !m.dead).length < o.pr.max) { addBeast(whoEntry(o.pr.who)); const m = AR.mons[AR.mons.length - 1]; m.o.position.set(o.x, 0, o.z + 0.9); o.kids.push(m); } } }
+    if (o.t === 'swallow' && d < 1.1 && !o.used) { o.used = true; clank(150); o.m.scale.set(1.4, 0.7, 1.4); const to = Math.min(WE.g.worlds.length - 1, o.pr.to ?? 1); W.returnTo = { x: o.x, z: o.z + 1.6 }; setTimeout(() => { const back = { wi: W.wi, x: o.x, z: o.z + 1.6, objKey: o.x + ',' + o.z }; loadWorld(to, back); }, 350); AR.on = false; setTimeout(() => { AR.on = true; }, 360); return; }
+    if (o.t === 'flag' && d < 1) { W.won = true; }
+    if (o.t === 'door' && !AR.mons.length && !AR.objs.some((x) => x.t === 'spawner' && !x.gone)) { o.gone = true; o.box.gone = true; AR.world.remove(o.m); pop2('الباب اتفتح', new THREE.Vector3(o.x, 2, o.z), '#ffe14d'); }
+  }
+  const hasFlag = AR.objs.some((o) => o.t === 'flag'), cleared = W.hadMon && !AR.mons.length && !AR.objs.some((x) => x.t === 'spawner' && !x.gone);
+  if (W.won || (!hasFlag && cleared)) { W.won = true; worldOver(true); }
+  hud();
+}
+function worldOver(win) {
+  const W = G2.world;
+  if (win && W.stack.length) { const back = W.stack[W.stack.length - 1], rest = W.stack.slice(0, -1); AR.on = false; pop2('خلّصته! راجع…', AR.hero.position.clone().add(new THREE.Vector3(0, 2, 0)), '#ffe14d', true);
+    setTimeout(() => { G2.world.stack = rest; loadWorld(back.wi, null); G2.world.stack = rest; AR.hero.position.set(back.x, 0, back.z); const box = AR.objs.find((o) => o.t === 'swallow' && o.x + ',' + o.z === back.objKey); if (box) { box.used = true; box.gone = true; AR.world.remove(box.m); } }, 900); return; }
+  AR.on = false; $('aOvT').textContent = win ? 'كسبت!' : 'وقعت!'; $('aOvP').textContent = win ? `خلّصت ${WE.g.name || 'لعبتك'} وجمعت ${G2.score} نقطة.` : 'الوحوش غلبتك المرة دي. جرّب تاني أو ارجع عدّل العالم.';
+  $('aGo').textContent = win ? 'العب تاني' : 'جرّب تاني'; $('aGo').onclick = () => { clank(260); $('aOv').hidden = true; $('aGo').onclick = () => { clank(260); startArena(); }; G2.world = null; playGame(); }; $('aEdit').hidden = false; $('aOv').hidden = false;
+}
+$('aEdit').onclick = () => { $('aOv').hidden = true; $('aEdit').hidden = true; $('aGo').onclick = () => { clank(260); startArena(); }; $('aGo').textContent = 'ابدأ'; show('world'); };
+
 let ct = 0; function changed() { drawGrid(); clearTimeout(ct); ct = setTimeout(() => { renderCard(); build(); }, 90); }
 
 // ---------------------------------------------------------------- your weapons (this device) and the shared gallery
@@ -1116,8 +1339,8 @@ async function unpublish(id) { const me = gal.docs.find((d) => d.uid === gal.uid
 async function like(key) { if (!gal.db) return; const cur = { ...(gal.likes.find((l) => l.uid === gal.uid)?.k || {}) }; if (cur[key]) delete cur[key]; else cur[key] = 1; try { await gal.db.collection('likes').doc(gal.uid).set({ k: cur }); } catch { toast('مانفعش، جرّب تاني'); } }
 $('bPub').onclick = () => { if (!A) return; const w = { id: Date.now().toString(36), name: $('wName').value.trim() || nameFor(A), g: enc(grid) }; publish(w); };
 
-function show(v) { for (const [k, id, sec] of [['forge', 'tForge', 'vForge'], ['beast', 'tBeast', 'vBeast'], ['arena', 'tArena', 'vArena'], ['mine', 'tMine', 'vMine'], ['gal', 'tGal', 'vGal']]) { $(id).setAttribute('aria-pressed', String(k === v)); $(sec).hidden = k !== v; } if (v === 'mine') renderMine(); if (v === 'gal') renderGal(); if (v === 'forge') size(); if (v === 'beast') beastInit(); if (v === 'arena') { arenaInit(); monsterRow(); if (!AR.on) { AR.cam.position.set(0, 13, 11); AR.cam.lookAt(0, 0.5, 0); heldWeapon(); } } }
-$('tForge').onclick = () => show('forge'); $('tMine').onclick = () => show('mine'); $('tGal').onclick = () => show('gal'); $('tBeast').onclick = () => show('beast'); $('tArena').onclick = () => show('arena');
+function show(v) { for (const [k, id, sec] of [['forge', 'tForge', 'vForge'], ['beast', 'tBeast', 'vBeast'], ['arena', 'tArena', 'vArena'], ['world', 'tWorld', 'vWorld'], ['mine', 'tMine', 'vMine'], ['gal', 'tGal', 'vGal']]) { $(id).setAttribute('aria-pressed', String(k === v)); $(sec).hidden = k !== v; } if (v === 'mine') renderMine(); if (v === 'gal') renderGal(); if (v === 'forge') size(); if (v === 'beast') beastInit(); if (v === 'world') worldInit(); if (v === 'arena') { arenaInit(); monsterRow(); if (!AR.on) { AR.cam.position.set(0, 13, 11); AR.cam.lookAt(0, 0.5, 0); heldWeapon(); } } }
+$('tForge').onclick = () => show('forge'); $('tMine').onclick = () => show('mine'); $('tGal').onclick = () => show('gal'); $('tBeast').onclick = () => show('beast'); $('tWorld').onclick = () => show('world'); $('tArena').onclick = () => show('arena');
 
 grid = fromRows(TEMPS.sword); changed(); initGallery();
 })();
