@@ -7,7 +7,7 @@ import { MODES, MODE_LIST } from './modes.js';
 import { cardOvr, cardTier } from './sports.js';
 import './party.js';
 import './slasher.js';
-import { world as worldMode, initWorld, vortex, loadPacks, need, useBuff, WORLD_MODELS, life, saveLife } from './world.js';
+import { world as worldMode, initWorld, vortex, loadPacks, need, useBuff, WORLD_MODELS, life, saveLife , prefetchWorld } from './world.js';
 import { WEAPONS, giveWeapon, fire, botFire, updateProjectiles, updatePickups, tickWeapons, clearProjectiles, dropWeapon } from './weapons.js';
 import { editor, customMode, getMap, PIECES, MAP_TYPES, piecesFor } from './build.js';
 import { comm, initCommunity, allMaps, featuredMaps, mapHash, publishMap, unpublishMap, recordPlay, liked, toggleLike, setFeatured, PUBLISH_PRICE, MAX_MAPS } from './community.js';
@@ -831,6 +831,13 @@ G.endRound = () => {
   else setTimeout(() => showResult(won, last, qualified, earned), 700);
 };
 // ---------------------------------------------------------------- the open world
+function backgroundLoad() {
+  if (navigator.connection?.saveData) return; // the player asked their phone to save data
+  loadExtras();
+  const btn = $('mWorld'); let badge = null;
+  const show_ = (f) => { if (!btn) return; if (!badge) { badge = document.createElement('span'); badge.className = 'dlBadge'; Object.assign(badge.style, { position: 'absolute', bottom: '-6px', left: '50%', transform: 'translateX(-50%)', font: '800 10px system-ui', color: '#fff', background: 'rgba(20,22,40,.8)', borderRadius: '8px', padding: '1px 5px', pointerEvents: 'none' }); if (getComputedStyle(btn).position === 'static') btn.style.position = 'relative'; btn.appendChild(badge); } badge.textContent = f >= 1 ? '✓' : Math.round(f * 100) + '%'; if (f >= 1) setTimeout(() => badge?.remove(), 2500); };
+  prefetchWorld(show_).then(() => { for (const f of ['radio-drive', 'radio-dance', 'radio-swing', 'radio-chill']) fetch(`./world/audio/${f}.mp3`).then((r) => r.blob()).catch(() => {}); });
+}
 async function enterWorld(quiet) {
   loadExtras();
   sfx.unlock(); const go = async () => {
@@ -1223,5 +1230,7 @@ translateDom();
   });
   comm.onOwner = () => { heroDress(); refreshMenu(); toast(t('Glitch') + ' · ' + t('Owner'), 3); };
   playIntro(false); initCommunity();
+  // after the menu is up, quietly download the rest (the open world, the quality files, the radio); the films stream when you watch them
+  setTimeout(backgroundLoad, 2500);
   window.__boltdash = { G, flow, ctl, MODES, comm, setTab, save, camera, renderer, scene, render: (dt) => renderScene(dt), giveWeapon, startRound, startMatchmaking, toMenu, openBuild, editor, sim(sec, hook) { for (let i = 0; i < sec * 60; i++) { hook && hook(i / 60); if (flow.state === 'fly') { flow.flyT = 99; flyCam(1 / 60); } if (flow.state === 'count' || flow.state === 'play') { stepRound(1 / 60); playCam(1 / 60); } } } };
 })();

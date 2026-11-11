@@ -4,7 +4,7 @@ import { build } from 'esbuild';
 import { readFileSync, writeFileSync, readdirSync, mkdirSync } from 'node:fs';
 
 const res = await build({
-  entryPoints: ['src/main.js'], bundle: true, minify: true, format: 'iife', write: false, target: 'es2020',
+  entryPoints: ['src/main.js'], bundle: true, minify: process.env.MINIFY !== '0', format: 'iife', write: false, target: 'es2020',
   alias: { 'three/addons': 'three/examples/jsm' },
   nodePaths: process.env.NODE_PATH ? [process.env.NODE_PATH] : [],
 });

@@ -39,25 +39,37 @@ export const roads = (a, b) => [segOK(a, b, 0), segOK(a, b, 1), segOK(a, b, 2), 
 export const isRoundabout = (a, b) => (a < 0 || a > 7 || b < 0 || b > 7) && roads(a, b).every(Boolean) && hash(a, b, SEG_SEED + 33) < 0.14;
 
 // colour variants of a model: the same building with its colours turned round the colour wheel (roofs, doors,
-// awnings change colour; white walls and glass stay as they are)
-const HUE = new Map();
-function hueTex(tex, v) {
-  const k = tex.uuid + ':' + v; if (HUE.has(k)) return HUE.get(k);
-  const img = tex.image, w = img.width, h = img.height, cv = document.createElement('canvas'); cv.width = w; cv.height = h; const g = cv.getContext('2d'); g.drawImage(img, 0, 0);
-  const d = g.getImageData(0, 0, w, h), a = d.data, rot = [0, 0.6, 0.2, 0.68, 0.27, 0.72][v % 6], lift = [1, 0.95, 1, 0.72, 0.85, 0.8][v % 6];
-  for (let i = 0; i < a.length; i += 4) {
-    let r = a[i] / 255, gg = a[i + 1] / 255, b = a[i + 2] / 255; const mx = Math.max(r, gg, b), mn = Math.min(r, gg, b), l = (mx + mn) / 2, dd = mx - mn; if (dd < 0.08 || (b > 0.55 && b > r + 0.08 && gg > r)) continue;
-    const sat = l > 0.5 ? dd / (2 - mx - mn) : dd / (mx + mn); let hh = mx === r ? (gg - b) / dd + (gg < b ? 6 : 0) : mx === gg ? (b - r) / dd + 2 : (r - gg) / dd + 4; hh = (hh / 6 + rot) % 1;
-    const L = Math.min(1, l * lift), q = L < 0.5 ? L * (1 + sat) : L + sat - L * sat, pp = 2 * L - q, f = (t) => { t = (t + 1) % 1; return t < 1 / 6 ? pp + (q - pp) * 6 * t : t < 0.5 ? q : t < 2 / 3 ? pp + (q - pp) * (2 / 3 - t) * 6 : pp; };
-    a[i] = f(hh + 1 / 3) * 255; a[i + 1] = f(hh) * 255; a[i + 2] = f(hh - 1 / 3) * 255;
-  }
-  g.putImageData(d, 0, 0); const t2 = new THREE.CanvasTexture(cv); t2.flipY = tex.flipY; t2.colorSpace = tex.colorSpace; t2.wrapS = tex.wrapS; t2.wrapT = tex.wrapT; t2.magFilter = tex.magFilter; t2.minFilter = tex.minFilter; t2.channel = tex.channel;
-  HUE.set(k, t2); return t2;
+// awnings change colour; white walls and glass stay as they are). Done on the graphics card, so it costs nothing.
+// The same shader lights some of the windows at night (BU.night, set by the quality file).
+export const BU = { night: { value: 0 } };
+const HUE_ROT = [0, 0.4167, 0.8056, 0.3611, 0.8333, 0.9167], LIFT = [1, 0.8, 0.85, 0.6, 0.65, 0.9]; // terracotta, blue, brown, slate, teal
+function patchB(mat, v) {
+  mat.onBeforeCompile = (sh) => {
+    sh.uniforms.bNight = BU.night;
+    sh.vertexShader = 'varying vec3 vBW;\n' + sh.vertexShader.replace('#include <worldpos_vertex>', `#include <worldpos_vertex>
+      vec4 bq = vec4(transformed, 1.0);
+      #ifdef USE_INSTANCING
+        bq = instanceMatrix * bq;
+      #endif
+      vBW = (modelMatrix * bq).xyz;`);
+    sh.fragmentShader = 'varying vec3 vBW; uniform float bNight;\n' + sh.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
+      vec3 bc = diffuseColor.rgb; float win = step(0.45, bc.b) * step(0.4, bc.b - bc.r) * step(bc.r, bc.g);
+      ${v ? `if (win < 0.5) {
+        float Y = dot(bc, vec3(0.299, 0.587, 0.114)), I = dot(bc, vec3(0.596, -0.274, -0.322)), Q = dot(bc, vec3(0.211, -0.523, 0.312));
+        float ca = cos(${(HUE_ROT[v] * 6.2832).toFixed(4)}), sa = sin(${(HUE_ROT[v] * 6.2832).toFixed(4)}), I2 = I * ca - Q * sa, Q2 = I * sa + Q * ca;
+        diffuseColor.rgb = clamp(vec3(Y + 0.956 * I2 + 0.621 * Q2, Y - 0.272 * I2 - 0.647 * Q2, Y - 1.106 * I2 + 1.703 * Q2), 0.0, 1.0) * mix(1.0, ${LIFT[v].toFixed(2)}, step(0.02, abs(I) + abs(Q)));
+      }` : ''}`).replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+      float bl = step(0.42, fract(sin(dot(floor(vBW.xz * 0.42) + floor(vBW.y * 0.36) * 7.13, vec2(127.1, 311.7))) * 43758.5453));
+      totalEmissiveRadiance += vec3(1.0, 0.8, 0.5) * win * bl * bNight;`);
+  };
+  mat.customProgramCacheKey = () => 'bld' + v; mat.needsUpdate = true;
 }
 export function variant(key, v) {
-  if (!v || !M[key]) return key; const vk = key + '#' + v; if (M[vk]) return vk;
-  const sc = M[key].scene.clone(true); sc.traverse((o) => { if (o.isMesh) { const src = o.material.map; o.material = o.material.clone(); if (src?.image) { o.material.map = hueTex(src, v); o.material.userData.srcMap = src; } } });
-  M[vk] = { scene: sc }; return vk;
+  if (!M[key]) return key;
+  if (!v) { if (!M[key].bp) { M[key].bp = true; M[key].scene.traverse((o) => { if (o.isMesh) patchB(o.material, 0); }); } return key; }
+  const vk = key + '#' + v; if (M[vk]) return vk;
+  const sc = M[key].scene.clone(true); sc.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); patchB(o.material, v); } });
+  M[vk] = { scene: sc, bp: true }; return vk;
 }
 
 const BB = {};
@@ -135,7 +147,7 @@ const PARKED = ['sedan', 'sedan', 'suv', 'van', 'hatchback-sports', 'sedan-sport
 
 export class City {
   constructor(L, seed, nat) {
-    this.L = L; this.seed = seed; this.nat = nat; SEG_SEED = seed; this.st = new Statics(L); this.chunks = new Map();
+    this.L = L; this.seed = seed; this.nat = nat; SEG_SEED = seed; window.__BD && (window.__BD.buildU = BU); this.st = new Statics(L); this.chunks = new Map();
     this.lots = []; this.doors = []; this.parked = []; this.blocks = []; this.coins = []; this.homes = []; this.cams = []; this.roleDoors = {};
     const TILE = W('city-kit-roads', 'tile-low'), tint = (name, hex) => { if (M[name] || !M[TILE]) return; const sc = M[TILE].scene.clone(true); sc.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.color.setHex(hex); } }); M[name] = { scene: sc }; };
     tint('w/concrete', 0xb9bec7); tint('w/asphalt', 0x50545f); tint('w/paint', 0xf4f4f4);

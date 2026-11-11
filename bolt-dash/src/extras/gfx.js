@@ -52,25 +52,6 @@ function patchTree(mat) {
   };
   mat.customProgramCacheKey = () => 'gfx-tree'; mat.needsUpdate = true;
 }
-// windows: the light-blue glass of the buildings glows warm at night
-const winCache = new Map();
-function windowMap(tex) {
-  if (winCache.has(tex.uuid)) return winCache.get(tex.uuid);
-  const img = tex.image; if (!img?.width) return null; const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const g = c.getContext('2d'); g.drawImage(img, 0, 0);
-  const d = g.getImageData(0, 0, c.width, c.height), a = d.data;
-  for (let i = 0; i < a.length; i += 4) { const r = a[i] / 255, gg = a[i + 1] / 255, b = a[i + 2] / 255, win = b > 0.7 && b - r > 0.3 && gg > r; a[i] = win ? 255 : 0; a[i + 1] = win ? 200 : 0; a[i + 2] = win ? 120 : 0; a[i + 3] = 255; }
-  g.putImageData(d, 0, 0); const t = new THREE.CanvasTexture(c); t.flipY = tex.flipY; t.colorSpace = THREE.SRGBColorSpace; t.channel = tex.channel; t.magFilter = tex.magFilter; t.minFilter = tex.minFilter;
-  winCache.set(tex.uuid, t); return t;
-}
-const lit = new Set();
-function patchBuilding(mat) {
-  if (mat.userData.gfxWin !== undefined) return; const src = mat.userData.srcMap || mat.map; const wm = src && windowMap(src); mat.userData.gfxWin = !!wm;
-  if (!wm) return; mat.emissiveMap = wm; mat.emissive = new THREE.Color(1, 0.85, 0.55); mat.emissiveIntensity = 0; lit.add(mat);
-  // only some windows are lit (people are home), picked by where the window is
-  mat.onBeforeCompile = (sh) => { WP_VERT(sh); sh.fragmentShader = 'varying vec3 vWP;\n' + NOISE + '\n' + sh.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
-    totalEmissiveRadiance *= step(0.42, gh(floor(vWP.xz * 0.42) + floor(vWP.y * 0.36) * 7.13));`); };
-  mat.customProgramCacheKey = () => 'gfx-win'; mat.needsUpdate = true;
-}
 // go through the city models once (and the new colour variants as they appear)
 const seen = new Set();
 function patchModels() {
@@ -78,7 +59,7 @@ function patchModels() {
     if (seen.has(k) || !M[k]?.scene) continue; seen.add(k);
     const ground = /road-|tile-low|w\/concrete|w\/asphalt|w\/paint|driveway/.test(k), grass = /Cube_Grass/.test(k), tree = /tree|Tree|Bush/.test(k), bld = /building/.test(k);
     if (!ground && !grass && !tree && !bld) continue;
-    M[k].scene.traverse((o) => { if (!o.isMesh || !o.material) return; for (const m of [].concat(o.material)) { if (ground) patchGround(m, 'road'); else if (grass) patchGround(m, 'grass'); else if (tree) patchTree(m); else if (bld) patchBuilding(m); } });
+    M[k].scene.traverse((o) => { if (!o.isMesh || !o.material) return; for (const m of [].concat(o.material)) { if (ground) patchGround(m, 'road'); else if (grass) patchGround(m, 'grass'); else if (tree) patchTree(m); } });
   }
 }
 
@@ -147,7 +128,7 @@ function frame(dt) {
     if (lv > 0) { sun.shadow.camera.left = sun.shadow.camera.bottom = -55; sun.shadow.camera.right = sun.shadow.camera.top = 55; sun.shadow.camera.far = 200; sun.shadow.camera.updateProjectionMatrix(); }
   }
   B.bloom.strength = 0.42 + night * 0.3; B.bloom.threshold = 1.0 - night * 0.12;
-  for (const m of lit) m.emissiveIntensity = night * 1.0;
+  if (B.buildU) B.buildU.night.value = night;
   // street lamps near you
   lampT -= dt;
   if (lampT <= 0) { lampT = 0.4; nearLamps = []; for (const c of w.city.chunks.values()) for (const l of c.lamps || []) { const d = Math.hypot(l[0] - p.x, l[1] - p.z); if (d < 130) nearLamps.push([l[0], l[1], d]); } nearLamps.sort((a, b) => a[2] - b[2]); nearLamps = nearLamps.slice(0, MAXP);
@@ -188,7 +169,7 @@ function restore() {
   keep.set = false; sky.visible = stars.visible = lampGlow.visible = pools.visible = rainFx.visible = carLights.visible = head.visible = false; realLamps.forEach((l) => (l.visible = false));
   B.sky.visible = true; B.motes.visible = true; renderer.toneMappingExposure = keep.exp; [B.bloom.strength, B.bloom.threshold] = keep.bloom; U.wet.value = 0; W.rain = 0;
   const c = sun.shadow.camera; [c.left, c.right, c.top, c.bottom, c.far] = keep.shadow; c.updateProjectionMatrix(); hemi.color.setHex(keep.hemi[0]); hemi.groundColor.setHex(keep.hemi[1]); sun.color.setHex(keep.sun); B.rim.intensity = keep.rim; envT = 0; setEnv(1, 0);
-  for (const m of lit) m.emissiveIntensity = 0;
+  if (B.buildU) B.buildU.night.value = 0;
 }
 B.hooks.push(frame);
 B.gfx = { U, weather: W };

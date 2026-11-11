@@ -20,12 +20,27 @@ async function loadPacks(onProgress) {
     let n = 0;
     await Promise.all(PACKS.map(async (k) => {
       // packs are stored as base64 text (the host only serves text and media types)
-      const b64 = await (await fetch(`./world/${k}.pack.txt`)).text(), bin = atob(b64.trim()), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i); const buf = u8.buffer;
+      const b64 = (await (await fetch(`./world/${k}.pack.txt`)).text()).trim(); let buf;
+      // the browser decodes the base64 itself (fast, and the menu keeps running smoothly); old browsers do it by hand
+      try { buf = await (await fetch('data:application/octet-stream;base64,' + b64)).arrayBuffer(); } catch { const bin = atob(b64), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i); buf = u8.buffer; }
       const len = new DataView(buf).getUint32(0, true), idx = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 4, len)));
       packData[k] = { buf, base: 4 + len, idx }; onProgress?.(++n / PACKS.length);
     }));
   })();
   return packsReady;
+}
+// get the open world ready in the background while you are in the menu: packs first, then the models a few at a
+// time with pauses, so the menu never stutters. Entering the world later is then instant.
+let prefetching = null;
+export function prefetchWorld(onProgress) {
+  if (prefetching) return prefetching;
+  prefetching = (async () => {
+    await loadPacks((f) => onProgress?.(f * 0.5));
+    const list = WORLD_MODELS.filter((n) => !M['w/' + n]);
+    for (let i = 0; i < list.length; i += 4) { await need(list.slice(i, i + 4)); onProgress?.(0.5 + 0.5 * Math.min(1, (i + 4) / list.length)); await new Promise((r) => setTimeout(r, 25)); }
+    onProgress?.(1);
+  })().catch(() => { prefetching = null; });
+  return prefetching;
 }
 // parse one model from a pack into M['w/<name>'] so place() and instanced() can use it
 async function need(names) {
