@@ -7,7 +7,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { t } from './i18n.js';
 import { Level } from './level.js';
 import { MODES } from './modes.js';
-import { buildCity, Traffic, Walkers, Minimap, carStep, carSize, bounds, rotBox, rng, wrap, HALF, CAR_S, R, P, N } from './city.js';
+import { City, Traffic, Walkers, Minimap, carStep, carSize, wrap, segOK, HALF, CAR_S, R, P } from './city.js';
 import { ITEM, dress, makePet } from './cosmetics.js';
 
 // ---------------------------------------------------------------- packs
@@ -76,49 +76,37 @@ export function useBuff() { const b = life.buff; if (!b) return null; life.buff 
 // ---------------------------------------------------------------- city layout (see city.js)
 let ctx = null; // hooks from main.js (flow, show, $, startRound, toMenu, heroDress, refreshMenu)
 export function initWorld(c) { ctx = c; }
-const PARKED = ['sedan', 'sedan', 'suv', 'van', 'hatchback-sports', 'sedan-sports', 'suv-luxury', 'taxi'];
-const ROLE_COLOR = { 'shop:food': '#ff8a3d', 'shop:drink': '#3db8ff', 'shop:clothes': '#ff5fb8', 'shop:furniture': '#b07a4a', estate: '#3ddc84', police: '#2f6bff', stadium: '#ff3d3d', depot: '#a46bff', airport: '#ffffff', bank: '#ffd23f' };
+const ROLE_COLOR = { 'shop:food': '#ff8a3d', 'shop:drink': '#3db8ff', 'shop:clothes': '#ff5fb8', 'shop:furniture': '#b07a4a', estate: '#3ddc84', police: '#2f6bff', stadium: '#ff3d3d', depot: '#a46bff', airport: '#ffffff', bank: '#ffd23f', gym: '#ff6b00', hospital: '#ff4d6d', dealer: '#00c2a8', race: '#111111' };
+const CARS_FOR_SALE = [['sedan', 1500, 27], ['hatchback-sports', 4000, 30], ['suv-luxury', 6000, 28], ['sedan-sports', 8000, 32], ['race', 15000, 36], ['race-future', 25000, 40]];
 
 const world = {
   id: 'world', name: t('The World'), short: t('World'), kind: 'world', icon: 'flag', hidden: true,
   desc: t('Live in the city: eat, work, buy a home, travel'), weapons: t('Your bat'),
+  get lots() { return this.city ? this.city.lots : []; },
+  get doors() { return this.city ? this.city.doors : []; },
+  get homes() { return this.city ? this.city.homes : []; },
+  get cams() { return this.city ? this.city.cams : []; },
+  get parked() { return this.city ? this.city.parked : []; },
   build() {
-    const L = new Level({ killY: -20 }); G.level = L; this.L = L;
+    const L = new Level({ killY: -20 }); G.level = L; this.L = L; this.city = null;
     const nat = NATIONS.find((n) => n.id === life.nation) || NATIONS[0]; this.nat = nat;
-    L.box(0, -1, 0, HALF + 70, 1, HALF + 70); // the island
-    const seed = 7 + Math.max(0, NATIONS.indexOf(nat)) * 101, city = buildCity(L, seed), r = rng(seed + 1); this.city = city; this.st = city.st;
-    this.lots = city.lots; this.doors = city.doors; this.cams = []; this.homes = [];
-    // shops and offices in the downtown buildings around the park, one per block
-    const roles = ['shop:food', 'shop:drink', 'shop:clothes', 'shop:furniture', 'estate', 'police', 'depot', 'bank', 'stadium', 'airport'], used = new Set();
-    const shops = this.lots.filter((l) => l.kind === 'shop').sort((a, b) => Math.hypot(a.door.x, a.door.z) - Math.hypot(b.door.x, b.door.z));
-    for (const role of roles) { const l = shops.find((x) => !x.role && !used.has(x.block) && (role !== 'airport' || x.block.type === 'commercial')); if (!l) break; l.role = role; used.add(l.block); }
-    for (const l of this.lots) {
-      if (l.role === 'police') l.label = t('Police station');
-      if (l.role || (l.kind === 'shop' && r() < 0.15)) this.cams.push({ x: l.door.x, z: l.door.z, y: 4, a: Math.atan2(l.nx, l.nz) });
-      if (l.home) { const forSale = r() < 0.35, n = this.homes.length; l.home = { id: `${nat.id}:h${n}`, price: forSale ? r.pick([6000, 9000, 14000]) : 0, furnished: r() < 0.5, owner: forSale ? null : 'npc', unlocked: !forSale && r() < 0.25 }; this.homes.push(l);
-        if (forSale) L.model(W('city-kit-suburban', 'planter'), l.door.x + l.nz * 2.5, 0, l.door.z + l.nx * 2.5, 3); }
-    }
-    // parked cars (drawn together; the one you take becomes a real car)
-    const groups = {}; this.parked = [];
-    for (const sp of city.spots) { if (Math.random() > sp.fill) continue; const n = sp.truck ? pick(['truck', 'truck-flat', 'delivery']) : pick(PARKED); (groups[n] = groups[n] || []).push(sp); }
-    for (const [n, list] of Object.entries(groups)) {
-      const key = W('car-kit', n), ins = instanced(key, list.map((sp) => ({ x: sp.x, y: 0, z: sp.z, s: CAR_S, ry: sp.ry })), L.root), b = bounds(key);
-      list.forEach((sp, idx) => { const [x0, x1, z0, z1] = rotBox(b, CAR_S, sp.ry); this.parked.push({ n, x: sp.x, z: sp.z, ry: sp.ry, ins, idx, s: this.st.add(sp.x + x0 + 0.1, sp.x + x1 - 0.1, sp.z + z0 + 0.1, sp.z + z1 - 0.1, 2.2, true, 'car') }); });
-    }
+    this.ground = L.box(0, -1, 0, 400, 1, 400); // the ground under you (it follows you: the city never ends)
+    const city = new City(L, 7 + Math.max(0, NATIONS.indexOf(nat)) * 101, nat.id); const s0 = this.spawn(); this.city = city; this.st = city.st;
+    city.update(s0.x, s0.z, true); this.st.update(0, s0.x, s0.z, true);
     this.cars = []; // cars that are out of their parking spot (yours, or stolen)
     this.traffic = new Traffic(L, this.st, 24);
     // people walking on the pavements
     this.npcs = [];
-    for (let k = 0; k < 22; k++) { const o = place('Character', 0, 0, 0, 0.42, 0, L.root); const eq = { skin: pick(['skin-straw', 'skin-mint', 'skin-lemon', 'skin-grape', 'skin-orange', 'skin-melon', 'skin-snow', 'skin-night', 'skin-blue']), head: Math.random() < 0.5 ? pick(['h-crown', 'h-cone', 'h-wizard', 'h-knight']) : undefined, back: Math.random() < 0.3 ? 'k-pack' : undefined }; dress(o, eq); const mixer = new THREE.AnimationMixer(o); const c = M.Character.animations.find((a) => a.name.endsWith('|Walk')); if (c) mixer.clipAction(c).play(); this.npcs.push({ o, mixer, sp: rand(1.1, 1.7), seen: 0 }); }
+    for (let k = 0; k < 22; k++) { const o = place('Character', 0, -50, 0, 0.42, 0, L.root); const eq = { skin: pick(['skin-straw', 'skin-mint', 'skin-lemon', 'skin-grape', 'skin-orange', 'skin-melon', 'skin-snow', 'skin-night', 'skin-blue']), head: Math.random() < 0.5 ? pick(['h-crown', 'h-cone', 'h-wizard', 'h-knight']) : undefined, back: Math.random() < 0.3 ? 'k-pack' : undefined }; dress(o, eq); const mixer = new THREE.AnimationMixer(o); const c = M.Character.animations.find((a) => a.name.endsWith('|Walk')); if (c) mixer.clipAction(c).play(); this.npcs.push({ o, mixer, sp: rand(1.1, 1.7), seen: 0 }); }
     this.walkers = new Walkers(city, this.npcs);
     // the statue of the most famous player, in the park in the middle of the city
-    const sx = city.statue.x, sz = city.statue.z; this.statue = place('Character', sx, 3, sz, 1.4, PI, L.root); dress(this.statue, { skin: 'film-gold' }); L.model(W('city-kit-roads', 'tile-high'), sx, 0, sz, 4); L.box(sx, 1.5, sz, 2, 1.5, 2);
-    L.scenery(HALF + 60, -HALF - 60, HALF + 40);
-    this.mini = new Minimap(city);
+    this.statue = place('Character', 0, 3, 0, 1.4, PI, L.root); dress(this.statue, { skin: 'film-gold' }); L.model(W('city-kit-roads', 'tile-high'), 0, 0, 0, 4); L.box(0, 1.5, 0, 2, 1.5, 2);
+    this.coinObjs = new Map(); life.found = life.found || []; life.cars = life.cars || []; life.str = life.str || 0;
+    this.mini = new Minimap(city); camera.far = 290; camera.updateProjectionMatrix();
     this.fly = [[0, 60, 90, 0, 0, 0]];
     this.t = 0; this.day = 0.3; this.driving = null; this.job = null; this.inside = null; this.hp = 100; this.dizzy = 0; this.policeT = 0; this.police = []; this.camDist = 0;
   },
-  spawn() { const h = Object.keys(life.homes)[0]; const lot = h && this.lots?.find((l) => l.home?.id === h); if (lot) return { x: lot.door.x, y: 0.5, z: lot.door.z, facing: Math.atan2(-lot.nx, -lot.nz) }; const s = this.city?.statue || { x: 0, z: 0 }; return { x: s.x, y: 0.5, z: s.z + 18, facing: PI }; },
+  spawn() { const h = Object.keys(life.homes).find((id) => life.homes[id].pos), pos = h && life.homes[h].pos; if (pos) return { x: pos.x, y: 0.5, z: pos.z, facing: Math.atan2(-pos.nx, -pos.nz) }; return { x: 0, y: 0.5, z: 18, facing: PI }; },
   playerSpeed() { return this.driving ? 0 : 1; },
   hudInfo() { const d = this.driving; return { value: '💰' + save.coins, label: '❤ ' + Math.round(this.hp) + ' · ' + '★'.repeat(life.wanted) + '☆'.repeat(5 - life.wanted) + (d ? ' · ' + Math.round(Math.abs(d.v) * 3.6) + ' km/h' : '') + (this.job ? ' · ' + this.job.text : '') }; },
   onFall(r) { const s = this.spawn(); r.reset(s.x, 1, s.z, s.facing); },
@@ -128,8 +116,9 @@ const world = {
     const p = G.player; if (!p) return; this.t += dt; const pp = p.pos;
     // day and night (a full day lasts 8 minutes)
     this.day = (this.day + dt / 480) % 1; const sunUp = Math.max(0, Math.sin(this.day * PI * 2));
-    if (!this.inside) { hemi.intensity = 0.3 + sunUp * 0.8; sun.intensity = 0.2 + sunUp * 1.9; scene.fog.color.setHSL(0.58, 0.45, 0.12 + sunUp * 0.5); scene.fog.near = 90; scene.fog.far = 330; }
-    this.st.update(dt, pp.x, pp.z);
+    if (!this.inside) { hemi.intensity = 0.3 + sunUp * 0.8; sun.intensity = 0.2 + sunUp * 1.9; scene.fog.color.setHSL(0.58, 0.45, 0.12 + sunUp * 0.5); scene.fog.near = 70; scene.fog.far = 270; }
+    if (!this.inside) { this.city.update(pp.x, pp.z); this.ground.position.x = Math.round(pp.x / 40) * 40; this.ground.position.z = Math.round(pp.z / 40) * 40; }
+    this.st.update(dt, pp.x, pp.z); this.coinsUpdate(dt, pp);
     // traffic and people
     const live = this.traffic.cars.filter((c) => c.live), cars = [...live, ...this.police, ...this.cars];
     this.traffic.update(dt, this.t, pp, cars, this.driving || this.inside ? null : pp, this.police);
@@ -148,12 +137,23 @@ const world = {
     if (!this.inside) this.mini.draw(dt, { x: pp.x, z: pp.z, facing: this.driving ? this.driving.h : p.facing }, ctx.ctl?.yaw || 0, this.marks());
     if (this.hp <= 0) this.die(this.killer || t('a car'));
   },
+  // hidden golden coins: one in some blocks, found ones are remembered
+  coinsUpdate(dt, pp) {
+    const live = new Set();
+    for (const c of this.city.coins) {
+      if (life.found.includes(c.id)) continue; live.add(c.id); let o = this.coinObjs.get(c.id);
+      if (!o) { o = place('Coin', c.x, 1.3, c.z, 1.4, 0, this.L.root); this.coinObjs.set(c.id, o); }
+      o.rotation.y += dt * 3; o.position.y = 1.3 + Math.sin(this.t * 2 + c.x) * 0.2;
+      if (!this.inside && Math.hypot(pp.x - c.x, pp.z - c.z) < (this.driving ? 3 : 1.8)) { life.found.push(c.id); save.coins += 100; saveLife(); sfx.coin(); fx.burst(o.position.clone(), 0xffd23f, 16, 6); toast(t('Hidden coin! +100 ({n} found)', { n: life.found.length }), 2.5); }
+    }
+    for (const [id, o] of this.coinObjs) if (!live.has(id)) { o.removeFromParent(); this.coinObjs.delete(id); }
+  },
   marks() {
     const m = [], pp = G.player.pos;
     for (const l of this.lots) if (l.role && Math.hypot(l.door.x - pp.x, l.door.z - pp.z) < 150) m.push({ x: l.door.x, z: l.door.z, c: ROLE_COLOR[l.role], r: 8 });
-    for (const id of Object.keys(life.homes)) { const l = this.homes.find((h) => h.home.id === id); if (l) m.push({ x: l.door.x, z: l.door.z, c: '#3ddc84', r: 11 }); }
+    for (const id of Object.keys(life.homes)) { const q = life.homes[id].pos; if (q) m.push({ x: q.x, z: q.z, c: '#3ddc84', r: 11 }); }
     for (const c of this.police) m.push({ x: c.x, z: c.z, c: this.t % 0.5 < 0.25 ? '#ff2d2d' : '#2f6bff', r: 9 });
-    const j = this.job; if (j?.mark) m.push({ x: j.mark.position.x, z: j.mark.position.z, c: '#ffd23f', r: 12 }); if (j?.thief) m.push({ x: j.thief.position.x, z: j.thief.position.z, c: '#111', r: 10 });
+    const j = this.job; if (j?.pts) { const q = j.pts[j.k]; if (q) m.push({ x: q[0], z: q[1], c: '#ffd23f', r: 12 }); } else if (j?.mark) m.push({ x: j.mark.position.x, z: j.mark.position.z, c: '#ffd23f', r: 12 }); if (j?.thief) m.push({ x: j.thief.position.x, z: j.thief.position.z, c: '#111', r: 10 });
     if (this.revengeTarget && !this.revengeTarget.dead) m.push({ x: this.revengeTarget.o.position.x, z: this.revengeTarget.o.position.z, c: '#000', r: 10 });
     return m;
   },
@@ -171,7 +171,7 @@ const world = {
     const ct = ctx.ctl; if (ct && Math.abs(c.v) > 2 && performance.now() - (ct.dragT || 0) > 1500) ct.yaw = c.h + PI + wrap(ct.yaw - c.h - PI) * Math.exp(-dt * 2.5);
     this.camDist = 8.5;
   },
-  cleanup() { hemi.intensity = 1.35; sun.intensity = 2.6; scene.fog.color.setHex(0xbfe6ff); scene.fog.near = 150; scene.fog.far = 420; ctx?.showAct(null); this.mini?.dispose(); this.mini = null; this.driving = null; },
+  cleanup() { camera.far = 900; camera.updateProjectionMatrix(); hemi.intensity = 1.35; sun.intensity = 2.6; scene.fog.color.setHex(0xbfe6ff); scene.fog.near = 150; scene.fog.far = 420; ctx?.showAct(null); this.mini?.dispose(); this.mini = null; this.driving = null; },
   // ---------------------------------------------------------------- interacting
   nearest(p) {
     const pp = p.pos; let best = null, bd = 3.2;
@@ -190,6 +190,10 @@ const world = {
       else if (lot.role === 'airport') add(dd, t('Airport'), () => this.travel());
       else if (lot.role === 'bank') add(dd, t('Business'), () => this.business());
       else if (lot.role === 'police') add(dd, t('Police station'), () => this.policeDesk());
+      else if (lot.role === 'gym') add(dd, t('Gym'), () => this.gym());
+      else if (lot.role === 'hospital') add(dd, t('Hospital'), () => this.hospital());
+      else if (lot.role === 'dealer') add(dd, t('Car dealer'), () => this.dealer(lot));
+      else if (lot.role === 'race') add(dd, t('Street race'), () => this.race(lot));
       else if (lot.home) { const h = lot.home, mine = !!life.homes[h.id]; if (mine) add(dd, t('Go home'), () => this.enter(lot, true)); else if (h.unlocked) add(dd, t('The door is open...'), () => this.enter(lot, false)); else if (h.owner) add(dd + 0.5, t('Climb in through the window'), () => this.climbIn(lot)); }
     }
     return best;
@@ -237,12 +241,12 @@ const world = {
     const forSale = this.lots.filter((l) => l.home && !l.home.owner && !life.homes[l.home.id]);
     ctx.panel(t('Homes for sale'), forSale.map((l) => ({ id: l.home.id, name: (l.home.furnished ? t('Furnished house') : t('Empty house')) + ' #' + l.home.id.slice(1), sub: l.home.furnished ? t('Sofa, TV, bed and kitchen included') : t('Buy furniture and place it yourself'), price: l.home.price + (l.home.furnished ? 4000 : 0), model: null })), (id) => {
       const l = forSale.find((x) => x.home.id === id), pr = l.home.price + (l.home.furnished ? 4000 : 0); if (save.coins < pr) return toast(t('Need {n} more', { n: pr - save.coins }));
-      save.coins -= pr; life.homes[id] = { furnished: l.home.furnished, items: [] }; saveLife(); sfx.win(); toast(t('You bought a home! You will wake up here'), 3);
+      save.coins -= pr; life.homes[id] = { furnished: l.home.furnished, items: [], pos: { x: l.door.x, z: l.door.z, nx: l.nx, nz: l.nz } }; saveLife(); sfx.win(); toast(t('You bought a home! You will wake up here'), 3);
     });
   },
   // ---------------------------------------------------------------- inside buildings
   async enter(lot, mine) {
-    const L = this.L, cx = 400 + Object.keys(this.homes).length * 30, cz = 400; await need(['furniture-kit/wall', 'furniture-kit/floorFull', 'furniture-kit/wallDoorway', ...FURNISHED.map((f) => 'furniture-kit/' + f[0]), ...FURN.map((n) => 'furniture-kit/' + n), ...LOOT.map((n) => 'furniture-kit/' + n)]);
+    const L = this.L, cx = 20000 + (this.roomN = ((this.roomN || 0) + 1) % 50) * 30, cz = 20000; // rooms are far away from the city await need(['furniture-kit/wall', 'furniture-kit/floorFull', 'furniture-kit/wallDoorway', ...FURNISHED.map((f) => 'furniture-kit/' + f[0]), ...FURN.map((n) => 'furniture-kit/' + n), ...LOOT.map((n) => 'furniture-kit/' + n)]);
     const g = new THREE.Group(); L.root.add(g); const fs = 1.6;
     const fl = []; for (let x = -5.6; x < 5.6; x += 1.6) for (let z = -4.6; z < 5.2; z += 1.6) fl.push({ x: cx + x, y: 0, z: cz + z, s: fs }); // floor tiles start at their corner
     L.box(cx, -0.5, cz, 6, 0.5, 5.5); for (const [x, z, hx, hz] of [[0, -4.6, 6, 0.2], [0, 5.2, 6, 0.2], [-5.6, 0, 0.2, 5.5], [5.6, 0, 0.2, 5.5]]) { L.box(cx + x, 1.6, cz + z, hx, 1.6, hz); }
@@ -282,10 +286,10 @@ const world = {
     if (grab && !this.carry && this.inside && !this.grabWas) {
       let best = null, bd = 2.2; for (const ob of this.inside.objs || []) { if (ob.loot?.taken) continue; const op = ob.o.getWorldPosition(V()), d = Math.hypot(op.x - p.pos.x, op.z - p.pos.z); if (d < bd) { bd = d; best = ob; } }
       if (best) {
-        const heavy = !LIGHT.test(best.n), strong = this.hp >= 70 && (p.food === 'power' || p.perk === 'heavy' || life.buff?.kind === 'power');
+        const heavy = !LIGHT.test(best.n), strong = this.hp >= 70 && (p.food === 'power' || p.perk === 'heavy' || life.buff?.kind === 'power' || life.str >= 5);
         // light: carried in your hands; heavy: lifted with both arms if you are strong, otherwise dragged along the floor
         this.carry = { ...best, heavy, how: !heavy ? 'hold' : strong ? 'lift' : 'drag' }; p.carrying = this.carry.how === 'hold' ? true : this.carry.how; sfx.pickup?.();
-        if (heavy && !strong) toast(t('Too heavy to lift: you drag it (eat power food to lift it)'), 2.2);
+        if (heavy && !strong) toast(t('Too heavy to lift: you drag it (eat power food or train at the gym)'), 2.2);
       }
     }
     this.grabWas = grab;
@@ -327,9 +331,9 @@ const world = {
       const see = Math.hypot(pp.x - c.x, pp.z - c.z) < 80 && this.st.clear(c.x, c.z, pp.x, pp.z); let tx = pp.x, tz = pp.z;
       if (!see) {
         if (!c.tn || Math.hypot(c.tn[0] - c.x, c.tn[1] - c.z) < 9) {
-          const a = clamp(Math.round((c.x + HALF) / P), 0, N), b = clamp(Math.round((c.z + HALF) / P), 0, N), here = [R(a), R(b)];
+          const a = Math.round((c.x + HALF) / P), b = Math.round((c.z + HALF) / P), here = [R(a), R(b)];
           if (!c.tn && Math.hypot(here[0] - c.x, here[1] - c.z) > 9) c.tn = here;
-          else { let best = null, bd = 1e9; for (const [da, db] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const na = a + da, nb = b + db; if (na < 0 || nb < 0 || na > N || nb > N) continue; const d = Math.hypot(R(na) - pp.x, R(nb) - pp.z); if (d < bd) { bd = d; best = [R(na), R(nb)]; } } c.tn = best; }
+          else { let best = null, bd = 1e9; for (const [da, db, dd] of [[1, 0, 0], [-1, 0, 2], [0, 1, 1], [0, -1, 3]]) { if (!segOK(a, b, dd)) continue; const na = a + da, nb = b + db; const d = Math.hypot(R(na) - pp.x, R(nb) - pp.z); if (d < bd) { bd = d; best = [R(na), R(nb)]; } } c.tn = best; }
         }
         [tx, tz] = c.tn;
       } else c.tn = null;
@@ -345,7 +349,7 @@ const world = {
     if (life.wanted > 0 && !this.police.some((c) => Math.hypot(pp.x - c.x, pp.z - c.z) < 70)) { this.calm = (this.calm || 0) + dt; if (this.calm > 40) { life.wanted--; this.calm = 0; this.dropPolice(this.police.pop()); saveLife(); } } else this.calm = 0;
   },
   spawnPolice(p) {
-    const pp = p.pos, nodes = []; for (let a = 0; a <= N; a++) for (let b = 0; b <= N; b++) { const d = Math.hypot(R(a) - pp.x, R(b) - pp.z); if (d > 90 && d < 170) nodes.push([R(a), R(b)]); }
+    const pp = p.pos, nodes = []; const na = Math.round((pp.x + HALF) / P), nb = Math.round((pp.z + HALF) / P); for (let a = na - 3; a <= na + 3; a++) for (let b = nb - 3; b <= nb + 3; b++) { const d = Math.hypot(R(a) - pp.x, R(b) - pp.z); if (d > 90 && d < 170) nodes.push([R(a), R(b)]); }
     const [x, z] = nodes.length ? pick(nodes) : [pp.x + 100, pp.z]; const { hw, hl } = carSize('police');
     const c = { n: 'police', o: place(W('car-kit', 'police'), x, 0, z, CAR_S, 0, this.L.root), hw, hl, x, z, h: Math.atan2(pp.x - x, pp.z - z), v: 0, vmax: 19 + life.wanted * 1.6, stuck: 0, rev: 0, tn: null, body: this.L.kin(new CANNON.Box(new CANNON.Vec3(hw, 1, hl)), x, 1, z, 'car') };
     this.police.push(c); sfx.beep();
@@ -353,7 +357,7 @@ const world = {
   dropPolice(c) { if (!c) return; c.o.removeFromParent(); c.body.position.set(0, -50, 0); },
   arrest() {
     const fine = Math.min(save.coins, 300 * life.wanted); save.coins -= fine; life.wanted = 0; life.evidence = 0; for (const c of this.police) this.dropPolice(c); this.police = []; saveLife();
-    toast(t('Arrested! You paid a {n} coin fine', { n: fine }), 3.5); const s = this.lots.find((l) => l.role === 'police'); if (s) G.player.reset(s.door.x, 0.5, s.door.z + 2, 0);
+    toast(t('Arrested! You paid a {n} coin fine', { n: fine }), 3.5); const s = this.city.roleDoors.police; if (s) G.player.reset(s.x, 0.5, s.z, Math.atan2(-s.lot.nx, -s.lot.nz));
   },
   policeDesk() { ctx.panel(t('Police station'), [{ id: 'turn', name: t('Turn yourself in'), sub: t('Pay a smaller fine and clear your wanted level'), price: 150 * life.wanted }], () => { const fine = Math.min(save.coins, 150 * life.wanted); save.coins -= fine; life.wanted = 0; life.evidence = 0; this.police.forEach((c) => this.dropPolice(c)); this.police = []; saveLife(); toast(t('Your record is clean'), 2); }); },
   // ---------------------------------------------------------------- permadeath and revenge
@@ -364,6 +368,39 @@ const world = {
     const dd = pick(this.doors.filter((d) => Math.hypot(d.x - s.x, d.z - s.z) < 140) || this.doors) || { x: s.x, z: s.z }; const o = place('Character', dd.x, 0, dd.z, 0.5, 0, this.L.root); dress(o, { skin: 'film-black', face: 'f-sun' }); this.revengeTarget = { o, hp: 5 };
   },
   // ---------------------------------------------------------------- jobs
+  // ---------------------------------------------------------------- gym, hospital, car dealer, street races
+  gym() {
+    ctx.panel(t('Gym'), [{ id: 'train', name: t('Train') + ` (${life.str}/10)`, sub: t('Get stronger: at 5 you can lift heavy things'), price: 30 }], () => {
+      if (life.str >= 10) return toast(t('You are as strong as can be!'), 2); if (save.coins < 30) return toast(t('Need {n} more', { n: 30 - save.coins }));
+      save.coins -= 30; life.str++; saveLife(); sfx.win(); toast(t('Strength {n}/10', { n: life.str }), 2);
+    });
+  },
+  hospital() {
+    ctx.panel(t('Hospital'), [{ id: 'heal', name: t('Get healed') + ` (❤ ${Math.round(this.hp)})`, sub: t('Back to full health'), price: 50 }], () => {
+      if (this.hp >= 100) return toast(t('You are healthy!'), 2); if (save.coins < 50) return toast(t('Need {n} more', { n: 50 - save.coins }));
+      save.coins -= 50; this.hp = 100; sfx.win(); toast(t('All better!'), 2);
+    });
+  },
+  dealer(lot) {
+    const list = CARS_FOR_SALE.map(([n, price]) => { const own = life.cars.includes(n); return { id: n, name: t(nice(n)), sub: own ? t('Yours: bring it here') : t('Buy your own car'), price: own ? 0 : price, model: W('car-kit', n) }; });
+    ctx.panel(t('Car dealer'), list, (n) => {
+      const [, price, vmax] = CARS_FOR_SALE.find((c) => c[0] === n);
+      if (!life.cars.includes(n)) { if (save.coins < price) return toast(t('Need {n} more', { n: price - save.coins })); save.coins -= price; life.cars.push(n); saveLife(); sfx.win(); toast(t('Your new car is outside!'), 2.5); }
+      // your car waits on the road in front of the shop
+      const old = this.cars.find((c) => c.mine); if (old && old !== this.driving) { old.o.removeFromParent(); old.body.position.set(0, -50, 0); this.cars.splice(this.cars.indexOf(old), 1); }
+      const d = lot.door, x = d.x + lot.nx * 7, z = d.z + lot.nz * 7, h = Math.atan2(lot.nz, -lot.nx);
+      const c = this.freeCar(n, place(W('car-kit', n), x, 0, z, CAR_S, h, this.L.root), x, z, h); c.mine = true; c.vmax = vmax;
+    });
+  },
+  race(lot) {
+    if (!this.driving) return toast(t('Get in a car first'), 2);
+    // a route along the streets: 8 crossings, never turning back
+    const pts = []; let a = Math.round((lot.door.x + HALF) / P), b = Math.round((lot.door.z + HALF) / P), last = -1, dist = 0, px = lot.door.x, pz = lot.door.z;
+    for (let k = 0; k < 8; k++) { const opts = [0, 1, 2, 3].filter((d) => d !== (last + 2) % 4 && segOK(a, b, d)); const d = pick(opts); a += [1, 0, -1, 0][d]; b += [0, 1, 0, -1][d]; last = d; const q = [R(a), R(b)]; dist += Math.hypot(q[0] - px, q[1] - pz); px = q[0]; pz = q[1]; pts.push(q); }
+    if (this.job) { this.job.mark?.removeFromParent(); this.job = null; }
+    this.job = { id: 'race', text: t('Street race: drive through the stars'), pts, k: 0, mark: place('Star', pts[0][0], 3, pts[0][1], 2.2, 0, this.L.root), time: Math.round(dist / 15 + 10), pay: 500 };
+    sfx.go?.(); toast(t('Street race! Drive through 8 stars before time runs out'), 3);
+  },
   jobs() {
     ctx.panel(t('Jobs'), [
       { id: 'delivery', name: t('Delivery'), sub: t('Take the parcel to the address before time runs out'), price: 0 },
@@ -387,6 +424,7 @@ const world = {
     const at = (d) => Math.hypot(p.pos.x - d.x, p.pos.z - d.z) < 3.5;
     if (j.mark) { j.mark.rotation.y += dt * 2; j.mark.position.y = 2 + Math.sin(this.t * 3) * 0.3; }
     if (j.id === 'delivery' && at(j.to)) this.jobDone();
+    if (j.id === 'race') { const q = j.pts[j.k]; j.mark.position.y = 3 + Math.sin(this.t * 3) * 0.4; if (Math.hypot(p.pos.x - q[0], p.pos.z - q[1]) < 9) { j.k++; sfx.coin(); if (j.k >= j.pts.length) { life.fame += 2; this.jobDone(); return; } j.mark.position.set(j.pts[j.k][0], 3, j.pts[j.k][1]); toast(`${j.k}/8`, 1); } }
     if (j.id === 'taxi') { if (!this.driving) j.text = t('Get in a car first') + ` (${Math.ceil(j.time)}s)`; else if (j.stage === 0 && at(j.from)) { j.stage = 1; j.mark.position.set(j.to.x, 2, j.to.z); toast(t('Passenger on board! Drive to the star'), 2); } else if (j.stage === 1 && at(j.to)) this.jobDone(); }
     if (j.id === 'shop') { j.serveT -= dt; if (j.serveT <= 0) { j.serveT = 2.5; ctx.showAct(t('Serve!')); this.serving = true; } }
     if (j.id === 'police') { const o = j.thief.position, dx = o.x - p.pos.x, dz = o.z - p.pos.z, d = Math.hypot(dx, dz) || 1; o.x += dx / d * 6.5 * dt; o.z += dz / d * 6.5 * dt; o.x = clamp(o.x, -HALF, HALF); o.z = clamp(o.z, -HALF, HALF); o.y = 0; const pu = this.st.resolve(o.x, o.z, 0.6); if (pu) { o.x += pu.x; o.z += pu.z; } j.thief.rotation.y = Math.atan2(dx, dz); if (d < 1.8) { j.thief.removeFromParent(); this.jobDone(); } }
@@ -420,9 +458,9 @@ const K = (kit, list) => list.map((n) => kit + '/' + n);
 export const WORLD_MODELS = [...K('city-kit-commercial', [...'abcdefghijklmn'.split('').map((c) => 'building-' + c), ...'abcde'.split('').map((c) => 'building-skyscraper-' + c)]),
   ...K('city-kit-suburban', [...'abcdefghijklmnopqrstu'.split('').map((c) => 'building-type-' + c), 'planter', 'tree-large', 'tree-small', 'driveway-long', 'fence']),
   ...K('city-kit-industrial', [...'abcdefghijklmnopqrst'.split('').map((c) => 'building-' + c), 'chimney-large', 'chimney-medium', 'detail-tank']),
-  ...K('city-kit-roads', ['road-straight', 'road-crossroad-path', 'road-intersection-path', 'road-bend', 'tile-low', 'light-square', 'tile-high']),
+  ...K('city-kit-roads', ['road-straight', 'road-crossroad-path', 'road-intersection-path', 'road-bend', 'road-roundabout', 'tile-low', 'light-square', 'tile-high']),
   ...K('street-props', ['detail-light-traffic', 'detail-bench', 'detail-dumpster-closed', 'tree-park-large', 'tree-pine-large']),
-  ...K('car-kit', ['sedan', 'suv', 'hatchback-sports', 'van', 'taxi', 'sedan-sports', 'suv-luxury', 'truck', 'truck-flat', 'police', 'delivery', 'garbage-truck', 'ambulance'])];
+  ...K('car-kit', ['sedan', 'suv', 'hatchback-sports', 'van', 'taxi', 'sedan-sports', 'suv-luxury', 'truck', 'truck-flat', 'police', 'delivery', 'garbage-truck', 'ambulance', 'race', 'race-future'])];
 function placeF(n, x, y, z, s, ry, parent) {
   const o = place(W('furniture-kit', n), x, y, z, s, ry, parent); o.updateMatrixWorld(true);
   const c = new THREE.Box3().setFromObject(o).getCenter(V()); o.position.x += x - c.x; o.position.z += z - c.z; return o;

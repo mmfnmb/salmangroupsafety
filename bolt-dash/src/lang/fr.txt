@@ -805,3 +805,29 @@ Washer
 Side Table
 Coat Rack Standing
 Bear
+Gym
+Hospital
+Car dealer
+Street race
+Steal the car
+Hidden coin! +100 ({n} found)
+Train
+Get stronger: at 5 you can lift heavy things
+You are as strong as can be!
+Strength {n}/10
+Get healed
+Back to full health
+You are healthy!
+All better!
+Yours: bring it here
+Buy your own car
+Your new car is outside!
+Street race: drive through the stars
+Street race! Drive through 8 stars before time runs out
+Too heavy to lift: you drag it (eat power food or train at the gym)
+a car crash
+Race Future
+Hatchback Sports
+Suv Luxury
+Sedan Sports
+Sedan
