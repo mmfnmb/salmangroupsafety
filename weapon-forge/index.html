@@ -107,6 +107,8 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
 .abForm input,.abForm select{background:var(--iron);color:var(--bone);border:1px solid var(--edge);border-radius:8px;padding:5px 8px;font:700 13px var(--body);min-width:0}
 .shapeBar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#3a2417;border:1px solid var(--ember);border-radius:10px;padding:8px 12px}
 .shapeBar span{color:var(--ash);font-size:13px;flex:1}
+.wopts{display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-size:13px;font-weight:700}
+.wopts select,.wopts input[type=number]{background:var(--coal);color:var(--bone);border:1px solid var(--edge);border-radius:8px;padding:4px 8px;font:700 13px var(--body);width:auto}
 .wtabs{display:flex;gap:6px;flex-wrap:wrap}
 .wtabs button{background:var(--plate);border:1px solid var(--edge);border-radius:9px;padding:5px 11px;font-weight:800;font-size:13px}
 .wtabs button[aria-pressed="true"]{border-color:var(--ember);color:var(--ember-2)}
@@ -276,12 +278,16 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
       <div class="wtabs" id="wTabs"></div>
       <div class="bstage" id="wstage">
         <div class="btools" role="toolbar" aria-label="أدوات العالم">
-          <button class="tool" id="wtPlace" aria-pressed="true">حط</button>
+          <button class="tool" id="wtPlace" aria-pressed="true">حط (واسحب)</button>
+          <button class="tool" id="wtRect" aria-pressed="false">مستطيل</button>
           <button class="tool" id="wtSel" aria-pressed="false">اختار</button>
           <button class="tool" id="wtErase" aria-pressed="false">امسح</button>
           <button class="tool" id="wtTurn">لف</button>
+          <button class="tool" id="wtCam" aria-pressed="false">حرّك الكاميرا</button>
         </div>
       </div>
+      <div class="wopts"><label>الأرض <select id="wGround"></select></label><label>ارتفاع المستطيل <input type="number" id="wH" min="1" max="8" value="1"></label><label class="chk"><input type="checkbox" id="wHollow"> مستطيل فاضي من جوه (حيطان)</label><span class="desc" id="wCount"></span></div>
+      <p class="desc">الكاميرا: زرار الماوس اليمين يلف، والعجلة تقرّب، أو صباعين على الموبايل، أو زرار "حرّك الكاميرا".</p>
       <div class="label">مكعبات</div><div class="items" id="wBlocks"></div>
       <div class="label">أرضيات</div><div class="items" id="wTiles"></div>
       <div class="label">حاجات بتعمل حاجات</div><div class="items" id="wSmart"></div>
@@ -572,8 +578,8 @@ const AR = { el: $('arena'), R: null, scene: null, cam: null, on: false, mons: [
 function arenaInit() {
   if (AR.R) return; const R2 = new THREE.WebGLRenderer({ antialias: true }); R2.setPixelRatio(Math.min(2, devicePixelRatio)); R2.shadowMap.enabled = true; AR.el.prepend(R2.domElement); AR.R = R2;
   const sc = new THREE.Scene(); sc.background = new THREE.Color(0x120d0b); sc.fog = new THREE.Fog(0x120d0b, 35, 75); AR.scene = sc;
-  AR.cam = new THREE.PerspectiveCamera(45, 16 / 10, 0.1, 200);
-  sc.add(new THREE.HemisphereLight(0xfff0e0, 0x403028, 1.5)); sc.add(new THREE.AmbientLight(0xffffff, 0.25)); const sun = new THREE.DirectionalLight(0xffffff, 0.9); sun.position.set(-8, 20, 10); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); Object.assign(sun.shadow.camera, { left: -32, right: 32, top: 32, bottom: -32 }); sun.shadow.mapSize.set(2048, 2048); sc.add(sun);
+  AR.cam = new THREE.PerspectiveCamera(45, 16 / 10, 0.1, 400);
+  sc.add(new THREE.HemisphereLight(0xfff0e0, 0x403028, 1.5)); sc.add(new THREE.AmbientLight(0xffffff, 0.25)); const sun = new THREE.DirectionalLight(0xffffff, 0.9); sun.position.set(-8, 20, 10); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); Object.assign(sun.shadow.camera, { left: -70, right: 70, top: 70, bottom: -70, far: 200 }); sun.position.set(-30, 60, 30); sun.shadow.mapSize.set(4096, 4096); sc.add(sun);
   // a pixel floor: stone tiles in a ring, torches of ember light around it
   const t = document.createElement('canvas'); t.width = t.height = 16; const g = t.getContext('2d'); for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) { g.fillStyle = ['#3a302a', '#342b25', '#40352e', '#2e2620'][(x * 7 + y * 13 + ((x / 4 | 0) + (y / 4 | 0)) * 5) % 4]; g.fillRect(x, y, 1, 1); }
   const tex = new THREE.CanvasTexture(t); tex.magFilter = THREE.NearestFilter; tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(17, 17);
@@ -610,11 +616,17 @@ function heldWeapon() {
 }
 function monsterRow() { beastInit(); $('bestiary').innerHTML = ''; for (const e of arenaPool()) { const d = document.createElement('div'); d.className = 'item mon'; const im = new Image(); im.className = 'thumb'; im.style.width = '64px'; im.style.flex = 'none'; im.src = beastThumb(e.def); im.alt = e.M.name; d.appendChild(im); const t = document.createElement('div'); t.innerHTML = `<b></b><br><small>بيضعف قدام: ${EL[e.M.weak].name} · مقاوم: ${EL[e.M.resist].name}${e.M.boss ? ' · بوس' : ''}</small>`; t.querySelector('b').textContent = e.M.name + (e.M.mine ? ' (وحشك)' : ''); d.appendChild(t); $('bestiary').appendChild(d); } }
 let G2 = null;
+// the arena is a world too: your game's main world when you have one, otherwise a big ready-made one
+function arenaWorld() { if (WE.g?.worlds?.[0]?.items?.length > 5) return WE.g.worlds[0]; const L = [], R = 26; for (let i = -R; i <= R; i++) for (let y = 0; y < 2; y++) L.push({ t: 'stone', x: i, z: -R, y }, { t: 'stone', x: i, z: R, y }, { t: 'stone', x: -R, z: i, y }, { t: 'stone', x: R, z: i, y });
+  for (let k = 0; k < 18; k++) { const x = Math.round((hash3(k, 1, 9) - 0.5) * 40), z = Math.round((hash3(k, 2, 9) - 0.5) * 40); if (Math.hypot(x, z) < 6) continue; const h = 1 + Math.floor(hash3(k, 3, 9) * 3); for (let y = 0; y < h; y++) L.push({ t: k % 3 ? 'stone' : 'brick', x, z, y }); }
+  for (let x = -12; x < -8; x++) for (let z = 8; z < 11; z++) L.push({ t: 'lava', x, z, y: 0 }); L.push({ t: 'heal', x: 10, z: -10, y: 0 }, { t: 'heal', x: -10, z: -10, y: 0 }, { t: 'pad', x: 0, z: -14, y: 0 }, { t: 'start', x: 0, z: 0, y: 0 });
+  return { ground: 'grass', items: L }; }
+function freeSpot(P, r0, r1) { for (let k = 0; k < 40; k++) { const a = Math.random() * Math.PI * 2, r = r0 + Math.random() * (r1 - r0), x = P.x + Math.cos(a) * r, z = P.z + Math.sin(a) * r; if (Math.abs(x) > WS - 2 || Math.abs(z) > WS - 2 || solidAt(Math.floor(x), Math.floor(z))) continue; return { x, z }; } return { x: P.x + 10, z: P.z }; }
 function startArena() {
   arenaInit(); beastInit(); heldWeapon(); for (const m of AR.mons) AR.scene.remove(m.o); AR.mons = []; for (const x of AR.shots) AR.scene.remove(x.o); AR.shots = [];
   const a = withOv(analyse(grid)); if (!a) { show('forge'); toast('ارسم سلاح الأول'); return; }
   G2 = { a, hp: 100, max: 100, wave: 0, score: 0, cd: 0, swingT: 0, face: new THREE.Vector3(0, 0, -1), pos: new THREE.Vector3(), between: 1.2 };
-  AR.mode = 'waves'; AR.ring.visible = true; AR.walls = AR.ringWalls; clearWorld(); AR.hero.position.set(0, 0, 0); $('aOv').hidden = true; AR.on = true; hud();
+  AR.mode = 'waves'; const W = arenaWorld(); const st = playScene(W, { noMonsters: true }); AR.hero.position.set(st.x, 0, st.z); $('aOv').hidden = true; AR.on = true; hud();
 }
 function arenaPool() {
   const def = Object.keys(MON).map((k) => ({ def: BEASTS[k], M: MON[k] }));
@@ -625,7 +637,7 @@ function addBeast(e, hpMul = 1) {
   const n = G2.wave, M_ = e.M, g = new THREE.Group(), R_ = buildRig(e.def), b = R_.root, bx = new THREE.Box3().setFromObject(b), h = Math.max(0.3, bx.max.y - bx.min.y);
   const k = (M_.size * 1.6) / h; b.scale.setScalar(k); b.position.y = -bx.min.y * k; g.add(b);
   const mats = []; g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.material = o.material.map((x) => x.clone()); mats.push(...o.material); } });
-  const ang = Math.random() * Math.PI * 2, r = 22 + Math.random() * 5; g.position.set(Math.cos(ang) * r, 0, Math.sin(ang) * r); AR.scene.add(g);
+  const sp = freeSpot(AR.hero.position, 14, 24); g.position.set(sp.x, 0, sp.z); AR.scene.add(g);
   b.userData.k0 = k; const ab = (e.def.abil || []).map((a) => ({ ...cleanAb(a), t: 0.8 + Math.random() })); const hpScale = (1 + (n - 1) * 0.18) * hpMul; AR.mons.push({ ab, M: M_, o: g, b, R_, mats, hp: M_.hp * hpScale, max: M_.hp * hpScale, hitT: 0, atk: 0, attT: 0, burn: 0, poison: 0, slow: 0, stun: 0, bob: Math.random() * 6, moving: 0 });
 }
 function spawnWave() {
@@ -648,7 +660,7 @@ function swing() {
   if (tgt && best < reach + 1.5) G2.face.copy(tgt.o.position).sub(P).setY(0).normalize();
   let hits = 0;
   for (const m of [...AR.mons]) { const to = m.o.position.clone().sub(P).setY(0), d = to.length() - m.M.size * 0.5; if (d > reach) continue; if (d > 0.6 && to.normalize().dot(G2.face) < 0.35) continue; hit(m, 1); hits++; if (a.el === 'bolt') { const near = AR.mons.filter((x) => x !== m && x.o.position.distanceTo(m.o.position) < 4).slice(0, 2); near.forEach((x) => hit(x, 0.5)); } }
-  if (AR.mode === 'world') hits += worldSwing(P, reach);
+  hits += worldSwing(P, reach);
   clank(hits ? 240 : 160);
 }
 function hit(m, mult) {
@@ -691,7 +703,7 @@ function shotsStep(dt) {
   for (let i = AR.shots.length - 1; i >= 0; i--) { const s = AR.shots[i]; s.life -= dt; s.o.position.addScaledVector(s.v, dt); s.spin.rotation.x += dt * 8; s.spin.rotation.y += dt * 6;
     let end = s.life <= 0; const hitP = Math.hypot(P.x - s.o.position.x, P.z - s.o.position.z) < 0.8 && s.o.position.y < 2.2;
     if (hitP) { if (!s.rad) hurtPlayer(s.dmg); end = true; }
-    if (!end) for (const w of AR.walls) if (Math.hypot(s.o.position.x - w.x, s.o.position.z - w.z) < w.r) { end = true; break; }
+    if (!end && s.o.position.y < 1.2 * ((AR.solid?.get(Math.floor(s.o.position.x) + ',' + Math.floor(s.o.position.z))) || 0) + 0.2) end = true;
     if (end) { if (s.rad || hitP) boom(s.o.position.clone(), s.rad, s.rad ? s.dmg : 0, s.from, s.el); AR.scene.remove(s.o); AR.shots.splice(i, 1); }
   }
 }
@@ -721,7 +733,8 @@ function abilitiesTick(m, d, dt) {
 function onMonsterEvent(m, kind) { for (const a of m.ab) if (a.when.k === kind && !a.done && a.t <= 0) { useAbility(m, a); a.t = a.cd; if (a.cd <= 0) a.done = true; } }
 
 AR.debris = [];
-function pushBoxes(p, rad) { for (const b of AR.boxes) { if (b.gone) continue; const cx = Math.max(b.x0, Math.min(b.x1, p.x)), cz = Math.max(b.z0, Math.min(b.z1, p.z)), dx = p.x - cx, dz = p.z - cz, d = Math.hypot(dx, dz); if (d < rad) { if (d > 1e-4) { p.x = cx + dx / d * rad; p.z = cz + dz / d * rad; } else { const l = p.x - b.x0, r_ = b.x1 - p.x, f = p.z - b.z0, k = b.z1 - p.z, m = Math.min(l, r_, f, k); if (m === l) p.x = b.x0 - rad; else if (m === r_) p.x = b.x1 + rad; else if (m === f) p.z = b.z0 - rad; else p.z = b.z1 + rad; } } } }
+function solidAt(x, z) { return AR.solid?.has(x + ',' + z); }
+function pushBoxes(p, rad) { if (!AR.solid?.size) return; const cx = Math.floor(p.x), cz = Math.floor(p.z); for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) { const x = cx + i, z = cz + j; if (!solidAt(x, z)) continue; const nx = Math.max(x, Math.min(x + 1, p.x)), nz = Math.max(z, Math.min(z + 1, p.z)), dx = p.x - nx, dz = p.z - nz, d = Math.hypot(dx, dz); if (d < rad) { if (d > 1e-4) { p.x = nx + dx / d * rad; p.z = nz + dz / d * rad; } else { const l = p.x - x, r_ = x + 1 - p.x, f = p.z - z, k = z + 1 - p.z, m = Math.min(l, r_, f, k); if (m === l) p.x = x - rad; else if (m === r_) p.x = x + 1 + rad; else if (m === f) p.z = z - rad; else p.z = z + 1 + rad; } } } }
 function pushOut(p, rad) { for (const w of AR.walls || []) { const dx = p.x - w.x, dz = p.z - w.z, d = Math.hypot(dx, dz), min = w.r + rad; if (d < min && d > 0.001) { p.x = w.x + dx / d * min; p.z = w.z + dz / d * min; } } }
 function shatter(m) {
   m.o.updateMatrixWorld(true); const list = []; m.o.traverse((x) => { if (x.isMesh) list.push(x); });
@@ -739,7 +752,7 @@ function arenaStep(dt, now) {
   // move
   let mx = 0, mz = 0; const K = AR.keys; if (K.KeyA || K.ArrowLeft) mx -= 1; if (K.KeyD || K.ArrowRight) mx += 1; if (K.KeyW || K.ArrowUp) mz -= 1; if (K.KeyS || K.ArrowDown) mz += 1; if (AR.joy) { mx += AR.joy.x; mz += AR.joy.y; }
   const l = Math.hypot(mx, mz); if (l > 0.1) { const sp = (5 + a.spd / 30) * dt / Math.max(1, l); P.x += mx * sp; P.z += mz * sp; if (G2.swingT <= 0) G2.face.set(mx, 0, mz).normalize(); }
-  if (AR.mode === 'world') { P.x = Math.max(-WS + 0.5, Math.min(WS - 0.5, P.x)); P.z = Math.max(-WS + 0.5, Math.min(WS - 0.5, P.z)); } else { const pl = Math.hypot(P.x, P.z); if (pl > 28) { P.x *= 28 / pl; P.z *= 28 / pl; } } pushOut(P, 0.5); pushBoxes(P, 0.45);
+  P.x = Math.max(-WS + 0.5, Math.min(WS - 0.5, P.x)); P.z = Math.max(-WS + 0.5, Math.min(WS - 0.5, P.z)); pushOut(P, 0.5); pushBoxes(P, 0.45);
   AR.hero.quaternion.copy(AR.cam.quaternion); if (Math.abs(G2.face.x) > 0.2) AR.body.scale.x = G2.face.x < 0 ? -1 : 1; AR.hero.position.y = l > 0.1 ? Math.abs(Math.sin(now / 90)) * 0.12 : 0;
   G2.cd -= dt; G2.swingT -= dt; if (AR.blade) AR.hand.rotation.z = G2.swingT > 0 ? -1.9 + (G2.swingT / 0.22) * 2.6 : 0.25;
   // monsters
@@ -757,7 +770,7 @@ function arenaStep(dt, now) {
   for (const m of AR.mons) if (!m.M.fly) { pushOut(m.o.position, m.M.size * 0.45); pushBoxes(m.o.position, m.M.size * 0.4); }
   // monsters keep a little apart
   for (let i = 0; i < AR.mons.length; i++) for (let j = i + 1; j < AR.mons.length; j++) { const A_ = AR.mons[i].o.position, B_ = AR.mons[j].o.position, d = A_.distanceTo(B_), min = (AR.mons[i].M.size + AR.mons[j].M.size) * 0.45; if (d < min && d > 0.001) { const push = B_.clone().sub(A_).setY(0).normalize().multiplyScalar((min - d) / 2); A_.sub(push); B_.add(push); } }
-  if (AR.mode === 'world') { worldTick(dt, now); if (!AR.on) return; }
+  worldTick(dt, now); if (!AR.on) return;
   if (G2.hp <= 0 && AR.mode === 'world') { AR.on = false; worldOver(false); return; }
   if (G2.hp <= 0) { AR.on = false; if (G2.wave > AR.best) { AR.best = G2.wave; store.set('best', AR.best); } $('aOvT').textContent = 'وقعت!'; $('aOvP').textContent = `وصلت للموجة ${G2.wave} وجمعت ${G2.score} نقطة. ارجع الورشة وقوّي سلاحك، أو ادخل تاني.`; $('aGo').textContent = 'العب تاني'; $('aOv').hidden = false; hud(); return; }
   if (AR.mode === 'waves' && !AR.mons.length) { G2.between -= dt; if (G2.between <= 0) { if (G2.wave) { G2.hp = Math.min(G2.max, G2.hp + 25); pop2('+25', P.clone().add(new THREE.Vector3(0, 2, 0)), '#46c96b'); } spawnWave(); G2.between = 2; } }
@@ -1117,7 +1130,8 @@ function fightBeast(def) { if (!analyse(grid)) { show('forge'); toast('ارسم 
 
 
 // ---------------------------------------------------------------- make your own game: worlds of pixel blocks and things that do things
-const WS = 16; // a world is 32 x 32 cells, from -16 to 16
+const WS = 64; // a world is 128 x 128 cells, from -64 to 64
+const GROUNDS = { grass: ['نجيلة', '#3f5a2e'], sand: ['رمل', '#c9a86a'], snow: ['تلج', '#dfe8ee'], stone: ['حجر', '#5d5852'], dark: ['أرض سحرية', '#3a2f45'], lava: ['أرض نار', '#4a2a1e'] };
 const plain = () => ['', '', '', '', '', ''];
 const C1 = (p, s, c, f) => ({ p, s, r: [0, 0, 0], c, f: f || plain() });
 const ITEMS = {
@@ -1159,54 +1173,102 @@ function itemMesh(it) {
   for (const q of cubes || []) g.add(cubeMesh({ ...q, seed: 7 + ((it.x * 31 + it.z * 17) & 255) }));
   g.position.set(it.x + 0.5, y, it.z + 0.5); g.rotation.y = (it.r || 0) * Math.PI / 2; g.userData.it = it; g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); return g;
 }
+const blockMats = {};
+function blockMat(t) { if (blockMats[t]) return blockMats[t]; const D = ITEMS[t], c = document.createElement('canvas'); c.width = c.height = 8; const g = c.getContext('2d'), col = new THREE.Color(), h = {};
+  for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) { let base = D.c;
+    if (t === 'lava') base = hash3(x, y, 3) > 0.8 ? '#ffe14d' : hash3(x, y, 4) > 0.6 ? '#ff8a3d' : D.c; if (t === 'spikes') base = (x % 4 === 1 && y % 4 === 1) ? '#cfd8e2' : '#5d5852';
+    if (t === 'pad') base = ((y === 2 && x > 1 && x < 6) || (y === 3 && x > 2 && x < 5) || (x > 2 && x < 5 && y > 3 && y < 7)) ? '#b9e27c' : D.c; if (t === 'heal') base = [[2, 2], [5, 2], [1, 3], [2, 3], [3, 3], [4, 3], [5, 3], [6, 3], [2, 4], [3, 4], [4, 4], [5, 4], [3, 5], [4, 5]].some(([a, b]) => a === x && b === y) ? '#ff6fb5' : '#7a5230';
+    if (t === 'grass') base = y < 2 ? '#4f9a3a' : '#7a5230'; if (t === 'brick') base = (y % 4 === 3 || (x + (y / 4 | 0) * 4) % 8 === 0) ? '#c9b8a0' : D.c;
+    col.set(base).getHSL(h); let l = h.l + (hash3(x, y, t.length * 13) - 0.5) * 0.12; if (x === 0 || y === 0 || x === 7 || y === 7) l -= 0.06; col.setHSL(h.h, h.s, Math.max(0, Math.min(1, l))); g.fillStyle = '#' + col.getHexString(); g.fillRect(x, y, 1, 1); }
+  const tx = new THREE.CanvasTexture(c); tx.magFilter = THREE.NearestFilter; tx.minFilter = THREE.NearestFilter; return (blockMats[t] = new THREE.MeshLambertMaterial({ map: tx, transparent: t === 'ice', opacity: t === 'ice' ? 0.85 : 1 })); }
+const tileGeo = new THREE.BoxGeometry(1, 0.1, 1);
+// the whole world as meshes: blocks and floors instanced per kind (fast with thousands), the smart things one by one
+function buildView(W, group, opts = {}) {
+  while (group.children.length) group.remove(group.children[0]);
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(WS * 2, WS * 2), new THREE.MeshLambertMaterial({ map: floorTex(GROUNDS[W.ground || 'grass'][1]) })); ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; ground.userData.ground = true; group.add(ground);
+  const by = {}, inst = [], singles = [];
+  for (const it of W.items) { const D = ITEMS[it.t]; if (!D || opts.skip?.(it)) continue; if (D.kind === 'block' || D.kind === 'tile') (by[it.t] ||= []).push(it); else { const m = itemMesh(it); group.add(m); singles.push(m); } }
+  const o = new THREE.Object3D();
+  for (const t in by) { const list = by[t], tile = ITEMS[t].kind === 'tile', m = new THREE.InstancedMesh(tile ? tileGeo : box, blockMat(t), list.length);
+    list.forEach((it, i) => { o.position.set(it.x + 0.5, (it.y || 0) + (tile ? 0.05 : 0.5), it.z + 0.5); o.updateMatrix(); m.setMatrixAt(i, o.matrix); }); m.castShadow = !tile; m.receiveShadow = true; m.userData.items = list; group.add(m); inst.push(m); }
+  return { ground, inst, singles };
+}
 function whoDef(w) { if (w?.startsWith?.('m:')) return BE.mine.find((d) => d.id === w.slice(2)) || BEASTS.slime; return BEASTS[w] || BEASTS.slime; }
 function whoEntry(w) { const def = whoDef(w); const pool = arenaPool(); return pool.find((e) => e.def === def) || (() => { const st = beastStats(def); return { def, M: { name: def.name, hp: st.hp, spd: st.spd, dmg: st.dmg, size: Math.max(0.8, Math.min(3.4, st.height * 0.45)), fly: !!def.fly, weak: st.weak, resist: st.resist } }; })(); }
 
 // ---- the editor
 const WE = { R: null, scene: null, cam: null, orbit: null, root: null, tool: 'place', item: 'stone', sel: null, wi: 0, g: null, games: store.get('games', []) };
-const newGame = () => ({ id: Date.now().toString(36), name: '', worlds: [{ items: sampleWorld() }] });
-function sampleWorld() { const L = []; for (let i = -6; i <= 6; i++) { L.push({ t: 'stone', x: i, z: -7, y: 0 }); L.push({ t: 'stone', x: i, z: 6, y: 0 }); } for (let i = -6; i <= 5; i++) { L.push({ t: 'brick', x: -7, z: i, y: 0 }); L.push({ t: 'brick', x: 7, z: i, y: 0 }); }
-  L.push({ t: 'start', x: 0, z: 4, y: 0 }, { t: 'tnt', x: -3, z: -2, y: 0, pr: { trig: 'hit', fuse: 1.5, rad: 3.5, dmg: 40 } }, { t: 'tnt', x: -4, z: -2, y: 0, pr: { trig: 'hit', fuse: 1.5, rad: 3.5, dmg: 40 } }, { t: 'chest', x: 3, z: -3, y: 0, pr: { hp: 80, dmg: 14 } }, { t: 'mon', x: 0, z: -4, y: 0, pr: { who: 'slime' } }, { t: 'lava', x: 2, z: 1, y: 0 }, { t: 'lava', x: 3, z: 1, y: 0 }, { t: 'heal', x: -5, z: 3, y: 0 }, { t: 'pad', x: 5, z: 3, y: 0 });
+const newGame = () => ({ id: Date.now().toString(36), name: '', worlds: [{ ground: 'grass', items: sampleWorld() }] });
+function sampleWorld() { const L = [], R = 14; for (let i = -R; i <= R; i++) { L.push({ t: 'stone', x: i, z: -R, y: 0 }, { t: 'stone', x: i, z: R, y: 0 }, { t: 'stone', x: -R, z: i, y: 0 }, { t: 'stone', x: R, z: i, y: 0 }); }
+  for (let i = -R; i <= R; i += 4) { L.push({ t: 'stone', x: i, z: -R, y: 1 }, { t: 'stone', x: i, z: R, y: 1 }); }
+  L.push({ t: 'start', x: 0, z: 8, y: 0 }, { t: 'tnt', x: -4, z: -2, y: 0, pr: { trig: 'hit', fuse: 1.5, rad: 3.5, dmg: 40 } }, { t: 'tnt', x: -5, z: -2, y: 0, pr: { trig: 'hit', fuse: 1.5, rad: 3.5, dmg: 40 } }, { t: 'chest', x: 5, z: -4, y: 0, pr: { hp: 80, dmg: 14 } }, { t: 'mon', x: 0, z: -6, y: 0, pr: { who: 'slime' } }, { t: 'mon', x: 6, z: 2, y: 0, pr: { who: 'imp' } }, { t: 'heal', x: -8, z: 6, y: 0 }, { t: 'pad', x: 8, z: 6, y: 0 });
+  for (let x = 2; x < 6; x++) for (let z = 0; z < 2; z++) L.push({ t: 'lava', x, z, y: 0 });
+  for (const [x, z] of [[-9, -8], [9, -8], [-9, 0], [9, 0]]) for (let y = 0; y < 3; y++) L.push({ t: 'brick', x, z, y });
   return L; }
+let WV = null; // the editor's view of the current world
 function worldInit() {
   if (WE.R) return; const st = $('wstage'), R4 = new THREE.WebGLRenderer({ antialias: true }); R4.setPixelRatio(Math.min(2, devicePixelRatio)); R4.shadowMap.enabled = true; st.prepend(R4.domElement); WE.R = R4;
-  const sc = new THREE.Scene(); sc.background = new THREE.Color(0x15110f); WE.scene = sc; WE.cam = new THREE.PerspectiveCamera(45, 1, 0.1, 300); WE.cam.position.set(0, 22, 18);
-  sc.add(new THREE.HemisphereLight(0xfff4e8, 0x40302a, 1.3)); const d = new THREE.DirectionalLight(0xffffff, 0.8); d.position.set(-8, 20, 10); d.castShadow = true; Object.assign(d.shadow.camera, { left: -20, right: 20, top: 20, bottom: -20 }); sc.add(d);
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(WS * 2, WS * 2), new THREE.MeshLambertMaterial({ map: floorTex('#3f5a2e') })); ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; ground.userData.ground = true; sc.add(ground); WE.ground = ground;
-  const gh = new THREE.GridHelper(WS * 2, WS * 2, 0x000000, 0x000000); gh.material.opacity = 0.18; gh.material.transparent = true; gh.position.y = 0.01; sc.add(gh);
-  WE.orbit = new THREE.OrbitControls(WE.cam, R4.domElement); WE.orbit.target.set(0, 0, 0); WE.orbit.maxPolarAngle = 1.35; WE.orbit.enableDamping = true; WE.orbit.update();
-  let down = null; R4.domElement.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY }; }); R4.domElement.addEventListener('pointerup', (e) => { if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 7) worldTap(e); down = null; });
+  const sc = new THREE.Scene(); sc.background = new THREE.Color(0x8fc3e8); sc.fog = new THREE.Fog(0x8fc3e8, 90, 200); WE.scene = sc; WE.cam = new THREE.PerspectiveCamera(45, 1, 0.1, 500); WE.cam.position.set(0, 30, 30);
+  sc.add(new THREE.HemisphereLight(0xfff4e8, 0x40302a, 1.3)); const d = new THREE.DirectionalLight(0xffffff, 0.8); d.position.set(-20, 40, 20); d.castShadow = true; d.shadow.mapSize.set(2048, 2048); Object.assign(d.shadow.camera, { left: -60, right: 60, top: 60, bottom: -60, far: 200 }); sc.add(d);
+  const gh = new THREE.GridHelper(WS * 2, WS * 2, 0x000000, 0x000000); gh.material.opacity = 0.12; gh.material.transparent = true; gh.position.y = 0.012; sc.add(gh);
+  WE.root = new THREE.Group(); sc.add(WE.root);
+  WE.rectBox = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0xffb347, transparent: true, opacity: 0.35, depthWrite: false })); WE.rectBox.visible = false; sc.add(WE.rectBox);
+  WE.orbit = new THREE.OrbitControls(WE.cam, R4.domElement); WE.orbit.target.set(0, 0, 0); WE.orbit.maxPolarAngle = 1.4; WE.orbit.maxDistance = 160; WE.orbit.enableDamping = true; WE.orbit.screenSpacePanning = false; WE.orbit.update();
+  // painting with the finger or mouse; the camera moves with the right button, two fingers, or the camera tool
+  let stroke = null;
+  R4.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
+  R4.domElement.addEventListener('pointerdown', (e) => { if (e.button !== 0 || WE.tool === 'cam' || (e.pointerType === 'touch' && WE.touches > 1)) return; stroke = { x: e.clientX, y: e.clientY, moved: false }; if (WE.tool === 'place' || WE.tool === 'erase') { stroke.base = worldTap(e, null); } if (WE.tool === 'rect') stroke.a = cellOnPlane(e, 0); });
+  R4.domElement.addEventListener('pointermove', (e) => { if (!stroke) return; if (Math.hypot(e.clientX - stroke.x, e.clientY - stroke.y) > 4) stroke.moved = true; if (!stroke.moved) return;
+    if (WE.tool === 'place' || WE.tool === 'erase') worldTap(e, stroke.base); if (WE.tool === 'rect' && stroke.a) { stroke.b = cellOnPlane(e, 0); if (stroke.b) showRect(stroke.a, stroke.b); } });
+  R4.domElement.addEventListener('pointerup', (e) => { if (!stroke) return; if (WE.tool === 'select' && !stroke.moved) worldTap(e, null); if (WE.tool === 'rect' && stroke.a) { const b = stroke.b || stroke.a; fillRect(stroke.a, b); WE.rectBox.visible = false; } stroke = null; });
+  R4.domElement.addEventListener('touchstart', (e) => { WE.touches = e.touches.length; if (e.touches.length > 1) stroke = null; }, { passive: true }); R4.domElement.addEventListener('touchend', (e) => { WE.touches = e.touches.length; }, { passive: true });
   new ResizeObserver(() => { const w = st.clientWidth, h = st.clientHeight; R4.setSize(w, h, false); WE.cam.aspect = w / h; WE.cam.updateProjectionMatrix(); }).observe(st);
-  const btn = (k, host) => { const D = ITEMS[k], b = document.createElement('button'); b.className = 'it'; b.dataset.k = k; b.setAttribute('aria-pressed', String(k === WE.item)); b.innerHTML = `<i style="background:${D.c}"></i><span></span>`; b.querySelector('span').textContent = D.n; b.onclick = () => { WE.item = k; setWTool('place'); document.querySelectorAll('.it').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); }; host.appendChild(b); };
+  const btn = (k, host) => { const D = ITEMS[k], b = document.createElement('button'); b.className = 'it'; b.dataset.k = k; b.setAttribute('aria-pressed', String(k === WE.item)); b.innerHTML = `<i style="background:${D.c}"></i><span></span>`; b.querySelector('span').textContent = D.n; b.onclick = () => { WE.item = k; if (WE.tool !== 'rect') setWTool('place'); document.querySelectorAll('.it').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); }; host.appendChild(b); };
   for (const k in ITEMS) btn(k, $(ITEMS[k].kind === 'block' ? 'wBlocks' : ITEMS[k].kind === 'tile' ? 'wTiles' : ITEMS[k].kind === 'mon' ? 'wMons' : 'wSmart'));
-  WE.g = store.get('gameDraft', null) || newGame(); $('gName').value = WE.g.name || ''; renderWorld(); renderTabs(); renderGames();
+  $('wGround').innerHTML = Object.entries(GROUNDS).map(([k, [n]]) => `<option value="${k}">${n}</option>`).join(''); $('wGround').onchange = () => { W_().ground = $('wGround').value; renderWorld(); };
+  WE.g = store.get('gameDraft2', null) || newGame(); $('gName').value = WE.g.name || ''; setWTool('place'); renderWorld(); renderTabs(); renderGames();
 }
 function floorTex(col) { const t = document.createElement('canvas'); t.width = t.height = 8; const g = t.getContext('2d'), c = new THREE.Color(col), h = {}; c.getHSL(h); for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) { c.setHSL(h.h, h.s, h.l + (hash3(x, y, 5) - 0.5) * 0.1); g.fillStyle = '#' + c.getHexString(); g.fillRect(x, y, 1, 1); } const tx = new THREE.CanvasTexture(t); tx.magFilter = THREE.NearestFilter; tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.repeat.set(WS * 2, WS * 2); return tx; }
 const W_ = () => WE.g.worlds[WE.wi];
-function renderWorld() { if (WE.root) WE.scene.remove(WE.root); WE.root = new THREE.Group(); for (const it of W_().items) { const m = itemMesh(it); if (it === WE.sel) m.traverse((o) => { if (o.isMesh) for (const mt of [].concat(o.material)) mt.emissive?.setHex(0x3a2410); }); WE.root.add(m); } WE.scene.add(WE.root); saveDraft(); }
-function renderTabs() { const T = $('wTabs'); T.innerHTML = ''; WE.g.worlds.forEach((w, i) => { const b = document.createElement('button'); b.textContent = i ? `عالم ${i + 1}` : 'العالم الأساسي'; b.setAttribute('aria-pressed', String(i === WE.wi)); b.onclick = () => { WE.wi = i; WE.sel = null; renderWorld(); renderTabs(); props(); }; T.appendChild(b); });
-  const add = document.createElement('button'); add.textContent = '+ عالم جديد'; add.onclick = () => { if (WE.g.worlds.length >= 6) return toast('أقصى حاجة 6 عوالم'); WE.g.worlds.push({ items: [{ t: 'start', x: 0, z: 4, y: 0 }] }); WE.wi = WE.g.worlds.length - 1; renderWorld(); renderTabs(); toast('عالم جديد. حط فيه وحوش، والصندوق البلّاع هيوديك هنا'); }; T.appendChild(add); }
-function setWTool(t) { WE.tool = t; for (const [id, k] of [['wtPlace', 'place'], ['wtSel', 'select'], ['wtErase', 'erase']]) $(id).setAttribute('aria-pressed', String(t === k)); }
-$('wtPlace').onclick = () => setWTool('place'); $('wtSel').onclick = () => setWTool('select'); $('wtErase').onclick = () => setWTool('erase');
-$('wtTurn').onclick = () => { if (!WE.sel) return toast('اختار حاجة الأول'); WE.sel.r = ((WE.sel.r || 0) + 1) % 4; renderWorld(); };
-const wray = new THREE.Raycaster();
-function worldTap(e) {
-  const r = WE.R.domElement.getBoundingClientRect(); wray.setFromCamera({ x: (e.clientX - r.left) / r.width * 2 - 1, y: -((e.clientY - r.top) / r.height) * 2 + 1 }, WE.cam);
-  const hits = wray.intersectObjects([...WE.root.children, WE.ground], true); const h = hits[0]; if (!h) return;
-  let o = h.object; while (o && !o.userData.it && !o.userData.ground) o = o.parent; const it = o?.userData.it;
-  if (WE.tool === 'erase') { if (it) { W_().items.splice(W_().items.indexOf(it), 1); if (WE.sel === it) WE.sel = null; renderWorld(); props(); } return; }
-  if (WE.tool === 'select') { WE.sel = it || null; renderWorld(); props(); return; }
-  // place: on the ground cell, or on top of a block
+let rwT = 0, rwPending = false;
+function renderWorld(now) { // redraws at most every 60 ms while painting
+  if (!now && performance.now() - rwT < 60) { if (!rwPending) { rwPending = true; setTimeout(() => { rwPending = false; renderWorld(true); }, 70); } return; } rwT = performance.now();
+  WV = buildView(W_(), WE.root); if (WE.sel) for (const m of WV.singles) if (m.userData.it === WE.sel) m.traverse((o) => { if (o.isMesh) for (const mt of [].concat(o.material)) mt.emissive?.setHex(0x3a2410); });
+  $('wGround').value = W_().ground || 'grass'; $('wCount').textContent = `${W_().items.length} حاجة في العالم ده`; saveDraft();
+}
+function renderTabs() { const T = $('wTabs'); T.innerHTML = ''; WE.g.worlds.forEach((w, i) => { const b = document.createElement('button'); b.textContent = i ? `عالم ${i + 1}` : 'العالم الأساسي'; b.setAttribute('aria-pressed', String(i === WE.wi)); b.onclick = () => { WE.wi = i; WE.sel = null; renderWorld(true); renderTabs(); props(); }; T.appendChild(b); });
+  const add = document.createElement('button'); add.textContent = '+ عالم جديد'; add.onclick = () => { if (WE.g.worlds.length >= 6) return toast('أقصى حاجة 6 عوالم'); WE.g.worlds.push({ ground: 'dark', items: [{ t: 'start', x: 0, z: 4, y: 0 }] }); WE.wi = WE.g.worlds.length - 1; renderWorld(true); renderTabs(); toast('عالم جديد. حط فيه وحوش، والصندوق البلّاع هيوديك هنا'); }; T.appendChild(add); }
+function setWTool(t) { WE.tool = t; for (const [id, k] of [['wtPlace', 'place'], ['wtRect', 'rect'], ['wtSel', 'select'], ['wtErase', 'erase'], ['wtCam', 'cam']]) $(id).setAttribute('aria-pressed', String(t === k));
+  if (!WE.orbit) return; const R_ = THREE.MOUSE, T_ = THREE.TOUCH; WE.orbit.mouseButtons = { LEFT: t === 'cam' ? R_.ROTATE : -1, MIDDLE: R_.DOLLY, RIGHT: R_.ROTATE }; WE.orbit.touches = { ONE: t === 'cam' ? T_.ROTATE : -1, TWO: T_.DOLLY_PAN }; }
+$('wtPlace').onclick = () => setWTool('place'); $('wtRect').onclick = () => setWTool('rect'); $('wtSel').onclick = () => setWTool('select'); $('wtErase').onclick = () => setWTool('erase'); $('wtCam').onclick = () => setWTool('cam');
+$('wtTurn').onclick = () => { if (!WE.sel) return toast('اختار حاجة الأول'); WE.sel.r = ((WE.sel.r || 0) + 1) % 4; renderWorld(true); };
+const wray = new THREE.Raycaster(), _pl = new THREE.Plane(), _hp = new THREE.Vector3();
+function rayFrom(e) { const r = WE.R.domElement.getBoundingClientRect(); wray.setFromCamera({ x: (e.clientX - r.left) / r.width * 2 - 1, y: -((e.clientY - r.top) / r.height) * 2 + 1 }, WE.cam); }
+function cellOnPlane(e, y) { rayFrom(e); _pl.set(new THREE.Vector3(0, 1, 0), -y); if (!wray.ray.intersectPlane(_pl, _hp)) return null; const x = Math.floor(_hp.x), z = Math.floor(_hp.z); return x < -WS || z < -WS || x >= WS || z >= WS ? null : { x, z }; }
+function itemAt(x, z, y) { return W_().items.find((it) => it.x === x && it.z === z && (it.y || 0) === y); }
+function putItem(t, x, z, y) {
+  const D = ITEMS[t]; if (D.kind !== 'block' && y > 0) y = 0; if (x < -WS || z < -WS || x >= WS || z >= WS || y > 12) return null; const L = W_().items;
+  for (let i = L.length - 1; i >= 0; i--) if (L[i].x === x && L[i].z === z && (L[i].y || 0) === y) L.splice(i, 1);
+  if (t === 'start') for (let i = L.length - 1; i >= 0; i--) if (L[i].t === 'start') L.splice(i, 1);
+  const nu = { t, x, z, y, r: 0, pr: D.pr ? clone(D.pr) : undefined }; if (t === 'swallow') nu.pr.to = Math.min(WE.g.worlds.length - 1, Math.max(1, WE.wi === 0 ? 1 : 0)); L.push(nu); return nu;
+}
+// a tap or a drag step: returns the layer a stroke paints on, so a drag keeps building on the same height
+function worldTap(e, base) {
+  if (base) { const c = cellOnPlane(e, base.y); if (!c) return base; if (WE.tool === 'erase') { const L = W_().items; for (let i = L.length - 1; i >= 0; i--) if (L[i].x === c.x && L[i].z === c.z && (L[i].y || 0) === base.y) L.splice(i, 1); } else putItem(WE.item, c.x, c.z, base.y); renderWorld(); return base; }
+  rayFrom(e); const hits = wray.intersectObjects(WE.root.children, true); const h = hits[0]; if (!h) return null;
+  let it = null, o = h.object; if (o.isInstancedMesh) it = o.userData.items[h.instanceId]; else { while (o && !o.userData.it && !o.userData.ground) o = o.parent; it = o?.userData.it || null; }
+  if (WE.tool === 'erase') { if (it) { W_().items.splice(W_().items.indexOf(it), 1); if (WE.sel === it) WE.sel = null; renderWorld(true); props(); return { y: it.y || 0 }; } return { y: 0 }; }
+  if (WE.tool === 'select') { WE.sel = it; renderWorld(true); props(); return null; }
   let x, z, y = 0;
   if (it && ITEMS[it.t].kind === 'block' && h.face && h.face.normal.y > 0.5) { x = it.x; z = it.z; y = (it.y || 0) + 1; }
-  else if (it && ITEMS[it.t].kind === 'block' && h.face) { const n = h.face.normal.clone().applyQuaternion(o.quaternion); x = it.x + Math.round(n.x); z = it.z + Math.round(n.z); y = it.y || 0; }
+  else if (it && ITEMS[it.t].kind === 'block' && h.face) { x = it.x + Math.round(h.face.normal.x); z = it.z + Math.round(h.face.normal.z); y = it.y || 0; }
   else { x = Math.floor(h.point.x); z = Math.floor(h.point.z); }
-  if (x < -WS || z < -WS || x >= WS || z >= WS || y > 6) return;
-  const D = ITEMS[WE.item]; if (D.kind !== 'block' && y > 0) y = 0;
-  const L = W_().items; for (let i = L.length - 1; i >= 0; i--) if (L[i].x === x && L[i].z === z && (L[i].y || 0) === y) L.splice(i, 1);
-  if (WE.item === 'start') for (let i = L.length - 1; i >= 0; i--) if (L[i].t === 'start') L.splice(i, 1);
-  const nu = { t: WE.item, x, z, y, r: 0, pr: D.pr ? clone(D.pr) : undefined }; if (WE.item === 'swallow') nu.pr.to = Math.min(WE.g.worlds.length - 1, Math.max(1, WE.wi === 0 ? 1 : 0)); L.push(nu); WE.sel = nu; renderWorld(); props();
+  const nu = putItem(WE.item, x, z, y); if (nu) { WE.sel = ITEMS[nu.t].kind === 'smart' || nu.t === 'mon' ? nu : null; renderWorld(); props(); } return { y: nu ? nu.y : 0 };
 }
+function showRect(a, b) { const x0 = Math.min(a.x, b.x), x1 = Math.max(a.x, b.x) + 1, z0 = Math.min(a.z, b.z), z1 = Math.max(a.z, b.z) + 1; WE.rectBox.visible = true; WE.rectBox.scale.set(x1 - x0, 1, z1 - z0); WE.rectBox.position.set((x0 + x1) / 2, 0.5, (z0 + z1) / 2); }
+function fillRect(a, b) { const x0 = Math.min(a.x, b.x), x1 = Math.max(a.x, b.x), z0 = Math.min(a.z, b.z), z1 = Math.max(a.z, b.z); if ((x1 - x0 + 1) * (z1 - z0 + 1) > 4096) return toast('المساحة كبيرة قوي، قسّمها');
+  const hollow = $('wHollow').checked && ITEMS[WE.item].kind === 'block', hgt = ITEMS[WE.item].kind === 'block' ? +$('wH').value || 1 : 1;
+  for (let x = x0; x <= x1; x++) for (let z = z0; z <= z1; z++) { if (hollow && x > x0 && x < x1 && z > z0 && z < z1) continue; for (let y = 0; y < hgt; y++) putItem(WE.item, x, z, y); } renderWorld(true); }
 // the selected thing's settings
 function props() {
   const it = WE.sel, F = $('wpF'); F.innerHTML = ''; if (!it) { $('wpT').textContent = 'اختار حاجة في العالم عشان تعدّلها'; return; } const D = ITEMS[it.t]; $('wpT').textContent = D.n + (D.fx ? ' · ' + D.fx : '');
@@ -1215,59 +1277,66 @@ function props() {
   const monOpts = () => [...Object.keys(BEASTS).map((k) => [k, BEASTS[k].name]), ...BE.mine.map((d) => ['m:' + d.id, d.name + ' (وحشك)'])].map(([k, n]) => `<option value="${k}">${n}</option>`).join('');
   if (it.t === 'tnt') { const s1 = field('بتتفرقع إمتى', '<select><option value="hit">لما تضربها</option><option value="near">لما حد يقرّب</option><option value="touch">لما تلمسها</option></select>', (v) => { it.pr.trig = v; }); s1.value = it.pr.trig; num('وقت الفتيل', 'fuse', 0, 6, 0.1); num('نص قطر الانفجار', 'rad', 1, 10, 0.5); num('الضرر', 'dmg', 1, 200); }
   if (it.t === 'chest') { num('صحته', 'hp', 10, 600, 10); num('قوة العضّة', 'dmg', 1, 80); }
-  if (it.t === 'swallow') { const s1 = field('بيوديك فين', `<select>${WE.g.worlds.map((w, i) => (i === WE.wi ? '' : `<option value="${i}">${i ? 'عالم ' + (i + 1) : 'العالم الأساسي'}</option>`)).join('')}<option value="new">عالم جديد</option></select>`, (v) => { if (v === 'new') { WE.g.worlds.push({ items: [{ t: 'start', x: 0, z: 4, y: 0 }, { t: 'mon', x: 0, z: -3, y: 0, pr: { who: 'imp' } }] }); it.pr.to = WE.g.worlds.length - 1; renderTabs(); props(); } else it.pr.to = +v; }); s1.value = it.pr.to; }
+  if (it.t === 'swallow') { const s1 = field('بيوديك فين', `<select>${WE.g.worlds.map((w, i) => (i === WE.wi ? '' : `<option value="${i}">${i ? 'عالم ' + (i + 1) : 'العالم الأساسي'}</option>`)).join('')}<option value="new">عالم جديد</option></select>`, (v) => { if (v === 'new') { WE.g.worlds.push({ ground: 'dark', items: [{ t: 'start', x: 0, z: 4, y: 0 }, { t: 'mon', x: 0, z: -3, y: 0, pr: { who: 'imp' } }] }); it.pr.to = WE.g.worlds.length - 1; renderTabs(); props(); } else it.pr.to = +v; }); s1.value = it.pr.to; }
   if (it.t === 'spawner') { const s1 = field('بيطلّع مين', `<select>${monOpts()}</select>`, (v) => { it.pr.who = v; }); s1.value = it.pr.who; num('كل كام ثانية', 'every', 1, 30, 0.5); num('أقصى عدد في نفس الوقت', 'max', 1, 12); }
   if (it.t === 'mon') { const s1 = field('الوحش', `<select>${monOpts()}</select>`, (v) => { it.pr.who = v; }); s1.value = it.pr.who; }
   if (!F.children.length) F.innerHTML = '<span class="desc">الحاجة دي ملهاش إعدادات.</span>';
 }
-function saveDraft() { WE.g.name = $('gName').value.trim(); store.set('gameDraft', WE.g); }
+function saveDraft() { WE.g.name = $('gName').value.trim(); store.set('gameDraft2', WE.g); }
 $('gName').addEventListener('input', saveDraft);
 $('gSave').onclick = () => { saveDraft(); const g = clone(WE.g); g.name = g.name || 'لعبتي ' + (WE.games.length + 1); const i = WE.games.findIndex((x) => x.id === g.id); if (i >= 0) WE.games[i] = g; else WE.games.unshift(g); WE.games = WE.games.slice(0, 20); store.set('games', WE.games); renderGames(); toast('اللعبة اتحفظت'); };
-$('gNew').onclick = () => { WE.g = newGame(); WE.g.worlds = [{ items: [{ t: 'start', x: 0, z: 4, y: 0 }] }]; WE.wi = 0; WE.sel = null; $('gName').value = ''; renderWorld(); renderTabs(); props(); };
-let clearArm2 = 0; $('gClear').onclick = () => { if (!clearArm2) { $('gClear').textContent = 'متأكد؟'; clearArm2 = setTimeout(() => { clearArm2 = 0; $('gClear').textContent = 'فضّي العالم ده'; }, 2500); return; } clearTimeout(clearArm2); clearArm2 = 0; $('gClear').textContent = 'فضّي العالم ده'; W_().items = [{ t: 'start', x: 0, z: 4, y: 0 }]; WE.sel = null; renderWorld(); props(); };
+$('gNew').onclick = () => { WE.g = newGame(); WE.g.worlds = [{ ground: 'grass', items: [{ t: 'start', x: 0, z: 4, y: 0 }] }]; WE.wi = 0; WE.sel = null; $('gName').value = ''; renderWorld(true); renderTabs(); props(); };
+let clearArm2 = 0; $('gClear').onclick = () => { if (!clearArm2) { $('gClear').textContent = 'متأكد؟'; clearArm2 = setTimeout(() => { clearArm2 = 0; $('gClear').textContent = 'فضّي العالم ده'; }, 2500); return; } clearTimeout(clearArm2); clearArm2 = 0; $('gClear').textContent = 'فضّي العالم ده'; W_().items = [{ t: 'start', x: 0, z: 4, y: 0 }]; WE.sel = null; renderWorld(true); props(); };
 function renderGames() { const L = $('myGames'); L.innerHTML = ''; if (!WE.games.length) { L.innerHTML = '<div class="empty">لسه محفظتش ألعاب.</div>'; return; }
   WE.games.forEach((g, i) => { const d = document.createElement('div'); d.className = 'item'; d.innerHTML = '<b></b><small></small><div class="row"></div>'; d.querySelector('b').textContent = g.name; d.querySelector('small').textContent = `${g.worlds.length} عوالم`;
     const r = d.querySelector('.row'), mk = (t, fn, alt) => { const b = document.createElement('button'); b.className = 'btn' + (alt ? ' alt' : ''); b.textContent = t; b.onclick = () => fn(b); r.appendChild(b); };
-    mk('العب', () => { WE.g = clone(g); playGame(); }); mk('عدّل', () => { WE.g = clone(g); WE.wi = 0; WE.sel = null; $('gName').value = g.name; renderWorld(); renderTabs(); props(); }, true);
+    mk('العب', () => { WE.g = clone(g); playGame(); }); mk('عدّل', () => { WE.g = clone(g); WE.wi = 0; WE.sel = null; $('gName').value = g.name; renderWorld(true); renderTabs(); props(); }, true);
     mk('امسح', (b) => { if (!b.dataset.arm) { b.dataset.arm = 1; b.textContent = 'متأكد؟'; return; } WE.games.splice(i, 1); store.set('games', WE.games); renderGames(); }, true); L.appendChild(d); }); }
 $('gPlay').onclick = () => { saveDraft(); playGame(); };
 
 // ---- playing a world in the arena
-function clearWorld() { if (!AR.world) return; while (AR.world.children.length) AR.world.remove(AR.world.children[0]); AR.boxes = []; AR.objs = []; AR.tiles = new Map(); }
+function clearWorld() { if (!AR.world) return; while (AR.world.children.length) AR.world.remove(AR.world.children[0]); AR.solid = new Map(); AR.objs = []; AR.tiles = new Map(); AR.cur = null; }
+// builds a world in the arena scene: blocks become solid cells, floors and smart things come alive
+function playScene(W, opts = {}) {
+  clearWorld(); AR.ring.visible = false; AR.walls = []; AR.cur = { W, items: W.items.map((it) => ({ ...it })) };
+  AR.scene.background = new THREE.Color(W.ground === 'dark' || W.ground === 'lava' ? 0x1a1420 : 0x8fc3e8); AR.scene.fog = new THREE.Fog(AR.scene.background.getHex(), 40, 110);
+  const live = (it) => ['tnt', 'swallow', 'spawner', 'flag', 'door', 'chest', 'mon', 'start'].includes(it.t);
+  AR.view = buildView({ ...W, items: AR.cur.items }, AR.world, { skip: (it) => live(it) && it.t !== 'door' && it.t !== 'tnt' && it.t !== 'swallow' && it.t !== 'spawner' && it.t !== 'flag' });
+  for (const it of AR.cur.items) { const D = ITEMS[it.t]; if (D.kind === 'block' || it.t === 'door' || it.t === 'tnt' || it.t === 'spawner') AR.solid.set(it.x + ',' + it.z, (AR.solid.get(it.x + ',' + it.z) || 0) + 1); if (D.kind === 'tile') AR.tiles.set(it.x + ',' + it.z, { t: it.t, it, used: false, cd: 0 }); }
+  for (const m of AR.view.singles) { const it = m.userData.it; if (['tnt', 'swallow', 'spawner', 'flag', 'door'].includes(it.t)) AR.objs.push({ t: it.t, it, pr: it.pr || {}, m, x: it.x + 0.5, z: it.z + 0.5, timer: 1, hp: 60 }); }
+  let start = { x: 0.5, z: 4.5 }; for (const it of AR.cur.items) if (it.t === 'start') start = { x: it.x + 0.5, z: it.z + 0.5 };
+  if (!opts.noMonsters) for (const it of AR.cur.items) { const cx = it.x + 0.5, cz = it.z + 0.5;
+    if (it.t === 'mon') { addBeast(whoEntry(it.pr?.who)); AR.mons[AR.mons.length - 1].o.position.set(cx, 0, cz); if (G2?.world) G2.world.hadMon = true; }
+    if (it.t === 'chest') { addBeast({ def: MIMIC, M: { name: 'صندوق بلسان', hp: it.pr.hp, spd: 3.8, dmg: it.pr.dmg, size: 0.75, weak: 'fire', resist: 'none' } }); const m = AR.mons[AR.mons.length - 1]; m.o.position.set(cx, 0, cz); m.sleep = true; m.ab.forEach((x) => { x.act.dmg = it.pr.dmg; }); if (G2?.world) G2.world.hadMon = true; } }
+  if (AR.objs.some((o) => o.t === 'spawner') && G2?.world) G2.world.hadMon = true;
+  return start;
+}
+// knocking out blocks (an explosion): they leave the world and the view is rebuilt
+function breakCells(cx, cz, rad) { if (!AR.cur) return 0; let n = 0; const L = AR.cur.items; for (let i = L.length - 1; i >= 0; i--) { const it = L[i]; if (ITEMS[it.t].kind !== 'block' && ITEMS[it.t].kind !== 'tile') continue; if (Math.hypot(it.x + 0.5 - cx, it.z + 0.5 - cz) < rad) { L.splice(i, 1); n++; const k = it.x + ',' + it.z; if (ITEMS[it.t].kind === 'block') { const c = (AR.solid.get(k) || 1) - 1; if (c <= 0) AR.solid.delete(k); else AR.solid.set(k, c); } else AR.tiles.delete(k); } }
+  if (n) { const keep = AR.world.children.filter((c) => c.userData.it && !c.isInstancedMesh); for (const c of [...AR.world.children]) if (c.isInstancedMesh) AR.world.remove(c); const tmp = new THREE.Group(); const v = buildView({ ...AR.cur.W, items: L.filter((it) => ITEMS[it.t].kind === 'block' || ITEMS[it.t].kind === 'tile') }, tmp); for (const m of v.inst) AR.world.add(m); } return n; }
 function playGame() { if (!analyse(grid) && !WOV) { show('forge'); toast('ارسم سلاح الأول، وبعدين العب لعبتك'); return; } show('arena'); $('aOv').hidden = true; $('aEdit').hidden = true; loadWorld(0, null); }
 function loadWorld(wi, back) {
   arenaInit(); beastInit(); heldWeapon(); for (const m of AR.mons) AR.scene.remove(m.o); AR.mons = []; for (const x of AR.shots) AR.scene.remove(x.o); AR.shots = [];
   const a = withOv(analyse(grid)) || { dmg: 30, spd: 50, reach: 50, crit: 10, elp: 0, el: 'none', sym: 0 };
   const keepHp = G2?.world ? G2.hp : 100, stack = back ? [...(G2.world.stack || []), back] : (G2?.world?.stack && wi !== 0 ? G2.world.stack : []);
   G2 = { a, hp: keepHp, max: 100, wave: 0, score: G2?.world ? G2.score : 0, cd: 0, swingT: 0, face: new THREE.Vector3(0, 0, -1), pos: new THREE.Vector3(), world: { wi, stack, label: wi ? `عالم ${wi + 1}` : (WE.g.name || 'لعبتي'), hadMon: false, won: false } };
-  AR.mode = 'world'; AR.ring.visible = false; AR.walls = []; clearWorld();
-  const W = WE.g.worlds[wi]; const floor = new THREE.Mesh(new THREE.PlaneGeometry(WS * 2, WS * 2), new THREE.MeshLambertMaterial({ map: floorTex(wi ? '#3a2f45' : '#3f5a2e') })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; AR.world.add(floor);
-  let start = { x: 0, z: 4 };
-  for (const it of W.items) {
-    const D = ITEMS[it.t]; if (!D) continue; const cx = it.x + 0.5, cz = it.z + 0.5;
-    if (it.t === 'start') { start = { x: cx, z: cz }; continue; }
-    if (it.t === 'mon') { addBeast(whoEntry(it.pr?.who)); AR.mons[AR.mons.length - 1].o.position.set(cx, 0, cz); G2.world.hadMon = true; continue; }
-    if (it.t === 'chest') { const e = { def: MIMIC, M: { name: 'صندوق بلسان', hp: it.pr.hp, spd: 3.8, dmg: it.pr.dmg, size: 0.75, weak: 'fire', resist: 'none' } }; addBeast(e); const m = AR.mons[AR.mons.length - 1]; m.o.position.set(cx, 0, cz); m.sleep = true; m.ab.forEach((x) => { x.act.dmg = it.pr.dmg; }); G2.world.hadMon = true; continue; }
-    const m = itemMesh(it); AR.world.add(m);
-    if (D.kind === 'block' || it.t === 'door') { const b = { x0: it.x, x1: it.x + 1, z0: it.z, z1: it.z + 1, m, door: it.t === 'door' }; AR.boxes.push(b); }
-    if (D.kind === 'tile') AR.tiles.set(it.x + ',' + it.z, { t: it.t, m, used: false, cd: 0 });
-    if (['tnt', 'swallow', 'spawner', 'flag', 'door'].includes(it.t)) { const o = { t: it.t, pr: it.pr || {}, m, x: cx, z: cz, timer: 1, hp: 60 }; if (it.t === 'tnt' || it.t === 'spawner') { o.box = { x0: it.x + 0.15, x1: it.x + 0.85, z0: it.z + 0.15, z1: it.z + 0.85 }; AR.boxes.push(o.box); } if (it.t === 'door') o.box = AR.boxes[AR.boxes.length - 1]; AR.objs.push(o); if (it.t === 'spawner') G2.world.hadMon = true; }
-  }
+  AR.mode = 'world'; const W = WE.g.worlds[wi]; let start = playScene(W);
   if (back === null && G2.world.stack.length && G2.world.returnTo) start = G2.world.returnTo;
   AR.hero.position.set(start.x, 0, start.z); AR.cam.position.set(start.x, 11, start.z + 10); AR.on = true; hud();
   pop2(G2.world.label, new THREE.Vector3(start.x, 2, start.z), '#ffb347', true);
 }
 function worldSwing(P, reach) { let n = 0; for (const o of AR.objs) { if (o.gone) continue; const d = Math.hypot(o.x - P.x, o.z - P.z); if (d > reach + 0.5) continue;
   if (o.t === 'tnt' && !o.fuse) { o.fuse = o.pr.fuse || 0.05; n++; }
-  if (o.t === 'spawner') { o.hp -= G2.a.dmg * 0.6; o.m.position.y = 0.08; setTimeout(() => { o.m.position.y = 0; }, 80); n++; if (o.hp <= 0) { o.gone = true; AR.world.remove(o.m); if (o.box) o.box.gone = true; boom(new THREE.Vector3(o.x, 0.5, o.z), 0, 0); } } } return n; }
+  if (o.t === 'spawner') { o.hp -= G2.a.dmg * 0.6; o.m.position.y = 0.08; setTimeout(() => { o.m.position.y = 0; }, 80); n++; if (o.hp <= 0) { o.gone = true; AR.world.remove(o.m); unsolid(o); boom(new THREE.Vector3(o.x, 0.5, o.z), 0, 0); } } } return n; }
+function unsolid(o) { const k = o.it.x + ',' + o.it.z, c = (AR.solid.get(k) || 1) - 1; if (c <= 0) AR.solid.delete(k); else AR.solid.set(k, c); }
 function worldTick(dt, now) {
-  const P = AR.hero.position, W = G2.world;
+  const P = AR.hero.position, W = G2.world; if (!AR.cur) return;
   // floors under your feet
   const tile = AR.tiles.get(Math.floor(P.x) + ',' + Math.floor(P.z));
   if (tile && !tile.used) { tile.cd -= dt;
     if (tile.t === 'lava' && tile.cd <= 0) { hurtPlayer(8, '#ff8a3d'); tile.cd = 0.5; }
     if (tile.t === 'spikes' && tile.cd <= 0) { hurtPlayer(10); tile.cd = 0.8; }
-    if (tile.t === 'heal') { G2.hp = Math.min(G2.max, G2.hp + 35); pop2('+35', P.clone().add(new THREE.Vector3(0, 2, 0)), '#46c96b'); tile.used = true; AR.world.remove(tile.m); hud(); }
+    if (tile.t === 'heal') { G2.hp = Math.min(G2.max, G2.hp + 35); pop2('+35', P.clone().add(new THREE.Vector3(0, 2, 0)), '#46c96b'); tile.used = true; breakCells(tile.it.x + 0.5, tile.it.z + 0.5, 0.3); hud(); }
     if (tile.t === 'pad' && tile.cd <= 0) { G2.launch = 0.35; tile.cd = 0.6; clank(400); } }
   if (G2.launch > 0) { G2.launch -= dt; P.addScaledVector(G2.face, dt * 22); AR.hero.position.y = Math.sin((0.35 - G2.launch) / 0.35 * Math.PI) * 2; }
   // monsters standing on lava burn too
@@ -1277,15 +1346,15 @@ function worldTick(dt, now) {
   for (const o of AR.objs) { if (o.gone) continue; const d = Math.hypot(o.x - P.x, o.z - P.z);
     if (o.t === 'tnt') { if (!o.fuse && ((o.pr.trig === 'near' && d < 2.2) || (o.pr.trig === 'touch' && d < 1.1) || AR.mons.some((m) => o.pr.trig === 'near' && Math.hypot(m.o.position.x - o.x, m.o.position.z - o.z) < 1.6))) o.fuse = o.pr.fuse || 0.05;
       if (o.fuse) { o.fuse -= dt; const f = Math.sin(now / (o.fuse < 0.5 ? 35 : 80)) > 0; o.m.traverse((x) => { if (x.isMesh) for (const mt of x.material) mt.emissive.setHex(f ? 0xffffff : 0); }); o.m.scale.setScalar(1 + Math.max(0, 1 - o.fuse) * 0.2);
-        if (o.fuse <= 0) { o.gone = true; AR.world.remove(o.m); if (o.box) o.box.gone = true; boom(new THREE.Vector3(o.x, 0.4, o.z), o.pr.rad, o.pr.dmg, null, 'fire');
+        if (o.fuse <= 0) { o.gone = true; AR.world.remove(o.m); unsolid(o); boom(new THREE.Vector3(o.x, 0.4, o.z), o.pr.rad, o.pr.dmg, null, 'fire');
           for (const x of AR.objs) if (x.t === 'tnt' && !x.gone && Math.hypot(x.x - o.x, x.z - o.z) < o.pr.rad) x.fuse = x.fuse ? Math.min(x.fuse, 0.3) : 0.3; // chain reaction
-          for (const b of AR.boxes) if (!b.gone && !b.door && b.m && Math.hypot(b.x0 + 0.5 - o.x, b.z0 + 0.5 - o.z) < o.pr.rad * 0.6) { b.gone = true; AR.world.remove(b.m); boom(new THREE.Vector3(b.x0 + 0.5, 0.5, b.z0 + 0.5), 0, 0); } } } }
+          breakCells(o.x, o.z, o.pr.rad * 0.6); } } }
     if (o.t === 'spawner') { o.timer -= dt; if (o.timer <= 0) { o.timer = o.pr.every; if ((o.kids || (o.kids = [])).filter((m) => !m.dead).length < o.pr.max) { addBeast(whoEntry(o.pr.who)); const m = AR.mons[AR.mons.length - 1]; m.o.position.set(o.x, 0, o.z + 0.9); o.kids.push(m); } } }
-    if (o.t === 'swallow' && d < 1.1 && !o.used) { o.used = true; clank(150); o.m.scale.set(1.4, 0.7, 1.4); const to = Math.min(WE.g.worlds.length - 1, o.pr.to ?? 1); W.returnTo = { x: o.x, z: o.z + 1.6 }; setTimeout(() => { const back = { wi: W.wi, x: o.x, z: o.z + 1.6, objKey: o.x + ',' + o.z }; loadWorld(to, back); }, 350); AR.on = false; setTimeout(() => { AR.on = true; }, 360); return; }
+    if (o.t === 'swallow' && W && d < 1.1 && !o.used) { o.used = true; clank(150); o.m.scale.set(1.4, 0.7, 1.4); const to = Math.min(WE.g.worlds.length - 1, o.pr.to ?? 1); W.returnTo = { x: o.x, z: o.z + 1.6 }; setTimeout(() => { const back = { wi: W.wi, x: o.x, z: o.z + 1.6, objKey: o.x + ',' + o.z }; loadWorld(to, back); }, 350); AR.on = false; setTimeout(() => { AR.on = true; }, 360); return; }
     if (o.t === 'flag' && d < 1) { W.won = true; }
-    if (o.t === 'door' && !AR.mons.length && !AR.objs.some((x) => x.t === 'spawner' && !x.gone)) { o.gone = true; o.box.gone = true; AR.world.remove(o.m); pop2('الباب اتفتح', new THREE.Vector3(o.x, 2, o.z), '#ffe14d'); }
+    if (o.t === 'door' && !AR.mons.length && !AR.objs.some((x) => x.t === 'spawner' && !x.gone)) { o.gone = true; unsolid(o); AR.world.remove(o.m); pop2('الباب اتفتح', new THREE.Vector3(o.x, 2, o.z), '#ffe14d'); }
   }
-  const hasFlag = AR.objs.some((o) => o.t === 'flag'), cleared = W.hadMon && !AR.mons.length && !AR.objs.some((x) => x.t === 'spawner' && !x.gone);
+  if (!W) return; const hasFlag = AR.objs.some((o) => o.t === 'flag'), cleared = W.hadMon && !AR.mons.length && !AR.objs.some((x) => x.t === 'spawner' && !x.gone);
   if (W.won || (!hasFlag && cleared)) { W.won = true; worldOver(true); }
   hud();
 }
