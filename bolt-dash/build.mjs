@@ -44,6 +44,8 @@ for(const [x,tilt] of [[26,-14],[74,14]]){const p=document.createElement('div');
 sq.appendChild(d)})})();</script>`;
   html = html.replace('<!--LOADART-->', art);
   // small pictures of the characters, so the wardrobe shows them before their models have loaded
+  const vx = {}; for (const f of readdirSync('assets/vfx')) if (f.endsWith('.webp')) vx[f.slice(0, -5)] = 'data:image/webp;base64,' + readFileSync('assets/vfx/' + f).toString('base64');
+  html = html.replace('<script>window.__BD_MODELS=', `<script>window.__BD_VFX=${JSON.stringify(vx)};</script>\n<script>window.__BD_MODELS=`);
   const ct = {}; for (const f of readdirSync('assets/chars')) if (f.endsWith('.webp')) ct[f.slice(0, -5)] = 'data:image/webp;base64,' + readFileSync('assets/chars/' + f).toString('base64');
   html = html.replace('<script>window.__BD_MODELS=', `<script>window.__BD_CHARTHUMBS=${JSON.stringify(ct)};</script>\n<script>window.__BD_MODELS=`);
 }

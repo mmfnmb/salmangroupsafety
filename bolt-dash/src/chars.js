@@ -55,7 +55,8 @@ export function loadChars() {
     const all = {};
     for (const n of Object.keys(idx).filter((k) => k.startsWith('anim-'))) { const g = await parse(n); for (const c of g?.animations || []) all[c.name] = c; }
     for (const n of Object.keys(idx).filter((k) => !k.startsWith('anim-'))) {
-      const g = await parse(n); if (!g) continue; g.scene.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); M['ch/' + n] = g;
+      const g = await parse(n); if (!g) continue; g.scene.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+      if (n.startsWith('prop-')) M['pr/' + n.slice(5)] = g; else M['ch/' + n] = g; // props: the characters' own things (clown balls, bomb...)
       await new Promise((r) => setTimeout(r, 0)); // keep the menu smooth
     }
     const clips = []; for (const [k, v] of Object.entries(MAP)) if (all[v]) { const c = all[v].clone(); c.name = 'CharacterArmature|' + k; clips.push(c); }

@@ -1,6 +1,7 @@
 // Game flow: lobby menu, matchmaking, show rounds, HUD, camera, input, build mode.
 import { THREE, CANNON, M, G, V, PI, rand, pick, clamp, damp, $, IS_TOUCH, store, save, persist, sfx, toast, renderer, scene, camera, canvas, sky, sun, world, puffs, confetti, fx, loadAssets, place, instanced, SkeletonUtils, renderScene, applyQuality, loadExtras } from './core.js';
-import { useAbility, abilitiesOn, abilityText, clearAbilities } from './abilities.js';
+import { useAbility, abilitiesOn, abilityText, clearAbilities, CINE } from './abilities.js';
+import { vfxUpdate, vfxClear } from './vfx.js';
 import { makeBody, loadChars, charsReady, kkBoneFix, TIER, CHAR } from './chars.js';
 import { t, LANG, LANGS, setLang, translateDom } from './i18n.js';
 import { ITEMS, ITEM, CATS, SKINS, BATS, THUMB, computeBoneFix, dress, randomEquip, makeThumbs, holdItem, skinFx, updateGold, makePet } from './cosmetics.js';
@@ -793,7 +794,7 @@ function beginPlay() {
 }
 function cleanupRound() {
   if (flow.cine) { flow.cine = null; $('cine').hidden = true; }
-  clearAbilities(); $('abil').hidden = true;
+  clearAbilities(); vfxClear(); $('abil').hidden = true;
   for (const r of G.runners) r.dispose(); G.runners = []; G.player = null;
   G.modeObj?.cleanup?.(); clearProjectiles(); G.level?.dispose(); G.level = null; G.modeObj = null;
   puffs.clear(); confetti.clear();
@@ -1216,20 +1217,21 @@ const clock = new THREE.Clock();
 // the knockout cinematic: the game stops, the camera closes in on your character, the edges go dark blue, the name of
 // the move comes up, your character strikes its pose, and then the knockout lands
 G.onUlt = (r, u, done) => {
-  flow.cine = { r, u, done, t: 0, dur: 1.7, a0: r.facing };
+  flow.cine = { r, u, done, t: 0, dur: u.dur || 1.7, a0: r.facing }; if (u.pose) r.play?.(u.pose, 0.1); // the pose must win over the running animation
   $('cine').querySelector('small').textContent = t('Knockout'); $('cine').querySelector('b').textContent = u.name; $('cine').hidden = false; sfx.win?.();
 };
 const cineRay = new THREE.Raycaster();
 function updateCine(dt) {
-  const c = flow.cine, r = c.r; c.t += dt; r.mixer.update(dt);
-  const k = Math.min(1, c.t / c.dur), d = 4.2 - k * 2.4, a = c.a0 + 0.5 - k * 0.9, p = r.pos;
+  const c = flow.cine, r = c.r; c.t += dt; r.mixer.update(dt); if (c.u.script) CINE[c.u.script]?.(c, dt);
+  const k = Math.min(1, c.t / c.dur), d = c.u.script ? 2.9 - k * 0.9 : 4.2 - k * 2.4, a = c.a0 + 0.5 - k * 0.9, p = r.pos;
   // keep the camera out of walls: if something is between the character and the camera, move in front of it
   const from = new CANNON.Vec3(p.x, p.y + 1.1, p.z), to = new CANNON.Vec3(p.x + Math.sin(a) * d, p.y + 1.6 - k * 0.3, p.z + Math.cos(a) * d), hit = new CANNON.RaycastResult();
   world.raycastClosest(from, to, { skipBackfaces: true, collisionFilterMask: 1 }, hit);
   const q = hit.hasHit ? hit.hitPointWorld : to, back = hit.hasHit ? 0.85 : 1;
   camera.position.set(from.x + (q.x - from.x) * back, from.y + (q.y - from.y) * back, from.z + (q.z - from.z) * back); camera.lookAt(p.x, p.y + 1.05, p.z);
   // and anything else still in the way (crates, other players, decorations) is hidden until the move lands
-  const head = V(p.x, p.y + 1.05, p.z), dir = head.clone().sub(camera.position), len = dir.length(); cineRay.set(camera.position, dir.normalize()); cineRay.far = len - 0.6;
+  const head = V(p.x, p.y + 1.05, p.z), dir = head.clone().sub(camera.position), len = dir.length(); cineRay.set(camera.position, dir.normalize()); cineRay.far = len - 0.6; cineRay.camera = camera;
+  for (const o of G.runners) if (o !== r && o.root.visible && o !== c.keep && Math.hypot(o.pos.x - camera.position.x, o.pos.z - camera.position.z) < 2.6) { o.root.visible = false; (c.hid ||= []).push(o.root); }
   for (const h of cineRay.intersectObjects(scene.children, true)) { let o = h.object; if (r.root === o || r.model === o) continue; let top = o; while (top.parent && top.parent !== scene && top.parent !== G.level?.root) top = top.parent; if (top === r.root || top.visible === false) continue; top.visible = false; (c.hid ||= []).push(top); }
   if (c.t >= c.dur) { flow.cine = null; $('cine').hidden = true; for (const o of c.hid || []) o.visible = true; c.done(); }
 }
@@ -1243,7 +1245,7 @@ function frame() {
   else if (flow.cine && !G.paused) updateCine(dt);
   else if ((flow.state === 'count' || flow.state === 'play' || flow.state === 'result') && !G.paused && G.modeObj) { stepRound(dt); playCam(dt); }
   else if (flow.state === 'build') { editor.updateCamera(dt); }
-  if (!G.paused) { puffs.update(dt); confetti.update(dt); }
+  if (!G.paused) { puffs.update(dt); confetti.update(dt); vfxUpdate(dt); }
   toast.update(dt);
   if (flow.bannerT > 0) { flow.bannerT -= dt; if (flow.bannerT <= 0) show('banner', false); }
   updateGold(dt);
