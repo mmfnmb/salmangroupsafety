@@ -264,7 +264,7 @@ html[dir=rtl] svg:has(use[href="#i-back"]){transform:scaleX(-1)}
 #bPush{right:max(214px,calc(env(safe-area-inset-right,0px) + 188px));bottom:max(30px,env(safe-area-inset-bottom,0px));width:58px;height:58px;background:#ff9f43}
 #bGrab{right:max(140px,calc(env(safe-area-inset-right,0px) + 114px));bottom:max(104px,calc(env(safe-area-inset-bottom,0px) + 82px));width:58px;height:58px;background:#a78bfa}
 #bPush svg.i,#bGrab svg.i{width:26px;height:26px}
-#abil{position:fixed;right:max(18px,env(safe-area-inset-right,0px));bottom:max(150px,calc(env(safe-area-inset-bottom,0px) + 150px));display:flex;flex-direction:column;align-items:center;gap:12px;z-index:6;pointer-events:none}
+#abil{position:fixed;right:max(290px,calc(env(safe-area-inset-right,0px) + 264px));bottom:max(30px,env(safe-area-inset-bottom,0px));display:flex;flex-direction:row-reverse;align-items:flex-end;gap:12px;z-index:6;pointer-events:none}
 #abil button{pointer-events:auto;position:relative;width:58px;height:58px;border-radius:50%;border:0;background:var(--paper);color:var(--ink);display:grid;place-items:center;box-shadow:0 6px 0 rgba(33,18,74,.3);overflow:hidden}
 #abil button svg.i{position:relative;z-index:2;width:26px;height:26px}
 #abil #bAb{background:#4cc9f0}
@@ -274,7 +274,7 @@ html[dir=rtl] svg:has(use[href="#i-back"]){transform:scaleX(-1)}
 #abil #bUlt.ready{background:#ffd23f}
 #abil em{position:absolute;bottom:4px;right:9px;font:800 11px var(--body,system-ui);font-style:normal;z-index:3;opacity:.7}
 .touchdev #abil em{display:none}
-@media (max-width:700px){#abil{bottom:max(190px,calc(env(safe-area-inset-bottom,0px) + 190px))}}
+@media (max-width:700px){#abil{right:max(18px,env(safe-area-inset-right,0px));bottom:max(250px,calc(env(safe-area-inset-bottom,0px) + 250px))}}
 
 .act.on{transform:translateY(4px);box-shadow:0 2px 0 rgba(33,18,74,.3)}
 .keys{position:fixed;left:50%;bottom:max(64px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--veil);color:var(--paper);border-radius:12px;padding:5px 12px;font-weight:800;font-size:13px;white-space:nowrap;pointer-events:none}

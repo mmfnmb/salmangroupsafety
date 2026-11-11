@@ -1,5 +1,5 @@
 // Abilities: every character has one ability (a button with a cooldown) and one knockout move (charges up while you
-// play; when it is full you unleash it with its own animation). Off in races and in the open world, so those stay fair.
+// play; when it is full you unleash it with its own animation). Off in the open world.
 import { THREE, G, V, PI, rand, sfx, fx, scene } from './core.js';
 import { t } from './i18n.js';
 
@@ -30,7 +30,7 @@ const KIT = {
 };
 export const kitOf = (charId) => KIT[charId || 'bolt'] || KIT.bolt;
 export const abilityText = (charId) => { const [a, u] = kitOf(charId); return { ab: AB[a].desc, ult: ULT[u].desc }; };
-export const abilitiesOn = () => { const k = G.modeObj?.kind; return !!G.modeObj && k !== 'race' && k !== 'world' && !G.modeObj.noAbilities; };
+export const abilitiesOn = () => { const k = G.modeObj?.kind; return !!G.modeObj && k !== 'world' && !G.modeObj.noAbilities; };
 
 const foes = (r, range) => G.runners.filter((o) => o !== r && !o.out && !o.finished && (!r.team || o.team !== r.team) && Math.hypot(o.pos.x - r.pos.x, o.pos.z - r.pos.z) < range);
 const fwd = (r) => V(Math.sin(r.facing), 0, Math.cos(r.facing));
