@@ -73,6 +73,7 @@ const golf = {
       if (d < 0.75 && sp < 8 && p.y < 1) {
         o.sunk = true; o.obj.visible = false; world.removeBody(o.body); fx.confetti(V(HOLE.x, 1, HOLE.z), r.isPlayer ? 140 : 40); sfx.goal();
         if (r.isPlayer) G.banner?.(t('In the hole! {n} strokes', { n: o.strokes }), true);
+        G.ann?.('finish', { p: r.name, n: o.strokes }, r.isPlayer ? 3 : 1);
         G.finish(r); return;
       }
       if (d < 2 && sp < 5) { v.x += (HOLE.x - p.x) * dt * 4; v.z += (HOLE.z - p.z) * dt * 4; }
@@ -159,7 +160,7 @@ const volley = {
         const landed = p.z > 0 ? 'red' : 'blue';
         const winner = out && this.last ? (this.last === 'red' ? 'blue' : 'red') : landed === 'red' ? 'blue' : 'red';
         this.score[winner]++; this.pointT = 1.6; this.nextServe = winner === 'red' ? 'blue' : 'red';
-        fx.confetti(V(p.x, 1, p.z), 60); sfx.goal(); toast(out ? t('Out!') : winner === 'red' ? t('Point for Red!') : t('Point for Blue!'), 1.6);
+        fx.confetti(V(p.x, 1, p.z), 60); sfx.goal(); toast(out ? t('Out!') : winner === 'red' ? t('Point for Red!') : t('Point for Blue!'), 1.6); G.ann?.('point', { team: winner === 'red' ? t('Red') : t('Blue') }, 2);
         if (this.score[winner] >= 5) setTimeout(() => G.endRound(), 1200);
       }
     }
@@ -308,7 +309,7 @@ const football = {
       }
       if (Math.abs(p.z) > FZ + 0.3 && Math.abs(p.x) < GW && p.y < GH) {
         const scorer = p.z > 0 ? 'blue' : 'red'; this.score[scorer]++; if (this.lastTouch?.team === scorer) grow(this.lastTouch, 'sho', 1.5); this.resetT = 2.2; this.owner = null;
-        sfx.goal(); fx.confetti(V(p.x, p.y + 1, p.z), 140); toast(scorer === 'red' ? t('Goal for Red!') : t('Goal for Blue!'), 2);
+        sfx.goal(); fx.confetti(V(p.x, p.y + 1, p.z), 140); toast(scorer === 'red' ? t('Goal for Red!') : t('Goal for Blue!'), 2); G.ann?.('goal', { team: scorer === 'red' ? t('Red') : t('Blue') }, 3);
         if (this.score[scorer] >= 3) setTimeout(() => G.endRound(), 1400);
       } else if (Math.abs(p.x) > FX + 1 || Math.abs(p.z) > FZ + 3.5 || p.y < -3) {
         b.position.set(clamp(p.x, -FX + 1, FX - 1), 0.6, clamp(p.z, -FZ + 1.5, FZ - 1.5)); b.velocity.set(0, 0, 0);

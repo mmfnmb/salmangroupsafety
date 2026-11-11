@@ -44,9 +44,9 @@ const lava = {
   // dangers that join the round, one every 20 s
   addDanger() {
     const L = G.level; this.stage++;
-    if (this.stage === 1) { L.sweeper(0, 0, 0, 9, 0.8); toast(t('Watch out: the spinning arm!'), 2); }
-    else if (this.stage === 2) { for (const a of [0, PI]) L.cannon(Math.cos(a) * 24, Math.sin(a) * 24, 0.2, -Math.cos(a), -Math.sin(a), 2.6, rand(0, 1), 15); toast(t('Cannons!'), 2); }
-    else if (this.stage === 3) { L.saw(0, 6, 0, 10, 1.6, 0, 'x'); L.saw(0, -6, 0, 10, 1.6, PI, 'x'); toast(t('Saws!'), 2); }
+    if (this.stage === 1) { L.sweeper(0, 0, 0, 9, 0.8); toast(t('Watch out: the spinning arm!'), 2); G.ann?.('arena', {}, 2); }
+    else if (this.stage === 2) { for (const a of [0, PI]) L.cannon(Math.cos(a) * 24, Math.sin(a) * 24, 0.2, -Math.cos(a), -Math.sin(a), 2.6, rand(0, 1), 15); toast(t('Cannons!'), 2); G.ann?.('arena', {}, 2); }
+    else if (this.stage === 3) { L.saw(0, 6, 0, 10, 1.6, 0, 'x'); L.saw(0, -6, 0, 10, 1.6, PI, 'x'); toast(t('Saws!'), 2); G.ann?.('arena', {}, 2); }
     else if (this.stage === 4) { for (const a of [PI / 2, -PI / 2]) L.cannon(Math.cos(a) * 24, Math.sin(a) * 24, 0.2, -Math.cos(a), -Math.sin(a), 2.0, rand(0, 1), 16); toast(t('More cannons!'), 2); }
     sfx.beep();
   },

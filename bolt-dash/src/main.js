@@ -2,6 +2,7 @@
 import { THREE, CANNON, M, G, V, PI, rand, pick, clamp, damp, $, IS_TOUCH, store, save, persist, sfx, toast, renderer, scene, camera, canvas, sky, sun, world, puffs, confetti, fx, loadAssets, place, instanced, SkeletonUtils, renderScene, applyQuality, loadExtras } from './core.js';
 import { useAbility, abilitiesOn, abilityText, clearAbilities, CINE } from './abilities.js';
 import { vfxUpdate, vfxClear } from './vfx.js';
+import { ann } from './announcer.js';
 import { makeBody, loadChars, charsReady, kkBoneFix, TIER, CHAR } from './chars.js';
 import { t, LANG, LANGS, setLang, translateDom } from './i18n.js';
 import { ITEMS, ITEM, CATS, SKINS, BATS, THUMB, computeBoneFix, dress, randomEquip, makeThumbs, holdItem, skinFx, updateGold, makePet } from './cosmetics.js';
@@ -452,11 +453,12 @@ async function openOv(kind) {
     const seg = (id, opts, cur) => `<div class="seg" id="${id}">${opts.map(([v, n]) => `<button data-v="${v}" aria-pressed="${String(v) === String(cur)}">${n}</button>`).join('')}</div>`;
     B.innerHTML = `<b>${t('Graphics')}</b>${seg('sQ', [['low', t('Light')], ['med', t('Medium')], ['high', t('Fantasy')]], save.quality)}
       <b>${t('Sound')}</b>${seg('sS', [['on', t('On')], ['off', t('Off')]], save.muted ? 'off' : 'on')}
+      <b>${t('Announcer')}</b>${seg('sA', [['on', t('On')], ['off', t('Off')]], save.announcer !== false ? 'on' : 'off')}
       <b>${t('Camera speed')}</b>${seg('sC', [[0.6, t('Slow')], [1, t('Normal')], [1.6, t('Fast')]], save.sens)}
       <b>${t('Language')}</b><select id="sLang">${LANGS.filter(([c]) => c === 'en' || (globalThis.__BD_LANG?.langs || {})[c]).map(([c, n]) => `<option value="${c}" ${c === LANG ? 'selected' : ''}>${n}</option>`).join('')}</select>
     <button class="btn alt" id="sIntro">${t('Watch the intro film again')}</button>`;
     const bind = (id, fn) => $(id).addEventListener('click', (e) => { const b = e.target.closest('[data-v]'); if (!b) return; fn(b.dataset.v); persist2(); sfx.click(); openOv('settings'); });
-    bind('sQ', (v) => { save.quality = v; applyQuality(); }); bind('sS', (v) => { save.muted = v === 'off'; }); bind('sC', (v) => { save.sens = parseFloat(v); });
+    bind('sQ', (v) => { save.quality = v; applyQuality(); }); bind('sS', (v) => { save.muted = v === 'off'; }); bind('sC', (v) => { save.sens = parseFloat(v); }); bind('sA', (v) => { ann.set(v === 'on'); if (v === 'on') ann.say('quip', {}, 3); });
     $('sLang').addEventListener('change', (e) => setLang(e.target.value));
     $('sIntro').addEventListener('click', () => { closeOv(); playIntro(true); });
   } else if (kind === 'profile') {
@@ -739,6 +741,9 @@ function startRound() {
   $('inIcon').innerHTML = icon(md.icon || 'play');
   show('intro', true); show('hud', false);
   flow.state = 'fly'; flow.flyT = 0;
+  { const roundTxt = total > 1 ? (flow.round === total - 1 ? 'the final round of a tournament' : `round ${flow.round + 1} of ${total} in a tournament`) : 'a single live match';
+    ann.match({ mode: md.name, desc: md.desc, round: roundTxt, kind: md.team ? 'team game' : md.kind === 'race' ? 'race' : 'survival', players: G.runners.map((r) => r.name), me: G.player?.name || save.name });
+    setTimeout(() => { if (flow.state === 'fly' || flow.state === 'count') ann.say('intro', { mode: md.name }, 3); }, 700); }
   const f = md.fly || [[0, 20, 20, 0, 0, 0]];
   camPos.set(f[0][0], f[0][1], f[0][2]); camLook.set(f[0][3], f[0][4], f[0][5]);
 }
@@ -805,6 +810,7 @@ G.finish = (r) => {
   if (r.weapon) dropWeapon(r);
   fx.confetti(V(r.pos.x, r.pos.y + 1, r.pos.z), r.isPlayer ? 140 : 30);
   if (r.isPlayer) { banner(r.place <= flow.q ? t('Qualified!') : t('A bit too late'), r.place <= flow.q); sfx.win(); }
+  ann.say(r.place === 1 ? 'first' : 'finish', { p: r.name, n: r.place }, r.place === 1 || r.isPlayer ? 3 : 1);
   if (flow.q && flow.finishedCount >= flow.q) setTimeout(() => G.endRound(), 900);
 };
 G.eliminate = (r) => {
@@ -812,6 +818,7 @@ G.eliminate = (r) => {
   r.eliminate(); fx.dust(V(r.pos.x, r.pos.y, r.pos.z), 6, 0xffffff, 3);
   if (r.isPlayer) { banner(t('Eliminated!'), false); sfx.lose(); }
   const left = G.runners.filter((o) => !o.out).length;
+  if (r.isPlayer) ann.say('outMe', { p: r.name }, 3); else if (left <= 3 && left > 1) ann.say('left', { n: left }, 2); else ann.say('out', { p: r.name }, 1);
   if (flow.q && left <= flow.q) setTimeout(() => G.endRound(), 900);
   else if (r.isPlayer && flow.show.rounds.length) setTimeout(() => { if (!flow.done && G.player?.out) G.endRound(); }, 1800);
 };
@@ -843,6 +850,8 @@ G.endRound = () => {
   if (last || !won) { st.games = (st.games || 0) + 1; if (isShow) track('shows'); }
   track('coins', flow.coins);
   persist2();
+  if (!(crown)) setTimeout(() => ann.say(won ? 'win' : 'lose', { p: save.name }, 3), 500);
+  else setTimeout(() => ann.say('crown', { p: save.name }, 3), 1500);
   if (isShow) setTimeout(() => ceremony(qualified, () => showResult(won, last, qualified, earned)), 900);
   else setTimeout(() => showResult(won, last, qualified, earned), 700);
 };
@@ -952,7 +961,7 @@ $('rNext').addEventListener('click', () => {
 });
 $('rMenu').addEventListener('click', () => { sfx.click(); toMenu(); });
 function toMenu() {
-  cleanupRound(); editor.close();
+  ann.stop(); cleanupRound(); editor.close();
   flow.state = 'menu'; lobby.view = 'play'; lobby.root.visible = true; dive.root.visible = false;
   for (const id of ['hud', 'result', 'pause', 'big', 'mm', 'intro', 'bui', 'banner', 'xhair']) show(id, false);
   show('menu', true); setTab('play'); refreshMenu();
@@ -1089,7 +1098,7 @@ function stepRound(dt) {
     const before = Math.ceil(flow.count - 0.6); flow.count -= dt; const now = Math.ceil(flow.count - 0.6);
     const big = $('big');
     if (flow.count > 0.6) { big.hidden = false; big.textContent = Math.max(1, now); if (now !== before) sfx.beep(); }
-    else if (flow.count > 0) { if (big.textContent !== t('GO!')) { big.textContent = t('GO!'); sfx.go(); } }
+    else if (flow.count > 0) { if (big.textContent !== t('GO!')) { big.textContent = t('GO!'); sfx.go(); ann.say('go', {}, 3); } }
     else { big.hidden = true; flow.state = 'play'; }
   }
   const live = flow.state === 'play';
@@ -1246,6 +1255,7 @@ function frame() {
   else if ((flow.state === 'count' || flow.state === 'play' || flow.state === 'result') && !G.paused && G.modeObj) { stepRound(dt); playCam(dt); }
   else if (flow.state === 'build') { editor.updateCamera(dt); }
   if (!G.paused) { puffs.update(dt); confetti.update(dt); vfxUpdate(dt); }
+  ann.update(dt, flow.state === 'play' && !G.paused && !flow.cine);
   toast.update(dt);
   if (flow.bannerT > 0) { flow.bannerT -= dt; if (flow.bannerT <= 0) show('banner', false); }
   updateGold(dt);

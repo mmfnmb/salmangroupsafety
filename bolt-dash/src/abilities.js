@@ -108,6 +108,7 @@ export function useUlt(r) {
   if (!abilitiesOn() || r.out || (r.ultCharge || 0) < 1 || r.ultPending || r.ultCine) return false;
   const u = ultOf(r.kk?.id || 'bolt'); r.ultCharge = 0; r.shieldT = Math.max(r.shieldT || 0, 2.5);
   r.play?.(r.actions[u.pose] ? u.pose : 'Yes', 0.05);
+  G.ann?.('ult', { p: r.name, u: u.name }, r.isPlayer ? 3 : 2);
   // the player gets the cinematic (the game waits for it); bots just wind up for a moment
   if (r.isPlayer && G.onUlt) { r.ultCine = true; G.onUlt(r, u, () => { r.ultCine = false; r.ultPending = { u, t: 0.05 }; }); }
   else { r.stun?.(0.5); fx.burst(V(r.pos.x, r.pos.y + 1.5, r.pos.z), u.color, 24, 5); r.ultPending = { u, t: 0.6 }; }
