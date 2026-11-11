@@ -15,6 +15,7 @@ html,body{background:var(--coal);color:var(--bone)}
 body{font-family:var(--body);font-size:15px;line-height:1.55;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 40px;
   background:radial-gradient(1200px 500px at 70% -10%,#3a1d0e66,transparent 70%),var(--coal)}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 button{font:inherit;color:inherit;cursor:pointer}
 button:focus-visible,input:focus-visible{outline:2px solid var(--ember-2);outline-offset:2px}
 .wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
@@ -74,6 +75,30 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
 .item small{color:var(--ash);font-size:12px}
 .item .row{display:flex;gap:6px;flex-wrap:wrap}
 .item .row button{font-size:12px;padding:5px 9px}
+.arena{position:relative;width:100%;aspect-ratio:16/10;max-height:72vh;border-radius:14px;overflow:hidden;background:#0d0b0a;box-shadow:inset 0 0 0 1px var(--edge);touch-action:none;user-select:none;-webkit-user-select:none}
+.arena canvas{display:block;width:100%;height:100%}
+.hud{position:absolute;inset:10px 12px auto;display:flex;gap:12px;align-items:center;justify-content:space-between;font-weight:800;pointer-events:none;text-shadow:0 2px 4px #000}
+.hud .hp{flex:1;max-width:260px;height:12px;border-radius:6px;background:#0008;overflow:hidden;box-shadow:0 0 0 1px #fff3}
+.hud .hp b{display:block;height:100%;width:100%;background:linear-gradient(90deg,#46c96b,#b9e27c);transition:width .2s}
+.ov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:20px;background:#0b0907cc}
+.ov h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,5vw,44px);margin:0;color:var(--ember-2)}
+.ov p{margin:0;max-width:46ch;color:var(--bone)}
+.joy{position:absolute;inset-inline-end:auto;left:max(14px,env(safe-area-inset-left,0px));bottom:14px;width:120px;height:120px;border-radius:50%;background:#ffffff10;box-shadow:inset 0 0 0 2px #ffffff22;display:none}
+.joy i{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px 0 0 -24px;border-radius:50%;background:#ffffff33}
+.hit{position:absolute;right:max(14px,env(safe-area-inset-right,0px));bottom:22px;width:92px;height:92px;border-radius:50%;border:0;font:800 18px var(--body);background:radial-gradient(circle at 40% 35%,var(--ember-2),var(--ember));color:#2a1406;box-shadow:0 6px 0 #7a2e0a;display:none}
+.arena.touch .joy,.arena.touch .hit{display:block}
+.bstage{position:relative;width:100%;aspect-ratio:1;max-height:70vh;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 40%,#2c2420,#100c0a 75%);box-shadow:inset 0 0 0 1px var(--edge);touch-action:none}
+.bstage canvas{display:block;width:100%;height:100%}
+.btools{position:absolute;inset:8px 8px auto;display:flex;flex-wrap:wrap;gap:6px;z-index:2}
+.btools.bottom{inset:auto 8px 8px}
+.btools .tool{background:#211c19e6;padding:5px 9px;font-size:13px}
+.chk{display:flex;gap:8px;align-items:center;font-weight:700;font-size:14px}
+.paint{position:fixed;inset:0;z-index:30;background:#000a;display:flex;align-items:center;justify-content:center;padding:16px}
+.pcard{background:var(--iron);border:1px solid var(--edge);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;max-width:360px;width:100%}
+.pcard canvas{width:100%;aspect-ratio:1;image-rendering:pixelated;touch-action:none;border-radius:8px;cursor:crosshair}
+.item .thumb{width:100%;aspect-ratio:1;border-radius:8px;background:radial-gradient(circle at 50% 40%,#2c2420,#100c0a 75%);object-fit:contain}
+.mon{display:flex;gap:8px;align-items:center}
+.mon canvas{width:48px;height:48px;aspect-ratio:auto;flex:none}
 .empty{color:var(--ash);text-align:center;padding:40px 10px;border:1px dashed var(--edge);border-radius:12px}
 .who{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .who input{background:var(--coal);border:1px solid var(--edge);border-radius:9px;padding:6px 10px;color:var(--bone);font:700 14px var(--body);width:180px;max-width:100%}
@@ -84,10 +109,12 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
   <header>
     <div>
       <h1>ورشة السلاح</h1>
-      <p class="tag">ارسم سلاحك بكسل بكسل، والورشة تطرقه 3D وتقولّك قوته.</p>
+      <p class="tag">ارسم سلاحك بكسل بكسل، وابني وحوشك مكعب مكعب، وانزل الساحة حاربهم.</p>
     </div>
     <nav aria-label="الأقسام">
       <button id="tForge" aria-pressed="true">الورشة</button>
+      <button id="tBeast" aria-pressed="false">الوحوش</button>
+      <button id="tArena" aria-pressed="false">الساحة</button>
       <button id="tMine" aria-pressed="false">سلاحي</button>
       <button id="tGal" aria-pressed="false">المعرض</button>
     </nav>
@@ -119,11 +146,68 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
         <p class="desc" id="cDesc"></p>
         <div class="acts">
           <button class="btn" id="bTest">جرّب على الدمية</button>
+          <button class="btn" id="bFight">حارب بيه الوحوش</button>
           <button class="btn alt" id="bSave">احفظ في سلاحي</button>
           <button class="btn alt" id="bPub">انشر في المعرض</button>
         </div>
       </div>
     </div>
+  </section>
+
+  <section id="vBeast" class="forge" hidden>
+    <div class="panel">
+      <div class="bstage" id="bstage">
+        <div class="btools" role="toolbar" aria-label="أدوات المكعبات">
+          <button class="tool" id="bAdd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 8v8M8 12h8"/></svg>مكعب جديد</button>
+          <button class="tool" id="bMove" aria-pressed="true">تحريك</button>
+          <button class="tool" id="bSize" aria-pressed="false">تكبير</button>
+          <button class="tool" id="bTurn" aria-pressed="false">لف</button>
+          <button class="tool" id="bPaint" aria-pressed="false">ارسم على الوش</button>
+        </div>
+        <div class="btools bottom">
+          <button class="tool" id="bDup">نسخ</button>
+          <button class="tool" id="bMir">مرآة</button>
+          <button class="tool" id="bDel">امسح</button>
+          <button class="tool" id="bUndo">رجوع</button>
+        </div>
+      </div>
+      <div class="label">لون المكعب (أو لون الريشة لما ترسم على الوش)</div>
+      <div class="pal" id="bpal"></div>
+      <div class="label">ابدأ من وحش جاهز</div>
+      <div class="temps" id="btemps"></div>
+    </div>
+    <div class="panel">
+      <div class="card" id="bcard">
+        <div class="nameRow"><input id="bName" maxlength="28" aria-label="اسم الوحش"><button class="btn alt" id="bNameGo">اقترح اسم</button></div>
+        <div class="chips"><span class="chip rar" id="bRar"></span><span class="chip" id="bEl"></span><span class="chip" id="bWeak"></span><span class="power" id="bPow"></span></div>
+        <div class="stats" id="bStats"></div>
+        <label class="chk"><input type="checkbox" id="bFly"> الوحش ده بيطير</label>
+        <p class="desc" id="bDesc"></p>
+        <div class="acts">
+          <button class="btn" id="bFightB">حاربه في الساحة</button>
+          <button class="btn alt" id="bSaveB">احفظ في وحوشي</button>
+          <button class="btn alt" id="bNew">وحش جديد</button>
+        </div>
+      </div>
+      <div class="label">وحوشي (بتنزل الساحة مع الوحوش الجاهزة)</div>
+      <div class="list" id="myBeasts"></div>
+    </div>
+    <div class="paint" id="paintBox" hidden>
+      <div class="pcard"><b id="paintT">ارسم على الوش</b><canvas id="paintCv" width="320" height="320"></canvas>
+        <div class="acts"><button class="btn alt" id="paintErase">ممحاة</button><button class="btn alt" id="paintClear">امسح الوش</button><button class="btn" id="paintDone">تمام</button></div></div>
+    </div>
+  </section>
+
+  <section id="vArena" hidden>
+    <div class="arena" id="arena">
+      <div class="pops" id="apops"></div>
+      <div class="hud"><span id="aWave"></span><span class="hp"><b id="aHp"></b></span><span id="aScore"></span></div>
+      <div class="ov" id="aOv"><h2 id="aOvT">ساحة الوحوش</h2><p id="aOvP">انزل بالسلاح اللي في الورشة واصمد قدام موجات الوحوش. كل وحش ليه عنصر بيضعف قدامه.</p><button class="btn" id="aGo">ابدأ</button></div>
+      <div class="joy" id="joy"><i id="joyK"></i></div>
+      <button class="hit" id="aHit" aria-label="اضرب">اضرب</button>
+    </div>
+    <p class="desc" id="aHelp">الحركة: WASD أو الأسهم · الضرب: مسافة أو كليك. على الموبايل: اسحب في الدايرة الشمال واضرب بالزرار.</p>
+    <div class="list" id="bestiary" style="margin-top:12px"></div>
   </section>
 
   <section id="vMine" hidden>
@@ -138,6 +222,8 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
 <div class="toast" id="toast" hidden></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
 <script>
 (() => {
 const $ = (id) => document.getElementById(id);
@@ -267,7 +353,7 @@ $('wName').addEventListener('input', () => { nameTouched = true; });
 $('bName').onclick = () => { if (A) { $('wName').value = nameFor(A); nameTouched = true; } };
 function renderCard() {
   A = analyse(grid); const card = $('card');
-  for (const id of ['bTest', 'bSave', 'bPub']) $(id).disabled = !A;
+  for (const id of ['bTest', 'bFight', 'bSave', 'bPub']) $(id).disabled = !A;
   if (!A) { card.style.setProperty('--rc', 'var(--edge)'); $('cRar').textContent = 'ارسم سلاحك'; $('cType').textContent = ''; $('cEl').textContent = ''; $('cPow').textContent = ''; $('stats').innerHTML = ''; $('cDesc').textContent = 'اختار لون وارسم على الشبكة، أو ابدأ من سلاح جاهز.'; return; }
   card.style.setProperty('--rc', A.rar.col);
   if (!nameTouched) $('wName').value = nameFor(A);
@@ -317,6 +403,7 @@ const dummy = (() => { const list = []; DUMMY.forEach((row, y) => [...row].forEa
 let test = null, t0 = performance.now();
 function pop(text, crit, col) { const v = dummy.position.clone().add(new THREE.Vector3((Math.random() - 0.5) * 6, 8, 0)).project(cam); const el = document.createElement('div'); el.className = 'pop' + (crit ? ' crit' : ''); el.textContent = text; el.style.left = ((v.x + 1) / 2 * 100) + '%'; el.style.top = ((1 - v.y) / 2 * 100) + '%'; if (col && !crit) el.style.color = col; $('pops').appendChild(el); setTimeout(() => el.remove(), 1000); }
 let actx = null; function clank(f = 220) { try { actx ||= new (window.AudioContext || window.webkitAudioContext)(); const o = actx.createOscillator(), g = actx.createGain(); o.type = 'square'; o.frequency.setValueAtTime(f, actx.currentTime); o.frequency.exponentialRampToValueAtTime(f / 3, actx.currentTime + 0.18); g.gain.setValueAtTime(0.12, actx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 0.2); o.connect(g).connect(actx.destination); o.start(); o.stop(actx.currentTime + 0.22); } catch { /* no sound here */ } }
+$('bFight').onclick = () => { if (!A) return; show('arena'); };
 $('bTest').onclick = () => { if (!A) return; test = { t: 0, hits: 0, a: A }; dummy.visible = true; auto = false; yaw = 0; };
 function frame(now) {
   const dt = Math.min(0.05, (now - t0) / 1000); t0 = now;
@@ -339,9 +426,284 @@ function frame(now) {
       pos.setY(i, pos.getY(i) + up * dt * 4); if (u.el === 'bolt') pos.setX(i, pos.getX(i) + (Math.random() - 0.5) * 0.8); if (u.el === 'shadow') pos.setX(i, pos.getX(i) + Math.sin(now / 300 + i) * dt * 2); }
     pos.needsUpdate = true; parts.material.opacity = u.el === 'bolt' ? (Math.random() < 0.7 ? 1 : 0.2) : 0.9; }
   rim.intensity = 1.2 + Math.sin(now / 400) * 0.25;
-  cam.lookAt(holder.position.x * 0.4, 0, 0); R.render(scene, cam); requestAnimationFrame(frame);
+  if (!$('vForge').hidden) { cam.lookAt(holder.position.x * 0.4, 0, 0); R.render(scene, cam); }
+  if (!$('vArena').hidden && AR.R) { arenaStep(dt, now); AR.R.render(AR.scene, AR.cam); }
+  if (!$('vBeast').hidden && BE.R) { BE.orbit.update(); BE.R.render(BE.scene, BE.cam); }
+  requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
+
+
+// ---------------------------------------------------------------- the monster arena: fight waves with the weapon from the forge
+const SPR = { '.': null, k: '#24262b', S: '#cfd8e2', s: '#6f7b89', b: '#3d6fd8', c: '#9ae6ff', g: '#46c96b', G: '#e2b043', W: '#f2efe6', r: '#e5484d', o: '#ff8a3d', y: '#ffe14d', p: '#8b54f0', f: '#f1c7a5', d: '#5b3a8f' };
+const ART = {
+  hero: ['...kkkk...', '..kSSSSk..', '..kSkkSk..', '..kffffk..', '...kffk...', '..bbbbbb..', '.bbGbbGbb.', '.bbbbbbbb.', '.fbbbbbbf.', '..bbbbbb..', '..ss..ss..', '..ss..ss..', '..kk..kk..'],
+  slime: ['....gggg....', '..gggggggg..', '.gggggggggg.', '.ggWkggWkgg.', 'gggWkggWkggg', 'gggggggggggg', 'gggggkkggggg', 'gggggggggggg', '.gggggggggg.'],
+  bat: ['p..........p', 'pp...pp...pp', 'ppp.pppp.ppp', 'pppppppppppp', '.ppprpprppp.', '..pppppppp..', '...p.pp.p...'],
+  skel: ['...WWWW...', '..WWWWWW..', '..WkWWkW..', '..WWWWWW..', '...WkkW...', '....WW....', '.WWWWWWWW.', '....WW....', '..WWWWWW..', '....WW....', '...W..W...', '...W..W...', '..WW..WW..'],
+  imp: ['.r......r.', '.rr....rr.', '..rrrrrr..', '..ryrryr..', '..rrrrrr..', '...rkkr...', '..rorror..', '.r.rrrr.r.', '...rrrr...', '...r..r...', '..rr..rr..'],
+  golem: ['...cccccc...', '..cbbbbbbc..', '..cbkbbkbc..', '..cbbbbbbc..', 'cccccccccccc', 'cbbbbbbbbbbc', 'cbbccbbccbbc', 'cbbbbbbbbbbc', '.cccccccccc.', '..cbb..bbc..', '..cbb..bbc..', '..ccc..ccc..'],
+  dragon: ['..d........d..', '.ddd......ddd.', 'dddd..dd..dddd', 'dddddddddddddd', '.ddyrddddyrdd.', '.dddddddddddd.', '..ddkkkkkkdd..', '..dddWWWWddd..', '.dddddddddddd.', 'dddddddddddddd', 'dd.dddddddd.dd', 'd..dd....dd..d', '...dd....dd...'],
+};
+const MON = {
+  slime: { name: 'سلايم', hp: 40, spd: 2.2, dmg: 6, size: 1.0, weak: 'fire', resist: 'poison', from: 1 },
+  bat: { name: 'خفاش', hp: 28, spd: 4.2, dmg: 5, size: 0.9, fly: true, weak: 'light', resist: 'shadow', from: 1 },
+  skel: { name: 'هيكل عظمي', hp: 60, spd: 2.6, dmg: 9, size: 1.2, weak: 'light', resist: 'poison', from: 2 },
+  imp: { name: 'عفريت نار', hp: 55, spd: 3.4, dmg: 10, size: 1.0, weak: 'ice', resist: 'fire', from: 3 },
+  golem: { name: 'عملاق تلج', hp: 140, spd: 1.6, dmg: 16, size: 1.9, weak: 'fire', resist: 'ice', from: 4 },
+  dragon: { name: 'التنين', hp: 420, spd: 2.1, dmg: 22, size: 3.4, weak: 'light', resist: 'fire', boss: true },
+};
+function voxels(rows, pal, scale = 1) {
+  const list = []; const h = rows.length, w = Math.max(...rows.map((r) => r.length));
+  rows.forEach((row, y) => [...row].forEach((ch, x) => { const col = pal[ch]; if (col) list.push([x, y, col]); }));
+  const m = new THREE.InstancedMesh(box, new THREE.MeshLambertMaterial({ emissive: 0x000000 }), list.length), o = new THREE.Object3D(), c = new THREE.Color();
+  list.forEach(([x, y, col], i) => { o.position.set((x - (w - 1) / 2) * scale, (h - 1 - y) * scale + scale / 2, 0); o.scale.set(scale, scale, scale * 2.2); o.updateMatrix(); m.setMatrixAt(i, o.matrix); m.setColorAt(i, c.set(col)); });
+  m.castShadow = true; return m;
+}
+const AR = { el: $('arena'), R: null, scene: null, cam: null, on: false, mons: [], keys: {}, joy: null, best: store.get('best', 0) };
+function arenaInit() {
+  if (AR.R) return; const R2 = new THREE.WebGLRenderer({ antialias: true }); R2.setPixelRatio(Math.min(2, devicePixelRatio)); R2.shadowMap.enabled = true; AR.el.prepend(R2.domElement); AR.R = R2;
+  const sc = new THREE.Scene(); sc.background = new THREE.Color(0x120d0b); sc.fog = new THREE.Fog(0x120d0b, 30, 60); AR.scene = sc;
+  AR.cam = new THREE.PerspectiveCamera(45, 16 / 10, 0.1, 200);
+  sc.add(new THREE.HemisphereLight(0xfff0e0, 0x403028, 1.5)); sc.add(new THREE.AmbientLight(0xffffff, 0.25)); const sun = new THREE.DirectionalLight(0xffffff, 0.9); sun.position.set(-8, 20, 10); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); Object.assign(sun.shadow.camera, { left: -20, right: 20, top: 20, bottom: -20 }); sc.add(sun);
+  // a pixel floor: stone tiles in a ring, torches of ember light around it
+  const t = document.createElement('canvas'); t.width = t.height = 16; const g = t.getContext('2d'); for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) { g.fillStyle = ['#3a302a', '#342b25', '#40352e', '#2e2620'][(x * 7 + y * 13 + ((x / 4 | 0) + (y / 4 | 0)) * 5) % 4]; g.fillRect(x, y, 1, 1); }
+  const tex = new THREE.CanvasTexture(t); tex.magFilter = THREE.NearestFilter; tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(9, 9);
+  const floor = new THREE.Mesh(new THREE.CircleGeometry(16, 48), new THREE.MeshLambertMaterial({ map: tex })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; sc.add(floor);
+  for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2, x = Math.cos(a) * 16.5, z = Math.sin(a) * 16.5; const post = voxels(['o', 'y', 's', 's', 's'], SPR, 0.6); post.position.set(x, 0, z); sc.add(post); const l = new THREE.PointLight(0xff8a3d, 0.7, 14); l.position.set(x, 3, z); sc.add(l); }
+  AR.hero = new THREE.Group(); const hv = voxels(ART.hero, SPR, 0.15); AR.body = new THREE.Group(); AR.body.add(hv); AR.hero.add(AR.body); AR.hand = new THREE.Group(); AR.hand.position.set(0.62, 0.9, 0.35); AR.body.add(AR.hand); sc.add(AR.hero);
+  new ResizeObserver(() => { const w = AR.el.clientWidth, h = AR.el.clientHeight; R2.setSize(w, h, false); AR.cam.aspect = w / h; AR.cam.updateProjectionMatrix(); }).observe(AR.el);
+  if (matchMedia('(pointer:coarse)').matches) AR.el.classList.add('touch');
+  // controls
+  addEventListener('keydown', (e) => { if (!AR.on || $('vArena').hidden) return; AR.keys[e.code] = true; if (e.code === 'Space' || e.code === 'KeyJ') { e.preventDefault(); swing(); } if (e.code.startsWith('Arrow')) e.preventDefault(); });
+  addEventListener('keyup', (e) => { AR.keys[e.code] = false; });
+  R2.domElement.addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse') swing(); });
+  const joy = $('joy'), knob = $('joyK');
+  joy.addEventListener('pointerdown', (e) => { joy.setPointerCapture(e.pointerId); AR.joy = { x: 0, y: 0 }; moveJoy(e); });
+  joy.addEventListener('pointermove', (e) => { if (AR.joy) moveJoy(e); });
+  const end = () => { AR.joy = null; knob.style.transform = ''; }; joy.addEventListener('pointerup', end); joy.addEventListener('pointercancel', end);
+  function moveJoy(e) { const r = joy.getBoundingClientRect(); let x = (e.clientX - r.left - r.width / 2) / (r.width / 2), y = (e.clientY - r.top - r.height / 2) / (r.height / 2); const l = Math.hypot(x, y); if (l > 1) { x /= l; y /= l; } AR.joy = { x, y }; knob.style.transform = `translate(${x * 36}px,${y * 36}px)`; }
+  $('aHit').addEventListener('pointerdown', (e) => { e.preventDefault(); swing(); });
+}
+function heldWeapon() {
+  while (AR.hand.children.length) AR.hand.remove(AR.hand.children[0]);
+  const g = new THREE.Group(), list = []; let hx = 0, hy = 0, hn = 0;
+  for (let i = 0; i < N * N; i++) { const v = grid[i]; if (!v) continue; const x = i % N, y = (i / N) | 0; list.push([x, y, v]); if ('wk'.includes(PAL[v].c)) { hx += x; hy += y; hn++; } }
+  if (!list.length) return; if (!hn) { hx = 12; hy = 22; hn = 1; } hx /= hn; hy /= hn;
+  const m = new THREE.InstancedMesh(box, new THREE.MeshLambertMaterial(), list.length), o = new THREE.Object3D(), c = new THREE.Color(), s = 0.075;
+  list.forEach(([x, y, v], i) => { o.position.set((x - hx) * s, -(y - hy) * s, 0); o.scale.setScalar(s); o.updateMatrix(); m.setMatrixAt(i, o.matrix); m.setColorAt(i, c.set(PAL[v].hex)); });
+  m.castShadow = true; g.add(m); AR.hand.add(g); AR.blade = g;
+}
+function monsterRow() { beastInit(); $('bestiary').innerHTML = ''; for (const e of arenaPool()) { const d = document.createElement('div'); d.className = 'item mon'; const im = new Image(); im.className = 'thumb'; im.style.width = '64px'; im.style.flex = 'none'; im.src = beastThumb(e.def); im.alt = e.M.name; d.appendChild(im); const t = document.createElement('div'); t.innerHTML = `<b></b><br><small>بيضعف قدام: ${EL[e.M.weak].name} · مقاوم: ${EL[e.M.resist].name}${e.M.boss ? ' · بوس' : ''}</small>`; t.querySelector('b').textContent = e.M.name + (e.M.mine ? ' (وحشك)' : ''); d.appendChild(t); $('bestiary').appendChild(d); } }
+let G2 = null;
+function startArena() {
+  arenaInit(); beastInit(); heldWeapon(); for (const m of AR.mons) AR.scene.remove(m.o); AR.mons = [];
+  const a = analyse(grid); if (!a) { show('forge'); toast('ارسم سلاح الأول'); return; }
+  G2 = { a, hp: 100, max: 100, wave: 0, score: 0, cd: 0, swingT: 0, face: new THREE.Vector3(0, 0, -1), pos: new THREE.Vector3(), between: 1.2 };
+  AR.hero.position.set(0, 0, 0); $('aOv').hidden = true; AR.on = true; hud();
+}
+function arenaPool() {
+  const def = Object.keys(MON).map((k) => ({ def: BEASTS[k], M: MON[k] }));
+  const mine = BE.mine.map((d) => { const st = beastStats(d); return { def: d, M: { name: d.name, hp: st.hp, spd: st.spd, dmg: st.dmg, size: Math.max(0.8, Math.min(3.4, st.height * 0.45)), fly: !!d.fly, weak: st.weak, resist: st.resist, from: 2, mine: true } }; });
+  return [...def, ...mine];
+}
+function addBeast(e, hpMul = 1) {
+  const n = G2.wave, M_ = e.M, g = new THREE.Group(), b = buildBeast(e.def), bx = new THREE.Box3().setFromObject(b), h = Math.max(0.3, bx.max.y - bx.min.y);
+  const k = (M_.size * 1.6) / h; b.scale.setScalar(k); b.position.y = -bx.min.y * k; g.add(b);
+  const mats = []; g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.material = o.material.map((x) => x.clone()); mats.push(...o.material); } });
+  const ang = Math.random() * Math.PI * 2, r = 12 + Math.random() * 3; g.position.set(Math.cos(ang) * r, 0, Math.sin(ang) * r); AR.scene.add(g);
+  const hpScale = (1 + (n - 1) * 0.18) * hpMul; AR.mons.push({ M: M_, o: g, b, mats, hp: M_.hp * hpScale, max: M_.hp * hpScale, hitT: 0, atk: 0, burn: 0, poison: 0, slow: 0, stun: 0, bob: Math.random() * 6 });
+}
+function spawnWave() {
+  G2.wave++; const n = G2.wave, boss = n % 5 === 0, all = arenaPool(), pool = all.filter((e) => !e.M.boss && (e.M.from || 1) <= Math.ceil(n / 1.5));
+  const pickOne = () => pool[(Math.random() * pool.length) | 0];
+  if (AR.focus) { const st = beastStats(AR.focus), e = { def: AR.focus, M: { name: AR.focus.name, hp: st.hp, spd: st.spd, dmg: st.dmg, size: Math.max(0.8, Math.min(3.4, st.height * 0.45)), fly: !!AR.focus.fly, weak: st.weak, resist: st.resist } };
+    if (boss) { e.M = { ...e.M, size: Math.min(4, e.M.size * 1.8), dmg: e.M.dmg * 1.6, boss: true }; addBeast(e, 3); } else for (let i = 0; i < 1 + Math.floor(n / 3); i++) addBeast(e);
+    for (let i = 0; i < Math.floor(n / 2) + 1; i++) addBeast(pickOne());
+  } else if (boss) { const big = [all.find((e) => e.M.boss), ...all.filter((e) => e.M.mine)].filter(Boolean).sort((a, b) => b.M.hp - a.M.hp)[0]; addBeast(big.M.boss ? big : { ...big, M: { ...big.M, size: Math.min(4, big.M.size * 1.8), boss: true } }, big.M.boss ? 1 : 3); for (let i = 0; i < Math.floor(n / 2); i++) addBeast(pickOne()); }
+  else for (let i = 0; i < 3 + n; i++) addBeast(pickOne());
+  pop2(boss ? 'البوس وصل!' : `الموجة ${n}`, new THREE.Vector3(0, 2, 0), '#ffb347', true); hud();
+}
+function hud() { $('aWave').textContent = `الموجة ${G2?.wave || 0}`; $('aScore').textContent = `النقط ${G2?.score || 0} · أحسن موجة ${AR.best}`; $('aHp').style.width = Math.max(0, G2 ? G2.hp / G2.max * 100 : 100) + '%'; }
+function pop2(text, pos, col, big) { const v = pos.clone().project(AR.cam), el = document.createElement('div'); el.className = 'pop' + (big ? ' crit' : ''); el.textContent = text; el.style.left = ((v.x + 1) / 2 * 100) + '%'; el.style.top = ((1 - v.y) / 2 * 100) + '%'; if (col) el.style.color = col; $('apops').appendChild(el); setTimeout(() => el.remove(), 1000); }
+function swing() {
+  if (!AR.on || !G2 || G2.cd > 0) return; const a = G2.a; G2.cd = 0.25 + (100 - a.spd) / 100 * 0.85; G2.swingT = 0.22;
+  // aim at the nearest monster in reach, else straight ahead
+  const P = AR.hero.position, reach = 1.6 + a.reach / 100 * 2.6; let tgt = null, best = 99;
+  for (const m of AR.mons) { const d = m.o.position.distanceTo(P) - m.M.size * 0.5; if (d < best) { best = d; tgt = m; } }
+  if (tgt && best < reach + 1.5) G2.face.copy(tgt.o.position).sub(P).setY(0).normalize();
+  let hits = 0;
+  for (const m of [...AR.mons]) { const to = m.o.position.clone().sub(P).setY(0), d = to.length() - m.M.size * 0.5; if (d > reach) continue; if (d > 0.6 && to.normalize().dot(G2.face) < 0.35) continue; hit(m, 1); hits++; if (a.el === 'bolt') { const near = AR.mons.filter((x) => x !== m && x.o.position.distanceTo(m.o.position) < 4).slice(0, 2); near.forEach((x) => hit(x, 0.5)); } }
+  clank(hits ? 240 : 160);
+}
+function hit(m, mult) {
+  const a = G2.a, crit = Math.random() * 100 < a.crit, el = a.el; let k = (0.85 + Math.random() * 0.3) * mult * (crit ? 2 : 1);
+  if (el === m.M.weak) k *= 2; if (el === m.M.resist) k *= 0.5;
+  const d = Math.round(a.dmg * k * 0.6); m.hp -= d; m.hitT = 0.15; m.o.position.addScaledVector(m.o.position.clone().sub(AR.hero.position).setY(0).normalize(), 0.6 / m.M.size);
+  pop2((crit ? 'حرجة! ' : '') + d + (el === m.M.weak ? ' ضعيف!' : el === m.M.resist ? ' مقاوم' : ''), m.o.position.clone().add(new THREE.Vector3(0, m.M.size + 0.6, 0)), el === m.M.weak ? '#ffe14d' : el === m.M.resist ? '#9aa' : '#fff', crit);
+  const ep = a.elp / 100;
+  if (el === 'fire') m.burn = 3; if (el === 'poison') m.poison = 4; if (el === 'ice') m.slow = 2 * (0.5 + ep); if (el === 'light') m.stun = 0.5 + ep * 0.6;
+  if (el === 'shadow') G2.hp = Math.min(G2.max, G2.hp + d * 0.15 * (0.5 + ep));
+  if (m.hp <= 0) kill(m);
+}
+function kill(m) { AR.scene.remove(m.o); AR.mons.splice(AR.mons.indexOf(m), 1); G2.score += Math.round(m.max / 4) * (m.M.boss ? 5 : 1); hud(); }
+function arenaStep(dt, now) {
+  if (!AR.on || !G2) return; const P = AR.hero.position, a = G2.a;
+  // move
+  let mx = 0, mz = 0; const K = AR.keys; if (K.KeyA || K.ArrowLeft) mx -= 1; if (K.KeyD || K.ArrowRight) mx += 1; if (K.KeyW || K.ArrowUp) mz -= 1; if (K.KeyS || K.ArrowDown) mz += 1; if (AR.joy) { mx += AR.joy.x; mz += AR.joy.y; }
+  const l = Math.hypot(mx, mz); if (l > 0.1) { const sp = (5 + a.spd / 30) * dt / Math.max(1, l); P.x += mx * sp; P.z += mz * sp; if (G2.swingT <= 0) G2.face.set(mx, 0, mz).normalize(); }
+  const pl = Math.hypot(P.x, P.z); if (pl > 15) { P.x *= 15 / pl; P.z *= 15 / pl; }
+  AR.hero.quaternion.copy(AR.cam.quaternion); if (Math.abs(G2.face.x) > 0.2) AR.body.scale.x = G2.face.x < 0 ? -1 : 1; AR.hero.position.y = l > 0.1 ? Math.abs(Math.sin(now / 90)) * 0.12 : 0;
+  G2.cd -= dt; G2.swingT -= dt; if (AR.blade) AR.hand.rotation.z = G2.swingT > 0 ? -1.9 + (G2.swingT / 0.22) * 2.6 : 0.25;
+  // monsters
+  for (const m of [...AR.mons]) {
+    const o = m.o, to = P.clone().sub(o.position).setY(0), d = to.length();
+    if (m.burn > 0) { m.burn -= dt; m.hp -= a.elp / 10 * dt * 3; } if (m.poison > 0) { m.poison -= dt; m.hp -= a.elp / 12 * dt * 3; } if ((m.burn > 0 || m.poison > 0) && m.hp <= 0) { kill(m); continue; }
+    m.stun -= dt; m.slow -= dt; m.hitT -= dt;
+    if (m.stun <= 0 && d > m.M.size * 0.5 + 0.7) o.position.addScaledVector(to.normalize(), m.M.spd * (m.slow > 0 ? 0.45 : 1) * dt);
+    o.position.y = (m.M.fly ? 1.4 + Math.sin(now / 200 + m.bob) * 0.4 : Math.abs(Math.sin(now / 160 + m.bob)) * 0.15);
+    if (d > 0.05) o.rotation.y = Math.atan2(to.x, to.z); m.b.rotation.x = Math.sin(now / 120 + m.bob) * 0.06; m.b.scale.y = m.b.scale.x * (1 + Math.sin(now / 140 + m.bob) * 0.05);
+    { const em = m.hitT > 0 ? 0xffffff : m.burn > 0 ? 0x661800 : m.slow > 0 ? 0x10304a : m.poison > 0 ? 0x0a3a12 : 0; if (m.em !== em) { m.em = em; for (const mt of m.mats) mt.emissive.setHex(em); } }
+    m.atk -= dt; if (d < m.M.size * 0.5 + 0.9 && m.atk <= 0 && m.stun <= 0) { m.atk = 0.9; G2.hp -= m.M.dmg; pop2('-' + m.M.dmg, P.clone().add(new THREE.Vector3(0, 2, 0)), '#ff5a5a'); hud(); clank(110); }
+  }
+  // monsters keep a little apart
+  for (let i = 0; i < AR.mons.length; i++) for (let j = i + 1; j < AR.mons.length; j++) { const A_ = AR.mons[i].o.position, B_ = AR.mons[j].o.position, d = A_.distanceTo(B_), min = (AR.mons[i].M.size + AR.mons[j].M.size) * 0.45; if (d < min && d > 0.001) { const push = B_.clone().sub(A_).setY(0).normalize().multiplyScalar((min - d) / 2); A_.sub(push); B_.add(push); } }
+  if (G2.hp <= 0) { AR.on = false; if (G2.wave > AR.best) { AR.best = G2.wave; store.set('best', AR.best); } $('aOvT').textContent = 'وقعت!'; $('aOvP').textContent = `وصلت للموجة ${G2.wave} وجمعت ${G2.score} نقطة. ارجع الورشة وقوّي سلاحك، أو ادخل تاني.`; $('aGo').textContent = 'العب تاني'; $('aOv').hidden = false; hud(); return; }
+  if (!AR.mons.length) { G2.between -= dt; if (G2.between <= 0) { if (G2.wave) { G2.hp = Math.min(G2.max, G2.hp + 25); pop2('+25', P.clone().add(new THREE.Vector3(0, 2, 0)), '#46c96b'); } spawnWave(); G2.between = 2; } }
+  AR.cam.position.lerp(new THREE.Vector3(P.x, 10, P.z + 9), 0.1); AR.cam.lookAt(P.x, 0.5, P.z);
+}
+$('aGo').onclick = () => { clank(260); startArena(); };
+$('tArena').addEventListener('click', () => { AR.focus = null; });
+
+
+// ---------------------------------------------------------------- the monster workshop: monsters made of cubes, like a block modeller
+// a cube: p position (its centre), s size, r rotation, c colour, f painted faces (6 faces, 8x8 pixels each, "" = plain)
+const Q = (x, y, z, w, h, d, c, r = [0, 0, 0]) => ({ p: [x, y, z], s: [w, h, d], r, c, f: ['', '', '', '', '', ''] });
+const mirrorX = (l) => l.flatMap((q) => (Math.abs(q.p[0]) < 0.01 ? [q] : [q, { ...q, p: [-q.p[0], q.p[1], q.p[2]], r: [q.r[0], -q.r[1], -q.r[2]], f: [...q.f] }]));
+const BEASTS = {
+  slime: { name: 'سلايم', fly: false, cubes: mirrorX([Q(0, 1, 0, 2.4, 2, 2.4, '#46c96b'), Q(0, 2.25, 0, 1.6, 0.5, 1.6, '#46c96b'), Q(0.55, 1.4, 1.21, 0.5, 0.6, 0.06, '#f2efe6'), Q(0.5, 1.33, 1.25, 0.25, 0.32, 0.06, '#24262b'), Q(0, 0.75, 1.21, 0.7, 0.16, 0.06, '#24262b')]) },
+  bat: { name: 'خفاش', fly: true, cubes: mirrorX([Q(0, 1.6, 0, 1, 1.1, 0.9, '#8b54f0'), Q(0.32, 2.3, 0, 0.25, 0.45, 0.2, '#8b54f0'), Q(1.1, 1.8, 0, 1.4, 0.15, 0.9, '#5b3a8f', [0, 0, 0.35]), Q(0.22, 1.75, 0.46, 0.2, 0.2, 0.06, '#e5484d')]) },
+  skel: { name: 'هيكل عظمي', fly: false, cubes: mirrorX([Q(0, 3.3, 0, 1, 1, 1, '#f2efe6'), Q(0.22, 3.35, 0.51, 0.26, 0.26, 0.06, '#24262b'), Q(0, 2.3, 0, 0.3, 1.3, 0.3, '#f2efe6'), Q(0, 2.1, 0, 1.1, 0.14, 0.6, '#f2efe6'), Q(0, 2.5, 0, 1.1, 0.14, 0.6, '#f2efe6'), Q(0, 2.9, 0, 1.1, 0.14, 0.6, '#f2efe6'), Q(0.75, 2.4, 0, 0.2, 1.2, 0.2, '#f2efe6'), Q(0, 1.6, 0, 0.8, 0.26, 0.4, '#f2efe6'), Q(0.25, 0.75, 0, 0.22, 1.4, 0.22, '#f2efe6')]) },
+  imp: { name: 'عفريت نار', fly: false, cubes: mirrorX([Q(0, 1.2, 0, 1, 1.2, 0.8, '#e5484d'), Q(0, 2.2, 0, 1.1, 0.9, 0.9, '#e5484d'), Q(0.4, 2.85, 0, 0.2, 0.55, 0.2, '#24262b', [0, 0, -0.4]), Q(0.25, 2.3, 0.46, 0.22, 0.18, 0.06, '#ffe14d'), Q(0.65, 1.3, 0, 0.3, 0.9, 0.3, '#e5484d'), Q(0.25, 0.35, 0, 0.3, 0.7, 0.3, '#e5484d'), Q(0, 1.1, 0.41, 0.6, 0.7, 0.06, '#ff8a3d'), Q(0, 0.9, -0.65, 0.16, 0.16, 0.9, '#e5484d', [0.6, 0, 0])]) },
+  golem: { name: 'عملاق تلج', fly: false, cubes: mirrorX([Q(0, 2.2, 0, 2.4, 2, 1.6, '#3d6fd8'), Q(0, 3.7, 0.2, 1.2, 1, 1.1, '#9ae6ff'), Q(0.3, 3.75, 0.76, 0.26, 0.2, 0.06, '#24262b'), Q(1.6, 2, 0, 0.9, 2.2, 0.9, '#9ae6ff'), Q(1.6, 0.8, 0, 1.1, 0.8, 1.1, '#3d6fd8'), Q(0.6, 0.6, 0, 0.9, 1.2, 0.9, '#3d6fd8'), Q(0.6, 3.4, -0.5, 0.3, 0.8, 0.3, '#9ae6ff', [0.3, 0, 0.3])]) },
+  dragon: { name: 'التنين', fly: false, boss: true, cubes: mirrorX([Q(0, 2, 0, 2.2, 1.6, 3.2, '#5b3a8f'), Q(0, 1.5, 0.2, 1.6, 0.6, 2.6, '#e2b043'), Q(0, 3, 1.6, 0.9, 1.4, 0.9, '#5b3a8f', [-0.4, 0, 0]), Q(0, 3.9, 2.3, 1.3, 1, 1.6, '#5b3a8f'), Q(0, 3.7, 3.3, 0.9, 0.6, 0.8, '#5b3a8f'), Q(0.5, 4.1, 2.6, 0.12, 0.25, 0.3, '#ffe14d'), Q(0.4, 4.6, 1.9, 0.2, 0.7, 0.2, '#f2efe6', [-0.5, 0, 0]), Q(2, 3, 0, 2.6, 0.2, 2, '#8b54f0', [0, 0, 0.5]), Q(0.8, 0.7, 1, 0.6, 1.4, 0.6, '#5b3a8f'), Q(0.8, 0.7, -1, 0.6, 1.4, 0.6, '#5b3a8f'), Q(0, 1.8, -2.5, 0.6, 0.6, 2.2, '#5b3a8f', [0.3, 0, 0])]) },
+};
+const BPAL = [...PAL.slice(1).map((p) => p.hex), '#f1c7a5', '#ff6fb5', '#7a5230', '#2f8f4e'];
+const HUE = (hex) => { const c = new THREE.Color(hex), h = {}; c.getHSL(h); return h; };
+// a colour's element: the same families as the weapon palette
+function elOfColor(hex) {
+  const { h, s, l } = HUE(hex); if (s < 0.25) return l > 0.85 ? 'light' : 'none'; const d = h * 360;
+  if (d < 20 || d >= 340) return 'fire'; if (d < 45) return 'fire'; if (d < 70) return 'bolt'; if (d < 160) return 'poison'; if (d < 250) return 'ice'; if (d < 300) return 'shadow'; return 'fire';
+}
+const WEAK = { fire: 'ice', ice: 'fire', poison: 'light', shadow: 'light', light: 'shadow', bolt: 'poison', none: 'bolt' };
+function beastStats(def) {
+  let V = 0, top = -1e9, bot = 1e9, ext = 0, horns = 0; const elv = {};
+  for (const q of def.cubes) { const v = q.s[0] * q.s[1] * q.s[2]; V += v; top = Math.max(top, q.p[1] + q.s[1] / 2); bot = Math.min(bot, q.p[1] - q.s[1] / 2); ext = Math.max(ext, Math.abs(q.p[0]) + q.s[0] / 2, Math.abs(q.p[2]) + q.s[2] / 2);
+    const e = elOfColor(q.c); elv[e] = (elv[e] || 0) + v; if (Math.min(...q.s) < 0.35 && Math.max(...q.s) > 0.45 && (q.r[0] || q.r[2])) horns++; }
+  let el = 'none', ev = 0; for (const k in elv) if (k !== 'none' && elv[k] > ev) { ev = elv[k]; el = k; }
+  if (ev < V * 0.25) el = 'none';
+  const height = top - bot, clamp = (v, a, b) => Math.max(a, Math.min(b, Math.round(v)));
+  const hp = clamp(25 + V * 9, 20, 900), spd = clamp((5.2 - Math.max(height, ext * 2) * 0.45) * 20, 20, 100) / 20, dmg = clamp(4 + Math.sqrt(V) * 3 + horns * 2, 3, 40);
+  const power = Math.round(hp * 0.25 + dmg * 3 + spd * 12 + (def.fly ? 15 : 0));
+  const rar = power < 70 ? RAR[0] : power < 110 ? RAR[1] : power < 160 ? RAR[2] : power < 220 ? RAR[3] : RAR[4];
+  return { hp, spd, dmg, el, weak: WEAK[el], resist: el, height: Math.max(0.5, height), V, power, rar, cubes: def.cubes.length };
+}
+// pixels drawn on a face become a little texture: the cube's colour underneath, the drawing on top
+const texCache = new Map();
+function faceMat(q, i) {
+  const f = q.f[i]; if (!f) return new THREE.MeshLambertMaterial({ color: q.c });
+  const key = q.c + f; let t = texCache.get(key);
+  if (!t) { const c = document.createElement('canvas'); c.width = c.height = 8; const g = c.getContext('2d'); g.fillStyle = q.c; g.fillRect(0, 0, 8, 8); for (let k = 0; k < 64; k++) { const ch = f[k]; if (ch && ch !== '.') { g.fillStyle = BPAL[parseInt(ch, 36)] || '#000'; g.fillRect(k % 8, (k / 8) | 0, 1, 1); } } t = new THREE.CanvasTexture(c); t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestFilter; texCache.set(key, t); }
+  return new THREE.MeshLambertMaterial({ map: t });
+}
+function cubeMesh(q) { const m = new THREE.Mesh(box, [0, 1, 2, 3, 4, 5].map((i) => faceMat(q, i))); m.position.fromArray(q.p); m.scale.fromArray(q.s); m.rotation.set(...q.r); m.castShadow = true; m.userData.q = q; return m; }
+function buildBeast(def) { const g = new THREE.Group(); for (const q of def.cubes) g.add(cubeMesh(q)); return g; }
+
+const BE = { R: null, scene: null, cam: null, orbit: null, tc: null, root: null, def: null, sel: null, mode: 'translate', undo: [], color: '#46c96b', mine: store.get('beasts', []) };
+function beastInit() {
+  if (BE.R) return; const st = $('bstage'), R3 = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true }); R3.setPixelRatio(Math.min(2, devicePixelRatio)); st.prepend(R3.domElement); BE.R = R3;
+  const sc = new THREE.Scene(); BE.scene = sc; BE.cam = new THREE.PerspectiveCamera(40, 1, 0.1, 200); BE.cam.position.set(7, 6, 9);
+  sc.add(new THREE.HemisphereLight(0xfff4e8, 0x40302a, 1.3)); const d = new THREE.DirectionalLight(0xffffff, 0.8); d.position.set(5, 10, 7); sc.add(d);
+  const gridH = new THREE.GridHelper(12, 24, 0x6b5a4c, 0x3a2f28); sc.add(gridH);
+  BE.orbit = new THREE.OrbitControls(BE.cam, R3.domElement); BE.orbit.target.set(0, 1.5, 0); BE.orbit.enableDamping = true; BE.orbit.update();
+  BE.tc = new THREE.TransformControls(BE.cam, R3.domElement); BE.tc.setTranslationSnap(0.25); BE.tc.setRotationSnap(Math.PI / 12); BE.tc.setScaleSnap(0.25); BE.tc.setSize(0.9); sc.add(BE.tc);
+  BE.tc.addEventListener('dragging-changed', (e) => { BE.orbit.enabled = !e.value; if (e.value) pushUndo(); else commitSel(); });
+  BE.tc.addEventListener('objectChange', () => { const m = BE.sel; if (!m) return; m.scale.set(Math.max(0.1, Math.abs(m.scale.x)), Math.max(0.1, Math.abs(m.scale.y)), Math.max(0.1, Math.abs(m.scale.z))); });
+  // tap a cube to select it (or a face, in paint mode); a tap on empty space lets go
+  let down = null; R3.domElement.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY }; });
+  R3.domElement.addEventListener('pointerup', (e) => { if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6 || BE.tc.dragging) return; down = null; pick(e); });
+  new ResizeObserver(() => { const w = st.clientWidth, h = st.clientHeight; R3.setSize(w, h, false); BE.cam.aspect = w / h; BE.cam.updateProjectionMatrix(); }).observe(st);
+  BPAL.forEach((hex, i) => { const b = document.createElement('button'); b.className = 'sw'; b.setAttribute('aria-pressed', String(hex === BE.color)); b.setAttribute('aria-label', 'لون ' + (i + 1)); b.innerHTML = `<i style="background:${hex}"></i>`; b.onclick = () => { BE.color = hex; PNT.ink = i; PNT.erase = false; $('bpal').querySelectorAll('.sw').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); if (BE.sel && !$('paintBox').hidden) return; if (BE.sel) { pushUndo(); BE.sel.userData.q.c = hex; rebuild(); } }; $('bpal').appendChild(b); });
+  for (const k in BEASTS) { const b = document.createElement('button'); b.className = 'temp'; b.textContent = BEASTS[k].name; b.onclick = () => { pushUndo(); loadBeast(clone(BEASTS[k]), true); }; $('btemps').appendChild(b); }
+  loadBeast(clone(BEASTS.slime), true); renderMyBeasts();
+}
+const clone = (o) => JSON.parse(JSON.stringify(o));
+function loadBeast(def, fresh) { BE.def = def; if (fresh) { bNameTouched = false; $('bFly').checked = !!def.fly; } rebuild(); select(null); }
+function rebuild() {
+  const keep = BE.sel?.userData.q; if (BE.root) { BE.scene.remove(BE.root); } BE.root = buildBeast(BE.def); BE.scene.add(BE.root);
+  BE.sel = null; if (keep) { const m = BE.root.children.find((x) => x.userData.q === keep); if (m) select(m); else select(null); } else BE.tc.detach();
+  bcard();
+}
+function select(m) { BE.sel = m; if (m && BE.mode !== 'paint') { BE.tc.setMode(BE.mode); BE.tc.attach(m); } else BE.tc.detach(); for (const c of BE.root?.children || []) for (const mt of c.material) mt.emissive?.setHex(c === m ? 0x2a1a0a : 0); }
+function commitSel() { const m = BE.sel; if (!m) return; const q = m.userData.q; q.p = m.position.toArray().map((v) => +v.toFixed(3)); q.s = m.scale.toArray().map((v) => +Math.max(0.1, v).toFixed(3)); q.r = [m.rotation.x, m.rotation.y, m.rotation.z].map((v) => +v.toFixed(4)); bcard(); }
+function pushUndo() { BE.undo.push(JSON.stringify(BE.def)); if (BE.undo.length > 60) BE.undo.shift(); }
+const ray = new THREE.Raycaster();
+function pick(e) {
+  const r = BE.R.domElement.getBoundingClientRect(); ray.setFromCamera({ x: (e.clientX - r.left) / r.width * 2 - 1, y: -((e.clientY - r.top) / r.height) * 2 + 1 }, BE.cam);
+  const hit = ray.intersectObjects(BE.root.children, false)[0];
+  if (!hit) { select(null); return; } select(hit.object);
+  if (BE.mode === 'paint') openPaint(hit.object, hit.face.materialIndex);
+}
+const setMode = (m) => { BE.mode = m; for (const [id, k] of [['bMove', 'translate'], ['bSize', 'scale'], ['bTurn', 'rotate'], ['bPaint', 'paint']]) $(id).setAttribute('aria-pressed', String(m === k)); if (m === 'paint') { BE.tc.detach(); toast('دوس على وش أي مكعب عشان ترسم عليه'); } else if (BE.sel) { BE.tc.attach(BE.sel); BE.tc.setMode(m); } };
+$('bMove').onclick = () => setMode('translate'); $('bSize').onclick = () => setMode('scale'); $('bTurn').onclick = () => setMode('rotate'); $('bPaint').onclick = () => setMode('paint');
+$('bAdd').onclick = () => { pushUndo(); const q = Q(0, 1.5, 0, 1, 1, 1, BE.color); if (BE.sel) { const o = BE.sel.userData.q; q.p = [o.p[0] + o.s[0] / 2 + 0.5, o.p[1], o.p[2]]; } BE.def.cubes.push(q); rebuild(); select(BE.root.children[BE.root.children.length - 1]); if (BE.mode === 'paint') setMode('translate'); };
+$('bDup').onclick = () => { if (!BE.sel) return toast('اختار مكعب الأول'); pushUndo(); const q = clone(BE.sel.userData.q); q.p[0] += 0.5; BE.def.cubes.push(q); rebuild(); select(BE.root.children[BE.root.children.length - 1]); };
+$('bMir').onclick = () => { if (!BE.sel) return toast('اختار مكعب الأول'); pushUndo(); const o = BE.sel.userData.q, q = { ...clone(o), p: [-o.p[0], o.p[1], o.p[2]], r: [o.r[0], -o.r[1], -o.r[2]] }; if (Math.abs(o.p[0]) < 0.05) q.p[0] = -(o.s[0] + 0.25); BE.def.cubes.push(q); rebuild(); toast('اتعمل نسخة في الناحية التانية'); };
+$('bDel').onclick = () => { if (!BE.sel) return toast('اختار مكعب الأول'); if (BE.def.cubes.length <= 1) return toast('الوحش لازم يبقى فيه مكعب واحد على الأقل'); pushUndo(); BE.def.cubes.splice(BE.def.cubes.indexOf(BE.sel.userData.q), 1); BE.sel = null; rebuild(); };
+$('bUndo').onclick = () => { if (!BE.undo.length) return; BE.def = JSON.parse(BE.undo.pop()); BE.sel = null; rebuild(); };
+$('bFly').onchange = () => { BE.def.fly = $('bFly').checked; bcard(); };
+// painting one face of a cube on an 8x8 grid
+const PNT = { m: null, i: 0, ink: 3, erase: false, cells: null };
+function openPaint(m, i) {
+  PNT.m = m; PNT.i = i; const q = m.userData.q; PNT.cells = (q.f[i] || '.'.repeat(64)).split(''); pushUndo();
+  $('paintT').textContent = 'ارسم على الوش ' + ['اليمين', 'الشمال', 'اللي فوق', 'اللي تحت', 'اللي قدام', 'اللي ورا'][i]; $('paintBox').hidden = false; drawPaint();
+}
+function drawPaint() { const c = $('paintCv'), g = c.getContext('2d'), s = c.width / 8, q = PNT.m.userData.q; g.fillStyle = q.c; g.fillRect(0, 0, c.width, c.height); PNT.cells.forEach((ch, k) => { if (ch !== '.') { g.fillStyle = BPAL[parseInt(ch, 36)]; g.fillRect((k % 8) * s, ((k / 8) | 0) * s, s, s); } }); g.strokeStyle = '#0003'; for (let k = 1; k < 8; k++) { g.beginPath(); g.moveTo(k * s, 0); g.lineTo(k * s, c.height); g.moveTo(0, k * s); g.lineTo(c.width, k * s); g.stroke(); } }
+{ const c = $('paintCv'); let on = false; const at = (e) => { const r = c.getBoundingClientRect(), x = Math.floor((e.clientX - r.left) / r.width * 8), y = Math.floor((e.clientY - r.top) / r.height * 8); if (x < 0 || y < 0 || x > 7 || y > 7) return; PNT.cells[y * 8 + x] = PNT.erase ? '.' : PNT.ink.toString(36); drawPaint(); };
+  c.addEventListener('pointerdown', (e) => { on = true; c.setPointerCapture(e.pointerId); at(e); }); c.addEventListener('pointermove', (e) => on && at(e)); c.addEventListener('pointerup', () => { on = false; }); }
+$('paintErase').onclick = () => { PNT.erase = !PNT.erase; $('paintErase').textContent = PNT.erase ? 'قلم' : 'ممحاة'; };
+$('paintClear').onclick = () => { PNT.cells = '.'.repeat(64).split(''); drawPaint(); };
+$('paintDone').onclick = () => { const s2 = PNT.cells.join(''); PNT.m.userData.q.f[PNT.i] = /[^.]/.test(s2) ? s2 : ''; $('paintBox').hidden = true; rebuild(); };
+let bNameTouched = false; $('bName').addEventListener('input', () => { bNameTouched = true; });
+function beastName(st) { const pick = (l) => l[Math.floor(Math.random() * l.length)]; return `${pick(['الوحش', 'المخلوق', 'الكائن', 'الغول', 'العملاق'])} ${pick(EL[st.el].words)} ${pick(['الرهيب', 'الغضبان', 'الجعان', 'المجنون', 'الكبير', 'اللي محدش يقدر عليه'])}`; }
+$('bNameGo').onclick = () => { $('bName').value = beastName(beastStats(BE.def)); bNameTouched = true; };
+function bcard() {
+  if (!BE.def) return; const st = beastStats(BE.def); $('bcard').style.setProperty('--rc', st.rar.col);
+  if (!bNameTouched) $('bName').value = BE.def.name || beastName(st);
+  $('bRar').textContent = st.rar.name; $('bEl').textContent = 'العنصر: ' + EL[st.el].name; $('bEl').style.color = EL[st.el].col; $('bWeak').textContent = 'بيضعف قدام: ' + EL[st.weak].name; $('bPow').textContent = st.power;
+  const rows = [['الصحة', Math.min(100, st.hp / 6), st.hp, '#46c96b'], ['الضرر', st.dmg * 2.5, st.dmg, '#ff8a5c'], ['السرعة', st.spd * 20, st.spd.toFixed(1), '#7cd4ff'], ['المكعبات', Math.min(100, st.cubes * 3), st.cubes, '#d6c3a8']];
+  $('bStats').innerHTML = rows.map(([k, w, v, c]) => `<span>${k}</span><span class="bar"><b style="width:${Math.min(100, w)}%;background:${c}"></b></span><span class="num">${v}</span>`).join('');
+  $('bDesc').textContent = `${st.V > 30 ? 'ضخم وتقيل، صحته كبيرة وماشي ببطء.' : st.V < 6 ? 'صغير وسريع، بس يموت من ضربتين.' : 'حجمه متوسط.'} سلاح ${EL[st.weak].name} بيعمل فيه ضرر مضاعف، وسلاح ${EL[st.el].name} بيعمل نص الضرر.`;
+}
+function beastThumb(def) { // a picture of a monster, rendered once with the workshop's renderer
+  const R3 = BE.R, sc = new THREE.Scene(); sc.add(new THREE.HemisphereLight(0xfff4e8, 0x40302a, 1.3)); const d = new THREE.DirectionalLight(0xffffff, 0.8); d.position.set(5, 10, 7); sc.add(d);
+  const g = buildBeast(def); sc.add(g); const bx = new THREE.Box3().setFromObject(g), c = bx.getCenter(new THREE.Vector3()), sz = bx.getSize(new THREE.Vector3()).length();
+  const cam = new THREE.PerspectiveCamera(35, 1, 0.1, 100); cam.position.copy(c).add(new THREE.Vector3(0.8, 0.5, 1.3).normalize().multiplyScalar(sz * 1.5)); cam.lookAt(c);
+  const w = R3.domElement.width, h = R3.domElement.height; R3.setSize(256, 256, false); R3.render(sc, cam); const url = R3.domElement.toDataURL('image/png'); R3.setSize(w, h, false); return url;
+}
+function renderMyBeasts() {
+  const L = $('myBeasts'); L.innerHTML = ''; if (!BE.mine.length) { L.innerHTML = '<div class="empty">لسه معملتش وحوش. ابني وحش ودوس "احفظ في وحوشي"، وهينزل الساحة.</div>'; return; }
+  BE.mine.forEach((def, i) => { const st = beastStats(def), d = document.createElement('div'); d.className = 'item'; d.style.setProperty('--rc', st.rar.col); const im = new Image(); im.className = 'thumb'; im.alt = def.name; im.src = beastThumb(def); d.appendChild(im);
+    d.insertAdjacentHTML('beforeend', `<b></b><small>${st.rar.name} · ${EL[st.el].name} · الصحة ${st.hp}</small>`); d.querySelector('b').textContent = def.name;
+    const r = document.createElement('div'); r.className = 'row'; const mk = (t, fn, alt) => { const b = document.createElement('button'); b.className = 'btn' + (alt ? ' alt' : ''); b.textContent = t; b.onclick = () => fn(b); r.appendChild(b); };
+    mk('افتح', () => { pushUndo(); loadBeast(clone(def), true); $('bName').value = def.name; bNameTouched = true; }); mk('حاربه', () => fightBeast(def), true);
+    mk('امسح', (b) => { if (!b.dataset.arm) { b.dataset.arm = 1; b.textContent = 'متأكد؟'; return; } BE.mine.splice(i, 1); store.set('beasts', BE.mine); renderMyBeasts(); }, true);
+    d.appendChild(r); L.appendChild(d); });
+}
+$('bSaveB').onclick = () => { commitSel(); const def = clone(BE.def); def.name = $('bName').value.trim() || beastName(beastStats(def)); def.id = def.id || Date.now().toString(36); const i = BE.mine.findIndex((x) => x.id === def.id); if (i >= 0) BE.mine[i] = def; else BE.mine.unshift(def); BE.def.id = def.id; BE.mine = BE.mine.slice(0, 24); store.set('beasts', BE.mine); renderMyBeasts(); toast('الوحش اتحفظ وهينزل الساحة'); };
+$('bNew').onclick = () => { pushUndo(); loadBeast({ name: '', fly: false, cubes: [Q(0, 1, 0, 1.5, 1.5, 1.5, BE.color)] }, true); };
+$('bFightB').onclick = () => { commitSel(); const def = clone(BE.def); def.name = $('bName').value.trim() || beastName(beastStats(def)); fightBeast(def); };
+function fightBeast(def) { if (!analyse(grid)) { show('forge'); toast('ارسم سلاح الأول، وبعدين ارجع حارب'); return; } AR.focus = def; show('arena'); startArena(); }
 
 let ct = 0; function changed() { drawGrid(); clearTimeout(ct); ct = setTimeout(() => { renderCard(); build(); }, 90); }
 
@@ -384,8 +746,8 @@ async function unpublish(id) { const me = gal.docs.find((d) => d.uid === gal.uid
 async function like(key) { if (!gal.db) return; const cur = { ...(gal.likes.find((l) => l.uid === gal.uid)?.k || {}) }; if (cur[key]) delete cur[key]; else cur[key] = 1; try { await gal.db.collection('likes').doc(gal.uid).set({ k: cur }); } catch { toast('مانفعش، جرّب تاني'); } }
 $('bPub').onclick = () => { if (!A) return; const w = { id: Date.now().toString(36), name: $('wName').value.trim() || nameFor(A), g: enc(grid) }; publish(w); };
 
-function show(v) { for (const [k, id, sec] of [['forge', 'tForge', 'vForge'], ['mine', 'tMine', 'vMine'], ['gal', 'tGal', 'vGal']]) { $(id).setAttribute('aria-pressed', String(k === v)); $(sec).hidden = k !== v; } if (v === 'mine') renderMine(); if (v === 'gal') renderGal(); if (v === 'forge') size(); }
-$('tForge').onclick = () => show('forge'); $('tMine').onclick = () => show('mine'); $('tGal').onclick = () => show('gal');
+function show(v) { for (const [k, id, sec] of [['forge', 'tForge', 'vForge'], ['beast', 'tBeast', 'vBeast'], ['arena', 'tArena', 'vArena'], ['mine', 'tMine', 'vMine'], ['gal', 'tGal', 'vGal']]) { $(id).setAttribute('aria-pressed', String(k === v)); $(sec).hidden = k !== v; } if (v === 'mine') renderMine(); if (v === 'gal') renderGal(); if (v === 'forge') size(); if (v === 'beast') beastInit(); if (v === 'arena') { arenaInit(); monsterRow(); if (!AR.on) { AR.cam.position.set(0, 13, 11); AR.cam.lookAt(0, 0.5, 0); heldWeapon(); } } }
+$('tForge').onclick = () => show('forge'); $('tMine').onclick = () => show('mine'); $('tGal').onclick = () => show('gal'); $('tBeast').onclick = () => show('beast'); $('tArena').onclick = () => show('arena');
 
 grid = fromRows(TEMPS.sword); changed(); initGallery();
 })();
