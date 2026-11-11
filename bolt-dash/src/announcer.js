@@ -4,7 +4,7 @@
 // phrase generator (thousands of combinations, never the same line twice in a row) and the browser's own voice.
 // The text always shows on screen too, as a TV-style caption.
 import { G, save, store } from './core.js';
-import { LANG, LANGS } from './i18n.js';
+import { LANG, LANGS, t } from './i18n.js';
 
 const AR = LANG === 'ar';
 const rnd = (a) => a[Math.floor(Math.random() * a.length)];
@@ -91,19 +91,65 @@ function lineFor(ev, d) {
   return s.replace(/\{p\}/g, d.p ?? '').replace(/\{n\}/g, d.n ?? '').replace(/\{team\}/g, d.team ?? '').replace(/\{u\}/g, d.u ?? '').replace(/\{mode\}/g, d.mode ?? '');
 }
 
+// ---------------------------------------------------------------- the recorded voices
+// Every device can play these: a bank of lines recorded with neural voices (Piper: Arabic "kareem", English
+// LibriTTS-R voices), shipped as world/voice-<lang>.pack.txt and loaded with the first match. Used when the
+// Claude voice isn't available on this device (phones, Safari...) or doesn't start.
+const BANK = { ar: 1, en: 1 };
+let bank = null, bankLoading = null, actx = null, src = null, bankUsed = {};
+function audio() { if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch { actx = null; } } if (actx?.state === 'suspended') actx.resume().catch(() => {}); return actx; }
+function loadBank() {
+  if (bank || bankLoading || !BANK[LANG]) return bankLoading;
+  bankLoading = (async () => {
+    const b64 = (await (await fetch(`./world/voice-${LANG}.pack.txt`)).text()).trim(); let buf;
+    try { buf = await (await fetch('data:application/octet-stream;base64,' + b64)).arrayBuffer(); } catch { const bin = atob(b64), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i); buf = u8.buffer; }
+    const len = new DataView(buf).getUint32(0, true), head = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 4, len)));
+    bank = { buf, base: 4 + len, files: head.files, lines: head.lines, decoded: {} };
+  })().catch(() => { bankLoading = null; });
+  return bankLoading;
+}
+// which recorded line fits this moment
+function bankLine(ev, d) {
+  if (!bank) return null; let key = ev;
+  if (ev === 'goal' || ev === 'point') key = ev + '_' + (d.tk === 'blue' ? 'blue' : 'red');
+  else if (ev === 'left') { if (d.n !== 2 && d.n !== 3) return null; key = 'left' + d.n; }
+  else if (ev === 'ult') { const named = bank.lines.filter((l) => l.ev === 'ultname' && d.u && (t(l.name) === d.u || l.name === d.u)); if (named.length && Math.random() < 0.7) return named[0]; }
+  const all = bank.lines.filter((l) => l.ev === key); if (!all.length) return null;
+  // never the same line twice until all of them were used
+  const used = (bankUsed[key] ||= new Set()); let free = all.filter((l) => !used.has(l.id)); if (!free.length) { used.clear(); free = all; }
+  const l = free[Math.floor(Math.random() * free.length)]; used.add(l.id); return l;
+}
+async function playClip(l) {
+  const ctx = audio(); if (!ctx || !bank) return 0;
+  let b = bank.decoded[l.id];
+  if (!b) { const [o, n] = bank.files[l.id]; b = bank.decoded[l.id] = await ctx.decodeAudioData(bank.buf.slice(bank.base + o, bank.base + o + n)); }
+  try { src?.stop(); } catch { /* already over */ }
+  const s = ctx.createBufferSource(), g = ctx.createGain(); g.gain.value = 1.15; s.buffer = b; s.connect(g).connect(ctx.destination); s.start(); src = s;
+  return b.duration;
+}
+async function speakBank(ev, d) {
+  if (!bank) await loadBank(); if (!bank) return false;
+  const l = bankLine(ev, d); if (!l) return false;
+  caption(l.who, l.text); const dur = await playClip(l); if (!dur) return false;
+  speaking = 1; clearTimeout(ann._safe); ann._safe = setTimeout(() => { speaking = 0; curPri = 0; }, dur * 1000 + 200);
+  // the second commentator chips in now and then
+  if (ev !== 'lull' && ev !== 'quip' && Math.random() < 0.3) setTimeout(async () => { if (!ann.on) return; const q = bankLine('quip', d); if (!q) return; caption(q.who, q.text); const d2 = await playClip(q); clearTimeout(ann._safe); ann._safe = setTimeout(() => { speaking = 0; curPri = 0; }, d2 * 1000 + 200); }, dur * 1000 + 250);
+  return true;
+}
+
 // ---------------------------------------------------------------- the voices
-let voiceErr = '', tts = null, ttsTried = false, ttsOff = false, denied = false, nextLull = 15, speaking = 0, curPri = 0, lastAt = 0, quietT = 0;
+let heard = false, broken = false, voiceErr = '', tts = null, ttsTried = false, ttsOff = false, denied = false, nextLull = 15, speaking = 0, curPri = 0, lastAt = 0, quietT = 0;
 async function getTts() {
   if (ttsTried) return tts; ttsTried = true;
   try { tts = window.claude?.use ? await window.claude.use('tts') : null; } catch { tts = null; }
-  tts?.onState?.(({ state }) => { if (state === 'idle') { speaking = 0; curPri = 0; } });
+  tts?.onState?.(({ state }) => { if (state === 'speaking') heard = true; if (state === 'idle') { speaking = 0; curPri = 0; } });
   return tts;
 }
 const synth = () => (typeof speechSynthesis !== 'undefined' ? speechSynthesis : null);
 let needTap = false, unlocked = false, lastLines = null;
 // phones only let a page speak after the player touches it: on the first touch or key press, wake both voices up
 function wake() {
-  getTts();
+  getTts(); audio(); loadBank();
   const s = synth(); if (s && !unlocked) { unlocked = true; try { s.getVoices(); const u = new SpeechSynthesisUtterance(' '); u.volume = 0; s.speak(u); } catch { /* no voice here */ } }
   // the voice was stopped (Esc or the Stop button): it may only start again from a touch, so say the last line now
   if (needTap && tts && ann.on && lastLines) { needTap = false; tts.speak(lastLines, { language: LANG }).catch(() => {}); }
@@ -133,13 +179,16 @@ export const ann = {
   get on() { return save.announcer !== false && !save.muted; },
   set(v) { save.announcer = !!v; store.set('announcer', save.announcer); if (!v) this.stop(); },
   // a new match: let Claude write this match's lines while the camera flies over the course
-  match(ctx) { pool = {}; quietT = 0; if (this.on) writeLines(ctx); },
-  stop() { speaking = 0; curPri = 0; try { tts?.stop(); } catch { /* not speaking */ } synth()?.cancel(); if (capEl) capEl.hidden = true; },
+  match(ctx) { pool = {}; quietT = 0; if (this.on) { writeLines(ctx); loadBank(); } },
+  stop() { speaking = 0; curPri = 0; try { src?.stop(); } catch { /* already over */ } try { tts?.stop(); } catch { /* not speaking */ } synth()?.cancel(); if (capEl) capEl.hidden = true; },
   // something happened: pri 1 chatter, 2 normal, 3 big moment (always gets through)
   async say(ev, d = {}, pri = 2) {
     if (!this.on) return; const now = performance.now();
     if (speaking && (pri < curPri || (pri === curPri && pri < 3))) return;
     if (pri < 3 && now - lastAt < (pri === 1 ? 6000 : 1800)) return;
+    // no working Claude voice here: the recorded voices
+    const tt0 = ttsOff || broken ? null : await getTts();
+    if (!tt0 && BANK[LANG] && !denied) { curPri = pri; lastAt = now; quietT = 0; if (await speakBank(ev, d)) return; }
     const text = lineFor(ev, d); if (!text) return;
     const lines = [{ who: 0, text }];
     // the second commentator chips in now and then
@@ -148,8 +197,10 @@ export const ann = {
     speaking = 1; curPri = pri; lastAt = now; quietT = 0; caption(lines[0].who, text);
     clearTimeout(this._safe); const est = 1500 + lines.reduce((n, l) => n + l.text.length, 0) * 75; this._safe = setTimeout(() => { speaking = 0; curPri = 0; }, est);
     if (lines[1]) setTimeout(() => { if (speaking) caption(1, lines[1].text); }, 900 + text.length * 55);
-    const tt = ttsOff ? null : await getTts();
+    const tt = tt0;
     if (tt) {
+      // if the Claude voice doesn't actually start on this device, switch to the recorded voices for good
+      if (!heard && BANK[LANG]) setTimeout(() => { if (!heard && !broken) { broken = true; try { tt.stop(); } catch { /* */ } speakBank(ev, d); } }, 4000);
       lastLines = lines.map((l) => ({ text: l.text, voice: VOICE[l.who].v, rate: VOICE[l.who].rate }));
       tt.speak(lines.map((l) => ({ text: l.text, voice: VOICE[l.who].v, rate: VOICE[l.who].rate })), { language: LANG }).catch((e) => {
         speaking = 0; curPri = 0;
@@ -164,13 +215,14 @@ export const ann = {
   // which voice this device uses, for the Settings screen
   async status() {
     const tt = denied ? null : await getTts();
-    if (tt) return { kind: 'claude', err: voiceErr };
+    if (tt && !broken) return { kind: 'claude', err: voiceErr };
+    if (BANK[LANG] && !denied) return { kind: 'recorded', err: '' };
     if (denied) return { kind: 'off', err: voiceErr };
     const s = synth(); if (!s) return { kind: 'none', err: voiceErr };
     return { kind: browserVoice().length ? 'device' : 'device-nolang', err: voiceErr };
   },
   // from a button press, so phones allow it
-  test() { wake(); speaking = 0; curPri = 0; lastAt = 0; ttsOff = false; return this.say('intro', { mode: 'Bolt Dash' }, 3); },
+  test() { wake(); speaking = 0; curPri = 0; lastAt = 0; return this.say('intro', { mode: 'Bolt Dash' }, 3); },
   // per frame: hide the caption, fill quiet moments with chatter
   update(dt, playing) {
     if (capT > 0 && (capT -= dt) <= 0 && capEl) capEl.hidden = true;

@@ -456,7 +456,7 @@ const ballClassic = {
     if (this.resetT > 0) { this.resetT -= dt; if (this.resetT <= 0) { this.resetBall(); G.runners.forEach((r, i) => { if (!r.out) { const s = this.spawn(G.runners.indexOf(r)); r.reset(s.x, 0, s.z, s.facing); } }); } }
     else if (this.goalHit(p)) {
       const scorer = this.goalHit(p); this.score[scorer] += this.lastValue || 1; this.lastValue = 0; this.resetT = 2.2;
-      sfx.goal(); fx.confetti(V(p.x, p.y + 1, p.z), 120); toast(scorer === 'red' ? t('Goal for Red!') : t('Goal for Blue!'), 2); G.ann?.('goal', { team: scorer === 'red' ? t('Red') : t('Blue') }, 3);
+      sfx.goal(); fx.confetti(V(p.x, p.y + 1, p.z), 120); toast(scorer === 'red' ? t('Goal for Red!') : t('Goal for Blue!'), 2); G.ann?.('goal', { team: scorer === 'red' ? t('Red') : t('Blue'), tk: scorer }, 3);
       if (this.score[scorer] >= (this.winScore || 3)) setTimeout(() => G.endRound(), 1400);
     }
     if (p.y < -6) this.resetBall();

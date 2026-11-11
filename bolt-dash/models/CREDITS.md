@@ -18,3 +18,9 @@ Kenney textures (colormap.png) were embedded into each .glb.
 
 ## Loading screen flags
 - Country flags from **flag-icons** by Panayiotis Lipiridis — https://github.com/lipis/flag-icons — MIT License.
+
+## Announcer voices
+- Recorded commentator lines (world/voice-ar.pack.txt, world/voice-en.pack.txt) were spoken by Piper neural voices
+  (https://github.com/rhasspy/piper, MIT), via the sherpa-onnx model releases:
+  - Arabic: ar_JO "kareem" (medium). Dataset: https://github.com/AliMokhammad/arabicttstrain/ (license: see that URL)
+  - English: en_US "libritts_r" (medium), speakers 3 and 9. Dataset: LibriTTS-R, CC BY 4.0

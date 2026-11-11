@@ -461,7 +461,7 @@ async function openOv(kind) {
     const bind = (id, fn) => $(id).addEventListener('click', (e) => { const b = e.target.closest('[data-v]'); if (!b) return; fn(b.dataset.v); persist2(); sfx.click(); openOv('settings'); });
     bind('sQ', (v) => { save.quality = v; applyQuality(); }); bind('sS', (v) => { save.muted = v === 'off'; }); bind('sC', (v) => { save.sens = parseFloat(v); }); bind('sA', (v) => { ann.set(v === 'on'); if (v === 'on') ann.say('quip', {}, 3); });
     $('sAT').addEventListener('click', () => { if (!ann.on) ann.set(true); ann.test(); setTimeout(showVoice, 2500); });
-    const showVoice = () => ann.status().then((st) => { const el = $('sAS'); if (!el) return; el.textContent = { claude: t('Voice: Claude'), device: t('Voice: this device'), 'device-nolang': t('This device has no voice for this language'), off: t('Reading aloud is turned off for this game in its Permissions menu'), none: t('This device can\'t speak: captions only') }[st.kind] + (st.err && st.kind === 'claude' ? ' (' + st.err + ')' : ''); });
+    const showVoice = () => ann.status().then((st) => { const el = $('sAS'); if (!el) return; el.textContent = { claude: t('Voice: Claude'), recorded: t('Voice: recorded commentators'), device: t('Voice: this device'), 'device-nolang': t('This device has no voice for this language'), off: t('Reading aloud is turned off for this game in its Permissions menu'), none: t('This device can\'t speak: captions only') }[st.kind] + (st.err && st.kind === 'claude' ? ' (' + st.err + ')' : ''); });
     showVoice();
     $('sLang').addEventListener('change', (e) => setLang(e.target.value));
     $('sIntro').addEventListener('click', () => { closeOv(); playIntro(true); });

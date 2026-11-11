@@ -914,3 +914,4 @@ Voice: this device
 This device has no voice for this language
 Reading aloud is turned off for this game in its Permissions menu
 This device can't speak: captions only
+Voice: recorded commentators
