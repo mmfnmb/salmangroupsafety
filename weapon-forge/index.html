@@ -98,6 +98,15 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
 .sliders input{width:100%;accent-color:var(--ember)}
 .sliders output{font-family:var(--pix);font-size:12px;text-align:end}
 .sliders select,.roleRow select{background:var(--coal);color:var(--bone);border:1px solid var(--edge);border-radius:8px;padding:5px 8px;font:700 13px var(--body)}
+.abList{display:flex;flex-direction:column;gap:6px}
+.ab{display:flex;gap:8px;align-items:center;background:var(--coal);border:1px solid var(--edge);border-radius:10px;padding:6px 10px;font-size:13px}
+.ab b{font-size:14px}.ab span{color:var(--ash);flex:1;min-width:0}.ab button{font-size:12px;padding:4px 9px}
+.abil textarea{width:100%;background:var(--coal);color:var(--bone);border:1px solid var(--edge);border-radius:10px;padding:8px 10px;font:600 14px var(--body);resize:vertical}
+.abForm{display:grid;gap:8px;background:var(--coal);border:1px solid var(--edge);border-radius:12px;padding:10px}
+.abForm label{display:grid;grid-template-columns:minmax(8em,auto) minmax(0,1fr);gap:8px;align-items:center;font-size:13px;font-weight:700}
+.abForm input,.abForm select{background:var(--iron);color:var(--bone);border:1px solid var(--edge);border-radius:8px;padding:5px 8px;font:700 13px var(--body);min-width:0}
+.shapeBar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#3a2417;border:1px solid var(--ember);border-radius:10px;padding:8px 12px}
+.shapeBar span{color:var(--ash);font-size:13px;flex:1}
 .chk{display:flex;gap:8px;align-items:center;font-weight:700;font-size:14px}
 .paint{position:fixed;inset:0;z-index:30;background:#000a;display:flex;align-items:center;justify-content:center;padding:16px}
 .pcard{background:var(--iron);border:1px solid var(--edge);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;max-width:360px;width:100%}
@@ -171,6 +180,7 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
 
   <section id="vBeast" class="forge" hidden>
     <div class="panel">
+      <div class="shapeBar" id="shapeBar" hidden><b>بتصمم شكل الطلقة</b><span>ابنيها بالمكعبات زي أي وحش</span><button class="btn" id="shapeDone">خلّصت</button></div>
       <div class="bstage" id="bstage">
         <div class="btools" role="toolbar" aria-label="أدوات المكعبات">
           <button class="tool" id="bAdd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 8v8M8 12h8"/></svg>مكعب جديد</button>
@@ -212,6 +222,30 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
         </div>
         <div class="roleRow" id="roleRow" hidden><span class="label">الجزء ده:</span><select id="bRole" aria-label="دور الجزء"></select></div>
         <div class="acts"><button class="btn alt" id="pvWalk">جرّب: مشي</button><button class="btn alt" id="pvAtk">جرّب: هجوم</button><button class="btn alt" id="pvDie">جرّب: موت</button><button class="btn alt" id="bFuse">ادمج مع وحش تاني</button></div>
+        <div class="abil">
+          <div class="label">قدرات الوحش</div>
+          <div id="abList" class="abList"></div>
+          <textarea id="abText" rows="2" maxlength="300" placeholder="اكتب القدرة بكلامك، مثلاً: لما اللاعب يقرّب يولّع فتيل ويتفرقع. أو: كل 3 ثواني يرمي 3 كور نار."></textarea>
+          <div class="acts"><button class="btn" id="abMake">حوّلها لقدرة</button><button class="btn alt" id="abNew">قدرة من القايمة</button></div>
+          <div class="abForm" id="abForm" hidden>
+            <label>اسم القدرة <input id="afName" maxlength="30"></label>
+            <label>تشتغل إمتى <select id="afWhen"><option value="near">لما اللاعب يقرّب (مسافة)</option><option value="every">كل كام ثانية</option><option value="hit">لما يتضرب</option><option value="low">لما صحته تقل عن (٪)</option><option value="death">لما يموت</option></select></label>
+            <label data-w="near every low">الرقم <input type="number" id="afWv" min="0" max="100" step="0.5"></label>
+            <label>بيعمل إيه <select id="afAct"><option value="shoot">يرمي طلقات</option><option value="explode">يتفرقع (فتيل)</option><option value="dash">يندفع عليك</option><option value="slam">ينط ويخبط الأرض</option><option value="summon">يطلّع وحوش</option><option value="heal">يعالج نفسه</option><option value="shield">يعمل درع</option><option value="teleport">ينتقل وراك</option></select></label>
+            <label data-a="shoot explode dash slam">الضرر <input type="number" id="afDmg" min="1" max="200"></label>
+            <label data-a="shoot explode slam">نص قطر الانفجار <input type="number" id="afRad" min="0" max="12" step="0.5"></label>
+            <label data-a="shoot">عدد الطلقات <input type="number" id="afN" min="1" max="12"></label>
+            <label data-a="shoot">سرعة الطلقة <input type="number" id="afSpd" min="2" max="30"></label>
+            <label data-a="shoot explode">العنصر <select id="afEl"></select></label>
+            <label data-a="explode">وقت الفتيل (ثانية) <input type="number" id="afFuse" min="0" max="5" step="0.1"></label>
+            <label data-a="heal">العلاج <input type="number" id="afAmt" min="1" max="500"></label>
+            <label data-a="shield">مدة الدرع <input type="number" id="afSec" min="0.5" max="10" step="0.5"></label>
+            <label data-a="summon">يطلّع مين <select id="afWho"></select></label>
+            <label data-a="summon">كام واحد <input type="number" id="afCnt" min="1" max="6"></label>
+            <label>يستنّى قد إيه بين كل مرة (ثانية) <input type="number" id="afCd" min="0" max="30" step="0.5"></label>
+            <div class="acts"><button class="btn alt" id="afShape" data-a="shoot explode">ارسم شكل الطلقة بالمكعبات</button><button class="btn" id="afSave">احفظ القدرة</button><button class="btn alt" id="afCancel">إلغاء</button></div>
+          </div>
+        </div>
         <div class="fuse" id="fuseBox" hidden><span class="label">اختار الوحش اللي هيتدمج مع اللي قدامك</span><div class="temps" id="fuseList"></div></div>
         <p class="desc" id="bDesc"></p>
         <div class="acts">
@@ -485,6 +519,7 @@ const ART = {
   dragon: ['..d........d..', '.ddd......ddd.', 'dddd..dd..dddd', 'dddddddddddddd', '.ddyrddddyrdd.', '.dddddddddddd.', '..ddkkkkkkdd..', '..dddWWWWddd..', '.dddddddddddd.', 'dddddddddddddd', 'dd.dddddddd.dd', 'd..dd....dd..d', '...dd....dd...'],
 };
 const MON = {
+  tnt: { name: 'وحش TNT', hp: 30, spd: 3.2, dmg: 4, size: 0.9, weak: 'ice', resist: 'fire', from: 2 },
   slime: { name: 'سلايم', hp: 40, spd: 2.2, dmg: 6, size: 1.0, weak: 'fire', resist: 'poison', from: 1 },
   bat: { name: 'خفاش', hp: 28, spd: 4.2, dmg: 5, size: 0.9, fly: true, weak: 'light', resist: 'shadow', from: 1 },
   skel: { name: 'هيكل عظمي', hp: 60, spd: 2.6, dmg: 9, size: 1.2, weak: 'light', resist: 'poison', from: 2 },
@@ -540,7 +575,7 @@ function heldWeapon() {
 function monsterRow() { beastInit(); $('bestiary').innerHTML = ''; for (const e of arenaPool()) { const d = document.createElement('div'); d.className = 'item mon'; const im = new Image(); im.className = 'thumb'; im.style.width = '64px'; im.style.flex = 'none'; im.src = beastThumb(e.def); im.alt = e.M.name; d.appendChild(im); const t = document.createElement('div'); t.innerHTML = `<b></b><br><small>بيضعف قدام: ${EL[e.M.weak].name} · مقاوم: ${EL[e.M.resist].name}${e.M.boss ? ' · بوس' : ''}</small>`; t.querySelector('b').textContent = e.M.name + (e.M.mine ? ' (وحشك)' : ''); d.appendChild(t); $('bestiary').appendChild(d); } }
 let G2 = null;
 function startArena() {
-  arenaInit(); beastInit(); heldWeapon(); for (const m of AR.mons) AR.scene.remove(m.o); AR.mons = [];
+  arenaInit(); beastInit(); heldWeapon(); for (const m of AR.mons) AR.scene.remove(m.o); AR.mons = []; for (const x of AR.shots) AR.scene.remove(x.o); AR.shots = [];
   const a = withOv(analyse(grid)); if (!a) { show('forge'); toast('ارسم سلاح الأول'); return; }
   G2 = { a, hp: 100, max: 100, wave: 0, score: 0, cd: 0, swingT: 0, face: new THREE.Vector3(0, 0, -1), pos: new THREE.Vector3(), between: 1.2 };
   AR.hero.position.set(0, 0, 0); $('aOv').hidden = true; AR.on = true; hud();
@@ -555,7 +590,7 @@ function addBeast(e, hpMul = 1) {
   const k = (M_.size * 1.6) / h; b.scale.setScalar(k); b.position.y = -bx.min.y * k; g.add(b);
   const mats = []; g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.material = o.material.map((x) => x.clone()); mats.push(...o.material); } });
   const ang = Math.random() * Math.PI * 2, r = 22 + Math.random() * 5; g.position.set(Math.cos(ang) * r, 0, Math.sin(ang) * r); AR.scene.add(g);
-  const hpScale = (1 + (n - 1) * 0.18) * hpMul; AR.mons.push({ M: M_, o: g, b, R_, mats, hp: M_.hp * hpScale, max: M_.hp * hpScale, hitT: 0, atk: 0, attT: 0, burn: 0, poison: 0, slow: 0, stun: 0, bob: Math.random() * 6, moving: 0 });
+  b.userData.k0 = k; const ab = (e.def.abil || []).map((a) => ({ ...cleanAb(a), t: 0.8 + Math.random() })); const hpScale = (1 + (n - 1) * 0.18) * hpMul; AR.mons.push({ ab, M: M_, o: g, b, R_, mats, hp: M_.hp * hpScale, max: M_.hp * hpScale, hitT: 0, atk: 0, attT: 0, burn: 0, poison: 0, slow: 0, stun: 0, bob: Math.random() * 6, moving: 0 });
 }
 function spawnWave() {
   G2.wave++; const n = G2.wave, boss = n % 5 === 0, all = arenaPool(), pool = all.filter((e) => !e.M.boss && (e.M.from || 1) <= Math.ceil(n / 1.5));
@@ -580,6 +615,8 @@ function swing() {
   clank(hits ? 240 : 160);
 }
 function hit(m, mult) {
+  if (m.shieldT > 0) { pop2('درع!', m.o.position.clone().add(new THREE.Vector3(0, m.M.size * 1.6 + 0.5, 0)), '#7cd4ff'); return; }
+  if (m.ab?.length) onMonsterEvent(m, 'hit');
   const a = G2.a, crit = Math.random() * 100 < a.crit, el = a.el; let k = (0.85 + Math.random() * 0.3) * mult * (crit ? 2 : 1);
   if (el === m.M.weak) k *= 2; if (el === m.M.resist) k *= 0.5;
   const d = Math.round(a.dmg * k * 0.6); m.hp -= d; m.hitT = 0.15; m.o.position.addScaledVector(m.o.position.clone().sub(AR.hero.position).setY(0).normalize(), 0.6 / m.M.size);
@@ -589,7 +626,63 @@ function hit(m, mult) {
   if (el === 'shadow') G2.hp = Math.min(G2.max, G2.hp + d * 0.15 * (0.5 + ep));
   if (m.hp <= 0) kill(m);
 }
-function kill(m) { shatter(m); AR.scene.remove(m.o); AR.mons.splice(AR.mons.indexOf(m), 1); G2.score += Math.round(m.max / 4) * (m.M.boss ? 5 : 1); hud(); }
+function kill(m) { if (m.dead) return; m.dead = true; if (m.ab?.length) onMonsterEvent(m, 'death'); shatter(m); AR.scene.remove(m.o); AR.mons.splice(AR.mons.indexOf(m), 1); G2.score += Math.round(m.max / 4) * (m.M.boss ? 5 : 1); hud(); }
+
+// ---------------------------------------------------------------- abilities in the arena: shots, fuses, explosions, dashes, slams...
+AR.shots = []; AR.shake = 0;
+function hurtPlayer(d, col) { if (!G2 || !AR.on) return; d = Math.round(d); G2.hp -= d; pop2('-' + d, AR.hero.position.clone().add(new THREE.Vector3(0, 2, 0)), col || '#ff5a5a'); hud(); }
+function boom(pos, rad, dmg, from, el) {
+  // a burst of little pixel cubes, a flash of light and the screen shakes
+  const cols = el === 'ice' ? ['#9ae6ff', '#f2efe6', '#3d6fd8'] : el === 'poison' ? ['#46c96b', '#2f8f4e', '#b9e27c'] : el === 'shadow' ? ['#8b54f0', '#24262b', '#5b3a8f'] : el === 'bolt' ? ['#ffe14d', '#f2efe6', '#ffb347'] : ['#ffe14d', '#ff8a3d', '#e5484d', '#6f6a64'];
+  const n = Math.min(40, 10 + rad * 6); for (let i = 0; i < n; i++) { const c = cubeMesh({ p: [pos.x, pos.y + 0.4, pos.z], s: [0.3, 0.3, 0.3].map((v) => v * (0.6 + Math.random())), r: [0, 0, 0], c: cols[i % cols.length], f: ['', '', '', '', '', ''], seed: i + 1 }); for (const mt of c.material) mt.transparent = true; AR.scene.add(c);
+    const a = Math.random() * Math.PI * 2, sp = 3 + Math.random() * rad * 3; AR.debris.push({ o: c, v: new THREE.Vector3(Math.cos(a) * sp, 3 + Math.random() * 7, Math.sin(a) * sp), w: new THREE.Vector3(Math.random(), Math.random(), Math.random()).multiplyScalar(12), t: 0.4 }); }
+  const fl = new THREE.PointLight(el === 'ice' ? 0x9ae6ff : 0xffa040, 4, rad * 5 + 4); fl.position.copy(pos).setY(2); AR.scene.add(fl); setTimeout(() => AR.scene.remove(fl), 160);
+  AR.shake = Math.min(1, AR.shake + 0.25 + rad * 0.06); clank(70);
+  if (rad > 0) { const P = AR.hero.position, d = Math.hypot(P.x - pos.x, P.z - pos.z); if (d < rad && dmg) hurtPlayer(dmg * (1 - (d / rad) * 0.5));
+    for (const m of [...AR.mons]) { if (m === from) continue; const dd = m.o.position.distanceTo(pos); if (dd < rad) { m.hp -= dmg * 0.5; m.hitT = 0.15; if (m.hp <= 0) kill(m); } } }
+}
+function shoot(m, a) {
+  const P = AR.hero.position, from = m.o.position.clone().setY((m.M.fly ? 1.4 : 0) + m.M.size * 1.0), n = a.act.n || 1;
+  for (let i = 0; i < n; i++) {
+    const dir = P.clone().setY(0.9).sub(from).normalize(); dir.applyAxisAngle(new THREE.Vector3(0, 1, 0), (i - (n - 1) / 2) * 0.28);
+    const R_ = buildRig({ cubes: a.shape || FIREBALL, fly: true }), o = R_.root, bx = new THREE.Box3().setFromObject(o), h = Math.max(0.2, bx.getSize(new THREE.Vector3()).length()); o.scale.setScalar(0.9 / h); const g = new THREE.Group(); g.add(o); g.position.copy(from); AR.scene.add(g);
+    AR.shots.push({ o: g, spin: o, v: dir.multiplyScalar(a.act.spd), dmg: a.act.dmg, rad: a.act.rad, el: a.act.el, life: 3.2, from: m });
+  }
+}
+function shotsStep(dt) {
+  const P = AR.hero.position;
+  for (let i = AR.shots.length - 1; i >= 0; i--) { const s = AR.shots[i]; s.life -= dt; s.o.position.addScaledVector(s.v, dt); s.spin.rotation.x += dt * 8; s.spin.rotation.y += dt * 6;
+    let end = s.life <= 0; const hitP = Math.hypot(P.x - s.o.position.x, P.z - s.o.position.z) < 0.8 && s.o.position.y < 2.2;
+    if (hitP) { if (!s.rad) hurtPlayer(s.dmg); end = true; }
+    if (!end) for (const w of AR.walls) if (Math.hypot(s.o.position.x - w.x, s.o.position.z - w.z) < w.r) { end = true; break; }
+    if (end) { if (s.rad || hitP) boom(s.o.position.clone(), s.rad, s.rad ? s.dmg : 0, s.from, s.el); AR.scene.remove(s.o); AR.shots.splice(i, 1); }
+  }
+}
+function useAbility(m, a) {
+  const P = AR.hero.position, k = a.act.k;
+  if (k === 'shoot') { shoot(m, a); m.attT = 0.4; }
+  else if (k === 'explode') { if (!m.fuse) { m.fuse = Math.max(0.05, a.act.fuse); m.fuseAb = a; pop2('سسسسس…', m.o.position.clone().add(new THREE.Vector3(0, m.M.size * 1.6 + 0.6, 0)), '#ffe14d'); } }
+  else if (k === 'dash') { m.dashT = 0.4; m.dashV = P.clone().sub(m.o.position).setY(0).normalize().multiplyScalar(m.M.spd * 4 + 6); m.dashDmg = a.act.dmg; m.attT = 0.4; }
+  else if (k === 'slam') { m.slamT = 0.7; m.slamAb = a; }
+  else if (k === 'summon') { const e = arenaPool().find((x) => x.def === BEASTS[a.act.who]) || arenaPool()[0]; for (let i = 0; i < (a.act.n || 1); i++) { addBeast(e); const nm = AR.mons[AR.mons.length - 1]; nm.o.position.copy(m.o.position).add(new THREE.Vector3((Math.random() - 0.5) * 4, 0, (Math.random() - 0.5) * 4)); } pop2('جت نجدة!', m.o.position.clone().add(new THREE.Vector3(0, 3, 0)), '#ffb347'); }
+  else if (k === 'heal') { m.hp = Math.min(m.max, m.hp + a.act.amt); pop2('+' + Math.round(a.act.amt), m.o.position.clone().add(new THREE.Vector3(0, m.M.size * 1.6 + 0.5, 0)), '#46c96b'); }
+  else if (k === 'shield') { m.shieldT = a.act.sec; }
+  else if (k === 'teleport') { const f = G2.face.clone(); m.o.position.set(P.x - f.x * 2.2, m.o.position.y, P.z - f.z * 2.2); pop2('ورّاك!', m.o.position.clone().add(new THREE.Vector3(0, 2.5, 0)), '#a77bff'); }
+}
+// every ability waits for its moment
+function abilitiesTick(m, d, dt) {
+  for (const a of m.ab) { a.t -= dt; if (a.t > 0 || a.done) continue; const w = a.when;
+    const ok = w.k === 'near' ? d < w.v + m.M.size * 0.5 : w.k === 'every' ? d < 26 : w.k === 'low' ? m.hp / m.max * 100 < w.v : false;
+    if (ok) { useAbility(m, a); a.t = a.cd; if (a.cd <= 0 || w.k === 'low') a.done = true; } }
+  if (m.fuse) { m.fuse -= dt; const f = Math.sin(performance.now() / (m.fuse < 0.5 ? 40 : 90)) > 0; for (const mt of m.mats) mt.emissive.setHex(f ? 0xffffff : 0); m.em = -1; m.b.scale.setScalar(m.b.userData.k0 * (1 + Math.max(0, 1 - m.fuse) * 0.25));
+    if (m.fuse <= 0) { const a = m.fuseAb; m.fuse = 0; boom(m.o.position.clone(), a.act.rad, a.act.dmg, m, a.act.el); m.noScore = false; kill(m); return true; } }
+  if (m.dashT > 0) { m.dashT -= dt; m.o.position.addScaledVector(m.dashV, dt); if (d < m.M.size * 0.5 + 0.9 && m.dashDmg) { hurtPlayer(m.dashDmg); m.dashDmg = 0; } }
+  if (m.slamT > 0) { m.slamT -= dt; const k = 1 - m.slamT / 0.7; m.o.position.y = Math.sin(Math.PI * k) * 3; if (m.slamT <= 0) { m.o.position.y = 0; const a = m.slamAb; boom(m.o.position.clone(), a.act.rad, a.act.dmg, m, a.act.el); } }
+  if (m.shieldT > 0) m.shieldT -= dt;
+  return false;
+}
+function onMonsterEvent(m, kind) { for (const a of m.ab) if (a.when.k === kind && !a.done && a.t <= 0) { useAbility(m, a); a.t = a.cd; if (a.cd <= 0) a.done = true; } }
+
 AR.debris = [];
 function pushOut(p, rad) { for (const w of AR.walls || []) { const dx = p.x - w.x, dz = p.z - w.z, d = Math.hypot(dx, dz), min = w.r + rad; if (d < min && d > 0.001) { p.x = w.x + dx / d * min; p.z = w.z + dz / d * min; } } }
 function shatter(m) {
@@ -603,7 +696,7 @@ function debrisStep(dt) {
     d.o.rotation.x += d.w.x * dt; d.o.rotation.y += d.w.y * dt; d.o.rotation.z += d.w.z * dt; if (d.t > 1.4) { const k = Math.max(0, 1 - (d.t - 1.4) / 0.6); for (const mt of d.o.material) mt.opacity = k; if (k <= 0) { AR.scene.remove(d.o); AR.debris.splice(i, 1); } } }
 }
 function arenaStep(dt, now) {
-  debrisStep(dt);
+  debrisStep(dt); shotsStep(dt);
   if (!AR.on || !G2) return; const P = AR.hero.position, a = G2.a;
   // move
   let mx = 0, mz = 0; const K = AR.keys; if (K.KeyA || K.ArrowLeft) mx -= 1; if (K.KeyD || K.ArrowRight) mx += 1; if (K.KeyW || K.ArrowUp) mz -= 1; if (K.KeyS || K.ArrowDown) mz += 1; if (AR.joy) { mx += AR.joy.x; mz += AR.joy.y; }
@@ -615,11 +708,12 @@ function arenaStep(dt, now) {
   for (const m of [...AR.mons]) {
     const o = m.o, to = P.clone().sub(o.position).setY(0), d = to.length();
     if (m.burn > 0) { m.burn -= dt; m.hp -= a.elp / 10 * dt * 3; } if (m.poison > 0) { m.poison -= dt; m.hp -= a.elp / 12 * dt * 3; } if ((m.burn > 0 || m.poison > 0) && m.hp <= 0) { kill(m); continue; }
+    if (m.dead) continue; if (m.ab.length && abilitiesTick(m, d, dt)) continue;
     m.stun -= dt; m.slow -= dt; m.hitT -= dt;
-    const go = m.stun <= 0 && d > m.M.size * 0.5 + 0.7; if (go) o.position.addScaledVector(to.normalize(), m.M.spd * (m.slow > 0 ? 0.45 : 1) * dt); m.moving += ((go ? 1 : 0) - m.moving) * Math.min(1, dt * 6);
-    o.position.y = m.M.fly ? 1.4 + Math.sin(now / 200 + m.bob) * 0.4 : 0;
+    const go = m.stun <= 0 && !m.fuse && !(m.slamT > 0) && !(m.dashT > 0) && d > m.M.size * 0.5 + 0.7; if (go) o.position.addScaledVector(to.normalize(), m.M.spd * (m.slow > 0 ? 0.45 : 1) * dt); m.moving += ((go ? 1 : 0) - m.moving) * Math.min(1, dt * 6);
+    if (!(m.slamT > 0)) o.position.y = m.M.fly ? 1.4 + Math.sin(now / 200 + m.bob) * 0.4 : 0;
     if (d > 0.05) o.rotation.y = Math.atan2(to.x, to.z); m.attT = Math.max(0, m.attT - dt); animRig(m.R_, now / 1000 + m.bob, m.stun > 0 ? 0 : m.moving * (m.slow > 0 ? 0.5 : 1), m.attT > 0 ? 1 - m.attT / 0.4 : 0);
-    { const em = m.hitT > 0 ? 0xffffff : m.burn > 0 ? 0x661800 : m.slow > 0 ? 0x10304a : m.poison > 0 ? 0x0a3a12 : 0; if (m.em !== em) { m.em = em; for (const mt of m.mats) mt.emissive.setHex(em); } }
+    if (!m.fuse) { const em = m.shieldT > 0 ? 0x1a4a7a : m.hitT > 0 ? 0xffffff : m.burn > 0 ? 0x661800 : m.slow > 0 ? 0x10304a : m.poison > 0 ? 0x0a3a12 : 0; if (m.em !== em) { m.em = em; for (const mt of m.mats) mt.emissive.setHex(em); } }
     m.atk -= dt; if (d < m.M.size * 0.5 + 0.9 && m.atk <= 0 && m.stun <= 0) { m.atk = 0.9; m.attT = 0.4; G2.hp -= m.M.dmg; pop2('-' + m.M.dmg, P.clone().add(new THREE.Vector3(0, 2, 0)), '#ff5a5a'); hud(); clank(110); }
   }
   for (const m of AR.mons) if (!m.M.fly) pushOut(m.o.position, m.M.size * 0.45);
@@ -627,7 +721,7 @@ function arenaStep(dt, now) {
   for (let i = 0; i < AR.mons.length; i++) for (let j = i + 1; j < AR.mons.length; j++) { const A_ = AR.mons[i].o.position, B_ = AR.mons[j].o.position, d = A_.distanceTo(B_), min = (AR.mons[i].M.size + AR.mons[j].M.size) * 0.45; if (d < min && d > 0.001) { const push = B_.clone().sub(A_).setY(0).normalize().multiplyScalar((min - d) / 2); A_.sub(push); B_.add(push); } }
   if (G2.hp <= 0) { AR.on = false; if (G2.wave > AR.best) { AR.best = G2.wave; store.set('best', AR.best); } $('aOvT').textContent = 'وقعت!'; $('aOvP').textContent = `وصلت للموجة ${G2.wave} وجمعت ${G2.score} نقطة. ارجع الورشة وقوّي سلاحك، أو ادخل تاني.`; $('aGo').textContent = 'العب تاني'; $('aOv').hidden = false; hud(); return; }
   if (!AR.mons.length) { G2.between -= dt; if (G2.between <= 0) { if (G2.wave) { G2.hp = Math.min(G2.max, G2.hp + 25); pop2('+25', P.clone().add(new THREE.Vector3(0, 2, 0)), '#46c96b'); } spawnWave(); G2.between = 2; } }
-  AR.cam.position.lerp(new THREE.Vector3(P.x, 11, P.z + 10), 0.1); AR.cam.lookAt(P.x, 0.5, P.z);
+  AR.cam.position.lerp(new THREE.Vector3(P.x, 11, P.z + 10), 0.1); AR.cam.lookAt(P.x, 0.5, P.z); if (AR.shake > 0) { AR.shake = Math.max(0, AR.shake - dt * 2); AR.cam.position.x += (Math.random() - 0.5) * AR.shake; AR.cam.position.y += (Math.random() - 0.5) * AR.shake; }
 }
 $('aGo').onclick = () => { clank(260); startArena(); };
 $('tArena').addEventListener('click', () => { AR.focus = null; });
@@ -637,13 +731,20 @@ $('tArena').addEventListener('click', () => { AR.focus = null; });
 // a cube: p position (its centre), s size, r rotation, c colour, f painted faces (6 faces, 8x8 pixels each, "" = plain)
 const Q = (x, y, z, w, h, d, c, r = [0, 0, 0]) => ({ p: [x, y, z], s: [w, h, d], r, c, f: ['', '', '', '', '', ''] });
 const mirrorX = (l) => l.flatMap((q) => (Math.abs(q.p[0]) < 0.01 ? [q] : [q, { ...q, p: [-q.p[0], q.p[1], q.p[2]], r: [q.r[0], -q.r[1], -q.r[2]], f: [...q.f] }]));
+const FIREBALL = [Q(0, 0, 0, 0.7, 0.7, 0.7, '#ff8a3d'), Q(0, 0, 0, 0.95, 0.45, 0.45, '#e5484d'), Q(0, 0, 0, 0.45, 0.95, 0.45, '#ffe14d'), Q(0, 0, 0, 0.45, 0.45, 0.95, '#e5484d')];
+const BONE = [Q(0, 0, 0, 0.18, 0.18, 0.9, '#f2efe6'), Q(0, 0, 0.45, 0.36, 0.22, 0.18, '#f2efe6'), Q(0, 0, -0.45, 0.36, 0.22, 0.18, '#f2efe6')];
+// TNT letters painted on a face, in pixels: red, a white band, black letters
+function tntFace(w, h) { const F = ['###.#.#.###', '.#..###..#.', '.#..###..#.', '.#..#.#..#.', '.#..#.#..#.'], c = []; const y0 = Math.floor((h - 5) / 2) - 1, x0 = Math.floor((w - 11) / 2);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const fy = y - y0 - 1, fx = x - x0; if (y >= y0 && y <= y0 + 6) c.push(fy >= 0 && fy < 5 && fx >= 0 && fx < 11 && F[fy][fx] === '#' ? '2' : '5'); else c.push('.'); } return `${w},${h}:${c.join('')}`; }
+const TNT = (() => { const q = Q(0, 0.75, 0, 1.5, 1.5, 1.5, '#e5484d'); const f = tntFace(12, 12); q.f = [f, f, '', '', f, f]; return [q, Q(0, 1.65, 0, 0.16, 0.3, 0.16, '#7a5230'), Q(0, 1.86, 0, 0.12, 0.12, 0.12, '#ffe14d')]; })();
 const BEASTS = {
+  tnt: { name: 'وحش TNT', fly: false, cubes: TNT, abil: [{ name: 'فتيل وانفجار', when: { k: 'near', v: 2.8 }, act: { k: 'explode', dmg: 35, rad: 3.6, fuse: 1.4, el: 'fire' }, cd: 0 }] },
   slime: { name: 'سلايم', fly: false, cubes: mirrorX([Q(0, 1, 0, 2.4, 2, 2.4, '#46c96b'), Q(0, 2.25, 0, 1.6, 0.5, 1.6, '#46c96b'), Q(0.55, 1.4, 1.21, 0.5, 0.6, 0.06, '#f2efe6'), Q(0.5, 1.33, 1.25, 0.25, 0.32, 0.06, '#24262b'), Q(0, 0.75, 1.21, 0.7, 0.16, 0.06, '#24262b')]) },
   bat: { name: 'خفاش', fly: true, cubes: mirrorX([Q(0, 1.6, 0, 1, 1.1, 0.9, '#8b54f0'), Q(0.32, 2.3, 0, 0.25, 0.45, 0.2, '#8b54f0'), Q(1.1, 1.8, 0, 1.4, 0.15, 0.9, '#5b3a8f', [0, 0, 0.35]), Q(0.22, 1.75, 0.46, 0.2, 0.2, 0.06, '#e5484d')]) },
-  skel: { name: 'هيكل عظمي', fly: false, cubes: mirrorX([Q(0, 3.3, 0, 1, 1, 1, '#f2efe6'), Q(0.22, 3.35, 0.51, 0.26, 0.26, 0.06, '#24262b'), Q(0, 2.3, 0, 0.3, 1.3, 0.3, '#f2efe6'), Q(0, 2.1, 0, 1.1, 0.14, 0.6, '#f2efe6'), Q(0, 2.5, 0, 1.1, 0.14, 0.6, '#f2efe6'), Q(0, 2.9, 0, 1.1, 0.14, 0.6, '#f2efe6'), Q(0.75, 2.4, 0, 0.2, 1.2, 0.2, '#f2efe6'), Q(0, 1.6, 0, 0.8, 0.26, 0.4, '#f2efe6'), Q(0.25, 0.75, 0, 0.22, 1.4, 0.22, '#f2efe6')]) },
-  imp: { name: 'عفريت نار', fly: false, cubes: mirrorX([Q(0, 1.2, 0, 1, 1.2, 0.8, '#e5484d'), Q(0, 2.2, 0, 1.1, 0.9, 0.9, '#e5484d'), Q(0.4, 2.85, 0, 0.2, 0.55, 0.2, '#24262b', [0, 0, -0.4]), Q(0.25, 2.3, 0.46, 0.22, 0.18, 0.06, '#ffe14d'), Q(0.65, 1.3, 0, 0.3, 0.9, 0.3, '#e5484d'), Q(0.25, 0.35, 0, 0.3, 0.7, 0.3, '#e5484d'), Q(0, 1.1, 0.41, 0.6, 0.7, 0.06, '#ff8a3d'), Q(0, 0.9, -0.65, 0.16, 0.16, 0.9, '#e5484d', [0.6, 0, 0])]) },
-  golem: { name: 'عملاق تلج', fly: false, cubes: mirrorX([Q(0, 2.2, 0, 2.4, 2, 1.6, '#3d6fd8'), Q(0, 3.7, 0.2, 1.2, 1, 1.1, '#9ae6ff'), Q(0.3, 3.75, 0.76, 0.26, 0.2, 0.06, '#24262b'), Q(1.6, 2, 0, 0.9, 2.2, 0.9, '#9ae6ff'), Q(1.6, 0.8, 0, 1.1, 0.8, 1.1, '#3d6fd8'), Q(0.6, 0.6, 0, 0.9, 1.2, 0.9, '#3d6fd8'), Q(0.6, 3.4, -0.5, 0.3, 0.8, 0.3, '#9ae6ff', [0.3, 0, 0.3])]) },
-  dragon: { name: 'التنين', fly: false, boss: true, cubes: mirrorX([Q(0, 2, 0, 2.2, 1.6, 3.2, '#5b3a8f'), Q(0, 1.5, 0.2, 1.6, 0.6, 2.6, '#e2b043'), Q(0, 3, 1.6, 0.9, 1.4, 0.9, '#5b3a8f', [-0.4, 0, 0]), Q(0, 3.9, 2.3, 1.3, 1, 1.6, '#5b3a8f'), Q(0, 3.7, 3.3, 0.9, 0.6, 0.8, '#5b3a8f'), Q(0.5, 4.1, 2.6, 0.12, 0.25, 0.3, '#ffe14d'), Q(0.4, 4.6, 1.9, 0.2, 0.7, 0.2, '#f2efe6', [-0.5, 0, 0]), Q(2, 3, 0, 2.6, 0.2, 2, '#8b54f0', [0, 0, 0.5]), Q(0.8, 0.7, 1, 0.6, 1.4, 0.6, '#5b3a8f'), Q(0.8, 0.7, -1, 0.6, 1.4, 0.6, '#5b3a8f'), Q(0, 1.8, -2.5, 0.6, 0.6, 2.2, '#5b3a8f', [0.3, 0, 0])]) },
+  skel: { name: 'هيكل عظمي', fly: false, abil: [{ name: 'رمي عضم', when: { k: 'every', v: 3.2 }, act: { k: 'shoot', dmg: 7, n: 1, spd: 13 }, cd: 3.2, shape: BONE }], cubes: mirrorX([Q(0, 3.3, 0, 1, 1, 1, '#f2efe6'), Q(0.22, 3.35, 0.51, 0.26, 0.26, 0.06, '#24262b'), Q(0, 2.3, 0, 0.3, 1.3, 0.3, '#f2efe6'), Q(0, 2.1, 0, 1.1, 0.14, 0.6, '#f2efe6'), Q(0, 2.5, 0, 1.1, 0.14, 0.6, '#f2efe6'), Q(0, 2.9, 0, 1.1, 0.14, 0.6, '#f2efe6'), Q(0.75, 2.4, 0, 0.2, 1.2, 0.2, '#f2efe6'), Q(0, 1.6, 0, 0.8, 0.26, 0.4, '#f2efe6'), Q(0.25, 0.75, 0, 0.22, 1.4, 0.22, '#f2efe6')]) },
+  imp: { name: 'عفريت نار', fly: false, abil: [{ name: 'كورة نار', when: { k: 'every', v: 2.6 }, act: { k: 'shoot', dmg: 9, n: 1, spd: 11, el: 'fire', rad: 1.2 }, cd: 2.6, shape: FIREBALL }], cubes: mirrorX([Q(0, 1.2, 0, 1, 1.2, 0.8, '#e5484d'), Q(0, 2.2, 0, 1.1, 0.9, 0.9, '#e5484d'), Q(0.4, 2.85, 0, 0.2, 0.55, 0.2, '#24262b', [0, 0, -0.4]), Q(0.25, 2.3, 0.46, 0.22, 0.18, 0.06, '#ffe14d'), Q(0.65, 1.3, 0, 0.3, 0.9, 0.3, '#e5484d'), Q(0.25, 0.35, 0, 0.3, 0.7, 0.3, '#e5484d'), Q(0, 1.1, 0.41, 0.6, 0.7, 0.06, '#ff8a3d'), Q(0, 0.9, -0.65, 0.16, 0.16, 0.9, '#e5484d', [0.6, 0, 0])]) },
+  golem: { name: 'عملاق تلج', fly: false, abil: [{ name: 'خبطة الأرض', when: { k: 'near', v: 3.5 }, act: { k: 'slam', dmg: 18, rad: 4, el: 'ice' }, cd: 5 }], cubes: mirrorX([Q(0, 2.2, 0, 2.4, 2, 1.6, '#3d6fd8'), Q(0, 3.7, 0.2, 1.2, 1, 1.1, '#9ae6ff'), Q(0.3, 3.75, 0.76, 0.26, 0.2, 0.06, '#24262b'), Q(1.6, 2, 0, 0.9, 2.2, 0.9, '#9ae6ff'), Q(1.6, 0.8, 0, 1.1, 0.8, 1.1, '#3d6fd8'), Q(0.6, 0.6, 0, 0.9, 1.2, 0.9, '#3d6fd8'), Q(0.6, 3.4, -0.5, 0.3, 0.8, 0.3, '#9ae6ff', [0.3, 0, 0.3])]) },
+  dragon: { name: 'التنين', fly: false, boss: true, abil: [{ name: 'نفس النار', when: { k: 'every', v: 3 }, act: { k: 'shoot', dmg: 12, n: 3, spd: 12, el: 'fire', rad: 1.6 }, cd: 3, shape: FIREBALL }, { name: 'يطلّع عفاريت', when: { k: 'low', v: 50 }, act: { k: 'summon', who: 'imp', n: 3 }, cd: 0 }], cubes: mirrorX([Q(0, 2, 0, 2.2, 1.6, 3.2, '#5b3a8f'), Q(0, 1.5, 0.2, 1.6, 0.6, 2.6, '#e2b043'), Q(0, 3, 1.6, 0.9, 1.4, 0.9, '#5b3a8f', [-0.4, 0, 0]), Q(0, 3.9, 2.3, 1.3, 1, 1.6, '#5b3a8f'), Q(0, 3.7, 3.3, 0.9, 0.6, 0.8, '#5b3a8f'), Q(0.5, 4.1, 2.6, 0.12, 0.25, 0.3, '#ffe14d'), Q(0.4, 4.6, 1.9, 0.2, 0.7, 0.2, '#f2efe6', [-0.5, 0, 0]), Q(2, 3, 0, 2.6, 0.2, 2, '#8b54f0', [0, 0, 0.5]), Q(0.8, 0.7, 1, 0.6, 1.4, 0.6, '#5b3a8f'), Q(0.8, 0.7, -1, 0.6, 1.4, 0.6, '#5b3a8f'), Q(0, 1.8, -2.5, 0.6, 0.6, 2.2, '#5b3a8f', [0.3, 0, 0])]) },
 };
 const BPAL = [...PAL.slice(1).map((p) => p.hex), '#f1c7a5', '#ff6fb5', '#7a5230', '#2f8f4e'];
 const HUE = (hex) => { const c = new THREE.Color(hex), h = {}; c.getHSL(h); return h; };
@@ -877,11 +978,76 @@ function fuse(A_, B_) {
 $('bFuse').onclick = () => { const box_ = $('fuseBox'); box_.hidden = !box_.hidden; if (box_.hidden) return; const L = $('fuseList'); L.innerHTML = '';
   const opts = [...Object.values(BEASTS), ...BE.mine]; for (const d of opts) { const b = document.createElement('button'); b.className = 'temp'; b.textContent = d.name; b.onclick = () => { commitSel(); const cur = clone(BE.def); cur.name = $('bName').value.trim() || cur.name; pushUndo(); const f = fuse(cur, clone(d)); box_.hidden = true; loadBeast(f, true); $('bName').value = f.name; bNameTouched = true; syncSliders(); toast('اتدمجوا! الراس والرجلين من الأول، والجسم والإيدين من التاني'); }; L.appendChild(b); } };
 
+
+// ---------------------------------------------------------------- monster abilities: what a monster does, written in your own words
+// { name, when: {k: near|every|hit|low|death, v}, act: {k: shoot|explode|dash|slam|summon|heal|shield|teleport, ...numbers}, cd, shape: cubes of a shot }
+const ACT = { shoot: 'يرمي طلقات', explode: 'يتفرقع', dash: 'يندفع عليك', slam: 'ينط ويخبط الأرض', summon: 'يطلّع وحوش', heal: 'يعالج نفسه', shield: 'يعمل درع', teleport: 'ينتقل وراك' };
+const WHEN = { near: (v) => `لما تقرّب ${v} متر`, every: (v) => `كل ${v} ثانية`, hit: () => 'لما يتضرب', low: (v) => `لما صحته تقل عن ${v}٪`, death: () => 'لما يموت' };
+function abText(a) { const x = a.act; const bits = [WHEN[a.when.k]?.(a.when.v) || '', ACT[x.k] || '']; if (x.k === 'shoot') bits.push(`${x.n || 1} طلقة · ضرر ${x.dmg}`); if (x.k === 'explode') bits.push(`فتيل ${x.fuse}ث · ضرر ${x.dmg} · قطر ${x.rad}`); if (x.k === 'heal') bits.push('+' + x.amt); if (x.k === 'summon') bits.push(`${x.n || 1} ${BEASTS[x.who]?.name || ''}`); return bits.filter(Boolean).join(' · '); }
+// a clean ability from anything (Claude's answer, the form, an old save): every number kept within the game's limits
+function cleanAb(a) {
+  const n = (v, d, lo, hi) => { v = +v; return Number.isFinite(v) ? Math.max(lo, Math.min(hi, v)) : d; }, x = a?.act || {}, w = a?.when || {};
+  const wk = WHEN[w.k] ? w.k : 'near', ak = ACT[x.k] ? x.k : 'shoot';
+  return { name: String(a?.name || ACT[ak]).slice(0, 30), when: { k: wk, v: n(w.v, wk === 'near' ? 3 : wk === 'every' ? 3 : wk === 'low' ? 30 : 0, 0, 100) },
+    act: { k: ak, dmg: n(x.dmg, 10, 1, 200), rad: n(x.rad, ak === 'explode' ? 3.5 : ak === 'slam' ? 3 : 0, 0, 12), n: Math.round(n(x.n, 1, 1, 12)), spd: n(x.spd, 10, 2, 30), el: EL[x.el] ? x.el : 'none', fuse: n(x.fuse, 1.2, 0, 5), amt: n(x.amt, 30, 1, 500), sec: n(x.sec, 3, 0.5, 10), who: BEASTS[x.who] ? x.who : 'slime' },
+    cd: n(a?.cd, ak === 'explode' ? 0 : 3, 0, 30), shape: Array.isArray(a?.shape) && a.shape.length ? a.shape.slice(0, 40) : null };
+}
+// turning your words into an ability: Claude reads them; without Claude, a few key words do
+async function wordsToAbility(text) {
+  try {
+    const sm = window.claude?.use ? await window.claude.use('sample') : null;
+    if (sm) {
+      const r = await sm.json(`A player of a kids' block game describes, in Egyptian Arabic or any language, a special ability for a monster they built. Turn it into ONE ability as JSON, nothing else:
+{"name": short Arabic name, "when": {"k": "near"|"every"|"hit"|"low"|"death", "v": number (near: distance in metres 1-12; every: seconds 0.5-30; low: health percent; else 0)},
+ "act": {"k": "shoot"|"explode"|"dash"|"slam"|"summon"|"heal"|"shield"|"teleport", "dmg": 1-200, "rad": explosion radius 0-12, "n": shots 1-12, "spd": shot speed 2-30, "el": "fire"|"ice"|"bolt"|"poison"|"shadow"|"light"|"none", "fuse": seconds before exploding 0-5, "amt": heal amount, "sec": shield seconds, "who": "slime"|"bat"|"skel"|"imp"|"golem"|"tnt" (for summon)},
+ "cd": seconds between uses (0 for a one-time explosion)}
+"explode" means the monster blows itself up like TNT after the fuse. Pick sensible numbers when the player gives none.
+Player's words: ${JSON.stringify(text)}`, { modelTier: 'quick', cache: false });
+      return cleanAb(r?.abilities?.[0] || r);
+    }
+  } catch (e) { if (e?.code === 'not_granted') toast('Claude مش متاح هنا، هفهمها بالكلمات'); }
+  const t = text, has = (...w) => w.some((x) => t.includes(x)), num = (+(t.match(/\d+(\.\d+)?/) || [])[0]) || null;
+  const el = has('نار', 'ولع', 'لهب') ? 'fire' : has('تلج', 'ثلج', 'جليد') ? 'ice' : has('برق', 'كهربا') ? 'bolt' : has('سم') ? 'poison' : has('ظل', 'ظلام') ? 'shadow' : has('نور') ? 'light' : 'none';
+  const every = +(t.match(/كل\s*(\d+(\.\d+)?)/) || [])[1];
+  const when = has('يموت', 'مات') ? { k: 'death', v: 0 } : has('يتضرب', 'اضربه') ? { k: 'hit', v: 0 } : has('صحته', 'يتعب') ? { k: 'low', v: num || 30 } : has('كل ') ? { k: 'every', v: every || 3 } : { k: 'near', v: 3 };
+  const k = has('يتفرقع', 'ينفجر', 'يفجر', 'تفرقع', 'فتيل', 'tnt', 'TNT') ? 'explode' : has('يرمي', 'يضرب كور', 'كور', 'طلق', 'يطلق') ? 'shoot' : has('يندفع', 'يجري عليك', 'يهجم') ? 'dash' : has('ينط', 'يخبط الأرض') ? 'slam' : has('يطلع وحوش', 'يستدعي', 'ينادي') ? 'summon' : has('يعالج', 'صحته ترجع') ? 'heal' : has('درع') ? 'shield' : has('ينتقل', 'يختفي') ? 'teleport' : 'shoot';
+  const nShots = +(t.match(/(\d+)\s*(كور|طلق|صاروخ|حج|سهم)/) || [])[1] || (k === 'shoot' && num && when.k !== 'every' ? num : 1);
+  return cleanAb({ name: ACT[k], when, act: { k, el, n: nShots, dmg: k === 'explode' ? 35 : 10, rad: k === 'explode' ? 3.5 : 0, fuse: 1.3 }, cd: k === 'explode' ? 0 : 3 });
+}
+function renderAbils() {
+  const L = $('abList'); L.innerHTML = ''; const list = BE.def.abil || [];
+  if (!list.length) { L.innerHTML = '<div class="desc">الوحش ده لسه ملوش قدرات. اكتب قدرة بكلامك تحت، أو اختار من القايمة.</div>'; return; }
+  list.forEach((a, i) => { const d = document.createElement('div'); d.className = 'ab'; d.innerHTML = '<b></b><span></span>'; d.querySelector('b').textContent = a.name; d.querySelector('span').textContent = abText(a);
+    const e = document.createElement('button'); e.className = 'btn alt'; e.textContent = 'عدّل'; e.onclick = () => openAbForm(i); const x = document.createElement('button'); x.className = 'btn alt'; x.textContent = 'شيل'; x.onclick = () => { BE.def.abil.splice(i, 1); renderAbils(); bcard(); };
+    d.append(e, x); L.appendChild(d); });
+}
+$('afEl').innerHTML = Object.keys(EL).map((k) => `<option value="${k}">${EL[k].name}</option>`).join('');
+$('afWho').innerHTML = Object.keys(BEASTS).filter((k) => !BEASTS[k].boss).map((k) => `<option value="${k}">${BEASTS[k].name}</option>`).join('');
+let abEdit = -1, abDraft = null;
+function openAbForm(i, draft) {
+  abEdit = i; abDraft = cleanAb(draft || (i >= 0 ? BE.def.abil[i] : { act: { k: 'shoot' } })); const a = abDraft;
+  $('afName').value = a.name; $('afWhen').value = a.when.k; $('afWv').value = a.when.v; $('afAct').value = a.act.k; for (const [id, k] of [['afDmg', 'dmg'], ['afRad', 'rad'], ['afN', 'n'], ['afSpd', 'spd'], ['afFuse', 'fuse'], ['afAmt', 'amt'], ['afSec', 'sec']]) $(id).value = a.act[k];
+  $('afEl').value = a.act.el; $('afWho').value = a.act.who; $('afCnt').value = a.act.n; $('afCd').value = a.cd; $('abForm').hidden = false; formVis();
+}
+function formVis() { const w = $('afWhen').value, a = $('afAct').value; $('abForm').querySelectorAll('[data-w]').forEach((x) => { x.hidden = !x.dataset.w.split(' ').includes(w); }); $('abForm').querySelectorAll('[data-a]').forEach((x) => { x.hidden = !x.dataset.a.split(' ').includes(a); }); }
+$('afWhen').onchange = formVis; $('afAct').onchange = formVis;
+function readForm() { const a = abDraft; return cleanAb({ ...a, name: $('afName').value.trim() || ACT[$('afAct').value], when: { k: $('afWhen').value, v: $('afWv').value }, act: { k: $('afAct').value, dmg: $('afDmg').value, rad: $('afRad').value, n: $('afAct').value === 'summon' ? $('afCnt').value : $('afN').value, spd: $('afSpd').value, el: $('afEl').value, fuse: $('afFuse').value, amt: $('afAmt').value, sec: $('afSec').value, who: $('afWho').value }, cd: $('afCd').value }); }
+$('afSave').onclick = () => { const a = readForm(); BE.def.abil ||= []; if (abEdit >= 0) BE.def.abil[abEdit] = a; else BE.def.abil.push(a); $('abForm').hidden = true; renderAbils(); bcard(); toast('القدرة اتحفظت'); };
+$('afCancel').onclick = () => { $('abForm').hidden = true; };
+$('abNew').onclick = () => openAbForm(-1);
+$('abMake').onclick = async () => { const t = $('abText').value.trim(); if (!t) return toast('اكتب القدرة الأول'); $('abMake').disabled = true; $('abMake').textContent = 'بيفهمها…'; const a = await wordsToAbility(t); $('abMake').disabled = false; $('abMake').textContent = 'حوّلها لقدرة'; openAbForm(-1, a); toast('راجع القدرة وعدّل لو حابب، وبعدين احفظها'); };
+// drawing the shot's shape: the workshop edits the shot for a while, then goes back to the monster
+let shapeEdit = null;
+$('afShape').onclick = () => { abDraft = readForm(); commitSel(); shapeEdit = { mon: BE.def, idx: abEdit, draft: abDraft, name: $('bName').value, touched: bNameTouched };
+  BE.def = { name: 'shape', cubes: clone(abDraft.shape || (abDraft.act.k === 'explode' ? [Q(0, 0, 0, 0.8, 0.8, 0.8, '#e5484d')] : FIREBALL)).map((q) => ({ ...q, p: [q.p[0], q.p[1] + 1.5, q.p[2]] })) }; BE.sels = []; rebuild(); $('shapeBar').hidden = false; $('bcard').hidden = true; };
+$('shapeDone').onclick = () => { if (!shapeEdit) return; commitSel(); const cubes = BE.def.cubes.map((q) => ({ ...clone(q), p: [q.p[0], q.p[1] - 1.5, q.p[2]] })); const se = shapeEdit; shapeEdit = null;
+  BE.def = se.mon; se.draft.shape = cubes; $('shapeBar').hidden = true; $('bcard').hidden = false; BE.sels = []; rebuild(); $('bName').value = se.name; bNameTouched = se.touched; openAbForm(se.idx, se.draft); };
+
 let bNameTouched = false; $('bName').addEventListener('input', () => { bNameTouched = true; });
 function beastName(st) { const pick = (l) => l[Math.floor(Math.random() * l.length)]; return `${pick(['الوحش', 'المخلوق', 'الكائن', 'الغول', 'العملاق'])} ${pick(EL[st.el].words)} ${pick(['الرهيب', 'الغضبان', 'الجعان', 'المجنون', 'الكبير', 'اللي محدش يقدر عليه'])}`; }
 $('bNameGo').onclick = () => { $('bName').value = beastName(beastStats(BE.def)); bNameTouched = true; };
 function bcard() {
-  if (!BE.def) return; syncRole(); const st = beastStats(BE.def); $('bcard').style.setProperty('--rc', st.rar.col);
+  if (!BE.def || shapeEdit) return; syncRole(); if (document.activeElement?.closest?.('#abForm') == null) renderAbils(); const st = beastStats(BE.def); $('bcard').style.setProperty('--rc', st.rar.col);
   if (!bNameTouched) $('bName').value = BE.def.name || beastName(st);
   $('bRar').textContent = st.rar.name; $('bEl').textContent = 'العنصر: ' + EL[st.el].name; $('bEl').style.color = EL[st.el].col; $('bWeak').textContent = 'بيضعف قدام: ' + EL[st.weak].name; $('bPow').textContent = st.power;
   const rows = [['الصحة', Math.min(100, st.hp / 6), st.hp, '#46c96b'], ['الضرر', st.dmg * 2.5, st.dmg, '#ff8a5c'], ['السرعة', st.spd * 20, st.spd.toFixed(1), '#7cd4ff'], ['المكعبات', Math.min(100, st.cubes * 3), st.cubes, '#d6c3a8']];
