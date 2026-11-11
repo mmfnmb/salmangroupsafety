@@ -7,10 +7,11 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { t } from './i18n.js';
 import { Level } from './level.js';
 import { MODES } from './modes.js';
+import { buildCity, Traffic, Walkers, Minimap, carStep, carSize, bounds, rotBox, rng, wrap, HALF, CAR_S, R, P, N } from './city.js';
 import { ITEM, dress, makePet } from './cosmetics.js';
 
 // ---------------------------------------------------------------- packs
-const PACKS = ['city-kit-commercial', 'city-kit-suburban', 'city-kit-roads', 'car-kit', 'food-kit', 'mini-market', 'furniture-kit'];
+const PACKS = ['city-kit-commercial', 'city-kit-suburban', 'city-kit-industrial', 'city-kit-roads', 'street-props', 'car-kit', 'food-kit', 'mini-market', 'furniture-kit'];
 const packData = {}; let packsReady = null;
 const gl = new GLTFLoader();
 async function loadPacks(onProgress) {
@@ -72,11 +73,11 @@ export function lifeBuff() { return life.buff; }
 // called by the game when a match starts: the food/drink you had is used up
 export function useBuff() { const b = life.buff; if (!b) return null; life.buff = null; saveLife(); return b; }
 
-// ---------------------------------------------------------------- city layout
-const BLK = 34, ROAD = 8, N = 5, HALF = (N * BLK) / 2; // 5x5 blocks of 34 m with 8 m roads
-const S = 8; // kit scale: one road tile = 8 m
+// ---------------------------------------------------------------- city layout (see city.js)
 let ctx = null; // hooks from main.js (flow, show, $, startRound, toMenu, heroDress, refreshMenu)
 export function initWorld(c) { ctx = c; }
+const PARKED = ['sedan', 'sedan', 'suv', 'van', 'hatchback-sports', 'sedan-sports', 'suv-luxury', 'taxi'];
+const ROLE_COLOR = { 'shop:food': '#ff8a3d', 'shop:drink': '#3db8ff', 'shop:clothes': '#ff5fb8', 'shop:furniture': '#b07a4a', estate: '#3ddc84', police: '#2f6bff', stadium: '#ff3d3d', depot: '#a46bff', airport: '#ffffff', bank: '#ffd23f' };
 
 const world = {
   id: 'world', name: t('The World'), short: t('World'), kind: 'world', icon: 'flag', hidden: true,
@@ -84,94 +85,102 @@ const world = {
   build() {
     const L = new Level({ killY: -20 }); G.level = L; this.L = L;
     const nat = NATIONS.find((n) => n.id === life.nation) || NATIONS[0]; this.nat = nat;
-    L.box(0, -1, 0, HALF + 40, 1, HALF + 40); // the island
-    // grass blocks and roads
-    const grass = [], roads = [];
-    for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) { const cx = -HALF + BLK / 2 + i * BLK, cz = -HALF + BLK / 2 + j * BLK; grass.push({ x: cx, y: -1.98, z: cz, sx: (BLK - ROAD) / 2, sy: 1, sz: (BLK - ROAD) / 2 }); }
-    L.inst('Cube_Grass_Single', grass);
-    for (let k = 0; k <= N; k++) { const c = -HALF + k * BLK; for (let p = -HALF; p < HALF; p += S) { roads.push({ x: c, y: 0.01, z: p + S / 2, s: S, ry: 0 }); roads.push({ x: p + S / 2, y: 0.01, z: c, s: S, ry: PI / 2 }); } }
-    L.inst(W('city-kit-roads', 'road-straight'), roads, false);
-    L.inst('Cube_Grass_Single', [{ x: 0, y: -2.2, z: 0, sx: HALF + 30, sy: 1, sz: HALF + 30 }], false);
-    // lots: 4 per block; each gets a role
-    const roles = ['shop:food', 'shop:drink', 'shop:clothes', 'shop:furniture', 'estate', 'police', 'stadium', 'depot', 'airport', 'bank'];
-    this.lots = []; this.doors = []; this.cams = []; this.homes = [];
-    let r = 0;
-    for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
-      const cx = -HALF + BLK / 2 + i * BLK, cz = -HALF + BLK / 2 + j * BLK;
-      for (const [dx, dz, ry] of [[-7, -7, 0], [7, -7, 0], [-7, 7, PI], [7, 7, PI]]) {
-        const x = cx + dx, z = cz + dz, role = r < roles.length && (i + j) % 2 === 0 && (dx < 0) === (dz < 0) ? roles[r++] : null;
-        this.lots.push({ x, z, ry, role, i, j });
-      }
+    L.box(0, -1, 0, HALF + 70, 1, HALF + 70); // the island
+    const seed = 7 + Math.max(0, NATIONS.indexOf(nat)) * 101, city = buildCity(L, seed), r = rng(seed + 1); this.city = city; this.st = city.st;
+    this.lots = city.lots; this.doors = city.doors; this.cams = []; this.homes = [];
+    // shops and offices in the downtown buildings around the park, one per block
+    const roles = ['shop:food', 'shop:drink', 'shop:clothes', 'shop:furniture', 'estate', 'police', 'depot', 'bank', 'stadium', 'airport'], used = new Set();
+    const shops = this.lots.filter((l) => l.kind === 'shop').sort((a, b) => Math.hypot(a.door.x, a.door.z) - Math.hypot(b.door.x, b.door.z));
+    for (const role of roles) { const l = shops.find((x) => !x.role && !used.has(x.block) && (role !== 'airport' || x.block.type === 'commercial')); if (!l) break; l.role = role; used.add(l.block); }
+    for (const l of this.lots) {
+      if (l.role === 'police') l.label = t('Police station');
+      if (l.role || (l.kind === 'shop' && r() < 0.15)) this.cams.push({ x: l.door.x, z: l.door.z, y: 4, a: Math.atan2(l.nx, l.nz) });
+      if (l.home) { const forSale = r() < 0.35, n = this.homes.length; l.home = { id: `${nat.id}:h${n}`, price: forSale ? r.pick([6000, 9000, 14000]) : 0, furnished: r() < 0.5, owner: forSale ? null : 'npc', unlocked: !forSale && r() < 0.25 }; this.homes.push(l);
+        if (forSale) L.model(W('city-kit-suburban', 'planter'), l.door.x + l.nz * 2.5, 0, l.door.z + l.nx * 2.5, 3); }
     }
-    const commercial = 'abcdefghijklmn'.split('').map((c) => 'building-' + c), sub = 'abcdefghijklmnopqrstu'.split('').map((c) => 'building-type-' + c);
-    for (const lot of this.lots) {
-      const { x, z, ry } = lot; let name, kit;
-      if (lot.role) { kit = 'city-kit-commercial'; name = lot.role === 'stadium' ? 'building-skyscraper-a' : lot.role === 'police' ? 'building-skyscraper-c' : pick(commercial); }
-      else if (Math.abs(lot.i - 2) + Math.abs(lot.j - 2) <= 1) { kit = 'city-kit-commercial'; name = pick(['building-skyscraper-b', 'building-skyscraper-d', 'building-skyscraper-e', ...commercial]); }
-      else { kit = 'city-kit-suburban'; name = pick(sub); }
-      const s = kit === 'city-kit-suburban' ? 9 : 10.5, o = L.model(W(kit, name), x, 0, z, s, ry);
-      const bb = new THREE.Box3().setFromObject(o), sz = bb.getSize(V()); L.box(x, sz.y / 2, z, sz.x / 2 * 0.92, sz.y / 2, sz.z / 2 * 0.92);
-      if (lot.role === 'police') lot.label = t('Police station');
-      const door = { x: x, z: z + (ry === 0 ? 1 : -1) * (sz.z / 2 + 1.2), lot };
-      lot.door = door; this.doors.push(door);
-      // homes: suburban houses (some for sale, some belong to people and a few are left unlocked)
-      if (kit === 'city-kit-suburban') {
-        const id = `h${lot.i}${lot.j}${dx(lot)}`; const forSale = Math.random() < 0.35;
-        lot.home = { id, price: forSale ? pick([6000, 9000, 14000]) : 0, furnished: Math.random() < 0.5, owner: forSale ? null : 'npc', unlocked: !forSale && Math.random() < 0.25 };
-        if (forSale) L.model(W('city-kit-suburban', 'planter'), door.x + 2.5, 0, door.z, 3);
-      }
-      if (lot.role === 'police' || Math.random() < 0.18) { const cam = { x: door.x + 2, z: door.z, y: 4, a: Math.atan2(-(door.x + 2), -door.z) }; this.cams.push(cam); L.model(W('city-kit-roads', 'light-square'), cam.x, 0, cam.z, 6, cam.a); }
+    // parked cars (drawn together; the one you take becomes a real car)
+    const groups = {}; this.parked = [];
+    for (const sp of city.spots) { if (Math.random() > sp.fill) continue; const n = sp.truck ? pick(['truck', 'truck-flat', 'delivery']) : pick(PARKED); (groups[n] = groups[n] || []).push(sp); }
+    for (const [n, list] of Object.entries(groups)) {
+      const key = W('car-kit', n), ins = instanced(key, list.map((sp) => ({ x: sp.x, y: 0, z: sp.z, s: CAR_S, ry: sp.ry })), L.root), b = bounds(key);
+      list.forEach((sp, idx) => { const [x0, x1, z0, z1] = rotBox(b, CAR_S, sp.ry); this.parked.push({ n, x: sp.x, z: sp.z, ry: sp.ry, ins, idx, s: this.st.add(sp.x + x0 + 0.1, sp.x + x1 - 0.1, sp.z + z0 + 0.1, sp.z + z1 - 0.1, 2.2, true, 'car') }); });
     }
-    // street details and trees
-    for (let k = 0; k < 40; k++) { const lot = pick(this.lots); L.model(W('city-kit-suburban', pick(['tree-large', 'tree-small'])), lot.x + rand(-11, 11), 0, lot.z + rand(-11, 11), 7, rand(0, 6)); }
-    // parked cars you can drive
-    this.cars = [];
-    for (let k = 0; k < 10; k++) { const c = -HALF + Math.floor(rand(1, N)) * BLK, p = rand(-HALF + 10, HALF - 10), alongX = Math.random() < 0.5; const x = alongX ? p : c + 3, z = alongX ? c + 3 : p; const n = pick(['sedan', 'suv', 'hatchback-sports', 'van', 'taxi', 'sedan-sports', 'suv-luxury']); this.cars.push({ n, o: L.model(W('car-kit', n), x, 0, z, 2.3, alongX ? PI / 2 : 0), x, z }); }
-    // traffic: cars driving around the outer ring road; they knock you over
-    this.traffic = [];
-    for (let k = 0; k < 6; k++) { const n = pick(['sedan', 'taxi', 'van', 'truck', 'police', 'delivery']); const o = L.model(W('car-kit', n), 0, 0, 0, 2.3); const b = L.kin(new CANNON.Box(new CANNON.Vec3(1.6, 1.2, 2.8)), 0, 1.2, 0, 'spiky'); this.traffic.push({ o, b, d: k / 6, sp: rand(0.012, 0.018), lane: k % 2 ? -2 : 2 }); }
+    this.cars = []; // cars that are out of their parking spot (yours, or stolen)
+    this.traffic = new Traffic(L, this.st, 24);
     // people walking on the pavements
     this.npcs = [];
-    for (let k = 0; k < 14; k++) { const o = place('Character', 0, 0, 0, 0.42, 0, L.root); const eq = { skin: pick(['skin-straw', 'skin-mint', 'skin-lemon', 'skin-grape', 'skin-orange', 'skin-melon', 'skin-snow', 'skin-night', 'skin-blue']), head: Math.random() < 0.5 ? pick(['h-crown', 'h-cone', 'h-wizard', 'h-knight']) : undefined, back: Math.random() < 0.3 ? 'k-pack' : undefined }; dress(o, eq); const mixer = new THREE.AnimationMixer(o); const c = M.Character.animations.find((a) => a.name.endsWith('|Walk')); if (c) mixer.clipAction(c).play(); this.npcs.push({ o, mixer, blk: [Math.floor(rand(0, N)), Math.floor(rand(0, N))], d: Math.random(), sp: rand(0.008, 0.014), seen: 0 }); }
-    // the statue of the most famous player, in the middle of the city
-    this.statue = place('Character', 0, 3, 0, 1.4, PI, L.root); dress(this.statue, { skin: 'film-gold' }); L.model(W('city-kit-roads', 'tile-high'), 0, 0, 0, 4); L.box(0, 1.5, 0, 2, 1.5, 2);
+    for (let k = 0; k < 22; k++) { const o = place('Character', 0, 0, 0, 0.42, 0, L.root); const eq = { skin: pick(['skin-straw', 'skin-mint', 'skin-lemon', 'skin-grape', 'skin-orange', 'skin-melon', 'skin-snow', 'skin-night', 'skin-blue']), head: Math.random() < 0.5 ? pick(['h-crown', 'h-cone', 'h-wizard', 'h-knight']) : undefined, back: Math.random() < 0.3 ? 'k-pack' : undefined }; dress(o, eq); const mixer = new THREE.AnimationMixer(o); const c = M.Character.animations.find((a) => a.name.endsWith('|Walk')); if (c) mixer.clipAction(c).play(); this.npcs.push({ o, mixer, sp: rand(1.1, 1.7), seen: 0 }); }
+    this.walkers = new Walkers(city, this.npcs);
+    // the statue of the most famous player, in the park in the middle of the city
+    const sx = city.statue.x, sz = city.statue.z; this.statue = place('Character', sx, 3, sz, 1.4, PI, L.root); dress(this.statue, { skin: 'film-gold' }); L.model(W('city-kit-roads', 'tile-high'), sx, 0, sz, 4); L.box(sx, 1.5, sz, 2, 1.5, 2);
     L.scenery(HALF + 60, -HALF - 60, HALF + 40);
-    this.fly = [[0, 40, 60, 0, 0, 0]];
-    this.t = 0; this.day = 0.3; this.driving = null; this.job = null; this.inside = null; this.hp = 100; this.dizzy = 0; this.policeT = 0; this.police = [];
+    this.mini = new Minimap(city);
+    this.fly = [[0, 60, 90, 0, 0, 0]];
+    this.t = 0; this.day = 0.3; this.driving = null; this.job = null; this.inside = null; this.hp = 100; this.dizzy = 0; this.policeT = 0; this.police = []; this.camDist = 0;
   },
-  spawn() { const h = Object.keys(life.homes)[0]; const lot = h && this.lots?.find((l) => l.home?.id === h); return lot ? { x: lot.door.x, y: 0.5, z: lot.door.z + 2, facing: 0 } : { x: 17, y: 0.5, z: 40, facing: PI }; },
-  playerSpeed() { return this.driving ? 2.6 : 1; },
-  hudInfo() { return { value: '💰' + save.coins, label: '❤ ' + Math.round(this.hp) + ' · ' + '★'.repeat(life.wanted) + '☆'.repeat(5 - life.wanted) + (this.job ? ' · ' + this.job.text : '') }; },
+  spawn() { const h = Object.keys(life.homes)[0]; const lot = h && this.lots?.find((l) => l.home?.id === h); if (lot) return { x: lot.door.x, y: 0.5, z: lot.door.z, facing: Math.atan2(-lot.nx, -lot.nz) }; const s = this.city?.statue || { x: 0, z: 0 }; return { x: s.x, y: 0.5, z: s.z + 18, facing: PI }; },
+  playerSpeed() { return this.driving ? 0 : 1; },
+  hudInfo() { const d = this.driving; return { value: '💰' + save.coins, label: '❤ ' + Math.round(this.hp) + ' · ' + '★'.repeat(life.wanted) + '☆'.repeat(5 - life.wanted) + (d ? ' · ' + Math.round(Math.abs(d.v) * 3.6) + ' km/h' : '') + (this.job ? ' · ' + this.job.text : '') }; },
   onFall(r) { const s = this.spawn(); r.reset(s.x, 1, s.z, s.facing); },
   target(r) { return { x: r.pos.x, z: r.pos.z, stop: true }; },
-  onFire(r) { r.swing(); this.hitNear(r); },
+  onFire(r) { if (this.driving) return; r.swing(); this.hitNear(r); },
   update(dt) {
-    const p = G.player; if (!p) return; this.t += dt;
+    const p = G.player; if (!p) return; this.t += dt; const pp = p.pos;
     // day and night (a full day lasts 8 minutes)
     this.day = (this.day + dt / 480) % 1; const sunUp = Math.max(0, Math.sin(this.day * PI * 2));
-    if (!this.inside) { hemi.intensity = 0.3 + sunUp * 0.8; sun.intensity = 0.2 + sunUp * 1.9; } if (!this.inside) { scene.fog.color.setHSL(0.58, 0.45, 0.12 + sunUp * 0.5); scene.fog.near = 60; scene.fog.far = 260; }
+    if (!this.inside) { hemi.intensity = 0.3 + sunUp * 0.8; sun.intensity = 0.2 + sunUp * 1.9; scene.fog.color.setHSL(0.58, 0.45, 0.12 + sunUp * 0.5); scene.fog.near = 90; scene.fog.far = 330; }
+    this.st.update(dt, pp.x, pp.z);
     // traffic and people
-    const ring = HALF - 0.01, per = (d) => { d = ((d % 1) + 1) % 1; const s = d * 4, side = Math.floor(s), f = s - side, a = -ring + f * ring * 2; return side === 0 ? [a, -ring, PI / 2] : side === 1 ? [ring, a, 0] : side === 2 ? [-a, ring, -PI / 2] : [-ring, -a, PI]; };
+    const live = this.traffic.cars.filter((c) => c.live), cars = [...live, ...this.police, ...this.cars];
+    this.traffic.update(dt, this.t, pp, cars, this.driving || this.inside ? null : pp, this.police);
+    this.walkers.update(dt, pp, this.driving ? null : pp);
     this.hitCd = Math.max(0, (this.hitCd || 0) - dt);
-    for (const c of this.traffic) { if (!this.driving && this.hitCd <= 0 && Math.hypot(c.o.position.x - p.pos.x, c.o.position.z - p.pos.z) < 2.6) { this.hp -= 34; this.hitCd = 1.5; this.killer = t('a car'); sfx.hit?.(); }
-      c.d += c.sp * dt; const [x, z, ry] = per(c.d); const ox = Math.cos(ry) * c.lane, oz = -Math.sin(ry) * c.lane; c.o.position.set(x + ox, 0, z + oz); c.o.rotation.y = ry; c.b.position.set(x + ox, 1.2, z + oz); c.b.quaternion.setFromEuler(0, ry, 0); }
-    for (const n of this.npcs) { n.mixer.update(dt); n.d += n.sp * dt; const cx = -HALF + BLK / 2 + n.blk[0] * BLK, cz = -HALF + BLK / 2 + n.blk[1] * BLK, h = BLK / 2 - ROAD / 2 - 1.2, s = ((n.d % 1) + 1) % 1 * 4, side = Math.floor(s), f = s - side, a = -h + f * h * 2; const [x, z, ry] = side === 0 ? [a, -h, PI / 2] : side === 1 ? [h, a, 0] : side === 2 ? [-a, h, -PI / 2] : [-h, -a, PI]; n.o.position.set(cx + x, 0, cz + z); n.o.rotation.y = ry; }
-    // the hero's car follows the hero while driving
-    if (this.driving) { const c = this.driving; c.o.position.set(p.pos.x, 0, p.pos.z); c.o.rotation.y = p.facing; p.root.visible = false; }
+    if (!this.driving && !this.inside && this.hitCd <= 0) for (const c of live) {
+      const fx_ = Math.sin(c.h), fz = Math.cos(c.h), rx = pp.x - c.x, rz = pp.z - c.z;
+      if (c.v > 4 && Math.abs(rx * fx_ + rz * fz) < c.hl + 0.4 && Math.abs(rx * fz - rz * fx_) < c.hw + 0.4) { this.hp -= 25; this.hitCd = 1.2; this.killer = t('a car'); sfx.hit?.(); p.tumble?.(V(fx_ * 9, 7, fz * 9)); }
+    }
+    if (this.driving) this.drive(dt, p, cars); else this.camDist = 0;
+    for (const c of this.cars) if (c !== this.driving && c.body) { c.body.position.set(c.x, 1, c.z); c.body.quaternion.setFromEuler(0, c.h, 0); }
     // interaction prompt
     const near = this.nearest(p); ctx.showAct(near ? near.label : null);
     if (this.dizzy > 0) { this.dizzy -= dt; p.confuse(0.2); }
     this.carryUpdate(dt, p); this.jobUpdate(dt, p); this.crimeUpdate(dt, p); this.bizUpdate(dt);
+    if (!this.inside) this.mini.draw(dt, { x: pp.x, z: pp.z, facing: this.driving ? this.driving.h : p.facing }, ctx.ctl?.yaw || 0, this.marks());
     if (this.hp <= 0) this.die(this.killer || t('a car'));
   },
-  cleanup() { hemi.intensity = 1.35; sun.intensity = 2.6; scene.fog.color.setHex(0xbfe6ff); scene.fog.near = 150; scene.fog.far = 420; ctx?.showAct(null); },
+  marks() {
+    const m = [], pp = G.player.pos;
+    for (const l of this.lots) if (l.role && Math.hypot(l.door.x - pp.x, l.door.z - pp.z) < 150) m.push({ x: l.door.x, z: l.door.z, c: ROLE_COLOR[l.role], r: 8 });
+    for (const id of Object.keys(life.homes)) { const l = this.homes.find((h) => h.home.id === id); if (l) m.push({ x: l.door.x, z: l.door.z, c: '#3ddc84', r: 11 }); }
+    for (const c of this.police) m.push({ x: c.x, z: c.z, c: this.t % 0.5 < 0.25 ? '#ff2d2d' : '#2f6bff', r: 9 });
+    const j = this.job; if (j?.mark) m.push({ x: j.mark.position.x, z: j.mark.position.z, c: '#ffd23f', r: 12 }); if (j?.thief) m.push({ x: j.thief.position.x, z: j.thief.position.z, c: '#111', r: 10 });
+    if (this.revengeTarget && !this.revengeTarget.dead) m.push({ x: this.revengeTarget.o.position.x, z: this.revengeTarget.o.position.z, c: '#000', r: 10 });
+    return m;
+  },
+  drive(dt, p, cars) {
+    const c = this.driving, inp = p.input, m = Math.min(1, Math.hypot(inp.x, inp.z)); let wantH = null, thr = 0, brake = false;
+    if (m > 0.15) { const th = Math.atan2(inp.x, inp.z), diff = wrap(th - c.h); if (Math.abs(diff) < 1.9) { wantH = th; thr = m; } else if (c.v > 1.5) brake = true; else { wantH = wrap(th + PI); thr = -m; } }
+    const crash = carStep(c, wantH, thr, brake || p.jumpBuf > 0, dt, this.st, cars);
+    if (crash > 6) { sfx.hit?.(); fx.burst(V(c.x - Math.sin(c.h) * c.hl * -1, 1, c.z + Math.cos(c.h) * c.hl), 0xdddddd, 12, 5); if (crash > 14) { this.hp -= Math.round(crash / 3); this.killer = t('a car crash'); } }
+    // running people over is a crime
+    if (Math.abs(c.v) > 3) for (const n of this.npcs) if (!n.down && Math.hypot(n.o.position.x - c.x, n.o.position.z - c.z) < c.hl + 0.3) { this.walkers.knock(n, Math.sin(c.h), Math.cos(c.h)); this.crime(2, this.witnessed()); }
+    const rv = this.revengeTarget; if (rv && !rv.dead && Math.abs(c.v) > 6 && Math.hypot(rv.o.position.x - c.x, rv.o.position.z - c.z) < c.hl) { rv.hp = 0; rv.dead = true; rv.o.rotation.x = -PI / 2; life.revenge = null; save.coins += 1500; saveLife(); toast(t('Revenge! +1500 coins'), 3); }
+    c.o.position.set(c.x, 0, c.z); c.o.rotation.y = c.h; if (c.body) c.body.position.set(0, -50, 0);
+    p.body.position.set(c.x, this.driveY, c.z); p.body.velocity.set(0, 0, 0); p.facing = c.h; p.root.visible = false;
+    // the camera swings round behind the car unless you are turning it yourself
+    const ct = ctx.ctl; if (ct && Math.abs(c.v) > 2 && performance.now() - (ct.dragT || 0) > 1500) ct.yaw = c.h + PI + wrap(ct.yaw - c.h - PI) * Math.exp(-dt * 2.5);
+    this.camDist = 8.5;
+  },
+  cleanup() { hemi.intensity = 1.35; sun.intensity = 2.6; scene.fog.color.setHex(0xbfe6ff); scene.fog.near = 150; scene.fog.far = 420; ctx?.showAct(null); this.mini?.dispose(); this.mini = null; this.driving = null; },
   // ---------------------------------------------------------------- interacting
   nearest(p) {
     const pp = p.pos; let best = null, bd = 3.2;
     const add = (d, label, fn) => { if (d < bd) { bd = d; best = { label, fn }; } };
     if (this.inside) { add(Math.hypot(pp.x - this.inside.exit.x, pp.z - this.inside.exit.z), t('Go outside'), () => this.leave()); for (const l of this.inside.loot || []) if (!l.taken) add(Math.hypot(pp.x - l.x, pp.z - l.z), t('Take it'), () => this.steal(l)); if (this.inside.mine) add(Math.hypot(pp.x - this.inside.cx, pp.z - this.inside.cz) < 9 ? 3 : 9, t('Decorate'), () => this.decorate()); return best; }
     if (this.driving) return { label: t('Get out of the car'), fn: () => this.exitCar() };
-    for (const c of this.cars) add(Math.hypot(pp.x - c.o.position.x, pp.z - c.o.position.z) - 1, t('Drive'), () => this.enterCar(c));
+    for (const c of this.cars) add(Math.hypot(pp.x - c.x, pp.z - c.z) - c.hw - 0.4, t('Drive'), () => this.enterCar(c));
+    for (const pc of this.parked) if (!pc.taken && Math.abs(pc.x - pp.x) < 6 && Math.abs(pc.z - pp.z) < 6) add(Math.hypot(pp.x - pc.x, pp.z - pc.z) - 1.6, t('Drive'), () => this.takeParked(pc));
+    for (const c of this.traffic.cars) if (c.live && c.v < 1.5 && Math.abs(c.x - pp.x) < 6 && Math.abs(c.z - pp.z) < 6) add(Math.hypot(pp.x - c.x, pp.z - c.z) - c.hw - 0.4, t('Steal the car'), () => this.hijack(c));
     for (const d of this.doors) {
       const dd = Math.hypot(pp.x - d.x, pp.z - d.z), lot = d.lot;
       if (lot.role?.startsWith('shop:')) add(dd, { 'shop:food': t('Restaurant'), 'shop:drink': t('Drinks shop'), 'shop:clothes': t('Clothes shop'), 'shop:furniture': t('Furniture shop') }[lot.role], () => this.shop(lot.role.slice(5)));
@@ -192,8 +201,24 @@ const world = {
     const rv = this.revengeTarget; if (rv && !rv.dead && Math.hypot(rv.o.position.x - r.pos.x, rv.o.position.z - r.pos.z) < 2) { rv.hp--; fx.burst(V(rv.o.position.x, 1, rv.o.position.z), 0x111111, 10, 4); if (rv.hp <= 0) { rv.dead = true; rv.o.rotation.x = -PI / 2; life.revenge = null; save.coins += 1500; saveLife(); toast(t('Revenge! +1500 coins'), 3); } }
   },
   // ---------------------------------------------------------------- cars
-  enterCar(c) { this.driving = c; G.player.root.visible = false; sfx.click(); toast(t('Driving! Press the action button to get out'), 2); },
-  exitCar() { const c = this.driving; this.driving = null; G.player.root.visible = true; const p = G.player.pos; c.o.position.set(p.x, 0, p.z); G.player.reset(p.x + 2.5, 0.5, p.z, G.player.facing); },
+  freeCar(n, o, x, z, h) { const { hw, hl } = carSize(n), body = this.L.kin(new CANNON.Box(new CANNON.Vec3(hw, 1, hl)), x, 1, z, 'car'); const c = { n, o, hw, hl, x, z, h, v: 0, body }; this.cars.push(c); return c; },
+  takeParked(pc) {
+    pc.taken = true; this.st.kill(pc.s); const zero = new THREE.Matrix4().makeScale(0, 0, 0);
+    for (const m of pc.ins.meshes) { m.setMatrixAt(pc.idx, zero); m.instanceMatrix.needsUpdate = true; }
+    this.enterCar(this.freeCar(pc.n, place(W('car-kit', pc.n), pc.x, 0, pc.z, CAR_S, pc.ry, this.L.root), pc.x, pc.z, pc.ry));
+  },
+  hijack(c) {
+    // pull the driver out and take the car: that is a crime
+    this.traffic.remove(c); this.L.root.add(c.o); this.traffic.cars.push(this.traffic.make(pick(['sedan', 'taxi', 'van', 'suv'])));
+    this.crime(1, true); this.enterCar(this.freeCar(c.n, c.o, c.x, c.z, c.h));
+  },
+  enterCar(c) { this.driving = c; c.v = 0; this.driveY = G.player.body.position.y; G.player.root.visible = false; sfx.click(); toast(t('Driving! Press the action button to get out'), 2); },
+  exitCar() {
+    const c = this.driving; if (!c) return; this.driving = null; c.v = 0; const p = G.player; p.root.visible = true;
+    const lx = Math.cos(c.h), lz = -Math.sin(c.h), fx_ = Math.sin(c.h), fz = Math.cos(c.h), d = c.hw + 1.1;
+    const opts = [[c.x + lx * d, c.z + lz * d], [c.x - lx * d, c.z - lz * d], [c.x - fx_ * (c.hl + 1.2), c.z - fz * (c.hl + 1.2)], [c.x + fx_ * (c.hl + 1.2), c.z + fz * (c.hl + 1.2)]];
+    const [x, z] = opts.find(([x, z]) => !this.st.inside(x, z, 0.6)) || opts[0]; p.reset(x, this.driveY || 0.5, z, c.h); c.body.position.set(c.x, 1, c.z);
+  },
   // ---------------------------------------------------------------- shops
   shop(kind) {
     if (kind === 'food' || kind === 'drink') {
@@ -226,7 +251,7 @@ const world = {
     for (let z = -4.6; z <= 5.21; z += 1.6) { place(W('furniture-kit', 'wall'), cx - 5.6, 0, cz + z, wsz, PI / 2, g); place(W('furniture-kit', 'wall'), cx + 5.6, 0, cz + z, wsz, -PI / 2, g); }
     const ceil = []; for (let x = -5.6; x < 5.6; x += 1.6) for (let z = -4.6; z < 5.2; z += 1.6) ceil.push({ x: cx + x, y: 3.6, z: cz + z + 1.6, s: fs, rx: PI }); instanced(W('furniture-kit', 'floorFull'), [...fl, ...ceil], g);
     // inside you only see the room: the sea, the sky and the city outside are hidden
-    this.outside = { bg: scene.background }; sky.visible = false; sea.visible = false; scene.background = new THREE.Color(0x1c1410); scene.fog.near = 1e4; scene.fog.far = 2e4; L.root.children.forEach((c) => { if (c !== g && !c.isLight) { c.userData.wasVis = c.visible; c.visible = false; } });
+    this.mini?.show(false); this.outside = { bg: scene.background }; sky.visible = false; sea.visible = false; scene.background = new THREE.Color(0x1c1410); scene.fog.near = 1e4; scene.fog.far = 2e4; L.root.children.forEach((c) => { if (c !== g && !c.isLight) { c.userData.wasVis = c.visible; c.visible = false; } });
     const lamp = new THREE.PointLight(0xfff0d0, 2.2, 14); lamp.position.set(cx, 3.2, cz); g.add(lamp);
     this.saveLight = [hemi.intensity, sun.intensity, hemi.groundColor.getHex()]; hemi.intensity = 0.95; sun.intensity = 0.1; hemi.groundColor.setHex(0xb0a090); this.exp = renderer.toneMappingExposure; renderer.toneMappingExposure = 0.95;
     g.traverse((m) => { if (m.isMesh && m.material?.color) { m.material = m.material.clone(); m.material.color.multiplyScalar(0.8); } });
@@ -237,7 +262,7 @@ const world = {
     if (!mine) for (const [x, z] of [[0.6, 1.8], [2.2, 0.6], [-0.6, -1.4]]) { const n = pick(LOOT); const o = placeF(n, cx + x, 0, cz + z, ff, 0, g); const l = { o, x: cx + x, z: cz + z, value: pick([80, 120, 200, 300]), n }; inside.loot.push(l); inside.objs.push({ n, o, loot: l }); }
     this.inside = inside; G.player.reset(cx, 0.5, cz + 3.4, PI); sfx.click();
   },
-  leave() { const i = this.inside; const cl = this.carry?.loot; if (cl && !cl.taken) { this.steal(cl); } this.drop(true); i.g.removeFromParent(); this.inside = null; if (this.outside) { sky.visible = true; sea.visible = true; scene.background = this.outside.bg; scene.fog.near = 60; scene.fog.far = 260; this.L.root.children.forEach((c) => { if (c.userData.wasVis !== undefined) { c.visible = c.userData.wasVis; delete c.userData.wasVis; } }); } if (this.saveLight) { [hemi.intensity, sun.intensity] = this.saveLight; hemi.groundColor.setHex(this.saveLight[2]); if (this.exp) renderer.toneMappingExposure = this.exp; } G.player.reset(i.lot.door.x, 0.5, i.lot.door.z + (i.lot.ry === 0 ? 1.5 : -1.5), 0); },
+  leave() { const i = this.inside; const cl = this.carry?.loot; if (cl && !cl.taken) { this.steal(cl); } this.drop(true); i.g.removeFromParent(); this.inside = null; this.mini?.show(true); if (this.outside) { sky.visible = true; sea.visible = true; scene.background = this.outside.bg; scene.fog.near = 60; scene.fog.far = 260; this.L.root.children.forEach((c) => { if (c.userData.wasVis !== undefined) { c.visible = c.userData.wasVis; delete c.userData.wasVis; } }); } if (this.saveLight) { [hemi.intensity, sun.intensity] = this.saveLight; hemi.groundColor.setHex(this.saveLight[2]); if (this.exp) renderer.toneMappingExposure = this.exp; } G.player.reset(i.lot.door.x, 0.5, i.lot.door.z + (i.lot.ry === 0 ? 1.5 : -1.5), 0); },
   climbIn(lot) { // a break-in: noisy, maybe an alarm
     if (Math.random() < 0.3) { toast(t('An alarm goes off!'), 2); this.crime(2, true); } else this.crime(1, false);
     this.enter(lot, false);
@@ -294,26 +319,49 @@ const world = {
   },
   crimeUpdate(dt, p) {
     if (life.evidence > 0) { this.evT = (this.evT ?? rand(60, 180)) - dt; if (this.evT <= 0) { life.wanted = Math.min(5, life.wanted + Math.ceil(life.evidence / 2)); life.evidence = 0; toast(t('The police found the evidence. They are coming for you!'), 3); saveLife(); } }
-    // police cars chase you when you are wanted
-    while (this.police.length < life.wanted && !this.inside) { const a = rand(0, PI * 2), o = place(W('car-kit', 'police'), p.pos.x + Math.cos(a) * 75, 0, p.pos.z + Math.sin(a) * 75, 2.3, 0, this.L.root); this.police.push({ o }); sfx.beep(); }
+    // police cars chase you when you are wanted: they drive along the roads and cut straight to you when they can see you
+    while (this.police.length < life.wanted && !this.inside) this.spawnPolice(p);
+    const pp = p.pos, mine = this.driving;
     for (const c of this.police) {
-      const dx = p.pos.x - c.o.position.x, dz = p.pos.z - c.o.position.z, d = Math.hypot(dx, dz) || 1, sp = 8.5 + life.wanted * 1.2; // a bit slower than a car, so you can get away by driving
-      if (!this.inside) { c.o.position.x += dx / d * sp * dt; c.o.position.z += dz / d * sp * dt; c.o.rotation.y = Math.atan2(dx, dz); }
-      if (d < 2.6 && !this.inside) { this.arrest(); break; }
+      if (this.inside) break;
+      const see = Math.hypot(pp.x - c.x, pp.z - c.z) < 80 && this.st.clear(c.x, c.z, pp.x, pp.z); let tx = pp.x, tz = pp.z;
+      if (!see) {
+        if (!c.tn || Math.hypot(c.tn[0] - c.x, c.tn[1] - c.z) < 9) {
+          const a = clamp(Math.round((c.x + HALF) / P), 0, N), b = clamp(Math.round((c.z + HALF) / P), 0, N), here = [R(a), R(b)];
+          if (!c.tn && Math.hypot(here[0] - c.x, here[1] - c.z) > 9) c.tn = here;
+          else { let best = null, bd = 1e9; for (const [da, db] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const na = a + da, nb = b + db; if (na < 0 || nb < 0 || na > N || nb > N) continue; const d = Math.hypot(R(na) - pp.x, R(nb) - pp.z); if (d < bd) { bd = d; best = [R(na), R(nb)]; } } c.tn = best; }
+        }
+        [tx, tz] = c.tn;
+      } else c.tn = null;
+      let wantH = Math.atan2(tx - c.x, tz - c.z), thr = Math.abs(wrap(wantH - c.h)) > 1.1 ? 0.45 : 1;
+      if (Math.abs(c.v) < 1) c.stuck += dt; else c.stuck = 0; if (c.stuck > 1.4) { c.rev = 1.1; c.stuck = 0; }
+      if (c.rev > 0) { c.rev -= dt; thr = -1; wantH = wrap(c.h + 0.9); }
+      carStep(c, wantH, thr, false, dt, this.st, [...this.traffic.cars.filter((o) => o.live), ...this.cars, ...this.police]);
+      c.o.position.set(c.x, 0, c.z); c.o.rotation.y = c.h; c.body.position.set(c.x, 1, c.z); c.body.quaternion.setFromEuler(0, c.h, 0);
+      const d = Math.hypot(pp.x - c.x, pp.z - c.z);
+      if (!mine && d < c.hl + 1.6 && Math.abs(c.v) < 12) { this.arrest(); break; }
+      if (mine && d < c.hl + mine.hl + 1.8 && Math.abs(mine.v) < 2.5) { this.bust = (this.bust || 0) + dt; if (this.bust > 1.5) { this.bust = 0; this.exitCar(); this.arrest(); break; } } else if (mine) this.bust = 0;
     }
-    if (life.wanted > 0 && !this.police.some((c) => Math.hypot(p.pos.x - c.o.position.x, p.pos.z - c.o.position.z) < 60)) { this.calm = (this.calm || 0) + dt; if (this.calm > 40) { life.wanted--; this.calm = 0; this.police.pop()?.o.removeFromParent(); saveLife(); } } else this.calm = 0;
+    if (life.wanted > 0 && !this.police.some((c) => Math.hypot(pp.x - c.x, pp.z - c.z) < 70)) { this.calm = (this.calm || 0) + dt; if (this.calm > 40) { life.wanted--; this.calm = 0; this.dropPolice(this.police.pop()); saveLife(); } } else this.calm = 0;
   },
+  spawnPolice(p) {
+    const pp = p.pos, nodes = []; for (let a = 0; a <= N; a++) for (let b = 0; b <= N; b++) { const d = Math.hypot(R(a) - pp.x, R(b) - pp.z); if (d > 90 && d < 170) nodes.push([R(a), R(b)]); }
+    const [x, z] = nodes.length ? pick(nodes) : [pp.x + 100, pp.z]; const { hw, hl } = carSize('police');
+    const c = { n: 'police', o: place(W('car-kit', 'police'), x, 0, z, CAR_S, 0, this.L.root), hw, hl, x, z, h: Math.atan2(pp.x - x, pp.z - z), v: 0, vmax: 19 + life.wanted * 1.6, stuck: 0, rev: 0, tn: null, body: this.L.kin(new CANNON.Box(new CANNON.Vec3(hw, 1, hl)), x, 1, z, 'car') };
+    this.police.push(c); sfx.beep();
+  },
+  dropPolice(c) { if (!c) return; c.o.removeFromParent(); c.body.position.set(0, -50, 0); },
   arrest() {
-    const fine = Math.min(save.coins, 300 * life.wanted); save.coins -= fine; life.wanted = 0; life.evidence = 0; for (const c of this.police) c.o.removeFromParent(); this.police = []; saveLife();
+    const fine = Math.min(save.coins, 300 * life.wanted); save.coins -= fine; life.wanted = 0; life.evidence = 0; for (const c of this.police) this.dropPolice(c); this.police = []; saveLife();
     toast(t('Arrested! You paid a {n} coin fine', { n: fine }), 3.5); const s = this.lots.find((l) => l.role === 'police'); if (s) G.player.reset(s.door.x, 0.5, s.door.z + 2, 0);
   },
-  policeDesk() { ctx.panel(t('Police station'), [{ id: 'turn', name: t('Turn yourself in'), sub: t('Pay a smaller fine and clear your wanted level'), price: 150 * life.wanted }], () => { const fine = Math.min(save.coins, 150 * life.wanted); save.coins -= fine; life.wanted = 0; life.evidence = 0; this.police.forEach((c) => c.o.removeFromParent()); this.police = []; saveLife(); toast(t('Your record is clean'), 2); }); },
+  policeDesk() { ctx.panel(t('Police station'), [{ id: 'turn', name: t('Turn yourself in'), sub: t('Pay a smaller fine and clear your wanted level'), price: 150 * life.wanted }], () => { const fine = Math.min(save.coins, 150 * life.wanted); save.coins -= fine; life.wanted = 0; life.evidence = 0; this.police.forEach((c) => this.dropPolice(c)); this.police = []; saveLife(); toast(t('Your record is clean'), 2); }); },
   // ---------------------------------------------------------------- permadeath and revenge
   die(by) {
     life.deaths++; life.hall.push({ name: life.name, fame: life.fame, by, at: Date.now() }); life.revenge = { by }; life.homes = {}; life.furn = []; life.buff = null; life.wanted = 0; life.fame = 0; life.biz = {}; life.name = pick(['Bolt', 'Zap', 'Dash', 'Volt', 'Spark', 'Flash']) + ' ' + (life.deaths + 1);
     saveLife(); this.hp = 100; this.killer = null; toast(t('You died. A new life begins... and a revenge file is open'), 4); const s = this.spawn(); G.player.reset(s.x, 1, s.z, 0);
     // the one who killed you walks the city now; find him and beat him
-    const o = place('Character', s.x + rand(-60, 60), 0, s.z + rand(-60, 60), 0.5, 0, this.L.root); dress(o, { skin: 'film-black', face: 'f-sun' }); this.revengeTarget = { o, hp: 5 };
+    const dd = pick(this.doors.filter((d) => Math.hypot(d.x - s.x, d.z - s.z) < 140) || this.doors) || { x: s.x, z: s.z }; const o = place('Character', dd.x, 0, dd.z, 0.5, 0, this.L.root); dress(o, { skin: 'film-black', face: 'f-sun' }); this.revengeTarget = { o, hp: 5 };
   },
   // ---------------------------------------------------------------- jobs
   jobs() {
@@ -330,7 +378,7 @@ const world = {
     if (id === 'delivery') this.job = { id, text: t('Deliver the parcel'), to: doorTo, mark: mk(doorTo.x, doorTo.z), time: 75, pay: 150 };
     else if (id === 'taxi') { const from = pick(this.doors), to = pick(this.doors); this.job = { id, text: t('Pick up the passenger'), stage: 0, from, to, mark: mk(from.x, from.z), time: 120, pay: 220 }; }
     else if (id === 'shop') this.job = { id, text: t('Serve 5 customers'), left: 5, time: 60, pay: 120, serveT: 2 };
-    else if (id === 'police') { const o = place('Character', p.pos.x + 25, 0, p.pos.z + 25, 0.42, 0, this.L.root); dress(o, { skin: 'mon-vamp', face: 'f-sun' }); this.job = { id, text: t('Catch the thief'), thief: o, time: 90, pay: 300 }; }
+    else if (id === 'police') { const td = pick(this.doors.filter((d) => { const q = Math.hypot(d.x - p.pos.x, d.z - p.pos.z); return q > 20 && q < 45; })) || { x: p.pos.x + 25, z: p.pos.z }; const o = place('Character', td.x, 0, td.z, 0.42, 0, this.L.root); dress(o, { skin: 'mon-vamp', face: 'f-sun' }); this.job = { id, text: t('Catch the thief'), thief: o, time: 90, pay: 300 }; }
     else if (id === 'pro') { ctx.goPlay('show'); return; }
     sfx.click(); toast(this.job.text, 2);
   },
@@ -341,7 +389,7 @@ const world = {
     if (j.id === 'delivery' && at(j.to)) this.jobDone();
     if (j.id === 'taxi') { if (!this.driving) j.text = t('Get in a car first') + ` (${Math.ceil(j.time)}s)`; else if (j.stage === 0 && at(j.from)) { j.stage = 1; j.mark.position.set(j.to.x, 2, j.to.z); toast(t('Passenger on board! Drive to the star'), 2); } else if (j.stage === 1 && at(j.to)) this.jobDone(); }
     if (j.id === 'shop') { j.serveT -= dt; if (j.serveT <= 0) { j.serveT = 2.5; ctx.showAct(t('Serve!')); this.serving = true; } }
-    if (j.id === 'police') { const o = j.thief.position, dx = o.x - p.pos.x, dz = o.z - p.pos.z, d = Math.hypot(dx, dz) || 1; o.x += dx / d * 6.5 * dt; o.z += dz / d * 6.5 * dt; o.x = clamp(o.x, -HALF, HALF); o.z = clamp(o.z, -HALF, HALF); o.y = 0; if (d < 1.8) { j.thief.removeFromParent(); this.jobDone(); } }
+    if (j.id === 'police') { const o = j.thief.position, dx = o.x - p.pos.x, dz = o.z - p.pos.z, d = Math.hypot(dx, dz) || 1; o.x += dx / d * 6.5 * dt; o.z += dz / d * 6.5 * dt; o.x = clamp(o.x, -HALF, HALF); o.z = clamp(o.z, -HALF, HALF); o.y = 0; const pu = this.st.resolve(o.x, o.z, 0.6); if (pu) { o.x += pu.x; o.z += pu.z; } j.thief.rotation.y = Math.atan2(dx, dz); if (d < 1.8) { j.thief.removeFromParent(); this.jobDone(); } }
     if (j.time <= 0) { toast(t('Too late! Job failed'), 2); j.mark?.removeFromParent(); j.thief?.removeFromParent(); this.job = null; }
   },
   serve() { const j = this.job; if (j?.id !== 'shop' || !this.serving) return false; this.serving = false; j.left--; sfx.coin(); if (j.left <= 0) this.jobDone(); else j.text = t('Serve {n} more customers', { n: j.left }); return true; },
@@ -358,7 +406,7 @@ const world = {
   },
   business() {
     const lots = this.lots.filter((l) => !l.role && !l.home).slice(0, 6), list = [];
-    for (const l of lots) { const id = `b${l.i}${l.j}${dx(l)}`, b = life.biz[id]; list.push({ id, name: b ? (b.done ? t('Your {x} (earning)', { x: b.kind }) : t('Building your {x}...', { x: b.kind })) : t('Land for sale'), sub: b ? (b.done ? t('Collect your earnings') : '') : t('Buy the land, then build an arena, cinema or restaurant'), price: b ? 0 : 5000 }); }
+    for (const l of lots) { const id = `b${this.nat.id}:${l.id}`, b = life.biz[id]; list.push({ id, name: b ? (b.done ? t('Your {x} (earning)', { x: b.kind }) : t('Building your {x}...', { x: b.kind })) : t('Land for sale'), sub: b ? (b.done ? t('Collect your earnings') : '') : t('Buy the land, then build an arena, cinema or restaurant'), price: b ? 0 : 5000 }); }
     ctx.panel(t('Business'), list, (id) => {
       const b = life.biz[id];
       if (!b) { if (save.coins < 5000) return toast(t('Need {n} more', { n: 5000 - save.coins })); save.coins -= 5000; life.biz[id] = { kind: pick([t('Arena'), t('Cinema'), t('Restaurant')]), start: Date.now(), done: false, last: Date.now() }; toast(t('Construction started! Come back in 10 minutes'), 3); }
@@ -368,9 +416,13 @@ const world = {
   },
   bizUpdate() { for (const b of Object.values(life.biz)) if (!b.done && Date.now() - b.start > 600000) { b.done = true; b.last = Date.now(); toast(t('Your {x} is open!', { x: b.kind }), 3); saveLife(); } },
 };
-export const WORLD_MODELS = [...'abcdefghijklmn'.split('').map((c) => 'city-kit-commercial/building-' + c), ...['a', 'b', 'c', 'd', 'e'].map((c) => 'city-kit-commercial/building-skyscraper-' + c), ...'abcdefghijklmnopqrstu'.split('').map((c) => 'city-kit-suburban/building-type-' + c),
-  'city-kit-suburban/planter', 'city-kit-suburban/tree-large', 'city-kit-suburban/tree-small', 'city-kit-roads/road-straight', 'city-kit-roads/light-square', 'city-kit-roads/tile-high',
-  ...['sedan', 'suv', 'hatchback-sports', 'van', 'taxi', 'sedan-sports', 'suv-luxury', 'truck', 'police', 'delivery'].map((n) => 'car-kit/' + n)];
+const K = (kit, list) => list.map((n) => kit + '/' + n);
+export const WORLD_MODELS = [...K('city-kit-commercial', [...'abcdefghijklmn'.split('').map((c) => 'building-' + c), ...'abcde'.split('').map((c) => 'building-skyscraper-' + c)]),
+  ...K('city-kit-suburban', [...'abcdefghijklmnopqrstu'.split('').map((c) => 'building-type-' + c), 'planter', 'tree-large', 'tree-small', 'driveway-long', 'fence']),
+  ...K('city-kit-industrial', [...'abcdefghijklmnopqrst'.split('').map((c) => 'building-' + c), 'chimney-large', 'chimney-medium', 'detail-tank']),
+  ...K('city-kit-roads', ['road-straight', 'road-crossroad-path', 'road-intersection-path', 'road-bend', 'tile-low', 'light-square', 'tile-high']),
+  ...K('street-props', ['detail-light-traffic', 'detail-bench', 'detail-dumpster-closed', 'tree-park-large', 'tree-pine-large']),
+  ...K('car-kit', ['sedan', 'suv', 'hatchback-sports', 'van', 'taxi', 'sedan-sports', 'suv-luxury', 'truck', 'truck-flat', 'police', 'delivery', 'garbage-truck', 'ambulance'])];
 function placeF(n, x, y, z, s, ry, parent) {
   const o = place(W('furniture-kit', n), x, y, z, s, ry, parent); o.updateMatrixWorld(true);
   const c = new THREE.Box3().setFromObject(o).getCenter(V()); o.position.x += x - c.x; o.position.z += z - c.z; return o;

@@ -108,7 +108,7 @@ canvas.addEventListener('pointermove', (e) => {
   if (drag.moved >= 8 && ctl.held && ctl.charge && !keys.has('KeyF')) { ctl.held = false; ctl.charge = null; show('pwr', false); }
   if (flow.state === 'build') { editor.cam.x = clamp(editor.cam.x - dx * editor.cam.zoom * 0.0025, -14, 14); editor.cam.z = clamp(editor.cam.z - dy * editor.cam.zoom * 0.004, -80, 14); }
   else if (flow.state === 'menu') { lobby.spin = (lobby.spin || 0) + dx * 0.012; lobby.spinT = 4; }
-  else { ctl.yaw -= dx * 0.006 * save.sens; ctl.pitch = clamp(ctl.pitch + dy * 0.004 * save.sens, -0.45, 1.1); }
+  else { ctl.dragT = performance.now(); ctl.yaw -= dx * 0.006 * save.sens; ctl.pitch = clamp(ctl.pitch + dy * 0.004 * save.sens, -0.45, 1.1); }
   drag.x = e.clientX; drag.y = e.clientY;
 });
 canvas.addEventListener('pointerup', (e) => {
@@ -1211,6 +1211,7 @@ translateDom();
   frame();
   // ---- the open world
   initWorld({
+    ctl,
     showAct(label) { const b = $('wAct'); if (!label) { b.hidden = true; return; } b.hidden = false; if (b.textContent !== label) b.textContent = label; },
     panel(title, items, onPick) { worldPanel(title, items, onPick); },
     openWardrobe() { worldClothes(); },
