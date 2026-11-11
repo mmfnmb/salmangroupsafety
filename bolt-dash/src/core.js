@@ -206,10 +206,13 @@ export function applyQuality() {
   motes.visible = q.extras;
   resize();
 }
+// shared with the extra files that load later (world/gfx.js, world/life.js): they get three.js and the scene from here
+export const BD = (window.__BD = { THREE, hooks: [] });
 export function renderScene(dt = 0) {
   skyU.time.value += dt; seaU.time.value += dt * (G.paused ? 0 : 1);
   sky.position.copy(camera.position); motes.material.uniforms.center.value.copy(camera.position);
   sea.position.x = Math.round(camera.position.x / 50) * 50; sea.position.z = Math.round(camera.position.z / 50) * 50;
+  for (const h of BD.hooks) h(dt); // the extra quality files (world/gfx.js, world/life.js) hook in here
   if ((QUALITY[save.quality] || QUALITY.med).bloom) composer.render(); else renderer.render(scene, camera);
 }
 
@@ -360,3 +363,10 @@ export const toast = (() => {
   f.update = (dt) => { if (t > 0) { t -= dt; if (t <= 0) el.hidden = true; } };
   return f;
 })();
+
+Object.assign(BD, { scene, camera, renderer, sun, hemi, rim, sky, sea, motes, composer, bloom, G, M, save, QUALITY, sfx, fog: scene.fog });
+// load the extra quality files once (only when a game or the open world starts, so the menu stays light)
+export function loadExtras() {
+  if (BD.extras) return; BD.extras = true;
+  for (const f of ['gfx', 'life']) { const s = document.createElement('script'); s.src = `./world/${f}.js`; s.async = true; document.head.appendChild(s); }
+}

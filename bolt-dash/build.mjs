@@ -34,3 +34,13 @@ console.log('dist/bolt-dash.html', (html.length / 1e6).toFixed(2), 'MB');
 // world packs (city models) are separate files next to the page; copy them for local testing
 import { cpSync, existsSync } from 'node:fs';
 if (existsSync('world')) cpSync('world', 'dist/world', { recursive: true });
+
+// the two extra quality files for the open world (and games): built on their own, loaded only when a game starts
+for (const f of ['gfx', 'life']) {
+  await build({
+    entryPoints: [`src/extras/${f}.js`], bundle: true, minify: true, format: 'iife', outfile: `dist/world/${f}.js`, target: 'es2020',
+    alias: { 'three/addons': 'three/examples/jsm' },
+    plugins: [{ name: 'shared-three', setup(b) { b.onResolve({ filter: /^three$/ }, () => ({ path: new URL('./src/extras/three-shim.js', import.meta.url).pathname })); } }],
+  });
+}
+console.log('dist/world/gfx.js + life.js');

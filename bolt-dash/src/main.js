@@ -1,5 +1,5 @@
 // Game flow: lobby menu, matchmaking, show rounds, HUD, camera, input, build mode.
-import { THREE, CANNON, M, G, V, PI, rand, pick, clamp, damp, $, IS_TOUCH, store, save, persist, sfx, toast, renderer, scene, camera, canvas, sky, sun, world, puffs, confetti, fx, loadAssets, place, instanced, SkeletonUtils, renderScene, applyQuality } from './core.js';
+import { THREE, CANNON, M, G, V, PI, rand, pick, clamp, damp, $, IS_TOUCH, store, save, persist, sfx, toast, renderer, scene, camera, canvas, sky, sun, world, puffs, confetti, fx, loadAssets, place, instanced, SkeletonUtils, renderScene, applyQuality, loadExtras } from './core.js';
 import { t, LANG, LANGS, setLang, translateDom } from './i18n.js';
 import { ITEMS, ITEM, CATS, SKINS, BATS, THUMB, computeBoneFix, dress, randomEquip, makeThumbs, holdItem, skinFx, updateGold, makePet } from './cosmetics.js';
 import { Runner, think } from './runner.js';
@@ -696,6 +696,7 @@ function roundMode(i) {
   return rd.m === 'custom' ? customMode(getMap()) : MODES[rd.m];
 }
 function startRound() {
+  loadExtras();
   const rd = flow.show.rounds[flow.round], md = roundMode(flow.round);
   show('mm', false); show('result', false); show('menu', false); dive.root.visible = false;
   cleanupRound();
@@ -831,6 +832,7 @@ G.endRound = () => {
 };
 // ---------------------------------------------------------------- the open world
 async function enterWorld(quiet) {
+  loadExtras();
   sfx.unlock(); const go = async () => {
     show('menu', false); show('pause', false); toast(t('Loading the city…'), 30);
     try { await loadPacks(); await need(WORLD_MODELS); } catch (e) { toast(t('The city could not load. Open the game from its published link'), 4); toMenu(); return; }

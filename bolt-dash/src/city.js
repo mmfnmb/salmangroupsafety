@@ -46,7 +46,7 @@ function hueTex(tex, v) {
   const img = tex.image, w = img.width, h = img.height, cv = document.createElement('canvas'); cv.width = w; cv.height = h; const g = cv.getContext('2d'); g.drawImage(img, 0, 0);
   const d = g.getImageData(0, 0, w, h), a = d.data, rot = [0, 0.6, 0.2, 0.68, 0.27, 0.72][v % 6], lift = [1, 0.95, 1, 0.72, 0.85, 0.8][v % 6];
   for (let i = 0; i < a.length; i += 4) {
-    let r = a[i] / 255, gg = a[i + 1] / 255, b = a[i + 2] / 255; const mx = Math.max(r, gg, b), mn = Math.min(r, gg, b), l = (mx + mn) / 2, dd = mx - mn; if (dd < 0.08) continue;
+    let r = a[i] / 255, gg = a[i + 1] / 255, b = a[i + 2] / 255; const mx = Math.max(r, gg, b), mn = Math.min(r, gg, b), l = (mx + mn) / 2, dd = mx - mn; if (dd < 0.08 || (b > 0.55 && b > r + 0.08 && gg > r)) continue;
     const sat = l > 0.5 ? dd / (2 - mx - mn) : dd / (mx + mn); let hh = mx === r ? (gg - b) / dd + (gg < b ? 6 : 0) : mx === gg ? (b - r) / dd + 2 : (r - gg) / dd + 4; hh = (hh / 6 + rot) % 1;
     const L = Math.min(1, l * lift), q = L < 0.5 ? L * (1 + sat) : L + sat - L * sat, pp = 2 * L - q, f = (t) => { t = (t + 1) % 1; return t < 1 / 6 ? pp + (q - pp) * 6 * t : t < 0.5 ? q : t < 2 / 3 ? pp + (q - pp) * (2 / 3 - t) * 6 : pp; };
     a[i] = f(hh + 1 / 3) * 255; a[i + 1] = f(hh) * 255; a[i + 2] = f(hh - 1 / 3) * 255;
@@ -56,7 +56,7 @@ function hueTex(tex, v) {
 }
 export function variant(key, v) {
   if (!v || !M[key]) return key; const vk = key + '#' + v; if (M[vk]) return vk;
-  const sc = M[key].scene.clone(true); sc.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); if (o.material.map?.image) o.material.map = hueTex(o.material.map, v); } });
+  const sc = M[key].scene.clone(true); sc.traverse((o) => { if (o.isMesh) { const src = o.material.map; o.material = o.material.clone(); if (src?.image) { o.material.map = hueTex(src, v); o.material.userData.srcMap = src; } } });
   M[vk] = { scene: sc }; return vk;
 }
 
@@ -158,7 +158,7 @@ export class City {
     const keep = (x) => x.chunk !== c; this.lots = this.lots.filter(keep); this.doors = this.doors.filter((d) => d.lot.chunk !== c); this.parked = this.parked.filter(keep); this.blocks = this.blocks.filter(keep); this.coins = this.coins.filter(keep); this.homes = this.homes.filter(keep); this.cams = this.cams.filter(keep);
   }
   make(ci, cj) {
-    const c = { ci, cj, group: new THREE.Group(), statics: [], spots: [] }, inst = new Map(); this.chunks.set(ci + ',' + cj, c); this.L.root.add(c.group);
+    const c = { ci, cj, group: new THREE.Group(), statics: [], spots: [], lamps: [] }, inst = new Map(); this.chunks.set(ci + ',' + cj, c); this.L.root.add(c.group);
     const add = (model, t, shadow = true) => { if (!M[model]) return; const k = model + '|' + (shadow ? 1 : 0); let a = inst.get(k); if (!a) inst.set(k, (a = [])); a.push(t); };
     for (let a = 0; a < 3; a++) for (let b = 0; b < 3; b++) this.block(ci * 3 + a, cj * 3 + b, c, add);
     for (const [k, list] of inst) { const [m, sh] = k.split('|'); instanced(m, list, c.group, sh === '1'); }
@@ -196,8 +196,8 @@ export class City {
     // street lights on both sides of those roads, traffic lights at the crossing (one per approach, on the driver's right)
     for (const f of [0.3, 0.7]) {
       const p = P * f;
-      if (e[0]) { add(LIGHT, { x: x0 + p, y: 0, z: z0 - 7.3, s: 10, ry: PI }); pole(x0 + p, z0 - 7.3); add(LIGHT, { x: x0 + p, y: 0, z: z0 + 7.3, s: 10, ry: 0 }); pole(x0 + p, z0 + 7.3); }
-      if (e[1]) { add(LIGHT, { x: x0 - 7.3, y: 0, z: z0 + p, s: 10, ry: -PI / 2 }); pole(x0 - 7.3, z0 + p); add(LIGHT, { x: x0 + 7.3, y: 0, z: z0 + p, s: 10, ry: PI / 2 }); pole(x0 + 7.3, z0 + p); }
+      if (e[0]) { add(LIGHT, { x: x0 + p, y: 0, z: z0 - 7.3, s: 10, ry: PI }); pole(x0 + p, z0 - 7.3); add(LIGHT, { x: x0 + p, y: 0, z: z0 + 7.3, s: 10, ry: 0 }); pole(x0 + p, z0 + 7.3); c.lamps.push([x0 + p, z0 - 5.3], [x0 + p, z0 + 5.3]); }
+      if (e[1]) { add(LIGHT, { x: x0 - 7.3, y: 0, z: z0 + p, s: 10, ry: -PI / 2 }); pole(x0 - 7.3, z0 + p); add(LIGHT, { x: x0 + 7.3, y: 0, z: z0 + p, s: 10, ry: PI / 2 }); pole(x0 + 7.3, z0 + p); c.lamps.push([x0 - 5.3, z0 + p], [x0 + 5.3, z0 + p]); }
     }
     if (deg >= 3) for (const [u, v, ry, k] of [[7.4, 7.4, PI / 2, 1], [7.4, -7.4, PI, 0], [-7.4, -7.4, -PI / 2, 3], [-7.4, 7.4, 0, 2]]) if (e[k]) { add(TL, { x: x0 + u, y: 0, z: z0 + v, s: 5.5, ry }); pole(x0 + u, z0 + v); }
     flat('w/concrete', cx, cz, P - S, P - S, 0.006);
