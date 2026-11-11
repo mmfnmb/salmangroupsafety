@@ -80,6 +80,7 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
 .hud{position:absolute;inset:10px 12px auto;display:flex;gap:12px;align-items:center;justify-content:space-between;font-weight:800;pointer-events:none;text-shadow:0 2px 4px #000}
 .hud .hp{flex:1;max-width:260px;height:12px;border-radius:6px;background:#0008;overflow:hidden;box-shadow:0 0 0 1px #fff3}
 .hud .hp b{display:block;height:100%;width:100%;background:linear-gradient(90deg,#46c96b,#b9e27c);transition:width .2s}
+.camBtn{position:absolute;top:38px;inset-inline-start:12px;z-index:2;background:#211c19cc;font-size:12px;padding:4px 10px}
 .ov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:20px;background:#0b0907cc}
 .ov h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,5vw,44px);margin:0;color:var(--ember-2)}
 .ov p{margin:0;max-width:46ch;color:var(--bone)}
@@ -335,11 +336,12 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
     <div class="arena" id="arena">
       <div class="pops" id="apops"></div>
       <div class="hud"><span id="aWave"></span><span class="hp"><b id="aHp"></b></span><span id="aScore"></span></div>
+      <button class="tool camBtn" id="aCam">الكاميرا</button>
       <div class="ov" id="aOv"><h2 id="aOvT">ساحة الوحوش</h2><p id="aOvP">انزل بالسلاح اللي في الورشة واصمد قدام موجات الوحوش. كل وحش ليه عنصر بيضعف قدامه.</p><div class="acts" style="justify-content:center"><button class="btn" id="aGo">ابدأ</button><button class="btn alt" id="aEdit" hidden>ارجع عدّل العالم</button></div></div>
       <div class="joy" id="joy"><i id="joyK"></i></div>
       <button class="hit" id="aHit" aria-label="اضرب">اضرب</button>
     </div>
-    <p class="desc" id="aHelp">الحركة: WASD أو الأسهم · الضرب: مسافة أو كليك. على الموبايل: اسحب في الدايرة الشمال واضرب بالزرار.</p>
+    <p class="desc" id="aHelp">الحركة: WASD أو الأسهم · لف الكاميرا: اسحب على الشاشة أو Q و E · الضرب: مسافة أو كليك · C تغيّر الكاميرا. على الموبايل: اتحرك بالدايرة الشمال، واسحب بصباع تاني على الشاشة عشان تلف، واضرب بالزرار.</p>
     <div class="list" id="bestiary" style="margin-top:12px"></div>
   </section>
 
@@ -603,7 +605,8 @@ function voxels(rows, pal, scale = 1) {
   list.forEach(([x, y, col], i) => { o.position.set((x - (w - 1) / 2) * scale, (h - 1 - y) * scale + scale / 2, 0); o.scale.set(scale, scale, scale * 2.2); o.updateMatrix(); m.setMatrixAt(i, o.matrix); m.setColorAt(i, c.set(col)); });
   m.castShadow = true; return m;
 }
-const AR = { el: $('arena'), R: null, scene: null, cam: null, on: false, mons: [], keys: {}, joy: null, best: store.get('best', 0) };
+const CAMS = { behind: 'من ورا', front: 'من قدام', first: 'عينه', top: 'من فوق' };
+const AR = { camMode: store.get('cam', 'behind'), yaw: 0, pitch: 0.3, el: $('arena'), R: null, scene: null, cam: null, on: false, mons: [], keys: {}, joy: null, best: store.get('best', 0) };
 function arenaInit() {
   if (AR.R) return; const R2 = new THREE.WebGLRenderer({ antialias: true }); R2.setPixelRatio(Math.min(2, devicePixelRatio)); R2.shadowMap.enabled = true; AR.el.prepend(R2.domElement); AR.R = R2;
   const sc = new THREE.Scene(); sc.background = new THREE.Color(0x120d0b); sc.fog = new THREE.Fog(0x120d0b, 35, 75); AR.scene = sc;
@@ -620,13 +623,18 @@ function arenaInit() {
   for (let i = 0; i < 12; i++) { const a = rnd(i) * Math.PI * 2, r = 7 + rnd(i + 40) * 17, x = Math.cos(a) * r, z = Math.sin(a) * r, h = 1.5 + rnd(i + 80) * 3, w = 1.4 + rnd(i + 120) * 1.4;
     const col = ['#6f6a64', '#7a736b', '#5d5852'][i % 3], m = cubeMesh({ p: [x, h / 2, z], s: [w, h, w], r: [0, rnd(i + 9) * 1.5, 0], c: col, f: ['', '', '', '', '', ''], seed: 100 + i }); m.receiveShadow = true; AR.ring.add(m); AR.walls.push({ x, z, r: w * 0.62 }); }
   AR.ringWalls = AR.walls;
-  AR.hero = new THREE.Group(); const hv = voxels(ART.hero, SPR, 0.15); AR.body = new THREE.Group(); AR.body.add(hv); AR.hero.add(AR.body); AR.hand = new THREE.Group(); AR.hand.position.set(0.62, 0.9, 0.35); AR.body.add(AR.hand); sc.add(AR.hero);
+  AR.hero = new THREE.Group(); AR.heroRig = buildRig(HERO); const hk = 1.9 / AR.heroRig.H; AR.heroRig.root.scale.setScalar(hk); AR.body = AR.heroRig.root; AR.hero.add(AR.body);
+  AR.body.traverse((o) => { if (o.isMesh) o.castShadow = true; }); AR.hand = new THREE.Group(); AR.hand.position.set(0, -0.86, 0.05); AR.hand.rotation.x = Math.PI / 2; AR.heroRig.g.armR.add(AR.hand); sc.add(AR.hero);
   new ResizeObserver(() => { const w = AR.el.clientWidth, h = AR.el.clientHeight; R2.setSize(w, h, false); AR.cam.aspect = w / h; AR.cam.updateProjectionMatrix(); }).observe(AR.el);
   if (matchMedia('(pointer:coarse)').matches) AR.el.classList.add('touch');
   // controls
-  addEventListener('keydown', (e) => { if (!AR.on || $('vArena').hidden) return; AR.keys[e.code] = true; if (e.code === 'Space' || e.code === 'KeyJ') { e.preventDefault(); swing(); } if (e.code.startsWith('Arrow')) e.preventDefault(); });
+  addEventListener('keydown', (e) => { if (!AR.on || $('vArena').hidden) return; AR.keys[e.code] = true; if (e.code === 'Space' || e.code === 'KeyJ') { e.preventDefault(); swing(); } if (e.code === 'KeyC') $('aCam').click(); if (e.code.startsWith('Arrow')) e.preventDefault(); });
   addEventListener('keyup', (e) => { AR.keys[e.code] = false; });
-  R2.domElement.addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse') swing(); });
+  // drag on the view to turn the camera; a click (no drag) swings
+  let drag = null; R2.domElement.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, y: e.clientY, moved: false, id: e.pointerId }; R2.domElement.setPointerCapture(e.pointerId); });
+  R2.domElement.addEventListener('pointermove', (e) => { if (!drag || e.pointerId !== drag.id) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true; AR.yaw -= dx * 0.008; AR.pitch = Math.max(-0.5, Math.min(1.1, AR.pitch + dy * 0.005)); drag.x = e.clientX; drag.y = e.clientY; });
+  R2.domElement.addEventListener('pointerup', (e) => { if (drag && !drag.moved && e.pointerType === 'mouse') swing(); drag = null; });
+  $('aCam').onclick = () => { const ks = Object.keys(CAMS); setCam(ks[(ks.indexOf(AR.camMode) + 1) % ks.length]); };
   const joy = $('joy'), knob = $('joyK');
   joy.addEventListener('pointerdown', (e) => { joy.setPointerCapture(e.pointerId); AR.joy = { x: 0, y: 0 }; moveJoy(e); });
   joy.addEventListener('pointermove', (e) => { if (AR.joy) moveJoy(e); });
@@ -639,8 +647,8 @@ function heldWeapon() {
   const g = new THREE.Group(), list = []; let hx = 0, hy = 0, hn = 0;
   for (let i = 0; i < N * N; i++) { const v = grid[i]; if (!v) continue; const x = i % N, y = (i / N) | 0; list.push([x, y, v]); if ('wk'.includes(PAL[v].c)) { hx += x; hy += y; hn++; } }
   if (!list.length) return; if (!hn) { hx = 12; hy = 22; hn = 1; } hx /= hn; hy /= hn;
-  const m = new THREE.InstancedMesh(box, new THREE.MeshLambertMaterial(), list.length), o = new THREE.Object3D(), c = new THREE.Color(), s = 0.09;
-  list.forEach(([x, y, v], i) => { o.position.set((x - hx) * s, -(y - hy) * s, 0); o.scale.set(s, s, s * 3.4); o.updateMatrix(); m.setMatrixAt(i, o.matrix); m.setColorAt(i, c.set(PAL[v].hex)); });
+  const m = new THREE.InstancedMesh(box, new THREE.MeshLambertMaterial(), list.length), o = new THREE.Object3D(), c = new THREE.Color(), s = 0.075 / (AR.heroRig ? 1.9 / AR.heroRig.H : 1);
+  list.forEach(([x, y, v], i) => { o.position.set((x - hx) * s, -(y - hy) * s, 0); o.scale.set(s * 1.02, s * 1.02, s * 4); o.updateMatrix(); m.setMatrixAt(i, o.matrix); m.setColorAt(i, c.set(PAL[v].hex)); });
   m.castShadow = true; g.add(m); AR.hand.add(g); AR.blade = g;
 }
 function monsterRow() { beastInit(); $('bestiary').innerHTML = ''; for (const e of arenaPool()) { const d = document.createElement('div'); d.className = 'item mon'; const im = new Image(); im.className = 'thumb'; im.style.width = '64px'; im.style.flex = 'none'; im.src = beastThumb(e.def); im.alt = e.M.name; d.appendChild(im); const t = document.createElement('div'); t.innerHTML = `<b></b><br><small>بيضعف قدام: ${EL[e.M.weak].name} · مقاوم: ${EL[e.M.resist].name}${e.M.boss ? ' · بوس' : ''}</small>`; t.querySelector('b').textContent = e.M.name + (e.M.mine ? ' (وحشك)' : ''); d.appendChild(t); $('bestiary').appendChild(d); } }
@@ -652,7 +660,7 @@ function arenaWorld() { if (WE.g?.worlds?.[0]?.items?.length > 5) return WE.g.wo
   return { ground: 'grass', items: L }; }
 function freeSpot(P, r0, r1) { for (let k = 0; k < 40; k++) { const a = Math.random() * Math.PI * 2, r = r0 + Math.random() * (r1 - r0), x = P.x + Math.cos(a) * r, z = P.z + Math.sin(a) * r; if (Math.abs(x) > WS - 2 || Math.abs(z) > WS - 2 || solidAt(Math.floor(x), Math.floor(z))) continue; return { x, z }; } return { x: P.x + 10, z: P.z }; }
 function startArena() {
-  arenaInit(); beastInit(); heldWeapon(); for (const m of AR.mons) AR.scene.remove(m.o); AR.mons = []; for (const x of AR.shots) AR.scene.remove(x.o); AR.shots = [];
+  arenaInit(); setCam(AR.camMode); beastInit(); heldWeapon(); for (const m of AR.mons) AR.scene.remove(m.o); AR.mons = []; for (const x of AR.shots) AR.scene.remove(x.o); AR.shots = [];
   const a = withOv(analyse(grid)); if (!a) { show('forge'); toast('ارسم سلاح الأول'); return; }
   G2 = { a, hp: 100, max: 100, wave: 0, score: 0, cd: 0, swingT: 0, face: new THREE.Vector3(0, 0, -1), pos: new THREE.Vector3(), between: 1.2 };
   AR.mode = 'waves'; const W = arenaWorld(); const st = playScene(W, { noMonsters: true }); AR.hero.position.set(st.x, 0, st.z); $('aOv').hidden = true; AR.on = true; hud();
@@ -682,7 +690,7 @@ function spawnWave() {
 function hud() { if (AR.mode === 'world' && G2?.world) { $('aWave').textContent = G2.world.label; $('aScore').textContent = `الوحوش ${AR.mons.length} · النقط ${G2.score}`; $('aHp').style.width = Math.max(0, G2.hp / G2.max * 100) + '%'; return; } $('aWave').textContent = `الموجة ${G2?.wave || 0}`; $('aScore').textContent = `النقط ${G2?.score || 0} · أحسن موجة ${AR.best}`; $('aHp').style.width = Math.max(0, G2 ? G2.hp / G2.max * 100 : 100) + '%'; }
 function pop2(text, pos, col, big) { const v = pos.clone().project(AR.cam), el = document.createElement('div'); el.className = 'pop' + (big ? ' crit' : ''); el.textContent = text; el.style.left = ((v.x + 1) / 2 * 100) + '%'; el.style.top = ((1 - v.y) / 2 * 100) + '%'; if (col) el.style.color = col; $('apops').appendChild(el); setTimeout(() => el.remove(), 1000); }
 function swing() {
-  if (!AR.on || !G2 || G2.cd > 0) return; const a = G2.a; G2.cd = 0.25 + (100 - a.spd) / 100 * 0.85; G2.swingT = 0.22;
+  if (!AR.on || !G2 || G2.cd > 0) return; const a = G2.a; G2.cd = 0.25 + (100 - a.spd) / 100 * 0.85; G2.swingT = 0.3;
   // aim at the nearest monster in reach, else straight ahead
   const P = AR.hero.position, reach = 1.6 + a.reach / 100 * 2.6; let tgt = null, best = 99;
   for (const m of AR.mons) { const d = m.o.position.distanceTo(P) - m.M.size * 0.5; if (d < best) { best = d; tgt = m; } }
@@ -775,15 +783,33 @@ function debrisStep(dt) {
   for (let i = AR.debris.length - 1; i >= 0; i--) { const d = AR.debris[i]; d.t += dt; d.v.y -= 20 * dt; d.o.position.addScaledVector(d.v, dt); if (d.o.position.y < 0.1) { d.o.position.y = 0.1; d.v.multiplyScalar(0.5); d.v.y = Math.abs(d.v.y) * 0.4; d.w.multiplyScalar(0.6); }
     d.o.rotation.x += d.w.x * dt; d.o.rotation.y += d.w.y * dt; d.o.rotation.z += d.w.z * dt; if (d.t > 1.4) { const k = Math.max(0, 1 - (d.t - 1.4) / 0.6); for (const mt of d.o.material) mt.opacity = k; if (k <= 0) { AR.scene.remove(d.o); AR.debris.splice(i, 1); } } }
 }
+function setCam(m) { if (!CAMS[m]) return; AR.camMode = m; store.set('cam', m); $('aCam').textContent = 'الكاميرا: ' + CAMS[m]; if (G2) AR.yaw = Math.atan2(G2.face.x, G2.face.z); }
+// where the camera sits: behind the hero (third person), in front of it, in its eyes, or high above
+function placeCam(P, dt) {
+  const f = new THREE.Vector3(Math.sin(AR.yaw), 0, Math.cos(AR.yaw)), m = AR.camMode, k = Math.min(1, dt * 10); let to, look;
+  if (m === 'first') { to = new THREE.Vector3(P.x, P.y + 1.75, P.z).addScaledVector(f, 0.25); look = to.clone().addScaledVector(f, 10).add(new THREE.Vector3(0, -AR.pitch * 6 + 1.5, 0)); AR.cam.position.copy(to); }
+  else { if (m === 'behind') { to = P.clone().addScaledVector(f, -6.5).add(new THREE.Vector3(0, 2.6 + AR.pitch * 5, 0)); look = P.clone().add(new THREE.Vector3(0, 1.4, 0)).addScaledVector(f, 2); }
+    else if (m === 'front') { to = P.clone().addScaledVector(f, 6).add(new THREE.Vector3(0, 2.4 + AR.pitch * 4, 0)); look = P.clone().add(new THREE.Vector3(0, 1.2, 0)); }
+    else { to = new THREE.Vector3(P.x, 11 + AR.pitch * 6, P.z + 10); look = new THREE.Vector3(P.x, 0.5, P.z); }
+    // keep the camera out of the walls a little: if a block is between, come closer
+    if (m !== 'top' && AR.solid?.size) { const steps = 12; for (let i = 1; i <= steps; i++) { const q = P.clone().lerp(to, i / steps); if (solidAt(Math.floor(q.x), Math.floor(q.z)) && q.y < 1.2 * (AR.solid.get(Math.floor(q.x) + ',' + Math.floor(q.z)) || 0)) { to = P.clone().lerp(to, (i - 1) / steps).add(new THREE.Vector3(0, 1.2, 0)); break; } } }
+    AR.cam.position.lerp(to, k); }
+  AR.cam.lookAt(look); AR.hero.visible = m !== 'first';
+}
 function arenaStep(dt, now) {
   debrisStep(dt); shotsStep(dt);
   if (!AR.on || !G2) return; const P = AR.hero.position, a = G2.a;
   // move
+  if (AR.keys.KeyQ) AR.yaw += dt * 2.2; if (AR.keys.KeyE) AR.yaw -= dt * 2.2;
   let mx = 0, mz = 0; const K = AR.keys; if (K.KeyA || K.ArrowLeft) mx -= 1; if (K.KeyD || K.ArrowRight) mx += 1; if (K.KeyW || K.ArrowUp) mz -= 1; if (K.KeyS || K.ArrowDown) mz += 1; if (AR.joy) { mx += AR.joy.x; mz += AR.joy.y; }
+  // moving is relative to the camera (except the top view, where up on the screen is north)
+  if (AR.camMode !== 'top') { const fx = Math.sin(AR.yaw), fz = Math.cos(AR.yaw), sgn = AR.camMode === 'front' ? -1 : 1, X = (-fz * mx * -1 + fx * -mz) * sgn, Z = (fx * mx * -1 + fz * -mz) * sgn; mx = X; mz = Z; }
   const l = Math.hypot(mx, mz); if (l > 0.1) { const sp = (5 + a.spd / 30) * dt / Math.max(1, l); P.x += mx * sp; P.z += mz * sp; if (G2.swingT <= 0) G2.face.set(mx, 0, mz).normalize(); }
+  else if (AR.camMode === 'first' && G2.swingT <= 0) G2.face.set(Math.sin(AR.yaw), 0, Math.cos(AR.yaw));
   P.x = Math.max(-WS + 0.5, Math.min(WS - 0.5, P.x)); P.z = Math.max(-WS + 0.5, Math.min(WS - 0.5, P.z)); pushOut(P, 0.5); pushBoxes(P, 0.45);
-  AR.hero.quaternion.copy(AR.cam.quaternion); if (Math.abs(G2.face.x) > 0.2) AR.body.scale.x = G2.face.x < 0 ? -1 : 1; AR.hero.position.y = l > 0.1 ? Math.abs(Math.sin(now / 90)) * 0.12 : 0;
-  G2.cd -= dt; G2.swingT -= dt; if (AR.blade) AR.hand.rotation.z = G2.swingT > 0 ? -1.9 + (G2.swingT / 0.22) * 2.6 : 0.25;
+  { const want = Math.atan2(G2.face.x, G2.face.z); let dr = want - AR.hero.rotation.y; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); AR.hero.rotation.y += dr * Math.min(1, dt * 14); } if (!(G2.launch > 0)) AR.hero.position.y = 0;
+  G2.walkK = (G2.walkK || 0) + ((l > 0.1 ? 1 : 0) - (G2.walkK || 0)) * Math.min(1, dt * 8); animRig(AR.heroRig, now / 1000 * 1.2, G2.walkK, G2.swingT > 0 ? 1 - G2.swingT / 0.3 : 0);
+  G2.cd -= dt; G2.swingT -= dt;
   // monsters
   for (const m of [...AR.mons]) {
     const o = m.o, to = P.clone().sub(o.position).setY(0), d = to.length();
@@ -803,7 +829,7 @@ function arenaStep(dt, now) {
   if (G2.hp <= 0 && AR.mode === 'world') { AR.on = false; worldOver(false); return; }
   if (G2.hp <= 0) { AR.on = false; if (G2.wave > AR.best) { AR.best = G2.wave; store.set('best', AR.best); } $('aOvT').textContent = 'وقعت!'; $('aOvP').textContent = `وصلت للموجة ${G2.wave} وجمعت ${G2.score} نقطة. ارجع الورشة وقوّي سلاحك، أو ادخل تاني.`; $('aGo').textContent = 'العب تاني'; $('aOv').hidden = false; hud(); return; }
   if (AR.mode === 'waves' && !AR.mons.length) { G2.between -= dt; if (G2.between <= 0) { if (G2.wave) { G2.hp = Math.min(G2.max, G2.hp + 25); pop2('+25', P.clone().add(new THREE.Vector3(0, 2, 0)), '#46c96b'); } spawnWave(); G2.between = 2; } }
-  AR.cam.position.lerp(new THREE.Vector3(P.x, 11, P.z + 10), 0.1); AR.cam.lookAt(P.x, 0.5, P.z); if (AR.shake > 0) { AR.shake = Math.max(0, AR.shake - dt * 2); AR.cam.position.x += (Math.random() - 0.5) * AR.shake; AR.cam.position.y += (Math.random() - 0.5) * AR.shake; }
+  placeCam(P, dt); if (AR.shake > 0) { AR.shake = Math.max(0, AR.shake - dt * 2); AR.cam.position.x += (Math.random() - 0.5) * AR.shake; AR.cam.position.y += (Math.random() - 0.5) * AR.shake; }
 }
 $('aGo').onclick = () => { clank(260); startArena(); };
 $('tArena').addEventListener('click', () => { AR.focus = null; if (AR.mode === 'world') { AR.on = false; AR.mode = 'waves'; $('aOvT').textContent = 'ساحة الوحوش'; $('aGo').textContent = 'ابدأ'; $('aEdit').hidden = true; $('aOv').hidden = false; } });
@@ -815,6 +841,16 @@ const Q = (x, y, z, w, h, d, c, r = [0, 0, 0]) => ({ p: [x, y, z], s: [w, h, d],
 const mirrorX = (l) => l.flatMap((q) => (Math.abs(q.p[0]) < 0.01 ? [q] : [q, { ...q, p: [-q.p[0], q.p[1], q.p[2]], r: [q.r[0], -q.r[1], -q.r[2]], f: [...q.f] }]));
 const FIREBALL = [Q(0, 0, 0, 0.7, 0.7, 0.7, '#ff8a3d'), Q(0, 0, 0, 0.95, 0.45, 0.45, '#e5484d'), Q(0, 0, 0, 0.45, 0.95, 0.45, '#ffe14d'), Q(0, 0, 0, 0.45, 0.45, 0.95, '#e5484d')];
 const BONE = [Q(0, 0, 0, 0.18, 0.18, 0.9, '#f2efe6'), Q(0, 0, 0.45, 0.36, 0.22, 0.18, '#f2efe6'), Q(0, 0, -0.45, 0.36, 0.22, 0.18, '#f2efe6')];
+// the hero: a chunky knight of pixel cubes, with parts that move like the monsters'
+const R_ = (q, role) => ({ ...q, role });
+const HERO = { name: 'البطل', cubes: [
+  R_(Q(0.24, 0.45, 0, 0.4, 0.9, 0.44, '#3a3f4a'), 'legL'), R_(Q(-0.24, 0.45, 0, 0.4, 0.9, 0.44, '#3a3f4a'), 'legR'), R_(Q(0.24, 0.06, 0.06, 0.42, 0.14, 0.56, '#24262b'), 'legL'), R_(Q(-0.24, 0.06, 0.06, 0.42, 0.14, 0.56, '#24262b'), 'legR'),
+  R_(Q(0, 1.32, 0, 1.0, 0.86, 0.56, '#3d6fd8'), 'body'), R_(Q(0, 0.96, 0, 1.03, 0.14, 0.58, '#7a5230'), 'body'), R_(Q(0, 1.38, 0.29, 0.32, 0.32, 0.04, '#e2b043'), 'body'),
+  R_(Q(0, 2.02, 0, 0.78, 0.72, 0.72, '#f1c7a5'), 'head'), R_(Q(0, 2.36, 0, 0.84, 0.3, 0.8, '#cfd8e2'), 'head'), R_(Q(0, 2.2, 0.38, 0.84, 0.1, 0.06, '#cfd8e2'), 'head'),
+  R_(Q(0.17, 2.02, 0.37, 0.12, 0.14, 0.03, '#24262b'), 'head'), R_(Q(-0.17, 2.02, 0.37, 0.12, 0.14, 0.03, '#24262b'), 'head'),
+  R_(Q(0.68, 1.36, 0, 0.32, 0.82, 0.34, '#3d6fd8'), 'armL'), R_(Q(0.68, 0.88, 0, 0.3, 0.2, 0.32, '#f1c7a5'), 'armL'), R_(Q(0.68, 1.72, 0, 0.42, 0.22, 0.44, '#cfd8e2'), 'armL'),
+  R_(Q(-0.68, 1.36, 0, 0.32, 0.82, 0.34, '#3d6fd8'), 'armR'), R_(Q(-0.68, 0.88, 0, 0.3, 0.2, 0.32, '#f1c7a5'), 'armR'), R_(Q(-0.68, 1.72, 0, 0.42, 0.22, 0.44, '#cfd8e2'), 'armR'),
+] };
 // TNT letters painted on a face, in pixels: red, a white band, black letters
 function tntFace(w, h) { const F = ['###.#.#.###', '.#..###..#.', '.#..###..#.', '.#..#.#..#.', '.#..#.#..#.'], c = []; const y0 = Math.floor((h - 5) / 2) - 1, x0 = Math.floor((w - 11) / 2);
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const fy = y - y0 - 1, fx = x - x0; if (y >= y0 && y <= y0 + 6) c.push(fy >= 0 && fy < 5 && fx >= 0 && fx < 11 && F[fy][fx] === '#' ? '2' : '5'); else c.push('.'); } return `${w},${h}:${c.join('')}`; }
@@ -1399,7 +1435,7 @@ function breakCells(cx, cz, rad) { if (!AR.cur) return 0; let n = 0; const L = A
   if (n) { const keep = AR.world.children.filter((c) => c.userData.it && !c.isInstancedMesh); for (const c of [...AR.world.children]) if (c.isInstancedMesh) AR.world.remove(c); const tmp = new THREE.Group(); const v = buildView({ ...AR.cur.W, items: L.filter((it) => ITEMS[it.t].kind === 'block' || ITEMS[it.t].kind === 'tile') }, tmp); for (const m of v.inst) AR.world.add(m); } return n; }
 function playGame() { if (!analyse(grid) && !WOV) { show('forge'); toast('ارسم سلاح الأول، وبعدين العب لعبتك'); return; } show('arena'); $('aOv').hidden = true; $('aEdit').hidden = true; loadWorld(0, null); }
 function loadWorld(wi, back) {
-  arenaInit(); beastInit(); heldWeapon(); for (const m of AR.mons) AR.scene.remove(m.o); AR.mons = []; for (const x of AR.shots) AR.scene.remove(x.o); AR.shots = [];
+  arenaInit(); setCam(AR.camMode); beastInit(); heldWeapon(); for (const m of AR.mons) AR.scene.remove(m.o); AR.mons = []; for (const x of AR.shots) AR.scene.remove(x.o); AR.shots = [];
   const a = withOv(analyse(grid)) || { dmg: 30, spd: 50, reach: 50, crit: 10, elp: 0, el: 'none', sym: 0 };
   const keepHp = G2?.world ? G2.hp : 100, stack = back ? [...(G2.world.stack || []), back] : (G2?.world?.stack && wi !== 0 ? G2.world.stack : []);
   G2 = { a, hp: keepHp, max: 100, wave: 0, score: G2?.world ? G2.score : 0, cd: 0, swingT: 0, face: new THREE.Vector3(0, 0, -1), pos: new THREE.Vector3(), world: { wi, stack, label: wi ? `عالم ${wi + 1}` : (WE.g.name || 'لعبتي'), hadMon: false, won: false } };
