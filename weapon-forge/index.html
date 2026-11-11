@@ -107,6 +107,29 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
 .abForm input,.abForm select{background:var(--iron);color:var(--bone);border:1px solid var(--edge);border-radius:8px;padding:5px 8px;font:700 13px var(--body);min-width:0}
 .shapeBar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#3a2417;border:1px solid var(--ember);border-radius:10px;padding:8px 12px}
 .shapeBar span{color:var(--ash);font-size:13px;flex:1}
+.wbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+.wbar input{flex:1;min-width:120px;background:var(--coal);border:1px solid var(--edge);border-radius:10px;padding:7px 12px;color:var(--bone);font:800 16px var(--body)}
+.wbar .btn{padding:8px 12px}
+.wstage{position:relative;width:100%;height:min(72vh,720px);min-height:360px;border-radius:14px;overflow:hidden;background:#8fc3e8;box-shadow:inset 0 0 0 1px var(--edge);touch-action:none;margin-top:8px}
+.wstage canvas{display:block;width:100%;height:100%}
+.wpanel{position:absolute;top:52px;inset-inline-end:8px;width:min(330px,calc(100% - 16px));max-height:calc(100% - 140px);overflow:auto;background:#211c19f0;border:1px solid var(--edge);border-radius:12px;padding:10px;z-index:3;display:flex;flex-direction:column;gap:8px}
+.wpanel .list{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
+.wpanel .x{position:absolute;inset-inline-start:8px;top:6px;background:transparent;border:0;font-size:18px;color:var(--ash)}
+@media (max-width:600px){.wpanel{top:94px;max-height:calc(100% - 190px)}}
+.aidock{position:absolute;inset:auto 8px 8px;z-index:3;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.aidock>*{pointer-events:auto}
+.aidock .aiLog{max-height:22vh;overflow:auto;display:flex;flex-direction:column;gap:5px;align-self:stretch}
+.aidock.min .aiLog{display:none}
+.aidock .aiLog .me,.aidock .aiLog .bot{max-width:85%;border-radius:10px;padding:5px 10px;font-size:13px;box-shadow:0 2px 8px #0005}
+.aidock .aiLog .me{background:#2c2622ee;align-self:flex-start}.aidock .aiLog .bot{background:#3a2417ee;border:1px solid var(--edge);align-self:flex-end}
+.aiRow{display:flex;gap:6px;align-items:center;background:#211c19ee;border:1px solid var(--edge);border-radius:12px;padding:5px}
+.aiRow input{flex:1;min-width:0;background:var(--coal);border:1px solid var(--edge);border-radius:9px;padding:7px 10px;color:var(--bone);font:600 14px var(--body)}
+.aiRow .btn{padding:7px 12px}
+.wcats{display:flex;gap:6px;margin-top:8px;overflow-x:auto}
+.wcats button{flex:none;background:var(--plate);border:1px solid var(--edge);border-radius:999px;padding:5px 12px;font-weight:800;font-size:13px}
+.wcats button[aria-pressed="true"]{border-color:var(--ember);color:var(--ember-2)}
+.istrip{display:flex;gap:6px;overflow-x:auto;padding:6px 0 2px;scroll-snap-type:x proximity}
+.istrip .it{flex:none;width:78px;scroll-snap-align:start}
 .wopts{display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-size:13px;font-weight:700}
 .wopts select,.wopts input[type=number]{background:var(--coal);color:var(--bone);border:1px solid var(--edge);border-radius:8px;padding:4px 8px;font:700 13px var(--body);width:auto}
 .ai{gap:8px}.aiLog{display:flex;flex-direction:column;gap:6px;max-height:180px;overflow:auto}
@@ -276,39 +299,36 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
     </div>
   </section>
 
-  <section id="vWorld" class="forge" hidden>
-    <div class="panel">
-      <div class="wtabs" id="wTabs"></div>
-      <div class="bstage" id="wstage">
-        <div class="btools" role="toolbar" aria-label="أدوات العالم">
-          <button class="tool" id="wtPlace" aria-pressed="true">حط (واسحب)</button>
-          <button class="tool" id="wtRect" aria-pressed="false">مستطيل</button>
-          <button class="tool" id="wtSel" aria-pressed="false">اختار</button>
-          <button class="tool" id="wtErase" aria-pressed="false">امسح</button>
-          <button class="tool" id="wtTurn">لف</button>
-          <button class="tool" id="wtCam" aria-pressed="false">حرّك الكاميرا</button>
-        </div>
-      </div>
-      <div class="wopts"><label>الأرض <select id="wGround"></select></label><label>ارتفاع المستطيل <input type="number" id="wH" min="1" max="8" value="1"></label><label class="chk"><input type="checkbox" id="wHollow"> مستطيل فاضي من جوه (حيطان)</label><span class="desc" id="wCount"></span></div>
-      <p class="desc">الكاميرا: زرار الماوس اليمين يلف، والعجلة تقرّب، أو صباعين على الموبايل، أو زرار "حرّك الكاميرا".</p>
-      <div class="label">مكعبات</div><div class="items" id="wBlocks"></div>
-      <div class="label">أرضيات</div><div class="items" id="wTiles"></div>
-      <div class="label">حاجات بتعمل حاجات</div><div class="items" id="wSmart"></div>
-      <div class="label">وحوش</div><div class="items" id="wMons"></div>
+  <section id="vWorld" hidden>
+    <div class="wbar">
+      <input id="gName" maxlength="28" aria-label="اسم اللعبة" placeholder="اسم لعبتك">
+      <button class="btn" id="gPlay">العب</button><button class="btn alt" id="gSave">احفظ</button><button class="btn alt" id="gNew">جديدة</button><button class="btn alt" id="gMine">ألعابي</button>
     </div>
-    <div class="panel">
-      <div class="nameRow"><input id="gName" maxlength="28" aria-label="اسم اللعبة" placeholder="اسم لعبتك"><button class="btn" id="gPlay">العب</button></div>
-      <div class="card ai" id="aiBox">
-        <b>مساعد Claude: اطلب وهو يبني</b>
-        <div class="aiLog" id="aiLog"><div class="desc">قولّه مثلاً: "اعمل قلعة طوب كبيرة في النص وحواليها حمم، وجوه القلعة تنين وصندوق بلّاع" أو "اعمل غابة فيها أشجار ووحوش سلايم". هيبني قدامك، وتقدر ترجّع اللي عمله.</div></div>
-        <textarea id="aiText" rows="2" maxlength="500" placeholder="اوصف العالم أو اللي عايزه يتحط…"></textarea>
-        <div class="acts"><button class="btn" id="aiGo">ابنيه</button><button class="btn alt" id="aiUndo" disabled>رجّع اللي عمله</button></div>
+    <div class="wtabs" id="wTabs"></div>
+    <div class="wstage" id="wstage">
+      <div class="btools" role="toolbar" aria-label="أدوات العالم">
+        <button class="tool" id="wtPlace" aria-pressed="true">حط (واسحب)</button>
+        <button class="tool" id="wtRect" aria-pressed="false">مستطيل</button>
+        <button class="tool" id="wtSel" aria-pressed="false">اختار</button>
+        <button class="tool" id="wtErase" aria-pressed="false">امسح</button>
+        <button class="tool" id="wtTurn">لف</button>
+        <button class="tool" id="wtCam" aria-pressed="false">كاميرا</button>
+        <button class="tool" id="wtMore" aria-pressed="false">إعدادات</button>
       </div>
-      <div class="card" id="wProps"><b id="wpT">اختار حاجة في العالم عشان تعدّلها</b><div class="abForm" id="wpF"></div></div>
-      <div class="acts"><button class="btn alt" id="gSave">احفظ اللعبة</button><button class="btn alt" id="gNew">لعبة جديدة</button><button class="btn alt" id="gClear">فضّي العالم ده</button></div>
-      <p class="desc">حط مكعبات وحاجات على الأرض. الصندوق البلّاع بيدخّلك عالم تاني من عوالم لعبتك، وتطلع منه لما تخلّص وحوشه أو توصل للعلم. لو حطيت علم، الوصول ليه بيكسّبك. لو مفيش علم، بتكسب لما الوحوش تخلص.</p>
-      <div class="label">ألعابي</div><div class="list" id="myGames"></div>
+      <div class="wpanel" id="wProps" hidden><button class="x" id="wpX" aria-label="اقفل">×</button><b id="wpT"></b><div class="abForm" id="wpF"></div></div>
+      <div class="wpanel" id="wMore" hidden>
+        <div class="wopts"><label>الأرض <select id="wGround"></select></label><label>ارتفاع المستطيل <input type="number" id="wH" min="1" max="8" value="1"></label><label class="chk"><input type="checkbox" id="wHollow"> مستطيل فاضي من جوه</label><button class="btn alt" id="gClear">فضّي العالم ده</button></div>
+        <span class="desc" id="wCount"></span>
+        <p class="desc">الكاميرا: زرار الماوس اليمين يلف والعجلة تقرّب، أو صباعين على الموبايل، أو زرار "كاميرا". الصندوق البلّاع بيدخّلك عالم تاني، ولو حطيت علم بتكسب لما توصله.</p>
+      </div>
+      <div class="wpanel" id="myGamesBox" hidden><b>ألعابي</b><div class="list" id="myGames"></div></div>
+      <div class="aidock" id="aiBox">
+        <div class="aiLog" id="aiLog"><div class="bot">أنا مساعدك. قولّي تبني إيه، مثلاً: "قلعة طوب في النص وحواليها حمم وجواها تنين".</div></div>
+        <div class="aiRow"><button class="tool" id="aiToggle" aria-label="خبّي المساعد">✦</button><input id="aiText" maxlength="500" placeholder="قول للمساعد يبني إيه…"><button class="btn" id="aiGo">ابنيه</button><button class="btn alt" id="aiUndo" disabled>رجّع</button></div>
+      </div>
     </div>
+    <div class="wcats" id="wCats"><button data-c="block" aria-pressed="true">مكعبات</button><button data-c="tile" aria-pressed="false">أرضيات</button><button data-c="smart" aria-pressed="false">حاجات بتعمل حاجات</button><button data-c="mon" aria-pressed="false">وحوش</button></div>
+    <div class="istrip" id="wItems"></div>
   </section>
 
   <section id="vArena" hidden>
@@ -1216,7 +1236,7 @@ function sampleWorld() { const L = [], R = 14; for (let i = -R; i <= R; i++) { L
   return L; }
 let WV = null; // the editor's view of the current world
 function worldInit() {
-  if (WE.R) return; const st = $('wstage'), R4 = new THREE.WebGLRenderer({ antialias: true }); R4.setPixelRatio(Math.min(2, devicePixelRatio)); R4.shadowMap.enabled = true; st.prepend(R4.domElement); WE.R = R4;
+  if (WE.R) return; const st = $('wstage'), R4 = new THREE.WebGLRenderer({ antialias: true }); R4.setPixelRatio(Math.min(2, devicePixelRatio)); R4.shadowMap.enabled = true; st.prepend(R4.domElement); WE.R = R4; for (const id of ['aiBox', 'wProps', 'wMore', 'myGamesBox']) $(id).addEventListener('pointerdown', (e) => e.stopPropagation());
   const sc = new THREE.Scene(); sc.background = new THREE.Color(0x8fc3e8); sc.fog = new THREE.Fog(0x8fc3e8, 90, 200); WE.scene = sc; WE.cam = new THREE.PerspectiveCamera(45, 1, 0.1, 500); WE.cam.position.set(0, 30, 30);
   sc.add(new THREE.HemisphereLight(0xfff4e8, 0x40302a, 1.3)); const d = new THREE.DirectionalLight(0xffffff, 0.8); d.position.set(-20, 40, 20); d.castShadow = true; d.shadow.mapSize.set(2048, 2048); Object.assign(d.shadow.camera, { left: -60, right: 60, top: 60, bottom: -60, far: 200 }); sc.add(d);
   const gh = new THREE.GridHelper(WS * 2, WS * 2, 0x000000, 0x000000); gh.material.opacity = 0.12; gh.material.transparent = true; gh.position.y = 0.012; sc.add(gh);
@@ -1233,7 +1253,8 @@ function worldInit() {
   R4.domElement.addEventListener('touchstart', (e) => { WE.touches = e.touches.length; if (e.touches.length > 1) stroke = null; }, { passive: true }); R4.domElement.addEventListener('touchend', (e) => { WE.touches = e.touches.length; }, { passive: true });
   new ResizeObserver(() => { const w = st.clientWidth, h = st.clientHeight; R4.setSize(w, h, false); WE.cam.aspect = w / h; WE.cam.updateProjectionMatrix(); }).observe(st);
   const btn = (k, host) => { const D = ITEMS[k], b = document.createElement('button'); b.className = 'it'; b.dataset.k = k; b.setAttribute('aria-pressed', String(k === WE.item)); b.innerHTML = `<i style="background:${D.c}"></i><span></span>`; b.querySelector('span').textContent = D.n; b.onclick = () => { WE.item = k; if (WE.tool !== 'rect') setWTool('place'); document.querySelectorAll('.it').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); }; host.appendChild(b); };
-  for (const k in ITEMS) btn(k, $(ITEMS[k].kind === 'block' ? 'wBlocks' : ITEMS[k].kind === 'tile' ? 'wTiles' : ITEMS[k].kind === 'mon' ? 'wMons' : 'wSmart'));
+  const showCat = (c) => { $('wItems').innerHTML = ''; for (const k in ITEMS) if (ITEMS[k].kind === c) btn(k, $('wItems')); $('wCats').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.c === c))); };
+  $('wCats').querySelectorAll('button').forEach((b) => { b.onclick = () => showCat(b.dataset.c); }); showCat('block');
   $('wGround').innerHTML = Object.entries(GROUNDS).map(([k, [n]]) => `<option value="${k}">${n}</option>`).join(''); $('wGround').onchange = () => { W_().ground = $('wGround').value; renderWorld(); };
   WE.g = store.get('gameDraft2', null) || newGame(); $('gName').value = WE.g.name || ''; setWTool('place'); renderWorld(); renderTabs(); renderGames();
 }
@@ -1250,6 +1271,10 @@ function renderTabs() { const T = $('wTabs'); T.innerHTML = ''; WE.g.worlds.forE
 function setWTool(t) { WE.tool = t; for (const [id, k] of [['wtPlace', 'place'], ['wtRect', 'rect'], ['wtSel', 'select'], ['wtErase', 'erase'], ['wtCam', 'cam']]) $(id).setAttribute('aria-pressed', String(t === k));
   if (!WE.orbit) return; const R_ = THREE.MOUSE, T_ = THREE.TOUCH; WE.orbit.mouseButtons = { LEFT: t === 'cam' ? R_.ROTATE : -1, MIDDLE: R_.DOLLY, RIGHT: R_.ROTATE }; WE.orbit.touches = { ONE: t === 'cam' ? T_.ROTATE : -1, TWO: T_.DOLLY_PAN }; }
 $('wtPlace').onclick = () => setWTool('place'); $('wtRect').onclick = () => setWTool('rect'); $('wtSel').onclick = () => setWTool('select'); $('wtErase').onclick = () => setWTool('erase'); $('wtCam').onclick = () => setWTool('cam');
+const panel = (id) => { for (const x of ['wMore', 'myGamesBox']) $(x).hidden = x === id ? !$(x).hidden : true; $('wtMore').setAttribute('aria-pressed', String(!$('wMore').hidden)); };
+$('wtMore').onclick = () => panel('wMore'); $('gMine').onclick = () => panel('myGamesBox');
+$('aiToggle').onclick = () => $('aiBox').classList.toggle('min');
+$('wpX').onclick = () => { $('wProps').hidden = true; };
 $('wtTurn').onclick = () => { if (!WE.sel) return toast('اختار حاجة الأول'); WE.sel.r = ((WE.sel.r || 0) + 1) % 4; renderWorld(true); };
 const wray = new THREE.Raycaster(), _pl = new THREE.Plane(), _hp = new THREE.Vector3();
 function rayFrom(e) { const r = WE.R.domElement.getBoundingClientRect(); wray.setFromCamera({ x: (e.clientX - r.left) / r.width * 2 - 1, y: -((e.clientY - r.top) / r.height) * 2 + 1 }, WE.cam); }
@@ -1280,7 +1305,7 @@ function fillRect(a, b) { const x0 = Math.min(a.x, b.x), x1 = Math.max(a.x, b.x)
   for (let x = x0; x <= x1; x++) for (let z = z0; z <= z1; z++) { if (hollow && x > x0 && x < x1 && z > z0 && z < z1) continue; for (let y = 0; y < hgt; y++) putItem(WE.item, x, z, y); } renderWorld(true); }
 // the selected thing's settings
 function props() {
-  const it = WE.sel, F = $('wpF'); F.innerHTML = ''; if (!it) { $('wpT').textContent = 'اختار حاجة في العالم عشان تعدّلها'; return; } const D = ITEMS[it.t]; $('wpT').textContent = D.n + (D.fx ? ' · ' + D.fx : '');
+  const it = WE.sel, F = $('wpF'); F.innerHTML = ''; $('wProps').hidden = !it || !(ITEMS[it.t].kind === 'smart' || it.t === 'mon'); if (!it) return; const D = ITEMS[it.t]; $('wpT').textContent = D.n + (D.fx ? ' · ' + D.fx : '');
   const field = (label, html, on) => { const l = document.createElement('label'); l.innerHTML = `<span></span>${html}`; l.querySelector('span').textContent = label; const inp = l.querySelector('input,select'); inp.onchange = () => { on(inp.value); renderWorld(); }; F.appendChild(l); return inp; };
   const num = (label, k, min, max, step = 1) => { const i = field(label, `<input type="number" min="${min}" max="${max}" step="${step}">`, (v) => { it.pr[k] = Math.max(min, Math.min(max, +v || 0)); }); i.value = it.pr[k]; };
   const monOpts = () => [...Object.keys(BEASTS).map((k) => [k, BEASTS[k].name]), ...BE.mine.map((d) => ['m:' + d.id, d.name + ' (وحشك)'])].map(([k, n]) => `<option value="${k}">${n}</option>`).join('');
@@ -1314,6 +1339,7 @@ function applyOps(ops) {
   }
   return n;
 }
+$('aiText').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); $('aiGo').click(); } });
 $('aiGo').onclick = async () => {
   const text = $('aiText').value.trim(); if (!text) return toast('اكتب طلبك الأول');
   const sm = window.claude?.use ? await window.claude.use('sample').catch(() => null) : null; if (!sm) { toast('المساعد شغّال بس جوه Claude. ابني بإيدك هنا'); return; }
