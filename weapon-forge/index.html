@@ -109,6 +109,9 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
 .shapeBar span{color:var(--ash);font-size:13px;flex:1}
 .wopts{display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-size:13px;font-weight:700}
 .wopts select,.wopts input[type=number]{background:var(--coal);color:var(--bone);border:1px solid var(--edge);border-radius:8px;padding:4px 8px;font:700 13px var(--body);width:auto}
+.ai{gap:8px}.aiLog{display:flex;flex-direction:column;gap:6px;max-height:180px;overflow:auto}
+.aiLog .me,.aiLog .bot{border-radius:10px;padding:6px 10px;font-size:13px}.aiLog .me{background:var(--plate);align-self:flex-start}.aiLog .bot{background:#3a2417;border:1px solid var(--edge);align-self:flex-end}
+#aiText{width:100%;background:var(--coal);color:var(--bone);border:1px solid var(--edge);border-radius:10px;padding:8px 10px;font:600 14px var(--body);resize:vertical}
 .wtabs{display:flex;gap:6px;flex-wrap:wrap}
 .wtabs button{background:var(--plate);border:1px solid var(--edge);border-radius:9px;padding:5px 11px;font-weight:800;font-size:13px}
 .wtabs button[aria-pressed="true"]{border-color:var(--ember);color:var(--ember-2)}
@@ -295,6 +298,12 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
     </div>
     <div class="panel">
       <div class="nameRow"><input id="gName" maxlength="28" aria-label="اسم اللعبة" placeholder="اسم لعبتك"><button class="btn" id="gPlay">العب</button></div>
+      <div class="card ai" id="aiBox">
+        <b>مساعد Claude: اطلب وهو يبني</b>
+        <div class="aiLog" id="aiLog"><div class="desc">قولّه مثلاً: "اعمل قلعة طوب كبيرة في النص وحواليها حمم، وجوه القلعة تنين وصندوق بلّاع" أو "اعمل غابة فيها أشجار ووحوش سلايم". هيبني قدامك، وتقدر ترجّع اللي عمله.</div></div>
+        <textarea id="aiText" rows="2" maxlength="500" placeholder="اوصف العالم أو اللي عايزه يتحط…"></textarea>
+        <div class="acts"><button class="btn" id="aiGo">ابنيه</button><button class="btn alt" id="aiUndo" disabled>رجّع اللي عمله</button></div>
+      </div>
       <div class="card" id="wProps"><b id="wpT">اختار حاجة في العالم عشان تعدّلها</b><div class="abForm" id="wpF"></div></div>
       <div class="acts"><button class="btn alt" id="gSave">احفظ اللعبة</button><button class="btn alt" id="gNew">لعبة جديدة</button><button class="btn alt" id="gClear">فضّي العالم ده</button></div>
       <p class="desc">حط مكعبات وحاجات على الأرض. الصندوق البلّاع بيدخّلك عالم تاني من عوالم لعبتك، وتطلع منه لما تخلّص وحوشه أو توصل للعلم. لو حطيت علم، الوصول ليه بيكسّبك. لو مفيش علم، بتكسب لما الوحوش تخلص.</p>
@@ -1282,6 +1291,54 @@ function props() {
   if (it.t === 'mon') { const s1 = field('الوحش', `<select>${monOpts()}</select>`, (v) => { it.pr.who = v; }); s1.value = it.pr.who; }
   if (!F.children.length) F.innerHTML = '<span class="desc">الحاجة دي ملهاش إعدادات.</span>';
 }
+
+// ---------------------------------------------------------------- the assistant: you ask, Claude builds it in front of you
+function aiSay(cls, text) { const d = document.createElement('div'); d.className = cls; d.textContent = text; $('aiLog').appendChild(d); $('aiLog').scrollTop = 1e9; }
+let aiUndo = null;
+function worldSummary(W) { const c = {}; let x0 = 99, x1 = -99, z0 = 99, z1 = -99; for (const it of W.items) { c[it.t] = (c[it.t] || 0) + 1; x0 = Math.min(x0, it.x); x1 = Math.max(x1, it.x); z0 = Math.min(z0, it.z); z1 = Math.max(z1, it.z); } return W.items.length ? `${W.items.length} things between x ${x0}..${x1}, z ${z0}..${z1}: ${Object.entries(c).map(([k, v]) => k + ' ' + v).join(', ')}` : 'empty'; }
+// building steps Claude can use; each is checked and kept inside the world
+function applyOps(ops) {
+  let n = 0; const cl = (v) => Math.max(-WS, Math.min(WS - 1, Math.round(+v || 0))), ok = (t) => !!ITEMS[t], monOk = (w) => !!BEASTS[w] || BE.mine.some((d) => 'm:' + d.id === w);
+  const put = (t, x, z, y, pr) => { if (n > 6000) return; const it = putItem(t, cl(x), cl(z), Math.max(0, Math.min(12, Math.round(+y || 0)))); if (it) { n++; if (pr && it.pr) { if (it.t === 'mon' || it.t === 'spawner') { if (monOk(pr.who)) it.pr.who = pr.who; } for (const k of ['trig', 'fuse', 'rad', 'dmg', 'hp', 'every', 'max', 'to']) if (pr[k] != null) it.pr[k] = k === 'trig' ? String(pr[k]) : +pr[k]; } } };
+  for (const o of ops || []) {
+    if (!o || typeof o !== 'object') continue; const h = Math.max(1, Math.min(8, Math.round(+o.h || 1))), y0 = Math.max(0, Math.round(+o.y || 0));
+    if (o.op === 'ground' && GROUNDS[o.g]) { W_().ground = o.g; continue; }
+    if (o.op === 'clear') { W_().items = []; continue; }
+    if (!ok(o.t) && o.op !== 'erase') continue;
+    if (o.op === 'put') put(o.t, o.x, o.z, o.y, o.pr);
+    else if (o.op === 'rect' || o.op === 'erase') { const xa = Math.min(cl(o.x0), cl(o.x1)), xb = Math.max(cl(o.x0), cl(o.x1)), za = Math.min(cl(o.z0), cl(o.z1)), zb = Math.max(cl(o.z0), cl(o.z1)); if ((xb - xa + 1) * (zb - za + 1) > 6000) continue;
+      if (o.op === 'erase') { W_().items = W_().items.filter((it) => !(it.x >= xa && it.x <= xb && it.z >= za && it.z <= zb)); continue; }
+      for (let x = xa; x <= xb; x++) for (let z = za; z <= zb; z++) { if (o.hollow && x > xa && x < xb && z > za && z < zb) continue; for (let y = y0; y < y0 + h; y++) put(o.t, x, z, y, o.pr); } }
+    else if (o.op === 'line') { const xa = cl(o.x0), za = cl(o.z0), xb = cl(o.x1), zb = cl(o.z1), st = Math.max(Math.abs(xb - xa), Math.abs(zb - za), 1); for (let i = 0; i <= st; i++) { const x = Math.round(xa + (xb - xa) * i / st), z = Math.round(za + (zb - za) * i / st); for (let y = y0; y < y0 + h; y++) put(o.t, x, z, y, o.pr); } }
+    else if (o.op === 'circle') { const cx = cl(o.cx), cz = cl(o.cz), r = Math.max(1, Math.min(40, +o.r || 3)); for (let x = cx - r; x <= cx + r; x++) for (let z = cz - r; z <= cz + r; z++) { const d = Math.hypot(x - cx, z - cz); if (d > r + 0.5 || (o.hollow && d < r - 0.5)) continue; for (let y = y0; y < y0 + h; y++) put(o.t, x, z, y, o.pr); } }
+  }
+  return n;
+}
+$('aiGo').onclick = async () => {
+  const text = $('aiText').value.trim(); if (!text) return toast('اكتب طلبك الأول');
+  const sm = window.claude?.use ? await window.claude.use('sample').catch(() => null) : null; if (!sm) { toast('المساعد شغّال بس جوه Claude. ابني بإيدك هنا'); return; }
+  aiSay('me', text); $('aiText').value = ''; $('aiGo').disabled = true; $('aiGo').textContent = 'بيبني…'; const before = JSON.stringify(W_());
+  const mons = [...Object.keys(BEASTS).map((k) => `${k} (${BEASTS[k].name})`), ...BE.mine.map((d) => `m:${d.id} (${d.name})`)].join(', ');
+  try {
+    const r = await sm.json(`You build worlds in a kids' block game from what the player asks (Egyptian Arabic or any language). The world is a grid: x and z from -64 to 63 (cells of 1 m), y = stack height 0..12 (only blocks stack). The player's view starts around (0,0).
+Things you can place (t):
+blocks (solid, stack): stone, dirt, grass, wood, brick, ice, gold, night
+floors (y 0, walkable): lava (burns), spikes (hurt), pad (launches you), heal (heart, one use)
+smart: tnt {pr: trig "hit"|"near"|"touch", fuse sec, rad, dmg}, chest (sleeping mimic monster {pr: hp, dmg}), swallow (box that swallows the player into another world {pr: to: world index}), spawner (spawns monsters {pr: who, every sec, max}), door (opens when monsters are gone), flag (reach it to win), start (where the player starts; only one)
+mon (a monster {pr: who}); who is one of: ${mons}
+Grounds: grass, sand, snow, stone, dark, lava.
+Current world: ${worldSummary(W_())}. This game has ${WE.g.worlds.length} worlds; this is world ${WE.wi}.
+Reply ONLY with JSON: {"say": one short friendly sentence in Egyptian Arabic about what you built, "ops": [steps]}. Steps:
+{"op":"ground","g":...} · {"op":"clear"} (only if asked to start over) · {"op":"put","t":...,"x","z","y","pr"} · {"op":"rect","t","x0","z0","x1","z1","y","h","hollow":true|false,"pr"} · {"op":"line","t","x0","z0","x1","z1","y","h"} · {"op":"circle","t","cx","cz","r","y","h","hollow"} · {"op":"erase","x0","z0","x1","z1"}
+Build generously and with care for how it looks (walls with towers, paths, decorations, varied blocks), keep it playable (paths the player can walk, a start spot if there is none), and use at most 150 steps.
+Player asks: ${JSON.stringify(text)}`, { modelTier: 'complex', cache: false });
+    aiUndo = before; const n = applyOps(r?.ops); renderWorld(true); renderTabs(); $('aiUndo').disabled = false;
+    aiSay('bot', (r?.say || 'خلصت') + (n ? ` (${n} حاجة)` : ' (مفيش حاجة اتحطت، جرّب توضّح أكتر)'));
+  } catch (e) { aiSay('bot', e?.code === 'rate_limited' ? 'المساعد محتاج يرتاح شوية، جرّب كمان دقيقة.' : 'معرفتش أبني ده، جرّب تقوله بطريقة تانية.'); }
+  $('aiGo').disabled = false; $('aiGo').textContent = 'ابنيه';
+};
+$('aiUndo').onclick = () => { if (!aiUndo) return; WE.g.worlds[WE.wi] = JSON.parse(aiUndo); aiUndo = null; $('aiUndo').disabled = true; WE.sel = null; renderWorld(true); aiSay('bot', 'رجّعت العالم زي ما كان'); };
+
 function saveDraft() { WE.g.name = $('gName').value.trim(); store.set('gameDraft2', WE.g); }
 $('gName').addEventListener('input', saveDraft);
 $('gSave').onclick = () => { saveDraft(); const g = clone(WE.g); g.name = g.name || 'لعبتي ' + (WE.games.length + 1); const i = WE.games.findIndex((x) => x.id === g.id); if (i >= 0) WE.games[i] = g; else WE.games.unshift(g); WE.games = WE.games.slice(0, 20); store.set('games', WE.games); renderGames(); toast('اللعبة اتحفظت'); };
