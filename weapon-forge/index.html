@@ -92,6 +92,12 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
 .btools{position:absolute;inset:8px 8px auto;display:flex;flex-wrap:wrap;gap:6px;z-index:2}
 .btools.bottom{inset:auto 8px 8px}
 .btools .tool{background:#211c19e6;padding:5px 9px;font-size:13px}
+.sliders{display:grid;gap:8px}
+.sliders label,.roleRow{display:grid;grid-template-columns:7.5em minmax(0,1fr) 3.5em;align-items:center;gap:8px;font-size:13px;font-weight:700}
+.roleRow{grid-template-columns:auto minmax(0,1fr)}
+.sliders input{width:100%;accent-color:var(--ember)}
+.sliders output{font-family:var(--pix);font-size:12px;text-align:end}
+.sliders select,.roleRow select{background:var(--coal);color:var(--bone);border:1px solid var(--edge);border-radius:8px;padding:5px 8px;font:700 13px var(--body)}
 .chk{display:flex;gap:8px;align-items:center;font-weight:700;font-size:14px}
 .paint{position:fixed;inset:0;z-index:30;background:#000a;display:flex;align-items:center;justify-content:center;padding:16px}
 .pcard{background:var(--iron);border:1px solid var(--edge);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;max-width:360px;width:100%}
@@ -143,6 +149,15 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
         <div class="nameRow"><input id="wName" maxlength="28" aria-label="اسم السلاح"><button class="btn alt" id="bName">اقترح اسم</button></div>
         <div class="chips"><span class="chip rar" id="cRar"></span><span class="chip" id="cType"></span><span class="chip" id="cEl"></span><span class="power" id="cPow" title="القوة الكلية"></span></div>
         <div class="stats" id="stats"></div>
+        <label class="chk"><input type="checkbox" id="wManual"> أنا اللي أحدد أرقام السلاح</label>
+        <div class="sliders" id="wSliders" hidden>
+          <label>الضرر <input type="range" id="wsDmg" min="1" max="200"><output id="woDmg"></output></label>
+          <label>السرعة <input type="range" id="wsSpd" min="5" max="100"><output id="woSpd"></output></label>
+          <label>المدى <input type="range" id="wsReach" min="5" max="100"><output id="woReach"></output></label>
+          <label>الضربة الحرجة <input type="range" id="wsCrit" min="0" max="100"><output id="woCrit"></output></label>
+          <label>قوة العنصر <input type="range" id="wsElp" min="0" max="100"><output id="woElp"></output></label>
+          <label>العنصر <select id="wsEl"></select></label>
+        </div>
         <p class="desc" id="cDesc"></p>
         <div class="acts">
           <button class="btn" id="bTest">جرّب على الدمية</button>
@@ -188,6 +203,16 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
         <div class="chips"><span class="chip rar" id="bRar"></span><span class="chip" id="bEl"></span><span class="chip" id="bWeak"></span><span class="power" id="bPow"></span></div>
         <div class="stats" id="bStats"></div>
         <label class="chk"><input type="checkbox" id="bFly"> الوحش ده بيطير</label>
+        <label class="chk"><input type="checkbox" id="bManual"> أنا اللي أحدد أرقامه</label>
+        <div class="sliders" id="bSliders" hidden>
+          <label>الصحة <input type="range" id="sHp" min="10" max="1500" step="10"><output id="oHp"></output></label>
+          <label>قوة الضربة <input type="range" id="sDmg" min="1" max="80"><output id="oDmg"></output></label>
+          <label>السرعة <input type="range" id="sSpd" min="0.5" max="8" step="0.1"><output id="oSpd"></output></label>
+          <label>العنصر <select id="sEl"></select></label>
+        </div>
+        <div class="roleRow" id="roleRow" hidden><span class="label">الجزء ده:</span><select id="bRole" aria-label="دور الجزء"></select></div>
+        <div class="acts"><button class="btn alt" id="pvWalk">جرّب: مشي</button><button class="btn alt" id="pvAtk">جرّب: هجوم</button><button class="btn alt" id="pvDie">جرّب: موت</button><button class="btn alt" id="bFuse">ادمج مع وحش تاني</button></div>
+        <div class="fuse" id="fuseBox" hidden><span class="label">اختار الوحش اللي هيتدمج مع اللي قدامك</span><div class="temps" id="fuseList"></div></div>
         <p class="desc" id="bDesc"></p>
         <div class="acts">
           <button class="btn" id="bFightB">حاربه في الساحة</button>
@@ -354,11 +379,19 @@ function nameFor(a) {
   const pick = (l) => l[Math.floor(Math.random() * l.length)];
   return `${a.type} ${pick(e.words)} ${pick(adj)}`;
 }
-let nameTouched = false, A = null;
+let nameTouched = false, A = null, WOV = null;
+// your own numbers for the weapon (when ticked) replace the ones worked out from the drawing
+function withOv(a) { if (!a || !WOV) return a; const b = { ...a, ...WOV }; b.power = Math.round(b.dmg * 1.1 + b.spd * 0.45 + b.reach * 0.4 + b.crit * 0.8 + b.elp * 0.7 + a.sym * 18); b.rar = [...RAR].reverse().find((r) => b.power >= r.min); return b; }
 $('wName').addEventListener('input', () => { nameTouched = true; });
 $('bName').onclick = () => { if (A) { $('wName').value = nameFor(A); nameTouched = true; } };
+$('wsEl').innerHTML = Object.keys(EL).map((k) => `<option value="${k}">${EL[k].name}</option>`).join('');
+const WK = [['wsDmg', 'dmg', 'woDmg'], ['wsSpd', 'spd', 'woSpd'], ['wsReach', 'reach', 'woReach'], ['wsCrit', 'crit', 'woCrit'], ['wsElp', 'elp', 'woElp']];
+function syncW() { $('wManual').checked = !!WOV; $('wSliders').hidden = !WOV; if (!WOV) return; for (const [id, k, o] of WK) { $(id).value = WOV[k]; $(o).textContent = WOV[k]; } $('wsEl').value = WOV.el; }
+$('wManual').onchange = () => { if ($('wManual').checked) { const a = analyse(grid) || { dmg: 30, spd: 50, reach: 50, crit: 10, elp: 0, el: 'none' }; WOV = { dmg: a.dmg, spd: a.spd, reach: a.reach, crit: a.crit, elp: a.elp, el: a.el }; } else WOV = null; renderCard(); };
+for (const [id, k] of WK) $(id).addEventListener('input', () => { if (WOV) { WOV[k] = +$(id).value; renderCard(); } });
+$('wsEl').onchange = () => { if (WOV) { WOV.el = $('wsEl').value; renderCard(); } };
 function renderCard() {
-  A = analyse(grid); const card = $('card');
+  A = withOv(analyse(grid)); const card = $('card'); syncW();
   for (const id of ['bTest', 'bFight', 'bSave', 'bPub']) $(id).disabled = !A;
   if (!A) { card.style.setProperty('--rc', 'var(--edge)'); $('cRar').textContent = 'ارسم سلاحك'; $('cType').textContent = ''; $('cEl').textContent = ''; $('cPow').textContent = ''; $('stats').innerHTML = ''; $('cDesc').textContent = 'اختار لون وارسم على الشبكة، أو ابدأ من سلاح جاهز.'; return; }
   card.style.setProperty('--rc', A.rar.col);
@@ -387,7 +420,7 @@ function build() {
     list.forEach(([x, y, v], i) => { o.position.set(x - center.x, -(y - center.y), 0); o.scale.set(1, 1, PAL[v].c === 'w' ? 0.8 : 1.2); o.updateMatrix(); m.setMatrixAt(i, o.matrix); m.setColorAt(i, c.set(PAL[v].hex)); }); spin.add(m); return m; };
   solid = mk(cs, new THREE.MeshStandardMaterial({ metalness: 0.35, roughness: 0.45 }));
   glow = mk(gs, new THREE.MeshBasicMaterial());
-  const a = analyse(grid); if (a && a.el !== 'none') {
+  const a = withOv(analyse(grid)); if (a && a.el !== 'none') {
     const P = 70, pos = new Float32Array(P * 3), g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     const src = gs.length ? gs : cs; parts = new THREE.Points(g, new THREE.PointsMaterial({ map: dot, color: EL[a.el].col, size: 1.6, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
     parts.userData = { el: a.el, src, life: new Float32Array(P).map(() => Math.random()) }; spin.add(parts);
@@ -434,7 +467,7 @@ function frame(now) {
   rim.intensity = 1.2 + Math.sin(now / 400) * 0.25;
   if (!$('vForge').hidden) { cam.lookAt(holder.position.x * 0.4, 0, 0); R.render(scene, cam); }
   if (!$('vArena').hidden && AR.R) { arenaStep(dt, now); AR.R.render(AR.scene, AR.cam); }
-  if (!$('vBeast').hidden && BE.R) { BE.orbit.update(); BE.R.render(BE.scene, BE.cam); }
+  if (!$('vBeast').hidden && BE.R) { previewStep(dt); BE.orbit.update(); BE.R.render(BE.scene, BE.cam); }
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
@@ -469,14 +502,18 @@ function voxels(rows, pal, scale = 1) {
 const AR = { el: $('arena'), R: null, scene: null, cam: null, on: false, mons: [], keys: {}, joy: null, best: store.get('best', 0) };
 function arenaInit() {
   if (AR.R) return; const R2 = new THREE.WebGLRenderer({ antialias: true }); R2.setPixelRatio(Math.min(2, devicePixelRatio)); R2.shadowMap.enabled = true; AR.el.prepend(R2.domElement); AR.R = R2;
-  const sc = new THREE.Scene(); sc.background = new THREE.Color(0x120d0b); sc.fog = new THREE.Fog(0x120d0b, 30, 60); AR.scene = sc;
+  const sc = new THREE.Scene(); sc.background = new THREE.Color(0x120d0b); sc.fog = new THREE.Fog(0x120d0b, 35, 75); AR.scene = sc;
   AR.cam = new THREE.PerspectiveCamera(45, 16 / 10, 0.1, 200);
-  sc.add(new THREE.HemisphereLight(0xfff0e0, 0x403028, 1.5)); sc.add(new THREE.AmbientLight(0xffffff, 0.25)); const sun = new THREE.DirectionalLight(0xffffff, 0.9); sun.position.set(-8, 20, 10); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); Object.assign(sun.shadow.camera, { left: -20, right: 20, top: 20, bottom: -20 }); sc.add(sun);
+  sc.add(new THREE.HemisphereLight(0xfff0e0, 0x403028, 1.5)); sc.add(new THREE.AmbientLight(0xffffff, 0.25)); const sun = new THREE.DirectionalLight(0xffffff, 0.9); sun.position.set(-8, 20, 10); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); Object.assign(sun.shadow.camera, { left: -32, right: 32, top: 32, bottom: -32 }); sun.shadow.mapSize.set(2048, 2048); sc.add(sun);
   // a pixel floor: stone tiles in a ring, torches of ember light around it
   const t = document.createElement('canvas'); t.width = t.height = 16; const g = t.getContext('2d'); for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) { g.fillStyle = ['#3a302a', '#342b25', '#40352e', '#2e2620'][(x * 7 + y * 13 + ((x / 4 | 0) + (y / 4 | 0)) * 5) % 4]; g.fillRect(x, y, 1, 1); }
-  const tex = new THREE.CanvasTexture(t); tex.magFilter = THREE.NearestFilter; tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(9, 9);
-  const floor = new THREE.Mesh(new THREE.CircleGeometry(16, 48), new THREE.MeshLambertMaterial({ map: tex })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; sc.add(floor);
-  for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2, x = Math.cos(a) * 16.5, z = Math.sin(a) * 16.5; const post = voxels(['o', 'y', 's', 's', 's'], SPR, 0.6); post.position.set(x, 0, z); sc.add(post); const l = new THREE.PointLight(0xff8a3d, 0.7, 14); l.position.set(x, 3, z); sc.add(l); }
+  const tex = new THREE.CanvasTexture(t); tex.magFilter = THREE.NearestFilter; tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(17, 17);
+  const floor = new THREE.Mesh(new THREE.CircleGeometry(30, 64), new THREE.MeshLambertMaterial({ map: tex })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; sc.add(floor);
+  for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2, x = Math.cos(a) * 30.5, z = Math.sin(a) * 30.5; const post = voxels(['o', 'y', 's', 's', 's'], SPR, 0.6); post.position.set(x, 0, z); sc.add(post); const l = new THREE.PointLight(0xff8a3d, 0.7, 14); l.position.set(x, 3, z); sc.add(l); }
+  // stone pillars and rocks, made of pixel cubes, to hide behind
+  AR.walls = []; const rnd = (k) => hash3(k, 7, 3);
+  for (let i = 0; i < 12; i++) { const a = rnd(i) * Math.PI * 2, r = 7 + rnd(i + 40) * 17, x = Math.cos(a) * r, z = Math.sin(a) * r, h = 1.5 + rnd(i + 80) * 3, w = 1.4 + rnd(i + 120) * 1.4;
+    const col = ['#6f6a64', '#7a736b', '#5d5852'][i % 3], m = cubeMesh({ p: [x, h / 2, z], s: [w, h, w], r: [0, rnd(i + 9) * 1.5, 0], c: col, f: ['', '', '', '', '', ''], seed: 100 + i }); m.receiveShadow = true; sc.add(m); AR.walls.push({ x, z, r: w * 0.62 }); }
   AR.hero = new THREE.Group(); const hv = voxels(ART.hero, SPR, 0.15); AR.body = new THREE.Group(); AR.body.add(hv); AR.hero.add(AR.body); AR.hand = new THREE.Group(); AR.hand.position.set(0.62, 0.9, 0.35); AR.body.add(AR.hand); sc.add(AR.hero);
   new ResizeObserver(() => { const w = AR.el.clientWidth, h = AR.el.clientHeight; R2.setSize(w, h, false); AR.cam.aspect = w / h; AR.cam.updateProjectionMatrix(); }).observe(AR.el);
   if (matchMedia('(pointer:coarse)').matches) AR.el.classList.add('touch');
@@ -496,15 +533,15 @@ function heldWeapon() {
   const g = new THREE.Group(), list = []; let hx = 0, hy = 0, hn = 0;
   for (let i = 0; i < N * N; i++) { const v = grid[i]; if (!v) continue; const x = i % N, y = (i / N) | 0; list.push([x, y, v]); if ('wk'.includes(PAL[v].c)) { hx += x; hy += y; hn++; } }
   if (!list.length) return; if (!hn) { hx = 12; hy = 22; hn = 1; } hx /= hn; hy /= hn;
-  const m = new THREE.InstancedMesh(box, new THREE.MeshLambertMaterial(), list.length), o = new THREE.Object3D(), c = new THREE.Color(), s = 0.075;
-  list.forEach(([x, y, v], i) => { o.position.set((x - hx) * s, -(y - hy) * s, 0); o.scale.setScalar(s); o.updateMatrix(); m.setMatrixAt(i, o.matrix); m.setColorAt(i, c.set(PAL[v].hex)); });
+  const m = new THREE.InstancedMesh(box, new THREE.MeshLambertMaterial(), list.length), o = new THREE.Object3D(), c = new THREE.Color(), s = 0.09;
+  list.forEach(([x, y, v], i) => { o.position.set((x - hx) * s, -(y - hy) * s, 0); o.scale.set(s, s, s * 3.4); o.updateMatrix(); m.setMatrixAt(i, o.matrix); m.setColorAt(i, c.set(PAL[v].hex)); });
   m.castShadow = true; g.add(m); AR.hand.add(g); AR.blade = g;
 }
 function monsterRow() { beastInit(); $('bestiary').innerHTML = ''; for (const e of arenaPool()) { const d = document.createElement('div'); d.className = 'item mon'; const im = new Image(); im.className = 'thumb'; im.style.width = '64px'; im.style.flex = 'none'; im.src = beastThumb(e.def); im.alt = e.M.name; d.appendChild(im); const t = document.createElement('div'); t.innerHTML = `<b></b><br><small>بيضعف قدام: ${EL[e.M.weak].name} · مقاوم: ${EL[e.M.resist].name}${e.M.boss ? ' · بوس' : ''}</small>`; t.querySelector('b').textContent = e.M.name + (e.M.mine ? ' (وحشك)' : ''); d.appendChild(t); $('bestiary').appendChild(d); } }
 let G2 = null;
 function startArena() {
   arenaInit(); beastInit(); heldWeapon(); for (const m of AR.mons) AR.scene.remove(m.o); AR.mons = [];
-  const a = analyse(grid); if (!a) { show('forge'); toast('ارسم سلاح الأول'); return; }
+  const a = withOv(analyse(grid)); if (!a) { show('forge'); toast('ارسم سلاح الأول'); return; }
   G2 = { a, hp: 100, max: 100, wave: 0, score: 0, cd: 0, swingT: 0, face: new THREE.Vector3(0, 0, -1), pos: new THREE.Vector3(), between: 1.2 };
   AR.hero.position.set(0, 0, 0); $('aOv').hidden = true; AR.on = true; hud();
 }
@@ -514,11 +551,11 @@ function arenaPool() {
   return [...def, ...mine];
 }
 function addBeast(e, hpMul = 1) {
-  const n = G2.wave, M_ = e.M, g = new THREE.Group(), b = buildBeast(e.def), bx = new THREE.Box3().setFromObject(b), h = Math.max(0.3, bx.max.y - bx.min.y);
+  const n = G2.wave, M_ = e.M, g = new THREE.Group(), R_ = buildRig(e.def), b = R_.root, bx = new THREE.Box3().setFromObject(b), h = Math.max(0.3, bx.max.y - bx.min.y);
   const k = (M_.size * 1.6) / h; b.scale.setScalar(k); b.position.y = -bx.min.y * k; g.add(b);
   const mats = []; g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.material = o.material.map((x) => x.clone()); mats.push(...o.material); } });
-  const ang = Math.random() * Math.PI * 2, r = 12 + Math.random() * 3; g.position.set(Math.cos(ang) * r, 0, Math.sin(ang) * r); AR.scene.add(g);
-  const hpScale = (1 + (n - 1) * 0.18) * hpMul; AR.mons.push({ M: M_, o: g, b, mats, hp: M_.hp * hpScale, max: M_.hp * hpScale, hitT: 0, atk: 0, burn: 0, poison: 0, slow: 0, stun: 0, bob: Math.random() * 6 });
+  const ang = Math.random() * Math.PI * 2, r = 22 + Math.random() * 5; g.position.set(Math.cos(ang) * r, 0, Math.sin(ang) * r); AR.scene.add(g);
+  const hpScale = (1 + (n - 1) * 0.18) * hpMul; AR.mons.push({ M: M_, o: g, b, R_, mats, hp: M_.hp * hpScale, max: M_.hp * hpScale, hitT: 0, atk: 0, attT: 0, burn: 0, poison: 0, slow: 0, stun: 0, bob: Math.random() * 6, moving: 0 });
 }
 function spawnWave() {
   G2.wave++; const n = G2.wave, boss = n % 5 === 0, all = arenaPool(), pool = all.filter((e) => !e.M.boss && (e.M.from || 1) <= Math.ceil(n / 1.5));
@@ -552,13 +589,26 @@ function hit(m, mult) {
   if (el === 'shadow') G2.hp = Math.min(G2.max, G2.hp + d * 0.15 * (0.5 + ep));
   if (m.hp <= 0) kill(m);
 }
-function kill(m) { AR.scene.remove(m.o); AR.mons.splice(AR.mons.indexOf(m), 1); G2.score += Math.round(m.max / 4) * (m.M.boss ? 5 : 1); hud(); }
+function kill(m) { shatter(m); AR.scene.remove(m.o); AR.mons.splice(AR.mons.indexOf(m), 1); G2.score += Math.round(m.max / 4) * (m.M.boss ? 5 : 1); hud(); }
+AR.debris = [];
+function pushOut(p, rad) { for (const w of AR.walls || []) { const dx = p.x - w.x, dz = p.z - w.z, d = Math.hypot(dx, dz), min = w.r + rad; if (d < min && d > 0.001) { p.x = w.x + dx / d * min; p.z = w.z + dz / d * min; } } }
+function shatter(m) {
+  m.o.updateMatrixWorld(true); const list = []; m.o.traverse((x) => { if (x.isMesh) list.push(x); });
+  for (const x of list) { AR.scene.attach(x); for (const mt of x.material) { mt.emissive.setHex(0); mt.transparent = true; } const out = x.position.clone().sub(m.o.position).setY(0).normalize();
+    AR.debris.push({ o: x, v: new THREE.Vector3(out.x * (2 + Math.random() * 4), 4 + Math.random() * 5, out.z * (2 + Math.random() * 4)), w: new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(10), t: 0 }); }
+  clank(90);
+}
+function debrisStep(dt) {
+  for (let i = AR.debris.length - 1; i >= 0; i--) { const d = AR.debris[i]; d.t += dt; d.v.y -= 20 * dt; d.o.position.addScaledVector(d.v, dt); if (d.o.position.y < 0.1) { d.o.position.y = 0.1; d.v.multiplyScalar(0.5); d.v.y = Math.abs(d.v.y) * 0.4; d.w.multiplyScalar(0.6); }
+    d.o.rotation.x += d.w.x * dt; d.o.rotation.y += d.w.y * dt; d.o.rotation.z += d.w.z * dt; if (d.t > 1.4) { const k = Math.max(0, 1 - (d.t - 1.4) / 0.6); for (const mt of d.o.material) mt.opacity = k; if (k <= 0) { AR.scene.remove(d.o); AR.debris.splice(i, 1); } } }
+}
 function arenaStep(dt, now) {
+  debrisStep(dt);
   if (!AR.on || !G2) return; const P = AR.hero.position, a = G2.a;
   // move
   let mx = 0, mz = 0; const K = AR.keys; if (K.KeyA || K.ArrowLeft) mx -= 1; if (K.KeyD || K.ArrowRight) mx += 1; if (K.KeyW || K.ArrowUp) mz -= 1; if (K.KeyS || K.ArrowDown) mz += 1; if (AR.joy) { mx += AR.joy.x; mz += AR.joy.y; }
   const l = Math.hypot(mx, mz); if (l > 0.1) { const sp = (5 + a.spd / 30) * dt / Math.max(1, l); P.x += mx * sp; P.z += mz * sp; if (G2.swingT <= 0) G2.face.set(mx, 0, mz).normalize(); }
-  const pl = Math.hypot(P.x, P.z); if (pl > 15) { P.x *= 15 / pl; P.z *= 15 / pl; }
+  const pl = Math.hypot(P.x, P.z); if (pl > 28) { P.x *= 28 / pl; P.z *= 28 / pl; } pushOut(P, 0.5);
   AR.hero.quaternion.copy(AR.cam.quaternion); if (Math.abs(G2.face.x) > 0.2) AR.body.scale.x = G2.face.x < 0 ? -1 : 1; AR.hero.position.y = l > 0.1 ? Math.abs(Math.sin(now / 90)) * 0.12 : 0;
   G2.cd -= dt; G2.swingT -= dt; if (AR.blade) AR.hand.rotation.z = G2.swingT > 0 ? -1.9 + (G2.swingT / 0.22) * 2.6 : 0.25;
   // monsters
@@ -566,17 +616,18 @@ function arenaStep(dt, now) {
     const o = m.o, to = P.clone().sub(o.position).setY(0), d = to.length();
     if (m.burn > 0) { m.burn -= dt; m.hp -= a.elp / 10 * dt * 3; } if (m.poison > 0) { m.poison -= dt; m.hp -= a.elp / 12 * dt * 3; } if ((m.burn > 0 || m.poison > 0) && m.hp <= 0) { kill(m); continue; }
     m.stun -= dt; m.slow -= dt; m.hitT -= dt;
-    if (m.stun <= 0 && d > m.M.size * 0.5 + 0.7) o.position.addScaledVector(to.normalize(), m.M.spd * (m.slow > 0 ? 0.45 : 1) * dt);
-    o.position.y = (m.M.fly ? 1.4 + Math.sin(now / 200 + m.bob) * 0.4 : Math.abs(Math.sin(now / 160 + m.bob)) * 0.15);
-    if (d > 0.05) o.rotation.y = Math.atan2(to.x, to.z); m.b.rotation.x = Math.sin(now / 120 + m.bob) * 0.06; m.b.scale.y = m.b.scale.x * (1 + Math.sin(now / 140 + m.bob) * 0.05);
+    const go = m.stun <= 0 && d > m.M.size * 0.5 + 0.7; if (go) o.position.addScaledVector(to.normalize(), m.M.spd * (m.slow > 0 ? 0.45 : 1) * dt); m.moving += ((go ? 1 : 0) - m.moving) * Math.min(1, dt * 6);
+    o.position.y = m.M.fly ? 1.4 + Math.sin(now / 200 + m.bob) * 0.4 : 0;
+    if (d > 0.05) o.rotation.y = Math.atan2(to.x, to.z); m.attT = Math.max(0, m.attT - dt); animRig(m.R_, now / 1000 + m.bob, m.stun > 0 ? 0 : m.moving * (m.slow > 0 ? 0.5 : 1), m.attT > 0 ? 1 - m.attT / 0.4 : 0);
     { const em = m.hitT > 0 ? 0xffffff : m.burn > 0 ? 0x661800 : m.slow > 0 ? 0x10304a : m.poison > 0 ? 0x0a3a12 : 0; if (m.em !== em) { m.em = em; for (const mt of m.mats) mt.emissive.setHex(em); } }
-    m.atk -= dt; if (d < m.M.size * 0.5 + 0.9 && m.atk <= 0 && m.stun <= 0) { m.atk = 0.9; G2.hp -= m.M.dmg; pop2('-' + m.M.dmg, P.clone().add(new THREE.Vector3(0, 2, 0)), '#ff5a5a'); hud(); clank(110); }
+    m.atk -= dt; if (d < m.M.size * 0.5 + 0.9 && m.atk <= 0 && m.stun <= 0) { m.atk = 0.9; m.attT = 0.4; G2.hp -= m.M.dmg; pop2('-' + m.M.dmg, P.clone().add(new THREE.Vector3(0, 2, 0)), '#ff5a5a'); hud(); clank(110); }
   }
+  for (const m of AR.mons) if (!m.M.fly) pushOut(m.o.position, m.M.size * 0.45);
   // monsters keep a little apart
   for (let i = 0; i < AR.mons.length; i++) for (let j = i + 1; j < AR.mons.length; j++) { const A_ = AR.mons[i].o.position, B_ = AR.mons[j].o.position, d = A_.distanceTo(B_), min = (AR.mons[i].M.size + AR.mons[j].M.size) * 0.45; if (d < min && d > 0.001) { const push = B_.clone().sub(A_).setY(0).normalize().multiplyScalar((min - d) / 2); A_.sub(push); B_.add(push); } }
   if (G2.hp <= 0) { AR.on = false; if (G2.wave > AR.best) { AR.best = G2.wave; store.set('best', AR.best); } $('aOvT').textContent = 'وقعت!'; $('aOvP').textContent = `وصلت للموجة ${G2.wave} وجمعت ${G2.score} نقطة. ارجع الورشة وقوّي سلاحك، أو ادخل تاني.`; $('aGo').textContent = 'العب تاني'; $('aOv').hidden = false; hud(); return; }
   if (!AR.mons.length) { G2.between -= dt; if (G2.between <= 0) { if (G2.wave) { G2.hp = Math.min(G2.max, G2.hp + 25); pop2('+25', P.clone().add(new THREE.Vector3(0, 2, 0)), '#46c96b'); } spawnWave(); G2.between = 2; } }
-  AR.cam.position.lerp(new THREE.Vector3(P.x, 10, P.z + 9), 0.1); AR.cam.lookAt(P.x, 0.5, P.z);
+  AR.cam.position.lerp(new THREE.Vector3(P.x, 11, P.z + 10), 0.1); AR.cam.lookAt(P.x, 0.5, P.z);
 }
 $('aGo').onclick = () => { clank(260); startArena(); };
 $('tArena').addEventListener('click', () => { AR.focus = null; });
@@ -608,11 +659,13 @@ function beastStats(def) {
     const e = elOfColor(q.c); elv[e] = (elv[e] || 0) + v; if (Math.min(...q.s) < 0.35 && Math.max(...q.s) > 0.45 && (q.r[0] || q.r[2])) horns++; }
   let el = 'none', ev = 0; for (const k in elv) if (k !== 'none' && elv[k] > ev) { ev = elv[k]; el = k; }
   if (ev < V * 0.25) el = 'none';
+  const autoEl = el;
   const height = top - bot, clamp = (v, a, b) => Math.max(a, Math.min(b, Math.round(v)));
-  const hp = clamp(25 + V * 9, 20, 900), spd = clamp((5.2 - Math.max(height, ext * 2) * 0.45) * 20, 20, 100) / 20, dmg = clamp(4 + Math.sqrt(V) * 3 + horns * 2, 3, 40);
+  let hp = clamp(25 + V * 9, 20, 900), spd = clamp((5.2 - Math.max(height, ext * 2) * 0.45) * 20, 20, 100) / 20, dmg = clamp(4 + Math.sqrt(V) * 3 + horns * 2, 3, 40);
+  if (def.ov) { hp = def.ov.hp; dmg = def.ov.dmg; spd = def.ov.spd; if (def.ov.el) el = def.ov.el; }
   const power = Math.round(hp * 0.25 + dmg * 3 + spd * 12 + (def.fly ? 15 : 0));
   const rar = power < 70 ? RAR[0] : power < 110 ? RAR[1] : power < 160 ? RAR[2] : power < 220 ? RAR[3] : RAR[4];
-  return { hp, spd, dmg, el, weak: WEAK[el], resist: el, height: Math.max(0.5, height), V, power, rar, cubes: def.cubes.length };
+  return { hp, spd, dmg, el, weak: WEAK[el], resist: el, height: Math.max(0.5, height), V, power, rar, cubes: def.cubes.length, manual: !!def.ov, autoEl };
 }
 // pixels drawn on a face become a little texture: the cube's colour underneath, the drawing on top
 // pixel style: every face is made of square pixels of the same size (8 per unit), each a slightly different shade of the
@@ -641,6 +694,54 @@ function faceMat(q, i) {
 function cubeMesh(q) { if (!q.seed) q.seed = 1 + ((Math.random() * 1e6) | 0); const m = new THREE.Mesh(box, [0, 1, 2, 3, 4, 5].map((i) => faceMat(q, i))); m.position.fromArray(q.p); m.scale.fromArray(q.s); m.rotation.set(...q.r); m.castShadow = true; m.userData.q = q; return m; }
 function buildBeast(def) { const g = new THREE.Group(); for (const q of def.cubes) g.add(cubeMesh(q)); return g; }
 
+
+// ---------------------------------------------------------------- animation: each cube belongs to a part (head, arm, leg, wing, tail),
+// the part turns around its joint (hips at the top of a leg, shoulders at the top of an arm, wings at the body side...)
+const ROLES = [['', 'تلقائي'], ['body', 'جسم'], ['head', 'راس'], ['armL', 'دراع شمال'], ['armR', 'دراع يمين'], ['legL', 'رجل شمال'], ['legR', 'رجل يمين'], ['wingL', 'جناح شمال'], ['wingR', 'جناح يمين'], ['tail', 'ديل'], ['jaw', 'بوق']];
+const vol = (q) => q.s[0] * q.s[1] * q.s[2];
+const qbox = (q) => ({ x0: q.p[0] - q.s[0] / 2, x1: q.p[0] + q.s[0] / 2, y0: q.p[1] - q.s[1] / 2, y1: q.p[1] + q.s[1] / 2, z0: q.p[2] - q.s[2] / 2, z1: q.p[2] + q.s[2] / 2 });
+function rolesOf(def) {
+  const cs = def.cubes; if (!cs.length) return []; let bi = 0; cs.forEach((q, i) => { if (vol(q) > vol(cs[bi])) bi = i; });
+  const B = qbox(cs[bi]), H = B.y1 - B.y0, W = B.x1 - B.x0, maxV = vol(cs[bi]), roles = cs.map((q) => q.role || null), big = cs.map((q, i) => i === bi || vol(q) >= maxV * 0.06);
+  cs.forEach((q, i) => {
+    if (roles[i] || !big[i]) return; if (i === bi) { roles[i] = 'body'; return; }
+    const b = qbox(q), cx = q.p[0], thin = Math.min(...q.s) < Math.max(...q.s) * 0.22, side = cx >= 0 ? 'L' : 'R';
+    if (b.y0 >= B.y1 - H * 0.2 && Math.abs(cx) < W * 0.6) roles[i] = 'head';
+    else if (thin && Math.abs(cx) > W * 0.35 && b.y0 > B.y0) roles[i] = 'wing' + side;
+    else if (b.y1 <= B.y0 + H * 0.3) roles[i] = Math.abs(cx) < 0.05 ? 'legL' : 'leg' + side;
+    else if (Math.abs(cx) >= W * 0.45) roles[i] = 'arm' + side;
+    else if (b.z1 <= B.z0 + 0.15) roles[i] = 'tail';
+    else roles[i] = 'body';
+  });
+  // little details (eyes, horns, teeth) move with the part they sit on
+  cs.forEach((q, i) => { if (roles[i]) return; let best = 1e9, r = 'body'; cs.forEach((o, j) => { if (!big[j] || j === i) return; const b = qbox(o), d = Math.hypot(Math.max(b.x0 - q.p[0], 0, q.p[0] - b.x1), Math.max(b.y0 - q.p[1], 0, q.p[1] - b.y1), Math.max(b.z0 - q.p[2], 0, q.p[2] - b.z1)); if (d < best) { best = d; r = roles[j] || 'body'; } }); roles[i] = r; });
+  return roles;
+}
+function buildRig(def) {
+  const roles = rolesOf(def), groups = {}, root = new THREE.Group(), boxes = {};
+  def.cubes.forEach((q, i) => { const r = roles[i], b = qbox(q), x = boxes[r] ||= { x0: 1e9, x1: -1e9, y0: 1e9, y1: -1e9, z0: 1e9, z1: -1e9 }; for (const k in b) x[k] = k.endsWith('0') ? Math.min(x[k], b[k]) : Math.max(x[k], b[k]); });
+  const piv = (r) => { const b = boxes[r], cx = (b.x0 + b.x1) / 2, cz = (b.z0 + b.z1) / 2; if (r.startsWith('leg') || r.startsWith('arm')) return [cx, b.y1, cz]; if (r === 'head') return [cx, b.y0, cz]; if (r === 'wingL') return [b.x0, (b.y0 + b.y1) / 2, cz]; if (r === 'wingR') return [b.x1, (b.y0 + b.y1) / 2, cz]; if (r === 'tail') return [cx, (b.y0 + b.y1) / 2, b.z1]; if (r === 'jaw') return [cx, b.y1, b.z0]; return [cx, b.y0, cz]; };
+  const bodyP = boxes.body ? piv('body') : [0, 0, 0], body = new THREE.Group(); body.position.fromArray(bodyP); root.add(body); groups.body = body;
+  for (const r in boxes) { if (r === 'body') continue; const g = new THREE.Group(), pp = piv(r); g.position.set(pp[0] - bodyP[0], pp[1] - bodyP[1], pp[2] - bodyP[2]); body.add(g); groups[r] = g; }
+  def.cubes.forEach((q, i) => { const m = cubeMesh(q), g = groups[roles[i]], gp = new THREE.Vector3(); g.updateMatrixWorld(true); root.updateMatrixWorld(true); g.getWorldPosition(gp); m.position.set(q.p[0] - gp.x, q.p[1] - gp.y, q.p[2] - gp.z); g.add(m); });
+  let top = -1e9, bot = 1e9; for (const r in boxes) { top = Math.max(top, boxes[r].y1); bot = Math.min(bot, boxes[r].y0); }
+  return { root, g: groups, hasLegs: !!(groups.legL || groups.legR), H: Math.max(0.5, top - bot), fly: !!def.fly };
+}
+// one pose of the animation. walk 0..1 how much it is walking, atk 0..1 through an attack
+function animRig(R_, t, walk, atk) {
+  const g = R_.g, s = Math.sin(t * 9), H = R_.H;
+  if (g.legL) g.legL.rotation.x = s * 0.6 * walk; if (g.legR) g.legR.rotation.x = -s * 0.6 * walk;
+  const sw = Math.sin(Math.PI * Math.min(1, atk));
+  if (g.armL) g.armL.rotation.x = -s * 0.5 * walk - sw * 1.7; if (g.armR) g.armR.rotation.x = s * 0.5 * walk - sw * 1.7;
+  const flap = Math.sin(t * (R_.fly ? 16 : 6)) * (R_.fly ? 0.7 : 0.15); if (g.wingL) g.wingL.rotation.z = flap; if (g.wingR) g.wingR.rotation.z = -flap;
+  if (g.tail) g.tail.rotation.y = Math.sin(t * 5) * 0.45; if (g.jaw) g.jaw.rotation.x = 0.1 + sw * 0.6;
+  if (g.head) { g.head.rotation.x = -sw * 0.35; g.head.rotation.z = Math.sin(t * 2.3) * 0.06; }
+  const b = g.body;
+  if (!R_.hasLegs && !R_.fly) { const hop = Math.abs(Math.sin(t * 5.5)); b.position.y = (R_.y0 ??= b.position.y) + hop * H * 0.28 * (0.4 + walk); b.scale.set(1 + (1 - hop) * 0.12, 1 - (1 - hop) * 0.16 + sw * 0.1, 1 + (1 - hop) * 0.12); }
+  else { b.position.y = (R_.y0 ??= b.position.y) + Math.abs(s) * H * 0.03 * walk; b.scale.y = 1 + Math.sin(t * 2) * 0.02; }
+  b.rotation.x = sw * 0.25;
+}
+
 const BE = { R: null, scene: null, cam: null, orbit: null, tc: null, root: null, def: null, sel: null, sels: [], pivot: null, multi: false, clip: null, mode: 'translate', undo: [], color: '#46c96b', mine: store.get('beasts', []) };
 function beastInit() {
   if (BE.R) return; const st = $('bstage'), R3 = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true }); R3.setPixelRatio(Math.min(2, devicePixelRatio)); st.prepend(R3.domElement); BE.R = R3;
@@ -660,7 +761,7 @@ function beastInit() {
   loadBeast(clone(BEASTS.slime), true); renderMyBeasts();
 }
 const clone = (o) => JSON.parse(JSON.stringify(o));
-function loadBeast(def, fresh) { BE.def = def; BE.sels = []; if (fresh) { bNameTouched = false; $('bFly').checked = !!def.fly; } rebuild(); select(null); }
+function loadBeast(def, fresh) { if (pv) { BE.scene.remove(pv.R_.root); if (pv.parts) for (const d of pv.parts) BE.scene.remove(d.o); pv = null; BE.root && (BE.root.visible = true); } BE.def = def; BE.sels = []; if (fresh) { bNameTouched = false; $('bFly').checked = !!def.fly; } rebuild(); select(null); syncSliders(); }
 function rebuild() {
   const keep = BE.sels.map((m) => m.userData.q); release(); if (BE.root) BE.scene.remove(BE.root); BE.root = buildBeast(BE.def); BE.scene.add(BE.root);
   BE.sels = BE.root.children.filter((x) => keep.includes(x.userData.q)); BE.sel = BE.sels[0] || null; gizmo(); bcard();
@@ -678,7 +779,7 @@ function gizmo() {
 }
 function select(m, add) {
   if (add && m) { BE.sels = BE.sels.includes(m) ? BE.sels.filter((x) => x !== m) : [...BE.sels, m]; } else BE.sels = m ? [m] : [];
-  BE.sel = BE.sels[0] || null; $('bSelInfo').textContent = BE.sels.length > 1 ? BE.sels.length + ' مكعبات متحددين' : ''; gizmo();
+  BE.sel = BE.sels[0] || null; $('bSelInfo').textContent = BE.sels.length > 1 ? BE.sels.length + ' مكعبات متحددين' : ''; gizmo(); syncRole();
 }
 const _inv = new THREE.Matrix4(), _mx = new THREE.Matrix4(), _p = new THREE.Vector3(), _q = new THREE.Quaternion(), _s = new THREE.Vector3(), _e = new THREE.Euler();
 function commitSel() {
@@ -732,11 +833,55 @@ $('paintClear').onclick = () => { PNT.cells = PNT.cells.map(() => '.'); drawPain
 $('paintCopy').onclick = () => { PNT.clip = { w: PNT.w, h: PNT.h, d: PNT.cells.join('') }; toast('الرسمة اتنسخت، افتح وش تاني والصقها'); };
 $('paintPaste').onclick = () => { if (!PNT.clip) return toast('انسخ رسمة الأول'); PNT.cells = resample(PNT.clip, PNT.w, PNT.h); drawPaint(); };
 $('paintDone').onclick = () => { const d = PNT.cells.join(''); PNT.m.userData.q.f[PNT.i] = /[^.]/.test(d) ? `${PNT.w},${PNT.h}:${d}` : ''; $('paintBox').hidden = true; rebuild(); };
+
+// ---------------------------------------------------------------- your numbers: health, hit and speed of a monster, set by hand
+$('sEl').innerHTML = Object.keys(EL).map((k) => `<option value="${k}">${EL[k].name}</option>`).join('');
+$('bRole').innerHTML = ROLES.map(([k, n]) => `<option value="${k}">${n}</option>`).join('');
+function syncSliders() { const st = beastStats(BE.def), on = !!BE.def.ov; $('bManual').checked = on; $('bSliders').hidden = !on; if (!on) return; $('sHp').value = st.hp; $('sDmg').value = st.dmg; $('sSpd').value = st.spd; $('sEl').value = st.el; $('oHp').textContent = st.hp; $('oDmg').textContent = st.dmg; $('oSpd').textContent = (+st.spd).toFixed(1); }
+$('bManual').onchange = () => { if ($('bManual').checked) { const st = beastStats({ ...BE.def, ov: null }); BE.def.ov = { hp: st.hp, dmg: st.dmg, spd: +st.spd.toFixed(1), el: st.el }; } else BE.def.ov = null; syncSliders(); bcard(); };
+for (const [id, k, o] of [['sHp', 'hp', 'oHp'], ['sDmg', 'dmg', 'oDmg'], ['sSpd', 'spd', 'oSpd']]) $(id).addEventListener('input', () => { if (!BE.def.ov) return; BE.def.ov[k] = +$(id).value; $(o).textContent = k === 'spd' ? (+$(id).value).toFixed(1) : $(id).value; bcard(); });
+$('sEl').onchange = () => { if (BE.def.ov) { BE.def.ov.el = $('sEl').value; bcard(); } };
+// which part a cube is (for the animation): picked automatically, or by hand
+function syncRole() { const show = BE.sels.length > 0; $('roleRow').hidden = !show; if (!show) return; const roles = rolesOf(BE.def), q = BE.sels[0].userData.q; $('bRole').value = q.role || ''; $('bRole').title = 'تلقائي: ' + (ROLES.find((r) => r[0] === roles[BE.def.cubes.indexOf(q)])?.[1] || ''); }
+$('bRole').onchange = () => { pushUndo(); for (const m of BE.sels) m.userData.q.role = $('bRole').value || undefined; toast('اتغيّر دور الجزء'); };
+// trying the animation inside the workshop: the editable cubes hide while the moving monster plays
+let pv = null;
+function preview(kind) {
+  commitSel(); if (pv) { BE.scene.remove(pv.R_.root); } const R_ = buildRig(BE.def); BE.scene.add(R_.root); BE.root.visible = false; BE.tc.detach(); pv = { R_, kind, t: 0 };
+}
+function previewStep(dt) {
+  if (!pv) return; pv.t += dt; const { R_, kind, t } = pv;
+  if (kind === 'walk') { animRig(R_, t, 1, 0); R_.root.position.z = Math.sin(t * 1.2) * 0.8; }
+  else if (kind === 'atk') animRig(R_, t, 0.2, (t % 1.1) < 0.4 ? (t % 1.1) / 0.4 : 0);
+  else if (kind === 'die') { if (!pv.parts) { pv.parts = []; R_.root.updateMatrixWorld(true); const ms = []; R_.root.traverse((x) => { if (x.isMesh) ms.push(x); }); for (const x of ms) { BE.scene.attach(x); pv.parts.push({ o: x, v: new THREE.Vector3(x.position.x * 2 + Math.random() - 0.5, 3 + Math.random() * 4, x.position.z * 2 + Math.random() - 0.5), w: new THREE.Vector3(Math.random(), Math.random(), Math.random()).multiplyScalar(8) }); } }
+    for (const d of pv.parts) { d.v.y -= 18 * dt; d.o.position.addScaledVector(d.v, dt); if (d.o.position.y < d.o.scale.y / 2) { d.o.position.y = d.o.scale.y / 2; d.v.multiplyScalar(0.5); d.v.y = Math.abs(d.v.y) * 0.3; d.w.multiplyScalar(0.5); } d.o.rotation.x += d.w.x * dt; d.o.rotation.z += d.w.z * dt; } }
+  if (t > (kind === 'die' ? 2.2 : 3.2)) { if (pv.parts) for (const d of pv.parts) BE.scene.remove(d.o); BE.scene.remove(R_.root); pv = null; BE.root.visible = true; gizmo(); }
+}
+$('pvWalk').onclick = () => preview('walk'); $('pvAtk').onclick = () => preview('atk'); $('pvDie').onclick = () => preview('die');
+// ---------------------------------------------------------------- fusion: two monsters become one
+function bboxOf(list) { const b = { x0: 1e9, x1: -1e9, y0: 1e9, y1: -1e9, z0: 1e9, z1: -1e9 }; for (const q of list) { const x = qbox(q); for (const k in b) b[k] = k.endsWith('0') ? Math.min(b[k], x[k]) : Math.max(b[k], x[k]); } return { ...b, cx: (b.x0 + b.x1) / 2, cz: (b.z0 + b.z1) / 2 }; }
+const shift = (list, d) => list.forEach((q) => { q.p = [q.p[0] + d[0], q.p[1] + d[1], q.p[2] + d[2]]; });
+function fuse(A_, B_) {
+  const ra = rolesOf(A_), rb = rolesOf(B_), take = (def, roles, set) => def.cubes.filter((q, i) => set.includes(roles[i])).map((q) => ({ ...clone(q), role: undefined, seed: 0 }));
+  let body = take(B_, rb, ['body', 'tail', 'jaw']); if (!body.length) body = B_.cubes.map(clone); const bb = bboxOf(body);
+  const head = take(A_, ra, ['head']), legs = take(A_, ra, ['legL', 'legR']), arms = take(B_, rb, ['armL', 'armR']); let wings = take(A_, ra, ['wingL', 'wingR']); if (!wings.length) wings = take(B_, rb, ['wingL', 'wingR']);
+  if (head.length) { const hb = bboxOf(head); shift(head, [bb.cx - hb.cx, bb.y1 - hb.y0 - 0.05, bb.cz - hb.cz]); }
+  if (legs.length) { const lb = bboxOf(legs), wx = (bb.x1 - bb.x0) / Math.max(0.5, lb.x1 - lb.x0); legs.forEach((q) => { q.p[0] = q.p[0] * Math.min(1.4, Math.max(0.6, wx)); }); const lb2 = bboxOf(legs); shift(legs, [bb.cx - lb2.cx, bb.y0 - lb2.y1 + 0.05, bb.cz - lb2.cz]); }
+  if (wings.length) { const wb = bboxOf(wings); shift(wings, [0, bb.y0 + (bb.y1 - bb.y0) * 0.7 - (wb.y0 + wb.y1) / 2, bb.cz - wb.cz]); }
+  const all = [...body, ...arms, ...head, ...legs, ...wings], g = bboxOf(all); shift(all, [-g.cx, -g.y0, -g.cz]);
+  const w1 = (A_.name || 'وحش').split(' ')[0], w2 = (B_.name || 'وحش').split(' ').slice(-1)[0];
+  const def = { name: w1 === w2 ? w1 + ' المدموج' : `${w1} ${w2}`, fly: !!(A_.fly || B_.fly) && wings.length > 0, cubes: all };
+  if (A_.ov || B_.ov) { const a = A_.ov ? A_.ov : beastStats(A_), b = B_.ov ? B_.ov : beastStats(B_); def.ov = { hp: Math.round((a.hp + b.hp) * 0.6), dmg: Math.round((a.dmg + b.dmg) * 0.6), spd: +((+a.spd + +b.spd) / 2).toFixed(1), el: a.el || 'none' }; }
+  return def;
+}
+$('bFuse').onclick = () => { const box_ = $('fuseBox'); box_.hidden = !box_.hidden; if (box_.hidden) return; const L = $('fuseList'); L.innerHTML = '';
+  const opts = [...Object.values(BEASTS), ...BE.mine]; for (const d of opts) { const b = document.createElement('button'); b.className = 'temp'; b.textContent = d.name; b.onclick = () => { commitSel(); const cur = clone(BE.def); cur.name = $('bName').value.trim() || cur.name; pushUndo(); const f = fuse(cur, clone(d)); box_.hidden = true; loadBeast(f, true); $('bName').value = f.name; bNameTouched = true; syncSliders(); toast('اتدمجوا! الراس والرجلين من الأول، والجسم والإيدين من التاني'); }; L.appendChild(b); } };
+
 let bNameTouched = false; $('bName').addEventListener('input', () => { bNameTouched = true; });
 function beastName(st) { const pick = (l) => l[Math.floor(Math.random() * l.length)]; return `${pick(['الوحش', 'المخلوق', 'الكائن', 'الغول', 'العملاق'])} ${pick(EL[st.el].words)} ${pick(['الرهيب', 'الغضبان', 'الجعان', 'المجنون', 'الكبير', 'اللي محدش يقدر عليه'])}`; }
 $('bNameGo').onclick = () => { $('bName').value = beastName(beastStats(BE.def)); bNameTouched = true; };
 function bcard() {
-  if (!BE.def) return; const st = beastStats(BE.def); $('bcard').style.setProperty('--rc', st.rar.col);
+  if (!BE.def) return; syncRole(); const st = beastStats(BE.def); $('bcard').style.setProperty('--rc', st.rar.col);
   if (!bNameTouched) $('bName').value = BE.def.name || beastName(st);
   $('bRar').textContent = st.rar.name; $('bEl').textContent = 'العنصر: ' + EL[st.el].name; $('bEl').style.color = EL[st.el].col; $('bWeak').textContent = 'بيضعف قدام: ' + EL[st.weak].name; $('bPow').textContent = st.power;
   const rows = [['الصحة', Math.min(100, st.hp / 6), st.hp, '#46c96b'], ['الضرر', st.dmg * 2.5, st.dmg, '#ff8a5c'], ['السرعة', st.spd * 20, st.spd.toFixed(1), '#7cd4ff'], ['المكعبات', Math.min(100, st.cubes * 3), st.cubes, '#d6c3a8']];
@@ -771,10 +916,10 @@ let toastT = 0; function toast(s) { const t = $('toast'); t.textContent = s; t.h
 let mine = store.get('mine', []);
 function thumb(code) { const c = document.createElement('canvas'); c.width = c.height = N; const g = c.getContext('2d'); for (let i = 0; i < N * N; i++) { const p = PAL[CI[code[i]] || 0]; if (!p.hex) continue; g.fillStyle = p.hex; g.fillRect(i % N, (i / N) | 0, 1, 1); } return c; }
 function item(w, btns) { const a = analyse(dec(w.g)), d = document.createElement('div'); d.className = 'item'; if (a) d.style.setProperty('--rc', a.rar.col); d.appendChild(thumb(w.g)); const b = document.createElement('b'); b.textContent = w.name; d.appendChild(b); const s = document.createElement('small'); s.textContent = a ? `${a.rar.name} · ${a.type} · ${EL[a.el].name} · القوة ${a.power}` : ''; d.appendChild(s); const r = document.createElement('div'); r.className = 'row'; for (const [t, fn, alt] of btns) { const x = document.createElement('button'); x.className = 'btn' + (alt ? ' alt' : ''); x.textContent = t; x.onclick = () => fn(x); r.appendChild(x); } d.appendChild(r); return d; }
-function openW(w) { undo.push(grid.slice()); grid = dec(w.g); $('wName').value = w.name; nameTouched = true; changed(); show('forge'); }
+function openW(w) { undo.push(grid.slice()); WOV = w.ov ? { ...w.ov } : null; grid = dec(w.g); $('wName').value = w.name; nameTouched = true; changed(); show('forge'); }
 function renderMine() { const L = $('mine'); L.innerHTML = ''; if (!mine.length) { L.innerHTML = '<div class="empty">لسه مفيش أسلحة محفوظة. ارسم سلاح في الورشة ودوس "احفظ في سلاحي".</div>'; return; }
   mine.forEach((w, i) => L.appendChild(item(w, [['افتح', () => openW(w)], ['انشر', () => publish(w), true], ['امسح', (x) => { if (!x.dataset.arm) { x.dataset.arm = 1; x.textContent = 'متأكد؟'; return; } mine.splice(i, 1); store.set('mine', mine); renderMine(); }, true]]))); }
-$('bSave').onclick = () => { if (!A) return; const w = { id: Date.now().toString(36), name: $('wName').value.trim() || nameFor(A), g: enc(grid), at: Date.now() }; mine.unshift(w); mine = mine.slice(0, 40); store.set('mine', mine); toast('اتحفظ في سلاحك'); };
+$('bSave').onclick = () => { if (!A) return; const w = { id: Date.now().toString(36), name: $('wName').value.trim() || nameFor(A), g: enc(grid), at: Date.now(), ov: WOV ? { ...WOV } : null }; mine.unshift(w); mine = mine.slice(0, 40); store.set('mine', mine); toast('اتحفظ في سلاحك'); };
 
 // shared gallery: every smith's published weapons live in their own document; likes too
 const gal = { db: null, uid: null, docs: [], likes: [], ready: false };
