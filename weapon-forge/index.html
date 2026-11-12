@@ -643,6 +643,13 @@ function arenaInit() {
   $('aHit').addEventListener('pointerdown', (e) => { e.preventDefault(); swing(); });
   $('aAct').addEventListener('pointerdown', (e) => { e.preventDefault(); AR.keys.Action = true; modsEv('key', 'Action'); }); $('aAct').addEventListener('pointerup', () => { AR.keys.Action = false; }); $('aAct').addEventListener('pointercancel', () => { AR.keys.Action = false; });
 }
+// the player's character can be redesigned per game (by hand-made cubes from the assistant)
+function setHeroLook(def) {
+  const d = def?.cubes?.length ? def : HERO; if (AR.heroLook === d) return; AR.heroLook = d;
+  AR.hero.remove(AR.body); AR.heroRig = buildRig(d); AR.heroRig.root.scale.setScalar(1.9 / AR.heroRig.H); AR.body = AR.heroRig.root; AR.hero.add(AR.body);
+  AR.body.traverse((o) => { if (o.isMesh) o.castShadow = true; }); (AR.heroRig.g.armR || AR.heroRig.g.body || AR.body).add(AR.hand);
+}
+const heroNow = () => (WE.g?.hero?.cubes?.length ? WE.g.hero : HERO).cubes.map((q) => ({ p: q.p, s: q.s, c: q.c, ...(q.r && q.r.some((v) => v) ? { r: q.r } : {}), ...(q.role ? { role: q.role } : {}) }));
 function heldWeapon() {
   while (AR.hand.children.length) AR.hand.remove(AR.hand.children[0]);
   const g = new THREE.Group(), list = []; let hx = 0, hy = 0, hn = 0;
@@ -820,7 +827,7 @@ function runEvent(ev, at, src) {
 // a game keeps them in g.mods: { key: { name, code } }. code is a function body that gets `api` and returns hooks
 const MOD_API = `The code is the BODY of function(api) and must "return { ...hooks }". Plain JavaScript, no imports, no DOM, no timers (use tick).
 Hooks (all optional): start() once when the world starts · tick(dt, t) every frame (dt seconds, runs after normal movement, so you can override the player's y for jumping, flying...) · key(code) a key was pressed (KeyboardEvent.code like "Space","KeyF"; on phones the player has an extra button that sends "Action") · swing() the player swung the weapon · hit(m, dmg) a monster is about to take dmg (return false to cancel the damage) · kill(m) a monster died · hurt(n) the player lost n hp · touch(m) the player is touching monster m (every frame).
-api: THREE (three.js r128) · api.state {} (your own memory) · api.hero (Object3D: position, rotation; y is height, 0 = ground) · api.heroParts {body, head, armL, armR, legL, legR} (Object3D parts of the hero, can be rotated/scaled) · api.player {hp, max, score, speedMul, powerMul} (change freely) · api.monsters (array of m: m.o Object3D, m.hp, m.M {name, size, spd, dmg}, m.friendly, m.parts {body, head, armL, armR, legL, legR, wingL, wingR, tail} may be missing, m.data {} for you) · api.keys (object: code -> true while held) · api.ground(x, z) height of blocks there in metres (0 = open floor) · api.cubes(list, x, y, z) makes a 3D model from boxes [{p:[x,y,z], s:[w,h,d], c:"#rrggbb", r:[rx,ry,rz]}] at that place and returns the Object3D (already in the scene) · api.remove(obj) · api.spawn(key, x, z, y) creates a monster (a built-in monster id or an invention key) and returns it · api.detach(m, part) takes a part off a monster (e.g. "armL") and returns its world position (or null) · api.damage(m, n) · api.kill(m) · api.hurt(n) · api.heal(n) · api.say(text, pos, color) floating text · api.boom(pos, rad, dmg) explosion that also breaks blocks · api.shake() · api.sound(freq) · api.camera(mode) "behind"|"front"|"first"|"top" · api.dist(a, b) flat distance of two Vector3 · api.rand(a, b).`;
+api: THREE (three.js r128) · api.state {} (your own memory) · api.hero (Object3D: position, rotation; y is height, 0 = ground) · api.heroParts {body, head, armL, armR, legL, legR} (Object3D parts of the hero, can be rotated/scaled) · api.player {hp, max, score, speedMul, powerMul} (change freely) · api.monsters (array of m: m.o Object3D, m.hp, m.M {name, size, spd, dmg}, m.friendly, m.parts {body, head, armL, armR, legL, legR, wingL, wingR, tail} may be missing, m.data {} for you) · api.keys (object: code -> true while held) · api.ground(x, z) height of blocks there in metres (0 = open floor) · api.cubes(list, x, y, z) makes a 3D model from boxes [{p:[x,y,z], s:[w,h,d], c:"#rrggbb", r:[rx,ry,rz]}] at that place and returns the Object3D (already in the scene) · api.remove(obj) · api.spawn(key, x, z, y) creates a monster (a built-in monster id or an invention key) and returns it · api.detach(m, part) takes a part off a monster (e.g. "armL") and returns its world position (or null) · api.damage(m, n) · api.kill(m) · api.hurt(n) · api.heal(n) · api.say(text, pos, color) floating text · api.boom(pos, rad, dmg) explosion that also breaks blocks · api.shake() · api.sound(freq) · api.setHero(list) changes how the player looks right now, boxes like the hero below (to transform, e.g. into a werewolf at night) · api.camera(mode) "behind"|"front"|"first"|"top" · api.dist(a, b) flat distance of two Vector3 · api.rand(a, b).`;
 const modsRun = { list: [], fixing: {} };
 function modApi(key) {
   const V = THREE.Vector3;
@@ -834,7 +841,7 @@ function modApi(key) {
     kill: (m) => m && kill(m), hurt: (n) => hurtPlayer(n), heal: (n) => { G2.hp = Math.min(G2.max, G2.hp + n); hud(); },
     say: (t, pos, c) => pop2(String(t).slice(0, 60), (pos || AR.hero.position).clone().add(new V(0, 2.2, 0)), c || '#ffe14d'),
     boom: (pos, rad = 2.5, dmg = 20) => boom(pos.clone ? pos.clone() : new V(pos.x, pos.y || 0, pos.z), rad, dmg, null, 'fire'),
-    shake: () => { AR.shake = 0.3; }, sound: (f) => clank(f || 300), camera: (m) => CAMS[m] && setCam(m),
+    shake: () => { AR.shake = 0.3; }, setHero: (l) => setHeroLook({ cubes: cleanCubes(l) }), sound: (f) => clank(f || 300), camera: (m) => CAMS[m] && setCam(m),
     dist: (a, b) => Math.hypot(a.x - b.x, a.z - b.z), rand: (a, b) => a + Math.random() * (b - a) };
 }
 function modCompile(code) { return new Function('api', '"use strict";\n' + code); }
@@ -926,7 +933,7 @@ function arenaStep(dt, now) {
   if (AR.keys.KeyQ) AR.yaw += dt * 2.2; if (AR.keys.KeyE) AR.yaw -= dt * 2.2;
   let mx = 0, mz = 0; const K = AR.keys; if (K.KeyA || K.ArrowLeft) mx -= 1; if (K.KeyD || K.ArrowRight) mx += 1; if (K.KeyW || K.ArrowUp) mz -= 1; if (K.KeyS || K.ArrowDown) mz += 1; if (AR.joy) { mx += AR.joy.x; mz += AR.joy.y; }
   // moving is relative to the camera (except the top view, where up on the screen is north)
-  if (AR.camMode !== 'top') { const fx = Math.sin(AR.yaw), fz = Math.cos(AR.yaw), sgn = AR.camMode === 'front' ? -1 : 1, X = (-fz * mx * -1 + fx * -mz) * sgn, Z = (fx * mx * -1 + fz * -mz) * sgn; mx = X; mz = Z; }
+  if (AR.camMode !== 'top') { const fx = Math.sin(AR.yaw), fz = Math.cos(AR.yaw), sgn = AR.camMode === 'front' ? -1 : 1, X = (-fz * mx + fx * -mz) * sgn, Z = (fx * mx + fz * -mz) * sgn; mx = X; mz = Z; }
   const l = Math.hypot(mx, mz); if (l > 0.1) { const sp = (5 + a.spd / 30) * (G2.speedMul || 1) * dt / Math.max(1, l); P.x += mx * sp; P.z += mz * sp; if (G2.swingT <= 0) G2.face.set(mx, 0, mz).normalize(); }
   else if (AR.camMode === 'first' && G2.swingT <= 0) G2.face.set(Math.sin(AR.yaw), 0, Math.cos(AR.yaw));
   P.x = Math.max(-WS + 0.5, Math.min(WS - 0.5, P.x)); P.z = Math.max(-WS + 0.5, Math.min(WS - 0.5, P.z)); pushOut(P, 0.5); pushBoxes(P, 0.45);
@@ -957,7 +964,7 @@ function arenaStep(dt, now) {
   placeCam(P, dt); if (AR.shake > 0) { AR.shake = Math.max(0, AR.shake - dt * 2); AR.cam.position.x += (Math.random() - 0.5) * AR.shake; AR.cam.position.y += (Math.random() - 0.5) * AR.shake; }
 }
 $('aGo').onclick = () => { clank(260); startArena(); };
-$('tArena').addEventListener('click', () => { AR.focus = null; modsRun.list = []; $('aAct').hidden = true; if (AR.mode === 'world') { AR.on = false; AR.mode = 'waves'; $('aOvT').textContent = 'ساحة الوحوش'; $('aGo').textContent = 'ابدأ'; $('aEdit').hidden = true; $('aOv').hidden = false; } });
+$('tArena').addEventListener('click', () => { AR.focus = null; modsRun.list = []; $('aAct').hidden = true; if (AR.R) setHeroLook(HERO); if (AR.mode === 'world') { AR.on = false; AR.mode = 'waves'; $('aOvT').textContent = 'ساحة الوحوش'; $('aGo').textContent = 'ابدأ'; $('aEdit').hidden = true; $('aOv').hidden = false; } });
 
 
 // ---------------------------------------------------------------- the monster workshop: monsters made of cubes, like a block modeller
@@ -1491,6 +1498,7 @@ function applyOps(ops) {
     if (!o || typeof o !== 'object') continue; const h = Math.max(1, Math.min(8, Math.round(+o.h || 1))), y0 = Math.max(0, Math.round(+o.y || 0));
     if (o.op === 'ground' && GROUNDS[o.g]) { W_().ground = o.g; continue; }
     if (o.op === 'code' && typeof o.key === 'string' && /^[a-z][a-z0-9_]{1,24}$/.test(o.key) && typeof o.code === 'string') { WE.g.mods ||= {}; WE.g.mods[o.key] = { name: String(o.name || o.key).slice(0, 40), code: o.code.slice(0, 20000) }; try { modCompile(o.code); } catch (e) { WE.g.mods[o.key].err = String(e.message); fixMod(o.key); } n++; continue; }
+    if (o.op === 'hero') { if (o.reset) delete WE.g.hero; else if (Array.isArray(o.cubes) && o.cubes.length >= 3) WE.g.hero = { name: String(o.name || 'البطل').slice(0, 30), cubes: cleanCubes(o.cubes) }; n++; continue; }
     if (o.op === 'uncode' && WE.g.mods?.[o.key]) { delete WE.g.mods[o.key]; n++; continue; }
     if (o.op === 'define' && typeof o.key === 'string' && /^[a-z][a-z0-9_]{1,24}$/.test(o.key) && (!ITEMS[o.key] || ITEMS[o.key].custom || ITEMS[o.key].kind === 'custom')) { WE.g.defs ||= {}; WE.g.defs[o.key] = cleanDef(o.def); registerDefs(WE.g); n++; continue; }
     if (o.op === 'setting') { W_().settings ||= {}; if (CAMS[o.camera]) W_().settings.camera = o.camera; if (/^#[0-9a-f]{6}$/i.test(o.sky)) W_().settings.sky = o.sky; n++; continue; }
@@ -1531,6 +1539,8 @@ An event: {"say": short Arabic text, "drop": key of an invention to drop (define
 Pickups ("kind":"pickup") are picked up when the player walks into them and run their "onTouch" event (beef: {"heal":30}). Blocks ("kind":"block") are new solid block types with a "color".
 NEW RULES AND MECHANICS (jumping, flying, double jump, gravity, dashing, a boss that splits, a monster whose hand falls off and becomes enemies, day and night, a timer, collecting coins to win, a pet that follows you and fights...): anything "define" can't do, PROGRAM it: {"op":"code","key": short lowercase english id,"name": Arabic name,"code": JavaScript}. To change a code feature write it again with the same key; to remove one: {"op":"uncode","key"}. Write complete, careful, working code; tell the player in "say" which key/button to use (phones have a ✦ button that sends "Action").
 ${MOD_API}
+The player's character (the hero) right now, in boxes: ${JSON.stringify(heroNow())}
+To change how the player looks (another character, a zombie, a robot, red clothes, a hat, a cape...): {"op":"hero","name": Arabic name,"cubes": the whole new list}. Start from the boxes above: for a small change (colours, a hat) keep the others as they are; for a new character design all boxes but keep the size (about 2.4 tall, feet at y=0, front +z) and the roles body, head, legL, legR, armL, armR (the weapon goes in armR's hand). {"op":"hero","reset":true} brings the normal hero back.
 Settings: {"op":"setting","camera":"behind"|"front"|"first"|"top","sky":"#rrggbb"}.
 Reply ONLY with JSON: {"say": one short friendly sentence in Egyptian Arabic about what you built, "ops": [steps]}. Steps:
 {"op":"ground","g":...} · {"op":"clear"} (only if asked to start over) · {"op":"put","t":...,"x","z","y","pr"} · {"op":"rect","t","x0","z0","x1","z1","y","h","hollow":true|false,"pr"} · {"op":"line","t","x0","z0","x1","z1","y","h"} · {"op":"circle","t","cx","cz","r","y","h","hollow"} · {"op":"erase","x0","z0","x1","z1"}
@@ -1578,7 +1588,7 @@ function breakCells(cx, cz, rad) { if (!AR.cur) return 0; let n = 0; const L = A
   if (n) { const keep = AR.world.children.filter((c) => c.userData.it && !c.isInstancedMesh); for (const c of [...AR.world.children]) if (c.isInstancedMesh) AR.world.remove(c); const tmp = new THREE.Group(); const v = buildView({ ...AR.cur.W, items: L.filter((it) => ITEMS[it.t].kind === 'block' || ITEMS[it.t].kind === 'tile') }, tmp); for (const m of v.inst) AR.world.add(m); } return n; }
 function playGame() { if (!analyse(grid) && !WOV) { show('forge'); toast('ارسم سلاح الأول، وبعدين العب لعبتك'); return; } show('arena'); $('aOv').hidden = true; $('aEdit').hidden = true; loadWorld(0, null); }
 function loadWorld(wi, back) {
-  arenaInit(); setCam(AR.camMode); beastInit(); heldWeapon(); for (const m of AR.mons) AR.scene.remove(m.o); AR.mons = []; for (const x of AR.shots) AR.scene.remove(x.o); AR.shots = []; for (const x of AR.picks) AR.scene.remove(x.o); AR.picks = [];
+  arenaInit(); setHeroLook(WE.g?.hero); setCam(AR.camMode); beastInit(); heldWeapon(); for (const m of AR.mons) AR.scene.remove(m.o); AR.mons = []; for (const x of AR.shots) AR.scene.remove(x.o); AR.shots = []; for (const x of AR.picks) AR.scene.remove(x.o); AR.picks = [];
   const a = withOv(analyse(grid)) || { dmg: 30, spd: 50, reach: 50, crit: 10, elp: 0, el: 'none', sym: 0 };
   const keepHp = G2?.world ? G2.hp : 100, stack = back ? [...(G2.world.stack || []), back] : (G2?.world?.stack && wi !== 0 ? G2.world.stack : []);
   G2 = { a, hp: keepHp, max: 100, wave: 0, score: G2?.world ? G2.score : 0, cd: 0, swingT: 0, face: new THREE.Vector3(0, 0, -1), pos: new THREE.Vector3(), world: { wi, stack, label: wi ? `عالم ${wi + 1}` : (WE.g.name || 'لعبتي'), hadMon: false, won: false } };
