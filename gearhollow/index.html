@@ -1,0 +1,307 @@
+<title>Gearhollow</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen&family=VT323&display=swap">
+<style>
+/* layout: one full-screen first-person view; HUD in the corners, prompts at the bottom centre, a title card over it at the start */
+:root{
+  --void:#07080a; --rust:#b5562b; --sodium:#ffb347; --mag-red:#ff4a3d; --mag-blue:#3da2ff; --ink:#e8e1d2; --dim:#8c8676;
+  --hud:"VT323",ui-monospace,monospace; --title:"Silkscreen",ui-monospace,monospace;
+  color-scheme:dark;
+}
+html,body{height:100%;background:var(--void);color:var(--ink);overflow:hidden}
+body{font:20px/1.2 var(--hud);user-select:none;-webkit-user-select:none;touch-action:none}
+#game{position:fixed;inset:0}
+#game canvas{display:block;width:100%;height:100%}
+.hud{position:fixed;pointer-events:none;text-shadow:0 2px 0 #000}
+#obj{top:calc(12px + env(safe-area-inset-top,0px));left:max(16px,env(safe-area-inset-left,0px));max-width:min(60vw,520px);font-size:22px;color:var(--sodium)}
+#obj small{display:block;color:var(--dim);font-size:16px;letter-spacing:.06em}
+#inv{top:calc(12px + env(safe-area-inset-top,0px));right:max(16px,env(safe-area-inset-right,0px));text-align:right;font-size:18px;color:var(--dim)}
+#inv b{color:var(--ink);font-weight:400}
+#cross{left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;background:var(--ink);opacity:.7;box-shadow:0 0 0 1px #000}
+#prompt{left:50%;bottom:calc(120px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);font-size:24px;padding:4px 12px;background:#000a;border:1px solid #fff2;white-space:nowrap}
+#toast{left:50%;top:22%;transform:translateX(-50%);font-size:26px;color:var(--ink);text-align:center;max-width:90vw;transition:opacity .4s}
+#battery{bottom:calc(16px + env(safe-area-inset-bottom,0px));left:max(16px,env(safe-area-inset-left,0px));font-size:16px;color:var(--dim)}
+#battery i{display:inline-block;width:90px;height:8px;border:1px solid var(--dim);vertical-align:middle;margin-left:6px;position:relative}
+#battery i::after{content:"";position:absolute;inset:1px;width:var(--b,100%);background:var(--sodium)}
+#card{position:fixed;inset:0;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 40%,#1a1410 0%,#07080a 70%);z-index:5;padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px))}
+#card .in{max-width:560px;text-align:center;display:grid;gap:18px}
+#card h1{font:400 clamp(40px,9vw,78px)/1 var(--title);margin:0;color:var(--sodium);letter-spacing:.04em;text-shadow:0 0 18px #ff8a2a55,0 4px 0 #3a1a08}
+#card p{margin:0;color:var(--dim);font-size:22px}
+#card .keys{font-size:18px;color:var(--ink);opacity:.85;display:grid;gap:4px}
+#card button,.mb{font:400 22px var(--title);background:var(--rust);color:#140a04;border:0;padding:12px 26px;cursor:pointer;box-shadow:0 4px 0 #5a2410}
+#card button:focus-visible,.mb:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+.sign{font-size:14px;color:var(--dim);letter-spacing:.2em}
+/* phone controls */
+#touch{position:fixed;inset:0;pointer-events:none;display:none}
+.touch #touch{display:block}
+#joy{position:absolute;left:calc(24px + env(safe-area-inset-left,0px));bottom:calc(24px + env(safe-area-inset-bottom,0px));width:130px;height:130px;border-radius:50%;border:2px solid #fff3;background:#0005;pointer-events:auto}
+#joy i{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px;border-radius:50%;background:#fff3}
+.tb{position:absolute;pointer-events:auto;width:62px;height:62px;border-radius:50%;border:2px solid #fff4;background:#000a;color:var(--ink);font:400 14px var(--title)}
+#bJump{right:calc(24px + env(safe-area-inset-right,0px));bottom:calc(30px + env(safe-area-inset-bottom,0px))}
+#bUse{right:calc(100px + env(safe-area-inset-right,0px));bottom:calc(30px + env(safe-area-inset-bottom,0px))}
+#bRed{right:calc(24px + env(safe-area-inset-right,0px));bottom:calc(106px + env(safe-area-inset-bottom,0px));border-color:var(--mag-red);color:var(--mag-red)}
+#bBlue{right:calc(100px + env(safe-area-inset-right,0px));bottom:calc(106px + env(safe-area-inset-bottom,0px));border-color:var(--mag-blue);color:var(--mag-blue)}
+#bLight{right:calc(176px + env(safe-area-inset-right,0px));bottom:calc(30px + env(safe-area-inset-bottom,0px))}
+#bHint{position:fixed;pointer-events:auto;right:max(16px,env(safe-area-inset-right,0px));top:calc(64px + env(safe-area-inset-top,0px));font:400 13px var(--title);background:#000a;color:var(--dim);border:1px solid #fff3;padding:6px 10px;cursor:pointer;z-index:3}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){#toast{transition:none}}
+</style>
+
+<div id="game" aria-label="Gearhollow, a first-person game"></div>
+<div class="hud" id="obj"></div>
+<div class="hud" id="inv"></div>
+<div class="hud" id="cross"></div>
+<div class="hud" id="prompt" hidden></div>
+<div class="hud" id="toast"></div>
+<div class="hud" id="battery">FLASHLIGHT <i></i></div>
+<button id="bHint" hidden>HINT</button>
+<div id="touch">
+  <div id="joy"><i id="joyK"></i></div>
+  <button class="tb" id="bJump">JUMP</button>
+  <button class="tb" id="bUse">USE</button>
+  <button class="tb" id="bRed">PULL</button>
+  <button class="tb" id="bBlue">PUSH</button>
+  <button class="tb" id="bLight">LIGHT</button>
+</div>
+<div id="card"><div class="in">
+  <div class="sign">GEARHOLLOW TOY CO. · EST. 1961 · CLOSED</div>
+  <h1>GEARHOLLOW</h1>
+  <p>The toy factory shut down overnight and nobody came back. The lights are dead. Something still walks the halls.</p>
+  <div class="keys" id="keys">
+    <div>WASD move · MOUSE look · SPACE jump · SHIFT run</div>
+    <div>E use · F flashlight · LEFT CLICK pull (red magnet) · RIGHT CLICK push (blue)</div>
+  </div>
+  <div><button id="go">ENTER THE FACTORY</button></div>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+'use strict';
+const $ = (id) => document.getElementById(id);
+const CELL = 2, WALL = 4;
+const touch = matchMedia('(pointer:coarse)').matches; if (touch) document.body.classList.add('touch');
+if (touch) $('keys').innerHTML = '<div>Left circle moves · drag the screen to look</div><div>USE · JUMP · LIGHT · PULL (red magnet) · PUSH (blue magnet)</div>';
+
+// ---------------------------------------------------------------- pixel textures, drawn by hand in code (16 px per tile, sharp)
+function tex(draw, w = 16, h = 16, rep = [1, 1]) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); draw(g, w, h);
+  const t = new THREE.CanvasTexture(c); t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep[0], rep[1]); return t;
+}
+let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+const px = (g, x, y, c) => { g.fillStyle = c; g.fillRect(x, y, 1, 1); };
+const shade = (hex, k) => { const c = new THREE.Color(hex); c.multiplyScalar(k); return '#' + c.getHexString(); };
+function noise(g, w, h, base, amt) { for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) px(g, x, y, shade(base, 1 + (rnd() - 0.5) * amt)); }
+const T = {
+  floor: tex((g, w, h) => { noise(g, w, h, '#4a4741', 0.22); g.fillStyle = '#2f2c28'; g.fillRect(0, 0, w, 1); g.fillRect(0, 0, 1, h); for (let i = 0; i < 6; i++) px(g, (rnd() * w) | 0, (rnd() * h) | 0, '#3a2a1c'); for (let i = 0; i < 5; i++) px(g, 6 + i, 9 + (i % 2), '#2a2724'); }),
+  wall: tex((g, w, h) => { noise(g, w, h, '#3b4a4a', 0.18); g.fillStyle = '#263131'; g.fillRect(0, 7, w, 1); g.fillRect(7, 0, 1, 7); g.fillRect(15, 8, 1, 8); for (const [x, y] of [[2, 2], [12, 2], [2, 12], [12, 12]]) { px(g, x, y, '#7d8a86'); px(g, x + 1, y + 1, '#1a2222'); } for (let i = 0; i < 9; i++) px(g, (rnd() * w) | 0, 8 + ((rnd() * 8) | 0), i % 2 ? '#7a3c1c' : '#8f4a22'); for (let y = 10; y < 16; y++) px(g, 4, y, '#6a3418'); }, 16, 16, [1, 2]),
+  ceil: tex((g, w, h) => { noise(g, w, h, '#1d1c1b', 0.3); g.fillStyle = '#2b2926'; g.fillRect(0, 6, w, 3); g.fillStyle = '#3a3733'; g.fillRect(0, 6, w, 1); }),
+  crate: tex((g, w, h) => { noise(g, w, h, '#5b6670', 0.15); g.fillStyle = '#2f363c'; g.fillRect(0, 0, w, 2); g.fillRect(0, h - 2, w, 2); g.fillRect(0, 0, 2, h); g.fillRect(w - 2, 0, 2, h); for (let i = 2; i < 14; i++) { px(g, i, i, '#3d464d'); px(g, 15 - i, i, '#3d464d'); } g.fillStyle = '#ff4a3d'; g.fillRect(6, 6, 4, 1); g.fillRect(6, 6, 1, 4); g.fillRect(9, 6, 1, 4); g.fillStyle = '#c9c9c9'; g.fillRect(6, 9, 1, 1); g.fillRect(9, 9, 1, 1); }),
+  wood: tex((g, w, h) => { noise(g, w, h, '#7a5230', 0.2); g.fillStyle = '#4d3220'; for (const y of [0, 5, 10, 15]) g.fillRect(0, y, w, 1); g.fillRect(0, 0, 1, h); g.fillRect(w - 1, 0, 1, h); for (let i = 0; i < 6; i++) px(g, (rnd() * w) | 0, (rnd() * h) | 0, '#5e3e26'); }),
+  shelf: tex((g, w, h) => { noise(g, w, h, '#5a3a24', 0.25); g.fillStyle = '#2a1a10'; g.fillRect(0, 0, w, 2); g.fillRect(0, 7, w, 2); g.fillRect(0, 14, w, 2); g.fillStyle = '#7a4a2a'; g.fillRect(0, 0, 2, h); g.fillRect(w - 2, 0, 2, h); for (let i = 0; i < 4; i++) { g.fillStyle = ['#c4475a', '#3f8fd0', '#e2b043', '#46c96b'][i]; g.fillRect(3 + i * 3, 4 + (i % 2), 2, 3); } }),
+  hazard: tex((g, w, h) => { for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) px(g, x, y, ((x + y) >> 2) % 2 ? '#d9a21b' : '#151412'); g.fillStyle = '#151412'; g.fillRect(4, 3, 8, 10); g.fillStyle = '#ffd34d'; g.fillRect(8, 4, 2, 4); g.fillRect(6, 7, 4, 1); g.fillRect(6, 8, 2, 4); }),
+  magdoor: tex((g, w, h) => { noise(g, w, h, '#58626b', 0.14); g.fillStyle = '#2f363c'; g.fillRect(0, 0, w, 1); g.fillRect(0, h - 1, w, 1); g.fillRect(7, 0, 2, h); g.fillStyle = '#ff4a3d'; g.fillRect(4, 3, 8, 2); g.fillRect(4, 3, 2, 8); g.fillRect(10, 3, 2, 8); g.fillStyle = '#e8e1d2'; g.fillRect(4, 11, 2, 2); g.fillRect(10, 11, 2, 2); }),
+  fusebox: tex((g, w, h) => { noise(g, w, h, '#6d7378', 0.12); g.fillStyle = '#2a2e31'; g.fillRect(1, 1, 14, 14); g.fillStyle = '#181a1b'; g.fillRect(5, 4, 6, 9); g.fillStyle = '#d9a21b'; g.fillRect(2, 2, 3, 1); g.fillRect(11, 2, 3, 1); }),
+  fuseon: tex((g, w, h) => { noise(g, w, h, '#6d7378', 0.12); g.fillStyle = '#2a2e31'; g.fillRect(1, 1, 14, 14); g.fillStyle = '#ffd34d'; g.fillRect(6, 4, 4, 9); g.fillStyle = '#fff6c0'; g.fillRect(7, 5, 2, 7); g.fillStyle = '#46c96b'; g.fillRect(2, 2, 3, 1); g.fillRect(11, 2, 3, 1); }),
+  poster: tex((g, w, h) => { noise(g, w, h, '#c9b88f', 0.15); g.fillStyle = '#b5562b'; g.fillRect(1, 1, 14, 3); g.fillStyle = '#3a2a1c'; for (let x = 2; x < 14; x += 2) px(g, x, 2, '#f2e6c8'); g.fillStyle = '#d24a3a'; g.fillRect(5, 6, 6, 5); g.fillStyle = '#151412'; px(g, 6, 8, '#151412'); px(g, 9, 8, '#151412'); g.fillRect(6, 10, 4, 1); g.fillStyle = '#7a6a4a'; g.fillRect(2, 13, 12, 1); for (let i = 0; i < 10; i++) px(g, (rnd() * w) | 0, (rnd() * h) | 0, '#8a7a5a'); }),
+};
+const M = (t, o = {}) => new THREE.MeshLambertMaterial({ map: t, ...o });
+
+// ---------------------------------------------------------------- the map. one character = 2 m.
+// # wall  . floor  S start  X fuse box (on the wall to the north)  G power gate  H tall shelf with the fuse on top
+// C metal crate (magnetic)  w wooden crate  P ceiling lamp  M red magnet door  E the way on  o poster
+const MAP = [
+  '#######################',
+  '#P......o###########..#',
+  '#.......########.....H#',
+  '#..S.......P..........#',
+  '#..w....#######...C...#',
+  '#.......#     #.......#',
+  '#X......#     ###..####',
+  '###G#####       #..#   ',
+  '#...P...#       ####   ',
+  '#.......#              ',
+  '#.......#              ',
+  '###M#####              ',
+  '#..E..#                ',
+  '#######                ',
+];
+const H_ = MAP.length, W_ = MAP[0].length, at = (x, z) => (MAP[z] && MAP[z][x]) || ' ';
+const cellC = (x, z) => new THREE.Vector3(x * CELL + CELL / 2, 0, z * CELL + CELL / 2);
+
+// ---------------------------------------------------------------- world
+const R = new THREE.WebGLRenderer({ antialias: false }); R.setPixelRatio(Math.min(1.5, devicePixelRatio)); R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFShadowMap;
+$('game').appendChild(R.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x050506); scene.fog = new THREE.FogExp2(0x050506, 0.085);
+const cam = new THREE.PerspectiveCamera(72, 1, 0.05, 80); scene.add(cam);
+const amb = new THREE.AmbientLight(0x8890a0, 0.05); scene.add(amb);
+const resize = () => { const w = innerWidth, h = innerHeight; R.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); }; addEventListener('resize', resize); resize();
+
+const box = new THREE.BoxGeometry(1, 1, 1);
+const solid = new Set();            // wall cells
+const blockers = new Map();         // cell -> door object while it is closed
+const boxes = [];                   // things you can stand on or bump into: {o, w, d, h, metal}
+const usables = [];                 // {o, label, use(), ok()}
+const lamps = [];
+
+// walls, floor, ceiling
+{ const walls = []; for (let z = 0; z < H_; z++) for (let x = 0; x < W_; x++) if (at(x, z) === '#') { solid.add(x + ',' + z); walls.push([x, z]); }
+  const wm = new THREE.InstancedMesh(box, M(T.wall), walls.length), o = new THREE.Object3D();
+  walls.forEach(([x, z], i) => { o.position.set(x * CELL + 1, WALL / 2, z * CELL + 1); o.scale.set(CELL, WALL, CELL); o.updateMatrix(); wm.setMatrixAt(i, o.matrix); }); wm.receiveShadow = true; wm.castShadow = true; scene.add(wm);
+  const fl = new THREE.Mesh(new THREE.PlaneGeometry(W_ * CELL, H_ * CELL), M(T.floor.clone())); fl.material.map.repeat.set(W_, H_); fl.material.map.needsUpdate = true; fl.rotation.x = -Math.PI / 2; fl.position.set(W_, 0, H_); fl.receiveShadow = true; scene.add(fl);
+  const ce = new THREE.Mesh(new THREE.PlaneGeometry(W_ * CELL, H_ * CELL), M(T.ceil.clone())); ce.material.map.repeat.set(W_, H_); ce.material.map.needsUpdate = true; ce.rotation.x = Math.PI / 2; ce.position.set(W_, WALL, H_); scene.add(ce); }
+
+function addBox(x, z, w, d, h, mat, metal, y0 = 0) { const o = new THREE.Mesh(box, mat); o.scale.set(w, h, d); o.position.set(x, y0 + h / 2, z); o.castShadow = o.receiveShadow = true; scene.add(o); const b = { o, w, d, h, y0, metal }; boxes.push(b); return b; }
+function door(x, z, mat, label) { const c = cellC(x, z), o = new THREE.Mesh(box, mat); o.scale.set(CELL, WALL, CELL * 0.5); o.position.set(c.x, WALL / 2, c.z); o.castShadow = true; scene.add(o); const d = { o, x, z, open: false, t: 0, label }; blockers.set(x + ',' + z, d); return d; }
+function openDoor(d) { if (d.open) return; d.open = true; blockers.delete(d.x + ',' + d.z); sfx.gate(); }
+
+let startPos = cellC(3, 3), fuseBox, gate, magDoor, fuse, endCell;
+for (let z = 0; z < H_; z++) for (let x = 0; x < W_; x++) { const ch = at(x, z), c = cellC(x, z);
+  if (ch === 'S') startPos = c;
+  if (ch === 'P') { const l = new THREE.PointLight(0xffb347, 1.4, 11, 1.6); l.position.set(c.x, WALL - 0.4, c.z); scene.add(l); const bulb = new THREE.Mesh(box, new THREE.MeshBasicMaterial({ color: 0xffd08a })); bulb.scale.set(0.5, 0.12, 0.5); bulb.position.copy(l.position).setY(WALL - 0.08); scene.add(bulb); lamps.push({ l, bulb, base: 1.4, ph: rnd() * 10, on: z < 7 && x < 13, flick: x > 6 }); }
+  if (ch === 'w') addBox(c.x, c.z, 1.1, 1.1, 1.1, M(T.wood), false);
+  if (ch === 'C') addBox(c.x, c.z, 1.1, 1.1, 1.1, M(T.crate), true);
+  if (ch === 'H') { const s = addBox(c.x - 0.2, c.z, 1.4, 1.6, 3.1, M(T.shelf), false); fuse = new THREE.Group(); const f1 = new THREE.Mesh(box, new THREE.MeshLambertMaterial({ color: 0xffd34d, emissive: 0x6a4a00 })); f1.scale.set(0.18, 0.42, 0.18); const f2 = new THREE.Mesh(box, new THREE.MeshLambertMaterial({ color: 0x9aa0a6 })); f2.scale.set(0.22, 0.08, 0.22); f2.position.y = 0.24; const f3 = f2.clone(); f3.position.y = -0.24; fuse.add(f1, f2, f3); fuse.position.set(c.x - 0.2, 3.1 + 0.3, c.z); scene.add(fuse);
+    usables.push({ o: fuse, label: 'Take the fuse', use() { has.fuse = true; scene.remove(fuse); sfx.pick(); objective(fuseBox.seen ? 'Put the fuse in the fuse box in the lobby.' : 'A fuse. Something in this factory must need it.'); toast('Got a fuse'); }, ok: () => !has.fuse && fuse.parent }); }
+  if (ch === 'X') { const o = new THREE.Mesh(box, [M(T.wall), M(T.wall), M(T.wall), M(T.wall), M(T.fusebox), M(T.wall)]); o.scale.set(0.9, 0.9, 0.25); o.position.set(c.x - 0.88, 1.6, c.z); o.rotation.y = Math.PI / 2; scene.add(o);
+    fuseBox = { o, seen: false, on: false }; usables.push({ o, label: 'Fuse box', use() { if (fuseBox.on) return; if (!has.fuse) { fuseBox.seen = true; sfx.deny(); toast('The fuse box is empty.'); objective('The power is out. Find a fuse for the fuse box.'); return; } has.fuse = false; fuseBox.on = true; o.material[4] = M(T.fuseon); powerOn(); }, ok: () => !fuseBox.on }); }
+  if (ch === 'G') gate = door(x, z, [M(T.hazard), M(T.hazard), M(T.hazard), M(T.hazard), M(T.hazard), M(T.hazard)], 'gate');
+  if (ch === 'M') { magDoor = door(x, z, [M(T.wall), M(T.wall), M(T.wall), M(T.wall), M(T.magdoor), M(T.magdoor)], 'magnet'); magDoor.color = 'red'; }
+  if (ch === 'E') endCell = { x, z };
+  if (ch === 'o') { const p = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 1.6), M(T.poster)); p.position.set(c.x, 2.1, z * CELL + 0.02); scene.add(p); }
+}
+// a few broken toys and junk lying around (tiny cube models)
+function junk(x, z, cols, s = 0.25) { const g = new THREE.Group(); cols.forEach((c, i) => { const m = new THREE.Mesh(box, new THREE.MeshLambertMaterial({ color: c })); m.scale.setScalar(s * (0.7 + rnd() * 0.6)); m.position.set((rnd() - 0.5) * 0.8, s / 2 + (i > 2 ? s : 0), (rnd() - 0.5) * 0.8); m.rotation.y = rnd() * 3; m.castShadow = true; g.add(m); }); g.position.set(x, 0, z); scene.add(g); }
+junk(5, 9, ['#c4475a', '#e2b043', '#3f8fd0', '#c4475a']); junk(17, 7, ['#46c96b', '#7a5230', '#e2b043']); junk(38, 9, ['#3f8fd0', '#c4475a', '#f2efe6', '#3f8fd0']); junk(4, 18, ['#e2b043', '#24262b']); junk(30, 10, ['#9aa0a6', '#9aa0a6', '#5a3a24']);
+
+// ---------------------------------------------------------------- the player
+const P = { pos: startPos.clone(), vy: 0, yaw: Math.PI, pitch: 0, ground: 0, onGround: true, eye: 1.6, r: 0.32 };
+const keys = {}, has = { fuse: false };
+let started = false, flashOn = true, battery = 1, magMode = null, magT = 0;
+const flash = new THREE.SpotLight(0xfff1d8, 2.2, 22, 0.42, 0.55, 1.2); flash.castShadow = true; flash.shadow.mapSize.set(512, 512); flash.shadow.camera.near = 0.2; cam.add(flash); flash.position.set(0.25, -0.2, 0); flash.target.position.set(0, 0, -5); cam.add(flash.target);
+
+// the magnet gauntlet you hold (right hand) and the flashlight (left), made of little cubes
+const hand = new THREE.Group(); cam.add(hand); hand.position.set(0.3, -0.26, -0.6); hand.scale.setScalar(0.55);
+{ const c = (x, y, z, w, h, d, col, em = 0) => { const m = new THREE.Mesh(box, new THREE.MeshLambertMaterial({ color: col, emissive: em })); m.scale.set(w, h, d); m.position.set(x, y, z); hand.add(m); return m; };
+  c(0, 0, 0.1, 0.16, 0.14, 0.34, '#3a3f45'); c(0, 0.06, 0.05, 0.18, 0.04, 0.2, '#b5562b');
+  hand.red = c(-0.05, 0, -0.12, 0.05, 0.1, 0.12, '#ff4a3d', 0x330000); hand.blue = c(0.05, 0, -0.12, 0.05, 0.1, 0.12, '#3da2ff', 0x001833); }
+const lamp = new THREE.Group(); cam.add(lamp); lamp.position.set(-0.32, -0.27, -0.62); lamp.scale.setScalar(0.55);
+{ const a = new THREE.Mesh(box, new THREE.MeshLambertMaterial({ color: '#2a2e31' })); a.scale.set(0.08, 0.08, 0.3); lamp.add(a); const b = new THREE.Mesh(box, new THREE.MeshBasicMaterial({ color: '#fff1d8' })); b.scale.set(0.1, 0.1, 0.02); b.position.z = -0.16; lamp.add(b); lamp.lens = b; }
+const beamMat = new THREE.LineBasicMaterial({ color: 0xff4a3d, transparent: true, opacity: 0.8 }); const beam = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]), beamMat); beam.frustumCulled = false; scene.add(beam); beam.visible = false;
+
+// ---------------------------------------------------------------- collisions: walls, closed doors and boxes (which you can also stand on)
+const wallAt = (x, z) => { const cx = Math.floor(x / CELL), cz = Math.floor(z / CELL); return solid.has(cx + ',' + cz) || blockers.has(cx + ',' + cz) || at(cx, cz) === ' '; };
+function collide(p, r, feet) {
+  for (let i = 0; i < 2; i++) { // walls: push out of any blocked cell nearby
+    const cx = Math.floor(p.x / CELL), cz = Math.floor(p.z / CELL);
+    for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) { const x = cx + dx, z = cz + dz; if (!(solid.has(x + ',' + z) || blockers.has(x + ',' + z) || at(x, z) === ' ')) continue;
+      const nx = Math.max(x * CELL, Math.min(p.x, x * CELL + CELL)), nz = Math.max(z * CELL, Math.min(p.z, z * CELL + CELL)), ddx = p.x - nx, ddz = p.z - nz, d = Math.hypot(ddx, ddz);
+      if (d < r) { if (d > 1e-5) { p.x += ddx / d * (r - d); p.z += ddz / d * (r - d); } else p.x += r; } } }
+  for (const b of boxes) { const top = b.y0 + b.h; if (feet >= top - 0.05 || feet + 1.7 <= b.y0) continue;
+    const hx = b.w / 2 + r, hz = b.d / 2 + r, dx = p.x - b.o.position.x, dz = p.z - b.o.position.z; if (Math.abs(dx) < hx && Math.abs(dz) < hz) { const ox = hx - Math.abs(dx), oz = hz - Math.abs(dz); if (ox < oz) p.x += Math.sign(dx || 1) * ox; else p.z += Math.sign(dz || 1) * oz; } }
+}
+function groundAt(x, z, feet) { let g = 0; for (const b of boxes) { const top = b.y0 + b.h; if (top <= feet + 0.35 && Math.abs(x - b.o.position.x) < b.w / 2 + 0.2 && Math.abs(z - b.o.position.z) < b.d / 2 + 0.2) g = Math.max(g, top); } return g; }
+
+// ---------------------------------------------------------------- input
+addEventListener('keydown', (e) => { keys[e.code] = true; if (!started) return; if (e.code === 'Space') { e.preventDefault(); jump(); } if (e.code === 'KeyE') use(); if (e.code === 'KeyF') toggleFlash(); });
+addEventListener('keyup', (e) => { keys[e.code] = false; });
+const cv = R.domElement; let locked = false;
+cv.addEventListener('contextmenu', (e) => e.preventDefault());
+cv.addEventListener('mousedown', (e) => { if (!started || touch) return; if (!locked) { cv.requestPointerLock?.()?.catch?.(() => {}); } magMode = e.button === 2 ? 'blue' : 'red'; });
+addEventListener('mouseup', () => { magMode = null; });
+document.addEventListener('pointerlockchange', () => { locked = document.pointerLockElement === cv; });
+let drag = null;
+addEventListener('mousemove', (e) => { if (!started || touch) return; if (locked) look(e.movementX, e.movementY); else if (e.buttons && drag) { look(e.clientX - drag.x, e.clientY - drag.y); drag = { x: e.clientX, y: e.clientY }; } });
+cv.addEventListener('mousedown', (e) => { drag = { x: e.clientX, y: e.clientY }; });
+function look(dx, dy) { P.yaw -= dx * 0.0024; P.pitch = Math.max(-1.45, Math.min(1.45, P.pitch - dy * 0.0024)); }
+// phone: left circle moves, drag anywhere else looks
+const joy = { x: 0, y: 0, id: null }, lookT = { id: null, x: 0, y: 0 };
+$('joy').addEventListener('pointerdown', (e) => { joy.id = e.pointerId; $('joy').setPointerCapture(e.pointerId); moveJoy(e); });
+$('joy').addEventListener('pointermove', (e) => { if (e.pointerId === joy.id) moveJoy(e); });
+const endJoy = () => { joy.id = null; joy.x = joy.y = 0; $('joyK').style.transform = ''; }; $('joy').addEventListener('pointerup', endJoy); $('joy').addEventListener('pointercancel', endJoy);
+function moveJoy(e) { const r = $('joy').getBoundingClientRect(); let x = (e.clientX - r.left - r.width / 2) / (r.width / 2), y = (e.clientY - r.top - r.height / 2) / (r.height / 2); const l = Math.hypot(x, y); if (l > 1) { x /= l; y /= l; } joy.x = x; joy.y = y; $('joyK').style.transform = `translate(${x * 38}px,${y * 38}px)`; }
+cv.addEventListener('pointerdown', (e) => { if (!touch || lookT.id !== null) return; lookT.id = e.pointerId; lookT.x = e.clientX; lookT.y = e.clientY; });
+cv.addEventListener('pointermove', (e) => { if (e.pointerId !== lookT.id) return; look((e.clientX - lookT.x) * 1.6, (e.clientY - lookT.y) * 1.6); lookT.x = e.clientX; lookT.y = e.clientY; });
+const endLook = (e) => { if (e.pointerId === lookT.id) lookT.id = null; }; cv.addEventListener('pointerup', endLook); cv.addEventListener('pointercancel', endLook);
+const hold = (id, on, off) => { const b = $(id); b.addEventListener('pointerdown', (e) => { e.preventDefault(); on(); }); if (off) { b.addEventListener('pointerup', off); b.addEventListener('pointercancel', off); b.addEventListener('pointerleave', off); } };
+hold('bJump', () => jump()); hold('bUse', () => use()); hold('bLight', () => toggleFlash()); hold('bRed', () => { magMode = 'red'; }, () => { magMode = null; }); hold('bBlue', () => { magMode = 'blue'; }, () => { magMode = null; });
+
+function jump() { if (P.onGround) { P.vy = 5.6; P.onGround = false; sfx.step(0.6); } }
+function toggleFlash() { flashOn = !flashOn; sfx.click(); }
+
+// ---------------------------------------------------------------- what you are looking at
+const ray = new THREE.Raycaster(); ray.far = 9;
+function aimed() { ray.setFromCamera({ x: 0, y: 0 }, cam); const objs = [...usables.filter((u) => u.ok()).map((u) => u.o), ...boxes.filter((b) => b.metal).map((b) => b.o), ...[gate, magDoor].filter((d) => d && !d.open).map((d) => d.o)];
+  const walls = scene.children.filter((o) => o.isInstancedMesh); const hit = ray.intersectObjects([...objs, ...walls], true)[0]; if (!hit) return null; let o = hit.object; while (o && !objs.includes(o)) o = o.parent; return o ? { o, d: hit.distance, p: hit.point } : null; }
+function use() { const a = aimed(); if (!a || a.d > 2.6) return; const u = usables.find((x) => x.o === a.o && x.ok()); if (u) u.use(); else if (gate && a.o === gate.o && !gate.open) { sfx.deny(); toast('It won’t move. No power.'); } }
+
+// ---------------------------------------------------------------- story beats
+function objective(t) { $('obj').innerHTML = `<small>OBJECTIVE</small>${t}`; }
+let toastT = 0; function toast(t) { const el = $('toast'); el.textContent = t; el.style.opacity = 1; clearTimeout(toastT); toastT = setTimeout(() => { el.style.opacity = 0; }, 2600); }
+function inv() { $('inv').innerHTML = has.fuse ? 'CARRYING <b>FUSE</b>' : ''; }
+function powerOn() { sfx.power(); toast('The power is back.'); for (const l of lamps) l.on = true; amb.intensity = 0.09; setTimeout(() => openDoor(gate), 1200); objective('The gate opened. Go down and find a way deeper into the factory.'); hintStep = 3; }
+let hintStep = 0, ended = false;
+const HINTS = ['The lobby has a fuse box. Look at it to see what it needs.', 'Somewhere dark there is a fuse up on a tall shelf. Your flashlight helps.', 'The shelf is too tall to jump onto. Metal crates can be pulled with the red magnet (hold), then climbed.', 'Doors with a magnet sign open to the magnet of the same colour. Aim and hold.'];
+$('bHint').onclick = () => toast(HINTS[Math.min(HINTS.length - 1, has.fuse ? 2 : hintStep)]);
+let seenShelf = false;
+
+// ---------------------------------------------------------------- sound, all made here (starts after the first click)
+const sfx = (() => { let ac = null, master; const on = () => { if (ac) return; try { ac = new (window.AudioContext || window.webkitAudioContext)(); master = ac.createGain(); master.gain.value = 0.5; master.connect(ac.destination); hum(); } catch { ac = null; } };
+  const env = (node, t, a, d, v) => { const g = ac.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + d); node.connect(g); g.connect(master); return g; };
+  function tone(f, d, v = 0.2, type = 'square', f2) { if (!ac) return; const t = ac.currentTime, o = ac.createOscillator(); o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d); env(o, t, 0.005, d, v); o.start(t); o.stop(t + d + 0.05); }
+  function noiseHit(d, v, fq) { if (!ac) return; const t = ac.currentTime, b = ac.createBuffer(1, ac.sampleRate * d, ac.sampleRate), ch = b.getChannelData(0); for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1; const s = ac.createBufferSource(); s.buffer = b; const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = fq; f.Q.value = 1.2; s.connect(f); env(f, t, 0.002, d, v); s.start(t); }
+  function hum() { const o1 = ac.createOscillator(), o2 = ac.createOscillator(), f = ac.createBiquadFilter(), g = ac.createGain(); o1.type = o2.type = 'sawtooth'; o1.frequency.value = 49; o2.frequency.value = 49.6; f.type = 'lowpass'; f.frequency.value = 140; g.gain.value = 0.06; o1.connect(f); o2.connect(f); f.connect(g); g.connect(master); o1.start(); o2.start();
+    const creak = () => { if (!ac) return; if (Math.random() < 0.5) tone(70 + Math.random() * 60, 1.2, 0.05, 'sawtooth', 40); else noiseHit(0.4, 0.12, 300 + Math.random() * 900); setTimeout(creak, 5000 + Math.random() * 9000); }; setTimeout(creak, 4000); }
+  return { on, step: (k = 1) => noiseHit(0.07, 0.08 * k, 180 + Math.random() * 60), click: () => tone(1400, 0.04, 0.08), pick: () => { tone(660, 0.08, 0.12); setTimeout(() => tone(990, 0.12, 0.12), 80); }, deny: () => tone(140, 0.25, 0.15, 'square', 90),
+    gate: () => { noiseHit(1.6, 0.25, 120); tone(55, 1.4, 0.12, 'sawtooth', 35); }, power: () => { tone(60, 1.2, 0.2, 'sawtooth', 180); setTimeout(() => noiseHit(0.3, 0.3, 2000), 900); }, mag: (f) => tone(f, 0.12, 0.03, 'sine') }; })();
+
+// ---------------------------------------------------------------- the loop
+let last = performance.now(), stepT = 0;
+function frame(now) { requestAnimationFrame(frame); const dt = Math.min(0.05, (now - last) / 1000); last = now; if (started && !ended) step(dt, now); render(now); }
+function step(dt, now) {
+  // move, relative to where you look
+  let mx = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0) + joy.x, mz = (keys.KeyS || keys.ArrowDown ? 1 : 0) - (keys.KeyW || keys.ArrowUp ? 1 : 0) + joy.y;
+  const l = Math.hypot(mx, mz); if (l > 1) { mx /= l; mz /= l; }
+  const run = keys.ShiftLeft || keys.ShiftRight ? 1.7 : 1, sp = 3.2 * run, s = Math.sin(P.yaw), c = Math.cos(P.yaw);
+  P.pos.x += (mx * c + mz * s) * sp * dt; P.pos.z += (-mx * s + mz * c) * sp * dt;
+  const feet = P.pos.y; collide(P.pos, P.r, feet);
+  // gravity, jumping, standing on crates and shelves
+  P.vy -= 16 * dt; P.pos.y += P.vy * dt; const g = groundAt(P.pos.x, P.pos.z, feet); if (P.pos.y <= g) { if (!P.onGround && P.vy < -4) sfx.step(1.2); P.pos.y = g; P.vy = 0; P.onGround = true; } else P.onGround = false;
+  if (l > 0.1 && P.onGround) { stepT -= dt * run; if (stepT <= 0) { stepT = 0.42; sfx.step(); } }
+  // flashlight battery: it drains while on and refills while off
+  battery = Math.max(0, Math.min(1, battery + (flashOn ? -dt / 240 : dt / 60))); if (battery <= 0) flashOn = false;
+  flash.intensity = flashOn ? 2.2 * (battery < 0.15 ? 0.6 + Math.random() * 0.4 : 1) : 0; lamp.lens.material.color.set(flashOn ? '#fff1d8' : '#333'); document.documentElement.style.setProperty('--b', (battery * 100).toFixed(0) + '%');
+  // magnet: red pulls metal crates toward you, blue pushes them away; the magnet doors answer to their colour
+  beam.visible = false; hand.red.material.emissive.setHex(magMode === 'red' ? 0xff2a1a : 0x330000); hand.blue.material.emissive.setHex(magMode === 'blue' ? 0x1a6aff : 0x001833);
+  if (magMode) { const a = aimed(); const from = new THREE.Vector3(); hand.getWorldPosition(from); magT -= dt; if (magT <= 0) { magT = 0.12; sfx.mag(magMode === 'red' ? 220 : 330); }
+    if (a) { beam.visible = true; beamMat.color.set(magMode === 'red' ? 0xff4a3d : 0x3da2ff); beam.geometry.setFromPoints([from, a.p]);
+      const b = boxes.find((x) => x.o === a.o && x.metal); if (b && a.d < 9) { const to = new THREE.Vector3(P.pos.x - b.o.position.x, 0, P.pos.z - b.o.position.z), d = to.length(); if (magMode === 'red' && d > 1.5) to.normalize().multiplyScalar(-1).negate(); else if (magMode === 'blue') to.normalize().negate(); else to.set(0, 0, 0);
+        const np = b.o.position.clone().addScaledVector(to, 3 * dt), hw = b.w / 2 + 0.02; if (!wallAt(np.x - hw, np.z - hw) && !wallAt(np.x + hw, np.z - hw) && !wallAt(np.x - hw, np.z + hw) && !wallAt(np.x + hw, np.z + hw) && !boxes.some((o) => o !== b && Math.abs(o.o.position.x - np.x) < (o.w + b.w) / 2 && Math.abs(o.o.position.z - np.z) < (o.d + b.d) / 2)) b.o.position.copy(np); }
+      if (magDoor && a.o === magDoor.o && !magDoor.open && a.d < 7) { if (magMode === magDoor.color) { magDoor.charge = (magDoor.charge || 0) + dt; if (magDoor.charge > 1.2) { openDoor(magDoor); toast('The magnet lock let go.'); objective('Go through. Deeper into the factory.'); } } else { magDoor.charge = 0; } } } }
+  // doors slide up when open
+  for (const d of [gate, magDoor]) if (d && d.open && d.o.position.y < WALL * 1.45) d.o.position.y += dt * 2.2;
+  // lamps flicker
+  for (const L of lamps) { const f = L.on ? (L.flick ? (Math.sin(now / 90 + L.ph) > 0.85 || Math.random() < 0.02 ? 0.15 : 1) : 1) : 0; L.l.intensity = L.base * f; L.bulb.material.color.set(f > 0.5 ? '#ffd08a' : '#2a2520'); }
+  // prompt for what you look at
+  const a = aimed(); let pr = ''; if (a && a.d < 2.6) { const u = usables.find((x) => x.o === a.o && x.ok()); if (u) pr = (touch ? 'USE · ' : '[E] ') + u.label; else if (gate && a.o === gate.o && !gate.open) pr = 'Power gate'; }
+  if (a && a.o === magDoor?.o && !magDoor.open && a.d < 7) pr = touch ? 'Hold PULL (red magnet)' : 'Hold LEFT CLICK (red magnet)';
+  if (a && boxes.some((b) => b.o === a.o && b.metal) && a.d < 9 && !magMode) pr = touch ? 'Metal crate · PULL / PUSH' : 'Metal crate · hold LEFT to pull, RIGHT to push';
+  $('prompt').hidden = !pr; $('prompt').textContent = pr;
+  if (!seenShelf && fuse?.parent && P.pos.distanceTo(fuse.position) < 6) { seenShelf = true; toast('Something is up on that shelf.'); if (hintStep < 2) hintStep = 2; }
+  if (fuseBox && !fuseBox.seen && P.pos.distanceTo(fuseBox.o.position) < 2.5) { fuseBox.seen = true; if (!has.fuse) objective('The power is out. Find a fuse for the fuse box.'); hintStep = Math.max(hintStep, 1); }
+  inv();
+  if (endCell && Math.floor(P.pos.x / CELL) === endCell.x && Math.floor(P.pos.z / CELL) === endCell.z) finish();
+}
+function render(now) {
+  const bob = started && P.onGround ? Math.sin(now / 130) * 0.03 * Math.min(1, Math.hypot(joy.x, joy.y) + (keys.KeyW || keys.KeyA || keys.KeyS || keys.KeyD ? 1 : 0)) : 0;
+  cam.position.set(P.pos.x, P.pos.y + P.eye + bob, P.pos.z); cam.rotation.set(0, 0, 0); cam.rotateY(P.yaw); cam.rotateX(P.pitch);
+  hand.position.y = -0.26 + bob * 0.5; lamp.position.y = -0.27 - bob * 0.5; R.render(scene, cam);
+}
+function finish() { ended = true; document.exitPointerLock?.(); $('card').hidden = false; $('card').querySelector('.in').innerHTML = '<div class="sign">PART 1 OF THE FACTORY</div><h1>DEEPER</h1><p>The assembly hall is ahead. The games are still switched on, and something in the dark heard the gate open.</p><p style="color:var(--sodium)">More of Gearhollow is coming.</p><div><button id="again">PLAY AGAIN</button></div>'; $('again').onclick = () => location.reload(); }
+
+$('go').onclick = () => { $('card').hidden = true; started = true; sfx.on(); objective('Find a way to turn the power back on.'); $('bHint').hidden = false; if (!touch) cv.requestPointerLock?.()?.catch?.(() => {}); toast(touch ? 'Drag to look around' : 'Click to look around'); };
+requestAnimationFrame(frame);
+window.__G = { P, boxes, has, usables, gate: () => gate, magDoor: () => magDoor, fuseBox: () => fuseBox, use, aimed, keys, setMag: (m) => { magMode = m; } };
+})();
+</script>
