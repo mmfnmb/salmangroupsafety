@@ -328,7 +328,7 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
         <div class="aiRow"><button class="tool" id="aiToggle" aria-label="خبّي المساعد">✦</button><input id="aiText" maxlength="500" placeholder="قول للمساعد يبني إيه…"><button class="btn" id="aiGo">ابنيه</button><button class="btn alt" id="aiUndo" disabled>رجّع</button></div>
       </div>
     </div>
-    <div class="wcats" id="wCats"><button data-c="block" aria-pressed="true">مكعبات</button><button data-c="tile" aria-pressed="false">أرضيات</button><button data-c="smart" aria-pressed="false">حاجات بتعمل حاجات</button><button data-c="mon" aria-pressed="false">وحوش</button></div>
+    <div class="wcats" id="wCats"><button data-c="block" aria-pressed="true">مكعبات</button><button data-c="tile" aria-pressed="false">أرضيات</button><button data-c="smart" aria-pressed="false">حاجات بتعمل حاجات</button><button data-c="mon" aria-pressed="false">وحوش</button><button data-c="custom" aria-pressed="false">اختراعات</button></div>
     <div class="istrip" id="wItems"></div>
   </section>
 
@@ -660,7 +660,7 @@ function arenaWorld() { if (WE.g?.worlds?.[0]?.items?.length > 5) return WE.g.wo
   return { ground: 'grass', items: L }; }
 function freeSpot(P, r0, r1) { for (let k = 0; k < 40; k++) { const a = Math.random() * Math.PI * 2, r = r0 + Math.random() * (r1 - r0), x = P.x + Math.cos(a) * r, z = P.z + Math.sin(a) * r; if (Math.abs(x) > WS - 2 || Math.abs(z) > WS - 2 || solidAt(Math.floor(x), Math.floor(z))) continue; return { x, z }; } return { x: P.x + 10, z: P.z }; }
 function startArena() {
-  arenaInit(); setCam(AR.camMode); beastInit(); heldWeapon(); for (const m of AR.mons) AR.scene.remove(m.o); AR.mons = []; for (const x of AR.shots) AR.scene.remove(x.o); AR.shots = [];
+  arenaInit(); setCam(AR.camMode); beastInit(); heldWeapon(); for (const m of AR.mons) AR.scene.remove(m.o); AR.mons = []; for (const x of AR.shots) AR.scene.remove(x.o); AR.shots = []; for (const x of AR.picks) AR.scene.remove(x.o); AR.picks = [];
   const a = withOv(analyse(grid)); if (!a) { show('forge'); toast('ارسم سلاح الأول'); return; }
   G2 = { a, hp: 100, max: 100, wave: 0, score: 0, cd: 0, swingT: 0, face: new THREE.Vector3(0, 0, -1), pos: new THREE.Vector3(), between: 1.2 };
   AR.mode = 'waves'; const W = arenaWorld(); const st = playScene(W, { noMonsters: true }); AR.hero.position.set(st.x, 0, st.z); $('aOv').hidden = true; AR.on = true; hud();
@@ -701,18 +701,19 @@ function swing() {
   clank(hits ? 240 : 160);
 }
 function hit(m, mult) {
+  if (m.cdef?.onHit && !(m.hitEvT > 0)) { m.hitEvT = 0.6; runEvent(m.cdef.onHit, m.o.position, m); }
   if (m.shieldT > 0) { pop2('درع!', m.o.position.clone().add(new THREE.Vector3(0, m.M.size * 1.6 + 0.5, 0)), '#7cd4ff'); return; }
   if (m.ab?.length) onMonsterEvent(m, 'hit');
   const a = G2.a, crit = Math.random() * 100 < a.crit, el = a.el; let k = (0.85 + Math.random() * 0.3) * mult * (crit ? 2 : 1);
   if (el === m.M.weak) k *= 2; if (el === m.M.resist) k *= 0.5;
-  const d = Math.round(a.dmg * k * 0.6); m.hp -= d; m.hitT = 0.15; m.o.position.addScaledVector(m.o.position.clone().sub(AR.hero.position).setY(0).normalize(), 0.6 / m.M.size);
+  const d = Math.round(a.dmg * k * 0.6 * (G2.powerMul || 1)); m.hp -= d; m.hitT = 0.15; m.o.position.addScaledVector(m.o.position.clone().sub(AR.hero.position).setY(0).normalize(), 0.6 / m.M.size);
   pop2((crit ? 'حرجة! ' : '') + d + (el === m.M.weak ? ' ضعيف!' : el === m.M.resist ? ' مقاوم' : ''), m.o.position.clone().add(new THREE.Vector3(0, m.M.size + 0.6, 0)), el === m.M.weak ? '#ffe14d' : el === m.M.resist ? '#9aa' : '#fff', crit);
   const ep = a.elp / 100;
   if (el === 'fire') m.burn = 3; if (el === 'poison') m.poison = 4; if (el === 'ice') m.slow = 2 * (0.5 + ep); if (el === 'light') m.stun = 0.5 + ep * 0.6;
   if (el === 'shadow') G2.hp = Math.min(G2.max, G2.hp + d * 0.15 * (0.5 + ep));
   if (m.hp <= 0) kill(m);
 }
-function kill(m) { if (m.dead) return; m.dead = true; if (m.ab?.length) onMonsterEvent(m, 'death'); shatter(m); AR.scene.remove(m.o); AR.mons.splice(AR.mons.indexOf(m), 1); G2.score += Math.round(m.max / 4) * (m.M.boss ? 5 : 1); hud(); }
+function kill(m) { if (m.dead) return; m.dead = true; if (m.cdef?.onDeath) runEvent(m.cdef.onDeath, m.o.position, m); if (m.ab?.length) onMonsterEvent(m, 'death'); shatter(m); AR.scene.remove(m.o); AR.mons.splice(AR.mons.indexOf(m), 1); G2.score += Math.round(m.max / 4) * (m.M.boss ? 5 : 1); hud(); }
 
 // ---------------------------------------------------------------- abilities in the arena: shots, fuses, explosions, dashes, slams...
 AR.shots = []; AR.shake = 0;
@@ -769,6 +770,62 @@ function abilitiesTick(m, d, dt) {
 }
 function onMonsterEvent(m, kind) { for (const a of m.ab) if (a.when.k === kind && !a.done && a.t <= 0) { useAbility(m, a); a.t = a.cd; if (a.cd <= 0) a.done = true; } }
 
+
+// ---------------------------------------------------------------- inventions: new things the assistant designs from players' words
+// a game keeps its inventions in g.defs: { key: def }. def.kind: 'entity' (moves, can be hit), 'pickup' (picked up on touch), 'block' (a new kind of block)
+const cleanCubes = (l) => (Array.isArray(l) ? l : []).slice(0, 60).map((q) => ({ p: (Array.isArray(q?.p) ? q.p : [0, 0.5, 0]).slice(0, 3).map((v) => Math.max(-6, Math.min(6, +v || 0))), s: (Array.isArray(q?.s) ? q.s : [1, 1, 1]).slice(0, 3).map((v) => Math.max(0.05, Math.min(6, +v || 1))), r: (Array.isArray(q?.r) ? q.r : [0, 0, 0]).slice(0, 3).map((v) => +v || 0), c: /^#[0-9a-f]{6}$/i.test(q?.c) ? q.c : '#cccccc', f: plain(), role: q?.role && ROLES.some((r) => r[0] === q.role) ? q.role : undefined }));
+function cleanDef(d) {
+  const n = (v, a, lo, hi) => { v = +v; return Number.isFinite(v) ? Math.max(lo, Math.min(hi, v)) : a; }, kind = ['entity', 'pickup', 'block'].includes(d?.kind) ? d.kind : 'entity';
+  const ev = (e) => (e && typeof e === 'object' ? { say: e.say ? String(e.say).slice(0, 60) : '', drop: typeof e.drop === 'string' ? e.drop.slice(0, 30) : '', n: Math.round(n(e.n, 1, 1, 8)), spawn: typeof e.spawn === 'string' ? e.spawn.slice(0, 30) : '', explode: e.explode ? { rad: n(e.explode.rad, 2.5, 0.5, 10), dmg: n(e.explode.dmg, 20, 0, 200) } : null, heal: n(e.heal, 0, 0, 200), dmg: n(e.dmg, 0, 0, 200), speed: n(e.speed, 0, 0, 3), power: n(e.power, 0, 0, 3), sec: n(e.sec, 8, 1, 60), score: n(e.score, 0, 0, 500) } : null);
+  return { kind, name: String(d?.name || 'اختراع').slice(0, 30), cubes: cleanCubes(d?.cubes), size: n(d?.size, kind === 'pickup' ? 0.6 : 1.2, 0.2, 5), color: /^#[0-9a-f]{6}$/i.test(d?.color) ? d.color : null,
+    move: ['wander', 'follow', 'flee', 'still', 'fly'].includes(d?.move) ? d.move : 'wander', hp: n(d?.hp, 30, 1, 2000), dmg: n(d?.dmg, 0, 0, 200), spd: n(d?.spd, 2, 0, 10), el: EL[d?.el] ? d.el : 'none',
+    onHit: ev(d?.onHit), onDeath: ev(d?.onDeath), onTouch: ev(d?.onTouch), abil: Array.isArray(d?.abil) ? d.abil.slice(0, 4).map(cleanAb) : [] };
+}
+function registerDefs(g) {
+  for (const k in ITEMS) if (ITEMS[k].kind === 'custom' || ITEMS[k].custom) delete ITEMS[k];
+  for (const [k, d] of Object.entries(g?.defs || {})) { const c = d.color || d.cubes?.[0]?.c || '#cccccc'; ITEMS[k] = d.kind === 'block' ? { n: d.name, c, kind: 'block', custom: true } : { n: d.name, c, kind: 'custom', def: d }; delete blockMats[k]; }
+  const on = document.querySelector('#wCats [aria-pressed="true"]'); if (on?.dataset.c === 'custom') on.click();
+}
+const defOf = (t) => WE.g?.defs?.[t];
+// an invention as a moving thing in the game
+function spawnCustom(t, x, z, y = 0) {
+  const d = defOf(t); if (!d) return null;
+  if (d.kind === 'pickup') return spawnPickup(t, x, z, y);
+  if (d.kind === 'block') return null;
+  const e = { def: { name: d.name, cubes: d.cubes.length ? d.cubes : [Q(0, 0.5, 0, 1, 1, 1, '#cccccc')], fly: d.move === 'fly', abil: d.abil }, M: { name: d.name, hp: d.hp, spd: d.spd, dmg: d.dmg, size: d.size, fly: d.move === 'fly', weak: WEAK[d.el], resist: d.el } };
+  addBeast(e); const m = AR.mons[AR.mons.length - 1]; m.o.position.set(x, y, z); m.cdef = d; m.ckey = t; m.friendly = !d.dmg; m.wander = Math.random() * 3; return m;
+}
+AR.picks = [];
+function spawnPickup(t, x, z, y = 0) {
+  const d = defOf(t); if (!d) return null; const R_ = buildRig({ cubes: d.cubes.length ? d.cubes : [Q(0, 0.3, 0, 0.5, 0.5, 0.5, d.color || '#ffe14d')] }), o = R_.root, bx = new THREE.Box3().setFromObject(o), h = Math.max(0.1, bx.max.y - bx.min.y), k = d.size / h;
+  o.scale.setScalar(k); o.position.y = -bx.min.y * k + 0.2; const g = new THREE.Group(); g.add(o); g.position.set(x, y, z); AR.scene.add(g); const pk = { t, d, o: g, spin: o, bob: Math.random() * 6 }; AR.picks.push(pk); return pk;
+}
+function runEvent(ev, at, src) {
+  if (!ev || !G2) return; const pos = at.clone();
+  if (ev.say) pop2(ev.say, pos.clone().add(new THREE.Vector3(0, 2.4, 0)), '#ffe14d');
+  if (ev.drop && defOf(ev.drop)) for (let i = 0; i < ev.n; i++) { if (defOf(ev.drop).kind === 'pickup') spawnPickup(ev.drop, pos.x + (Math.random() - 0.5) * 1.2, pos.z + (Math.random() - 0.5) * 1.2); else spawnCustom(ev.drop, pos.x + (Math.random() - 0.5) * 1.5, pos.z + (Math.random() - 0.5) * 1.5); }
+  if (ev.spawn) for (let i = 0; i < ev.n; i++) { if (defOf(ev.spawn)) spawnCustom(ev.spawn, pos.x + (Math.random() - 0.5) * 2, pos.z + (Math.random() - 0.5) * 2); else if (BEASTS[ev.spawn]) { addBeast(whoEntry(ev.spawn)); AR.mons[AR.mons.length - 1].o.position.set(pos.x + (Math.random() - 0.5) * 2, 0, pos.z + (Math.random() - 0.5) * 2); } }
+  if (ev.explode) boom(pos, ev.explode.rad, ev.explode.dmg, src, 'fire');
+  if (ev.heal) { G2.hp = Math.min(G2.max, G2.hp + ev.heal); pop2('+' + ev.heal, AR.hero.position.clone().add(new THREE.Vector3(0, 2, 0)), '#46c96b'); }
+  if (ev.dmg && src?.isPick) hurtPlayer(ev.dmg);
+  if (ev.speed) { G2.speedMul = 1 + ev.speed; G2.speedT = ev.sec; pop2('أسرع!', AR.hero.position.clone().add(new THREE.Vector3(0, 2.4, 0)), '#7cd4ff'); }
+  if (ev.power) { G2.powerMul = 1 + ev.power; G2.powerT = ev.sec; pop2('أقوى!', AR.hero.position.clone().add(new THREE.Vector3(0, 2.4, 0)), '#ff8a5c'); }
+  if (ev.score) G2.score += ev.score; hud();
+}
+function picksStep(dt, now) {
+  if (!G2) return; const P = AR.hero.position; if (G2.speedT > 0 && (G2.speedT -= dt) <= 0) G2.speedMul = 1; if (G2.powerT > 0 && (G2.powerT -= dt) <= 0) G2.powerMul = 1;
+  for (let i = AR.picks.length - 1; i >= 0; i--) { const k = AR.picks[i]; k.spin.rotation.y += dt * 2.5; k.spin.position.y += Math.sin(now / 300 + k.bob) * 0.004;
+    if (Math.hypot(k.o.position.x - P.x, k.o.position.z - P.z) < 1) { AR.scene.remove(k.o); AR.picks.splice(i, 1); clank(520); pop2(k.d.name, k.o.position.clone().add(new THREE.Vector3(0, 1.8, 0)), '#ffe14d'); runEvent(k.d.onTouch || { heal: 10 }, k.o.position, { isPick: true }); } }
+}
+// friendly or strange moving things: wander, follow, flee, stay still or fly about
+function customMove(m, to, d, dt) {
+  const mv = m.cdef.move; let dir = null;
+  if (mv === 'follow') dir = to.clone().normalize(); else if (mv === 'flee' && d < 8) dir = to.clone().normalize().negate();
+  else if (mv === 'wander' || mv === 'fly') { m.wander -= dt; if (m.wander <= 0) { m.wander = 1.5 + Math.random() * 3; m.wdir = Math.random() < 0.3 ? null : new THREE.Vector3(Math.random() - 0.5, 0, Math.random() - 0.5).normalize(); } dir = m.wdir; }
+  const go = !!dir && mv !== 'still'; if (go) { m.o.position.addScaledVector(dir, m.M.spd * dt); m.o.rotation.y = Math.atan2(dir.x, dir.z); } m.moving += ((go ? 1 : 0) - m.moving) * Math.min(1, dt * 6);
+  if (m.cdef.onTouch && d < m.M.size * 0.5 + 0.8 && !(m.touchT > 0)) { m.touchT = 1.2; runEvent(m.cdef.onTouch, m.o.position, m); } if (m.touchT > 0) m.touchT -= dt;
+}
+
 AR.debris = [];
 function solidAt(x, z) { return AR.solid?.has(x + ',' + z); }
 function pushBoxes(p, rad) { if (!AR.solid?.size) return; const cx = Math.floor(p.x), cz = Math.floor(p.z); for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) { const x = cx + i, z = cz + j; if (!solidAt(x, z)) continue; const nx = Math.max(x, Math.min(x + 1, p.x)), nz = Math.max(z, Math.min(z + 1, p.z)), dx = p.x - nx, dz = p.z - nz, d = Math.hypot(dx, dz); if (d < rad) { if (d > 1e-4) { p.x = nx + dx / d * rad; p.z = nz + dz / d * rad; } else { const l = p.x - x, r_ = x + 1 - p.x, f = p.z - z, k = z + 1 - p.z, m = Math.min(l, r_, f, k); if (m === l) p.x = x - rad; else if (m === r_) p.x = x + 1 + rad; else if (m === f) p.z = z - rad; else p.z = z + 1 + rad; } } } }
@@ -797,14 +854,14 @@ function placeCam(P, dt) {
   AR.cam.lookAt(look); AR.hero.visible = m !== 'first';
 }
 function arenaStep(dt, now) {
-  debrisStep(dt); shotsStep(dt);
+  debrisStep(dt); shotsStep(dt); picksStep(dt, now);
   if (!AR.on || !G2) return; const P = AR.hero.position, a = G2.a;
   // move
   if (AR.keys.KeyQ) AR.yaw += dt * 2.2; if (AR.keys.KeyE) AR.yaw -= dt * 2.2;
   let mx = 0, mz = 0; const K = AR.keys; if (K.KeyA || K.ArrowLeft) mx -= 1; if (K.KeyD || K.ArrowRight) mx += 1; if (K.KeyW || K.ArrowUp) mz -= 1; if (K.KeyS || K.ArrowDown) mz += 1; if (AR.joy) { mx += AR.joy.x; mz += AR.joy.y; }
   // moving is relative to the camera (except the top view, where up on the screen is north)
   if (AR.camMode !== 'top') { const fx = Math.sin(AR.yaw), fz = Math.cos(AR.yaw), sgn = AR.camMode === 'front' ? -1 : 1, X = (-fz * mx * -1 + fx * -mz) * sgn, Z = (fx * mx * -1 + fz * -mz) * sgn; mx = X; mz = Z; }
-  const l = Math.hypot(mx, mz); if (l > 0.1) { const sp = (5 + a.spd / 30) * dt / Math.max(1, l); P.x += mx * sp; P.z += mz * sp; if (G2.swingT <= 0) G2.face.set(mx, 0, mz).normalize(); }
+  const l = Math.hypot(mx, mz); if (l > 0.1) { const sp = (5 + a.spd / 30) * (G2.speedMul || 1) * dt / Math.max(1, l); P.x += mx * sp; P.z += mz * sp; if (G2.swingT <= 0) G2.face.set(mx, 0, mz).normalize(); }
   else if (AR.camMode === 'first' && G2.swingT <= 0) G2.face.set(Math.sin(AR.yaw), 0, Math.cos(AR.yaw));
   P.x = Math.max(-WS + 0.5, Math.min(WS - 0.5, P.x)); P.z = Math.max(-WS + 0.5, Math.min(WS - 0.5, P.z)); pushOut(P, 0.5); pushBoxes(P, 0.45);
   { const want = Math.atan2(G2.face.x, G2.face.z); let dr = want - AR.hero.rotation.y; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); AR.hero.rotation.y += dr * Math.min(1, dt * 14); } if (!(G2.launch > 0)) AR.hero.position.y = 0;
@@ -816,6 +873,8 @@ function arenaStep(dt, now) {
     if (m.burn > 0) { m.burn -= dt; m.hp -= a.elp / 10 * dt * 3; } if (m.poison > 0) { m.poison -= dt; m.hp -= a.elp / 12 * dt * 3; } if ((m.burn > 0 || m.poison > 0) && m.hp <= 0) { kill(m); continue; }
     if (m.dead) continue; if (m.sleep) continue; if (m.ab.length && abilitiesTick(m, d, dt)) continue;
     m.stun -= dt; m.slow -= dt; m.hitT -= dt;
+    if (m.hitEvT > 0) m.hitEvT -= dt;
+    if (m.cdef && (m.friendly || m.cdef.move !== 'follow')) { customMove(m, to, d, dt); animRig(m.R_, now / 1000 + m.bob, m.moving, 0); if (!m.friendly) { m.atk -= dt; if (d < m.M.size * 0.5 + 0.9 && m.atk <= 0) { m.atk = 0.9; hurtPlayer(m.M.dmg); } } continue; }
     const go = m.stun <= 0 && !m.fuse && !(m.slamT > 0) && !(m.dashT > 0) && d > m.M.size * 0.5 + 0.7; if (go) o.position.addScaledVector(to.normalize(), m.M.spd * (m.slow > 0 ? 0.45 : 1) * dt); m.moving += ((go ? 1 : 0) - m.moving) * Math.min(1, dt * 6);
     if (!(m.slamT > 0)) o.position.y = m.M.fly ? 1.4 + Math.sin(now / 200 + m.bob) * 0.4 : 0;
     if (d > 0.05) o.rotation.y = Math.atan2(to.x, to.z); m.attT = Math.max(0, m.attT - dt); animRig(m.R_, now / 1000 + m.bob, m.stun > 0 ? 0 : m.moving * (m.slow > 0 ? 0.5 : 1), m.attT > 0 ? 1 - m.attT / 0.4 : 0);
@@ -1234,6 +1293,7 @@ function itemMesh(it) {
   else if (it.t === 'door') cubes = [C1([0, 1, 0], [1, 2, 0.3], D.c), C1([0.3, 1, 0.16], [0.1, 0.1, 0.06], '#e2b043')];
   else if (it.t === 'flag') cubes = [C1([0, 1.1, 0], [0.1, 2.2, 0.1], '#cfd8e2'), C1([0.35, 1.9, 0], [0.6, 0.4, 0.06], D.c)];
   else if (it.t === 'start') cubes = [C1([0, 0.04, 0], [0.9, 0.08, 0.9], D.c), C1([0, 0.1, 0.15], [0.3, 0.06, 0.4], '#f2efe6')];
+  else if (D.kind === 'custom') { const R_ = buildRig({ cubes: D.def.cubes.length ? D.def.cubes : [Q(0, 0.5, 0, 1, 1, 1, D.c)] }); const bx = new THREE.Box3().setFromObject(R_.root), h = Math.max(0.1, bx.max.y - bx.min.y), k = D.def.size / h; R_.root.scale.setScalar(k); R_.root.position.y = -bx.min.y * k; g.add(R_.root); }
   else if (it.t === 'mon') { const def = whoDef(it.pr?.who); const R_ = buildRig(def); const bx = new THREE.Box3().setFromObject(R_.root), h = Math.max(0.3, bx.max.y - bx.min.y); R_.root.scale.setScalar(1.4 / h); R_.root.position.y = -bx.min.y * 1.4 / h; g.add(R_.root); }
   for (const q of cubes || []) g.add(cubeMesh({ ...q, seed: 7 + ((it.x * 31 + it.z * 17) & 255) }));
   g.position.set(it.x + 0.5, y, it.z + 0.5); g.rotation.y = (it.r || 0) * Math.PI / 2; g.userData.it = it; g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); return g;
@@ -1289,10 +1349,10 @@ function worldInit() {
   R4.domElement.addEventListener('touchstart', (e) => { WE.touches = e.touches.length; if (e.touches.length > 1) stroke = null; }, { passive: true }); R4.domElement.addEventListener('touchend', (e) => { WE.touches = e.touches.length; }, { passive: true });
   new ResizeObserver(() => { const w = st.clientWidth, h = st.clientHeight; R4.setSize(w, h, false); WE.cam.aspect = w / h; WE.cam.updateProjectionMatrix(); }).observe(st);
   const btn = (k, host) => { const D = ITEMS[k], b = document.createElement('button'); b.className = 'it'; b.dataset.k = k; b.setAttribute('aria-pressed', String(k === WE.item)); b.innerHTML = `<i style="background:${D.c}"></i><span></span>`; b.querySelector('span').textContent = D.n; b.onclick = () => { WE.item = k; if (WE.tool !== 'rect') setWTool('place'); document.querySelectorAll('.it').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); }; host.appendChild(b); };
-  const showCat = (c) => { $('wItems').innerHTML = ''; for (const k in ITEMS) if (ITEMS[k].kind === c) btn(k, $('wItems')); $('wCats').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.c === c))); };
+  const showCat = (c) => { $('wItems').innerHTML = ''; for (const k in ITEMS) if (ITEMS[k].kind === c || (c === 'custom' && ITEMS[k].custom)) btn(k, $('wItems')); if (c === 'custom' && !$('wItems').children.length) $('wItems').innerHTML = '<span class="desc">لسه مفيش اختراعات. اطلب من المساعد حاجة مش موجودة، زي "بقرة لما أضربها تطلّع لحمة".</span>'; $('wCats').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.c === c))); };
   $('wCats').querySelectorAll('button').forEach((b) => { b.onclick = () => showCat(b.dataset.c); }); showCat('block');
   $('wGround').innerHTML = Object.entries(GROUNDS).map(([k, [n]]) => `<option value="${k}">${n}</option>`).join(''); $('wGround').onchange = () => { W_().ground = $('wGround').value; renderWorld(); };
-  WE.g = store.get('gameDraft2', null) || newGame(); $('gName').value = WE.g.name || ''; setWTool('place'); renderWorld(); renderTabs(); renderGames();
+  WE.g = store.get('gameDraft2', null) || newGame(); registerDefs(WE.g); $('gName').value = WE.g.name || ''; setWTool('place'); renderWorld(); renderTabs(); renderGames();
 }
 function floorTex(col) { const t = document.createElement('canvas'); t.width = t.height = 8; const g = t.getContext('2d'), c = new THREE.Color(col), h = {}; c.getHSL(h); for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) { c.setHSL(h.h, h.s, h.l + (hash3(x, y, 5) - 0.5) * 0.1); g.fillStyle = '#' + c.getHexString(); g.fillRect(x, y, 1, 1); } const tx = new THREE.CanvasTexture(t); tx.magFilter = THREE.NearestFilter; tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.repeat.set(WS * 2, WS * 2); return tx; }
 const W_ = () => WE.g.worlds[WE.wi];
@@ -1317,7 +1377,7 @@ function rayFrom(e) { const r = WE.R.domElement.getBoundingClientRect(); wray.se
 function cellOnPlane(e, y) { rayFrom(e); _pl.set(new THREE.Vector3(0, 1, 0), -y); if (!wray.ray.intersectPlane(_pl, _hp)) return null; const x = Math.floor(_hp.x), z = Math.floor(_hp.z); return x < -WS || z < -WS || x >= WS || z >= WS ? null : { x, z }; }
 function itemAt(x, z, y) { return W_().items.find((it) => it.x === x && it.z === z && (it.y || 0) === y); }
 function putItem(t, x, z, y) {
-  const D = ITEMS[t]; if (D.kind !== 'block' && y > 0) y = 0; if (x < -WS || z < -WS || x >= WS || z >= WS || y > 12) return null; const L = W_().items;
+  const D = ITEMS[t]; if (!D) return null; if (D.kind !== 'block' && y > 0) y = 0; if (x < -WS || z < -WS || x >= WS || z >= WS || y > 12) return null; const L = W_().items;
   for (let i = L.length - 1; i >= 0; i--) if (L[i].x === x && L[i].z === z && (L[i].y || 0) === y) L.splice(i, 1);
   if (t === 'start') for (let i = L.length - 1; i >= 0; i--) if (L[i].t === 'start') L.splice(i, 1);
   const nu = { t, x, z, y, r: 0, pr: D.pr ? clone(D.pr) : undefined }; if (t === 'swallow') nu.pr.to = Math.min(WE.g.worlds.length - 1, Math.max(1, WE.wi === 0 ? 1 : 0)); L.push(nu); return nu;
@@ -1364,6 +1424,8 @@ function applyOps(ops) {
   for (const o of ops || []) {
     if (!o || typeof o !== 'object') continue; const h = Math.max(1, Math.min(8, Math.round(+o.h || 1))), y0 = Math.max(0, Math.round(+o.y || 0));
     if (o.op === 'ground' && GROUNDS[o.g]) { W_().ground = o.g; continue; }
+    if (o.op === 'define' && typeof o.key === 'string' && /^[a-z][a-z0-9_]{1,24}$/.test(o.key) && (!ITEMS[o.key] || ITEMS[o.key].custom || ITEMS[o.key].kind === 'custom')) { WE.g.defs ||= {}; WE.g.defs[o.key] = cleanDef(o.def); registerDefs(WE.g); n++; continue; }
+    if (o.op === 'setting') { W_().settings ||= {}; if (CAMS[o.camera]) W_().settings.camera = o.camera; if (/^#[0-9a-f]{6}$/i.test(o.sky)) W_().settings.sky = o.sky; n++; continue; }
     if (o.op === 'clear') { W_().items = []; continue; }
     if (!ok(o.t) && o.op !== 'erase') continue;
     if (o.op === 'put') put(o.t, o.x, o.z, o.y, o.pr);
@@ -1390,9 +1452,18 @@ smart: tnt {pr: trig "hit"|"near"|"touch", fuse sec, rad, dmg}, chest (sleeping 
 mon (a monster {pr: who}); who is one of: ${mons}
 Grounds: grass, sand, snow, stone, dark, lava.
 Current world: ${worldSummary(W_())}. This game has ${WE.g.worlds.length} worlds; this is world ${WE.wi}.
+Inventions already in this game: ${Object.entries(WE.g.defs || {}).map(([k, d]) => k + ' (' + d.name + ', ' + d.kind + ')').join(', ') || 'none'}.
+IMPORTANT: the player may ask for ANYTHING, including things this game has never had (animals, food, magic items, new blocks, characters...). Never refuse and never swap it for something else: INVENT it with a "define" step, then place it with "put" (or rect/line/circle for blocks).
+An invention: {"op":"define","key": short lowercase english id like "cow","def":{"kind":"entity"|"pickup"|"block","name": Arabic name,
+ "cubes": its 3D model built from 3-40 boxes [{"p":[x,y,z] centre,"s":[w,h,d] size,"c":"#rrggbb","r":[rx,ry,rz] radians,"role": optional "body"|"head"|"legL"|"legR"|"armL"|"armR"|"wingL"|"wingR"|"tail"}] (y up, feet at y=0, about 1-3 units tall, front faces +z; give legs, arms, wings and the head roles so they animate; make it recognisable and cute, with eyes, spots, horns...),
+ "size": height in metres in the game, "move":"wander"|"follow"|"flee"|"still"|"fly", "hp", "dmg" (0 = harmless/friendly), "spd", "el": element,
+ "onHit": event, "onDeath": event, "onTouch": event}}
+An event: {"say": short Arabic text, "drop": key of an invention to drop (define pickups BEFORE what drops them), "n": count, "spawn": key or monster to create, "explode": {"rad","dmg"}, "heal", "dmg", "speed": extra speed 0-3, "power": extra hit power 0-3, "sec": seconds, "score"}.
+Pickups ("kind":"pickup") are picked up when the player walks into them and run their "onTouch" event (beef: {"heal":30}). Blocks ("kind":"block") are new solid block types with a "color".
+Settings: {"op":"setting","camera":"behind"|"front"|"first"|"top","sky":"#rrggbb"}.
 Reply ONLY with JSON: {"say": one short friendly sentence in Egyptian Arabic about what you built, "ops": [steps]}. Steps:
 {"op":"ground","g":...} · {"op":"clear"} (only if asked to start over) · {"op":"put","t":...,"x","z","y","pr"} · {"op":"rect","t","x0","z0","x1","z1","y","h","hollow":true|false,"pr"} · {"op":"line","t","x0","z0","x1","z1","y","h"} · {"op":"circle","t","cx","cz","r","y","h","hollow"} · {"op":"erase","x0","z0","x1","z1"}
-Build generously and with care for how it looks (walls with towers, paths, decorations, varied blocks), keep it playable (paths the player can walk, a start spot if there is none), and use at most 150 steps.
+Build generously and with care for how it looks (walls with towers, paths, decorations, varied blocks), keep it playable (paths the player can walk, a start spot if there is none), and use at most 150 steps (inventions first, then placing them).
 Player asks: ${JSON.stringify(text)}`, { modelTier: 'complex', cache: false });
     aiUndo = before; const n = applyOps(r?.ops); renderWorld(true); renderTabs(); $('aiUndo').disabled = false;
     aiSay('bot', (r?.say || 'خلصت') + (n ? ` (${n} حاجة)` : ' (مفيش حاجة اتحطت، جرّب توضّح أكتر)'));
@@ -1409,7 +1480,7 @@ let clearArm2 = 0; $('gClear').onclick = () => { if (!clearArm2) { $('gClear').t
 function renderGames() { const L = $('myGames'); L.innerHTML = ''; if (!WE.games.length) { L.innerHTML = '<div class="empty">لسه محفظتش ألعاب.</div>'; return; }
   WE.games.forEach((g, i) => { const d = document.createElement('div'); d.className = 'item'; d.innerHTML = '<b></b><small></small><div class="row"></div>'; d.querySelector('b').textContent = g.name; d.querySelector('small').textContent = `${g.worlds.length} عوالم`;
     const r = d.querySelector('.row'), mk = (t, fn, alt) => { const b = document.createElement('button'); b.className = 'btn' + (alt ? ' alt' : ''); b.textContent = t; b.onclick = () => fn(b); r.appendChild(b); };
-    mk('العب', () => { WE.g = clone(g); playGame(); }); mk('عدّل', () => { WE.g = clone(g); WE.wi = 0; WE.sel = null; $('gName').value = g.name; renderWorld(true); renderTabs(); props(); }, true);
+    mk('العب', () => { WE.g = clone(g); registerDefs(WE.g); playGame(); }); mk('عدّل', () => { WE.g = clone(g); registerDefs(WE.g); WE.wi = 0; WE.sel = null; $('gName').value = g.name; renderWorld(true); renderTabs(); props(); }, true);
     mk('امسح', (b) => { if (!b.dataset.arm) { b.dataset.arm = 1; b.textContent = 'متأكد؟'; return; } WE.games.splice(i, 1); store.set('games', WE.games); renderGames(); }, true); L.appendChild(d); }); }
 $('gPlay').onclick = () => { saveDraft(); playGame(); };
 
@@ -1418,13 +1489,14 @@ function clearWorld() { if (!AR.world) return; while (AR.world.children.length) 
 // builds a world in the arena scene: blocks become solid cells, floors and smart things come alive
 function playScene(W, opts = {}) {
   clearWorld(); AR.ring.visible = false; AR.walls = []; AR.cur = { W, items: W.items.map((it) => ({ ...it })) };
-  AR.scene.background = new THREE.Color(W.ground === 'dark' || W.ground === 'lava' ? 0x1a1420 : 0x8fc3e8); AR.scene.fog = new THREE.Fog(AR.scene.background.getHex(), 40, 110);
-  const live = (it) => ['tnt', 'swallow', 'spawner', 'flag', 'door', 'chest', 'mon', 'start'].includes(it.t);
+  AR.scene.background = new THREE.Color(W.settings?.sky || (W.ground === 'dark' || W.ground === 'lava' ? 0x1a1420 : 0x8fc3e8)); if (W.settings?.camera) setCam(W.settings.camera); AR.scene.fog = new THREE.Fog(AR.scene.background.getHex(), 40, 110);
+  const live = (it) => ['tnt', 'swallow', 'spawner', 'flag', 'door', 'chest', 'mon', 'start'].includes(it.t) || ITEMS[it.t]?.kind === 'custom';
   AR.view = buildView({ ...W, items: AR.cur.items }, AR.world, { skip: (it) => live(it) && it.t !== 'door' && it.t !== 'tnt' && it.t !== 'swallow' && it.t !== 'spawner' && it.t !== 'flag' });
   for (const it of AR.cur.items) { const D = ITEMS[it.t]; if (D.kind === 'block' || it.t === 'door' || it.t === 'tnt' || it.t === 'spawner') AR.solid.set(it.x + ',' + it.z, (AR.solid.get(it.x + ',' + it.z) || 0) + 1); if (D.kind === 'tile') AR.tiles.set(it.x + ',' + it.z, { t: it.t, it, used: false, cd: 0 }); }
   for (const m of AR.view.singles) { const it = m.userData.it; if (['tnt', 'swallow', 'spawner', 'flag', 'door'].includes(it.t)) AR.objs.push({ t: it.t, it, pr: it.pr || {}, m, x: it.x + 0.5, z: it.z + 0.5, timer: 1, hp: 60 }); }
   let start = { x: 0.5, z: 4.5 }; for (const it of AR.cur.items) if (it.t === 'start') start = { x: it.x + 0.5, z: it.z + 0.5 };
   if (!opts.noMonsters) for (const it of AR.cur.items) { const cx = it.x + 0.5, cz = it.z + 0.5;
+    if (ITEMS[it.t]?.kind === 'custom') { const m = spawnCustom(it.t, cx, cz, it.y || 0); if (m && !m.friendly && m.M && G2?.world) G2.world.hadMon = true; continue; }
     if (it.t === 'mon') { addBeast(whoEntry(it.pr?.who)); AR.mons[AR.mons.length - 1].o.position.set(cx, 0, cz); if (G2?.world) G2.world.hadMon = true; }
     if (it.t === 'chest') { addBeast({ def: MIMIC, M: { name: 'صندوق بلسان', hp: it.pr.hp, spd: 3.8, dmg: it.pr.dmg, size: 0.75, weak: 'fire', resist: 'none' } }); const m = AR.mons[AR.mons.length - 1]; m.o.position.set(cx, 0, cz); m.sleep = true; m.ab.forEach((x) => { x.act.dmg = it.pr.dmg; }); if (G2?.world) G2.world.hadMon = true; } }
   if (AR.objs.some((o) => o.t === 'spawner') && G2?.world) G2.world.hadMon = true;
@@ -1435,7 +1507,7 @@ function breakCells(cx, cz, rad) { if (!AR.cur) return 0; let n = 0; const L = A
   if (n) { const keep = AR.world.children.filter((c) => c.userData.it && !c.isInstancedMesh); for (const c of [...AR.world.children]) if (c.isInstancedMesh) AR.world.remove(c); const tmp = new THREE.Group(); const v = buildView({ ...AR.cur.W, items: L.filter((it) => ITEMS[it.t].kind === 'block' || ITEMS[it.t].kind === 'tile') }, tmp); for (const m of v.inst) AR.world.add(m); } return n; }
 function playGame() { if (!analyse(grid) && !WOV) { show('forge'); toast('ارسم سلاح الأول، وبعدين العب لعبتك'); return; } show('arena'); $('aOv').hidden = true; $('aEdit').hidden = true; loadWorld(0, null); }
 function loadWorld(wi, back) {
-  arenaInit(); setCam(AR.camMode); beastInit(); heldWeapon(); for (const m of AR.mons) AR.scene.remove(m.o); AR.mons = []; for (const x of AR.shots) AR.scene.remove(x.o); AR.shots = [];
+  arenaInit(); setCam(AR.camMode); beastInit(); heldWeapon(); for (const m of AR.mons) AR.scene.remove(m.o); AR.mons = []; for (const x of AR.shots) AR.scene.remove(x.o); AR.shots = []; for (const x of AR.picks) AR.scene.remove(x.o); AR.picks = [];
   const a = withOv(analyse(grid)) || { dmg: 30, spd: 50, reach: 50, crit: 10, elp: 0, el: 'none', sym: 0 };
   const keepHp = G2?.world ? G2.hp : 100, stack = back ? [...(G2.world.stack || []), back] : (G2?.world?.stack && wi !== 0 ? G2.world.stack : []);
   G2 = { a, hp: keepHp, max: 100, wave: 0, score: G2?.world ? G2.score : 0, cd: 0, swingT: 0, face: new THREE.Vector3(0, 0, -1), pos: new THREE.Vector3(), world: { wi, stack, label: wi ? `عالم ${wi + 1}` : (WE.g.name || 'لعبتي'), hadMon: false, won: false } };
@@ -1473,7 +1545,7 @@ function worldTick(dt, now) {
     if (o.t === 'flag' && d < 1) { W.won = true; }
     if (o.t === 'door' && !AR.mons.length && !AR.objs.some((x) => x.t === 'spawner' && !x.gone)) { o.gone = true; unsolid(o); AR.world.remove(o.m); pop2('الباب اتفتح', new THREE.Vector3(o.x, 2, o.z), '#ffe14d'); }
   }
-  if (!W) return; const hasFlag = AR.objs.some((o) => o.t === 'flag'), cleared = W.hadMon && !AR.mons.length && !AR.objs.some((x) => x.t === 'spawner' && !x.gone);
+  if (!W) return; const hasFlag = AR.objs.some((o) => o.t === 'flag'), cleared = W.hadMon && !AR.mons.some((m) => !m.friendly) && !AR.objs.some((x) => x.t === 'spawner' && !x.gone);
   if (W.won || (!hasFlag && cleared)) { W.won = true; worldOver(true); }
   hud();
 }
