@@ -597,6 +597,7 @@ const MON = {
   imp: { name: 'عفريت نار', hp: 55, spd: 3.4, dmg: 10, size: 1.0, weak: 'ice', resist: 'fire', from: 3 },
   golem: { name: 'عملاق تلج', hp: 140, spd: 1.6, dmg: 16, size: 1.9, weak: 'fire', resist: 'ice', from: 4 },
   dragon: { name: 'التنين', hp: 420, spd: 2.1, dmg: 22, size: 3.4, weak: 'light', resist: 'fire', boss: true },
+  qirmiz: { name: 'قرمز', hp: 260, spd: 2.8, dmg: 18, size: 3.4, weak: 'light', resist: 'shadow', from: 5 },
 };
 function voxels(rows, pal, scale = 1) {
   const list = []; const h = rows.length, w = Math.max(...rows.map((r) => r.length));
@@ -999,6 +1000,25 @@ const BEASTS = {
   skel: { name: 'هيكل عظمي', fly: false, abil: [{ name: 'رمي عضم', when: { k: 'every', v: 3.2 }, act: { k: 'shoot', dmg: 7, n: 1, spd: 13 }, cd: 3.2, shape: BONE }], cubes: mirrorX([Q(0, 3.3, 0, 1, 1, 1, '#f2efe6'), Q(0.22, 3.35, 0.51, 0.26, 0.26, 0.06, '#24262b'), Q(0, 2.3, 0, 0.3, 1.3, 0.3, '#f2efe6'), Q(0, 2.1, 0, 1.1, 0.14, 0.6, '#f2efe6'), Q(0, 2.5, 0, 1.1, 0.14, 0.6, '#f2efe6'), Q(0, 2.9, 0, 1.1, 0.14, 0.6, '#f2efe6'), Q(0.75, 2.4, 0, 0.2, 1.2, 0.2, '#f2efe6'), Q(0, 1.6, 0, 0.8, 0.26, 0.4, '#f2efe6'), Q(0.25, 0.75, 0, 0.22, 1.4, 0.22, '#f2efe6')]) },
   imp: { name: 'عفريت نار', fly: false, abil: [{ name: 'كورة نار', when: { k: 'every', v: 2.6 }, act: { k: 'shoot', dmg: 9, n: 1, spd: 11, el: 'fire', rad: 1.2 }, cd: 2.6, shape: FIREBALL }], cubes: mirrorX([Q(0, 1.2, 0, 1, 1.2, 0.8, '#e5484d'), Q(0, 2.2, 0, 1.1, 0.9, 0.9, '#e5484d'), Q(0.4, 2.85, 0, 0.2, 0.55, 0.2, '#24262b', [0, 0, -0.4]), Q(0.25, 2.3, 0.46, 0.22, 0.18, 0.06, '#ffe14d'), Q(0.65, 1.3, 0, 0.3, 0.9, 0.3, '#e5484d'), Q(0.25, 0.35, 0, 0.3, 0.7, 0.3, '#e5484d'), Q(0, 1.1, 0.41, 0.6, 0.7, 0.06, '#ff8a3d'), Q(0, 0.9, -0.65, 0.16, 0.16, 0.9, '#e5484d', [0.6, 0, 0])]) },
   golem: { name: 'عملاق تلج', fly: false, abil: [{ name: 'خبطة الأرض', when: { k: 'near', v: 3.5 }, act: { k: 'slam', dmg: 18, rad: 4, el: 'ice' }, cd: 5 }], cubes: mirrorX([Q(0, 2.2, 0, 2.4, 2, 1.6, '#3d6fd8'), Q(0, 3.7, 0.2, 1.2, 1, 1.1, '#9ae6ff'), Q(0.3, 3.75, 0.76, 0.26, 0.2, 0.06, '#24262b'), Q(1.6, 2, 0, 0.9, 2.2, 0.9, '#9ae6ff'), Q(1.6, 0.8, 0, 1.1, 0.8, 1.1, '#3d6fd8'), Q(0.6, 0.6, 0, 0.9, 1.2, 0.9, '#3d6fd8'), Q(0.6, 3.4, -0.5, 0.3, 0.8, 0.3, '#9ae6ff', [0.3, 0, 0.3])]) },
+  qirmiz: { name: 'قرمز', fly: false, abil: [{ name: 'طعنة الناب', when: { k: 'near', v: 4 }, act: { k: 'dash', dmg: 22 }, cd: 2.4 }, { name: 'نطّة العنكبوت', when: { k: 'every', v: 6 }, act: { k: 'slam', dmg: 16, rad: 3.5, el: 'shadow' }, cd: 6 }], cubes: (() => { const L = [], red = '#c62828', dk = '#8e1b1b', glow = '#5dff7a', bone = '#e8dcc0';
+    // eight spider legs, every other one on the same swing so it scuttles
+    [-0.65, -0.22, 0.22, 0.65].forEach((z, i) => [1, -1].forEach((sd, j) => { const role = (i + j) % 2 ? 'legL' : 'legR';
+      L.push(R_(Q(sd * 0.95, 2.45, z, 1.5, 0.2, 0.2, dk, [0, z * 0.5 * sd, sd * 0.5]), role), R_(Q(sd * 1.75, 1.25, z * 1.5, 0.2, 2.5, 0.2, red, [z * 0.3, 0, sd * -0.22]), role)); }));
+    // a long thin body with glowing green seams
+    L.push(R_(Q(0, 2.55, 0, 1.0, 0.8, 0.85, dk), 'body'), R_(Q(0, 3.65, 0, 1.15, 1.5, 0.8, red), 'body'), R_(Q(-0.3, 3.65, 0.41, 0.07, 1.3, 0.03, glow), 'body'), R_(Q(0.3, 3.5, 0.41, 0.07, 1.0, 0.03, glow), 'body'), R_(Q(0, 2.95, 0.41, 0.7, 0.07, 0.03, glow), 'body'));
+    // the head: torn feathery top, one good eye, one torn-out eye with a dark drip, a stitched mouth
+    L.push(R_(Q(0, 5.05, 0, 1.5, 1.3, 1.1, red), 'head'));
+    [[-0.62, 0.5, 0.2], [-0.38, 0.75, -0.15], [-0.12, 0.4, 0.1], [0.12, 0.85, -0.2], [0.36, 0.55, 0.25], [0.6, 0.7, -0.1]].forEach(([x, h, r], i) => L.push(R_(Q(x, 5.7 + h / 2, (i % 2 ? -0.2 : 0.2), 0.2, h, 0.6, i % 2 ? '#b71c1c' : '#e53935', [0, 0, r]), 'head')));
+    L.push(R_(Q(0.36, 5.18, 0.56, 0.36, 0.34, 0.04, '#f2efe6'), 'head'), R_(Q(0.4, 5.15, 0.58, 0.16, 0.18, 0.03, '#24262b'), 'head'));
+    L.push(R_(Q(-0.36, 5.15, 0.56, 0.38, 0.36, 0.04, '#1a0606'), 'head'), R_(Q(-0.42, 4.84, 0.57, 0.09, 0.32, 0.03, '#6d0000'), 'head'), R_(Q(-0.28, 4.9, 0.57, 0.07, 0.18, 0.03, '#6d0000'), 'head'), R_(Q(-0.42, 4.64, 0.57, 0.12, 0.08, 0.03, '#6d0000'), 'head'));
+    L.push(R_(Q(0, 4.62, 0.56, 0.95, 0.08, 0.03, '#2a0a0a'), 'head')); [-0.33, -0.11, 0.11, 0.33].forEach((x) => L.push(R_(Q(x, 4.62, 0.58, 0.05, 0.24, 0.03, bone), 'head')));
+    // left arm: very long, hanging, with claws
+    L.push(R_(Q(0.85, 4.1, 0, 0.5, 0.45, 0.5, red), 'armL'), R_(Q(0.95, 2.95, 0, 0.32, 2.1, 0.32, red), 'armL'), R_(Q(0.95, 1.75, 0, 0.45, 0.4, 0.45, dk), 'armL'), R_(Q(0.85, 1.42, 0.12, 0.08, 0.3, 0.08, bone), 'armL'), R_(Q(1.05, 1.42, 0.12, 0.08, 0.3, 0.08, bone), 'armL'));
+    // right arm torn off: a stump and a big sharp fang-blade with glowing green lines
+    L.push(R_(Q(-0.85, 4.1, 0, 0.5, 0.45, 0.5, dk), 'armR'), R_(Q(-0.95, 3.75, 0, 0.36, 0.3, 0.36, '#6d0000'), 'armR'));
+    [[3.25, 0.55], [2.6, 0.44], [1.95, 0.32], [1.4, 0.2], [1.0, 0.09]].forEach(([y, w]) => L.push(R_(Q(-0.95, y, 0, w, 0.66, 0.26, bone), 'armR')));
+    L.push(R_(Q(-0.95, 2.4, 0.14, 0.06, 1.9, 0.02, glow), 'armR'), R_(Q(-0.85, 2.9, 0.14, 0.04, 0.8, 0.02, glow), 'armR'));
+    return L; })() },
   dragon: { name: 'التنين', fly: false, boss: true, abil: [{ name: 'نفس النار', when: { k: 'every', v: 3 }, act: { k: 'shoot', dmg: 12, n: 3, spd: 12, el: 'fire', rad: 1.6 }, cd: 3, shape: FIREBALL }, { name: 'يطلّع عفاريت', when: { k: 'low', v: 50 }, act: { k: 'summon', who: 'imp', n: 3 }, cd: 0 }], cubes: mirrorX([Q(0, 2, 0, 2.2, 1.6, 3.2, '#5b3a8f'), Q(0, 1.5, 0.2, 1.6, 0.6, 2.6, '#e2b043'), Q(0, 3, 1.6, 0.9, 1.4, 0.9, '#5b3a8f', [-0.4, 0, 0]), Q(0, 3.9, 2.3, 1.3, 1, 1.6, '#5b3a8f'), Q(0, 3.7, 3.3, 0.9, 0.6, 0.8, '#5b3a8f'), Q(0.5, 4.1, 2.6, 0.12, 0.25, 0.3, '#ffe14d'), Q(0.4, 4.6, 1.9, 0.2, 0.7, 0.2, '#f2efe6', [-0.5, 0, 0]), Q(2, 3, 0, 2.6, 0.2, 2, '#8b54f0', [0, 0, 0.5]), Q(0.8, 0.7, 1, 0.6, 1.4, 0.6, '#5b3a8f'), Q(0.8, 0.7, -1, 0.6, 1.4, 0.6, '#5b3a8f'), Q(0, 1.8, -2.5, 0.6, 0.6, 2.2, '#5b3a8f', [0.3, 0, 0])]) },
 };
 const BPAL = [...PAL.slice(1).map((p) => p.hex), '#f1c7a5', '#ff6fb5', '#7a5230', '#2f8f4e'];
