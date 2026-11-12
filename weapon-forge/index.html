@@ -125,7 +125,7 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
 .aidock .aiLog .me{background:#2c2622ee;align-self:flex-start}.aidock .aiLog .bot{background:#3a2417ee;border:1px solid var(--edge);align-self:flex-end}
 .aiRow{display:flex;gap:6px;align-items:center;background:#211c19ee;border:1px solid var(--edge);border-radius:12px;padding:5px}
 .aiRow input{flex:1;min-width:0;background:var(--coal);border:1px solid var(--edge);border-radius:9px;padding:7px 10px;color:var(--bone);font:600 14px var(--body)}
-.aiRow .btn{padding:7px 12px}.anim .row2{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}.anim label{display:flex;flex-direction:column;gap:2px;font-size:12px;flex:1 1 120px;min-width:0}.anim select{background:var(--coal);color:var(--bone);border:1px solid var(--edge);border-radius:8px;padding:4px}.fmode{display:flex;gap:6px;margin-bottom:8px}.shieldMode #card .acts,.shieldMode #wSliders,.shieldMode #card .chk{display:none}.shieldInfo{font-size:14px;line-height:1.5}.arena .hit.blk{bottom:126px;right:auto;left:auto;inset-inline-end:max(96px,calc(env(safe-area-inset-right,0px) + 96px));width:64px;height:64px;font-size:24px;background:radial-gradient(circle at 40% 35%,#cfd8e2,#6f7b89)}.arena.touch .hit.blk[hidden]{display:none}.dz{display:flex;gap:6px;flex-wrap:wrap}.dz input{flex:1 1 220px;min-width:0;background:var(--coal);border:1px solid var(--edge);border-radius:9px;padding:8px 10px;color:var(--bone);font:600 14px var(--body)}.picBtn{position:relative;overflow:hidden;cursor:pointer;display:inline-flex;align-items:center}.picBtn input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;font-size:0}.aiPics{display:flex;flex-wrap:wrap;gap:6px;padding:6px;background:#211c19ee;border:1px solid var(--edge);border-radius:12px;margin-bottom:6px;max-height:190px;overflow:auto}.aiPics .pic{position:relative;width:52px;height:52px;border-radius:8px;overflow:hidden;border:2px solid transparent;cursor:pointer;background:#0d0b0a}.aiPics .pic.on{border-color:var(--ember)}.aiPics .pic img{width:100%;height:100%;object-fit:contain}.aiPics .pic button{position:absolute;top:0;inset-inline-end:0;border:0;background:#000a;color:#fff;font-size:11px;width:18px;height:18px;padding:0;cursor:pointer}.picActs{display:flex;flex-wrap:wrap;gap:6px;align-items:center;width:100%;font-size:12px;color:var(--ash,#bbb)}.picActs .tool{font-size:12px;padding:5px 9px}#aiThumb{width:34px;height:34px;object-fit:cover;border-radius:7px;border:2px solid var(--ember);cursor:pointer}
+.aiRow .btn{padding:7px 12px}.anim .row2{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}.anim label{display:flex;flex-direction:column;gap:2px;font-size:12px;flex:1 1 120px;min-width:0}.anim select{background:var(--coal);color:var(--bone);border:1px solid var(--edge);border-radius:8px;padding:4px}.fmode{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}.shieldMode #card .acts,.shieldMode #wSliders,.shieldMode #card .chk{display:none}.shieldInfo{font-size:14px;line-height:1.5}.arena .hit.blk{bottom:126px;right:auto;left:auto;inset-inline-end:max(96px,calc(env(safe-area-inset-right,0px) + 96px));width:64px;height:64px;font-size:24px;background:radial-gradient(circle at 40% 35%,#cfd8e2,#6f7b89)}.arena.touch .hit.blk[hidden]{display:none}.dz{display:flex;gap:6px;flex-wrap:wrap}.dz input{flex:1 1 220px;min-width:0;background:var(--coal);border:1px solid var(--edge);border-radius:9px;padding:8px 10px;color:var(--bone);font:600 14px var(--body)}.picBtn{position:relative;overflow:hidden;cursor:pointer;display:inline-flex;align-items:center}.picBtn input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;font-size:0}.aiPics{display:flex;flex-wrap:wrap;gap:6px;padding:6px;background:#211c19ee;border:1px solid var(--edge);border-radius:12px;margin-bottom:6px;max-height:190px;overflow:auto}.aiPics .pic{position:relative;width:52px;height:52px;border-radius:8px;overflow:hidden;border:2px solid transparent;cursor:pointer;background:#0d0b0a}.aiPics .pic.on{border-color:var(--ember)}.aiPics .pic img{width:100%;height:100%;object-fit:contain}.aiPics .pic button{position:absolute;top:0;inset-inline-end:0;border:0;background:#000a;color:#fff;font-size:11px;width:18px;height:18px;padding:0;cursor:pointer}.picActs{display:flex;flex-wrap:wrap;gap:6px;align-items:center;width:100%;font-size:12px;color:var(--ash,#bbb)}.picActs .tool{font-size:12px;padding:5px 9px}#aiThumb{width:34px;height:34px;object-fit:cover;border-radius:7px;border:2px solid var(--ember);cursor:pointer}
 .wcats{display:flex;gap:6px;margin-top:8px;overflow-x:auto}
 .wcats button{flex:none;background:var(--plate);border:1px solid var(--edge);border-radius:999px;padding:5px 12px;font-weight:800;font-size:13px}
 .wcats button[aria-pressed="true"]{border-color:var(--ember);color:var(--ember-2)}
@@ -174,7 +174,7 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
 
   <section id="vForge" class="forge">
     <div class="panel">
-      <div class="fmode" role="group" aria-label="What you draw"><button class="tool" id="fmWeapon" aria-pressed="true">Weapon</button><button class="tool" id="fmShield" aria-pressed="false">Shield</button></div>
+      <div class="fmode" id="fmode" role="group" aria-label="What you draw"><button class="tool" data-k="weapon" aria-pressed="true">Weapon</button><button class="tool" data-k="shield" aria-pressed="false">Shield</button><button class="tool" data-k="helmet" aria-pressed="false">Helmet</button><button class="tool" data-k="chest" aria-pressed="false">Chest</button><button class="tool" data-k="pants" aria-pressed="false">Pants</button><button class="tool" data-k="boots" aria-pressed="false">Boots</button></div>
       <div class="anvil"><canvas id="grid" width="480" height="480" aria-label="Drawing grid"></canvas></div>
       <div class="tools" role="toolbar" aria-label="Tools">
         <button class="tool" id="toPen" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20l4-1 11-11-3-3L5 16z"/></svg>Pen</button>
@@ -700,7 +700,7 @@ function arenaWorld() { if (WE.g?.worlds?.[0]?.items?.length > 5) return WE.g.wo
   return { ground: 'grass', items: L }; }
 function freeSpot(P, r0, r1) { for (let k = 0; k < 40; k++) { const a = Math.random() * Math.PI * 2, r = r0 + Math.random() * (r1 - r0), x = P.x + Math.cos(a) * r, z = P.z + Math.sin(a) * r; if (Math.abs(x) > WS - 2 || Math.abs(z) > WS - 2 || solidAt(Math.floor(x), Math.floor(z))) continue; return { x, z }; } return { x: P.x + 10, z: P.z }; }
 function startArena() {
-  arenaInit(); setCam(AR.camMode); beastInit(); heldWeapon(); heldShield(); for (const m of AR.mons) AR.scene.remove(m.o); AR.mons = []; for (const x of AR.shots) AR.scene.remove(x.o); AR.shots = []; for (const x of AR.picks) AR.scene.remove(x.o); AR.picks = [];
+  arenaInit(); setCam(AR.camMode); beastInit(); heldWeapon(); heldShield(); wearGear(); for (const m of AR.mons) AR.scene.remove(m.o); AR.mons = []; for (const x of AR.shots) AR.scene.remove(x.o); AR.shots = []; for (const x of AR.picks) AR.scene.remove(x.o); AR.picks = [];
   const a = withOv(analyse(grid)); if (!a) { show('forge'); toast('Draw a weapon first'); return; }
   G2 = { a, hp: 100, max: 100, wave: 0, score: 0, cd: 0, swingT: 0, face: new THREE.Vector3(0, 0, -1), pos: new THREE.Vector3(), between: 1.2 };
   AR.mode = 'waves'; const W = arenaWorld(); const st = playScene(W, { noMonsters: true }); AR.hero.position.set(st.x, 0, st.z); $('aOv').hidden = true; AR.on = true; hud();
@@ -1674,14 +1674,23 @@ function alliesStep(dt, now) {
 }
 
 // ---------------------------------------------------------------- shields: drawn pixel by pixel in the forge, held in the left hand, raised with B (or 🛡)
-let shieldMode = false, wGrid = null; const SHIELD = { g: store.get('shield', null) };
+let shieldMode = false, gearKind = 'weapon', wGrid = null; const SHIELD = { g: store.get('shield', null) };
+// armor you wear: drawn like the weapon, worn on the hero's head, body, legs and feet; it always protects a little
+const GEAR = { helmet: store.get('gear_helmet', null), chest: store.get('gear_chest', null), pants: store.get('gear_pants', null), boots: store.get('gear_boots', null) };
+const GEAR_INFO = { shield: ['Shield', 'Draw your shield'], helmet: ['Helmet', 'Draw the front of your helmet'], chest: ['Chest armor', 'Draw the front of your chest armor'], pants: ['Pants', 'Draw your pants from the front: the left half goes on one leg, the right half on the other'], boots: ['Boots', 'Draw your boots from the front: one boot on each side'] };
+const GEAR_MAX = { helmet: 0.12, chest: 0.25, pants: 0.15, boots: 0.08 };
+const gearCode = (k) => (k === 'shield' ? SHIELD.g : GEAR[k]);
+function setGearCode(k, v) { if (k === 'shield') { SHIELD.g = v; store.set('shield', v); } else { GEAR[k] = v; store.set('gear_' + k, v); } }
+const gearPart = (k) => (GEAR[k] ? GEAR_MAX[k] * Math.min(1, shieldDef(GEAR[k]) / 0.5) : 0);
+function armorDef() { let d = 0; for (const k in GEAR_MAX) d += gearPart(k); return Math.min(0.6, d); }
+function setGear(kind) {
+  if (kind === gearKind) return; if (gearKind === 'weapon') wGrid = grid; else setGearCode(gearKind, enc(grid));
+  if (kind === 'weapon') { grid = wGrid || grid; wGrid = null; } else { const c = gearCode(kind); grid = c ? dec(c) : new Uint8Array(N * N); }
+  gearKind = kind; shieldMode = kind !== 'weapon'; document.querySelectorAll('#fmode button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.k === kind))); document.body.classList.toggle('shieldMode', shieldMode); changed();
+  toast(kind === 'weapon' ? 'Back to your weapon' : GEAR_INFO[kind][1]); }
 const shieldDef = (code) => { if (!code) return 0; let n = 0, metal = 0; for (const ch of code) { if (ch === '.' || !CI[ch]) continue; n++; if ('SsG'.includes(ch)) metal++; } return n ? Math.min(0.85, 0.12 + n / 320 + metal / 900) : 0; };
-function setForgeMode(sh) {
-  if (sh === shieldMode) return; if (sh) { wGrid = grid; grid = SHIELD.g ? dec(SHIELD.g) : new Uint8Array(N * N); } else { SHIELD.g = enc(grid); store.set('shield', SHIELD.g); grid = wGrid || grid; wGrid = null; }
-  shieldMode = sh; $('fmWeapon').setAttribute('aria-pressed', String(!sh)); $('fmShield').setAttribute('aria-pressed', String(sh)); document.body.classList.toggle('shieldMode', sh); changed();
-  toast(sh ? 'Draw your shield. More cubes and more metal block more' : 'Back to your weapon');
-}
-function shieldCard() { if (!shieldMode) return; SHIELD.g = enc(grid); store.set('shield', SHIELD.g); const d = shieldDef(SHIELD.g); $('stats').innerHTML = `<div class="shieldInfo"><b>Shield</b> blocks <b>${Math.round(d * 100)}%</b> of a hit while raised (B, or 🛡 on a phone). Draw it bigger and use steel or gold to make it stronger.</div>`; }
+function setForgeMode(sh) { setGear(sh ? 'shield' : 'weapon'); }
+function shieldCard() { if (!shieldMode) return; setGearCode(gearKind, enc(grid)); if (gearKind !== 'shield') { $('stats').innerHTML = `<div class="shieldInfo"><b>${GEAR_INFO[gearKind][0]}</b> takes <b>${Math.round(gearPart(gearKind) * 100)}%</b> off every hit, all the time. All your armor together: <b>${Math.round(armorDef() * 100)}%</b>. Draw more of it, with steel or gold, to make it stronger.</div>`; return; } const d = shieldDef(SHIELD.g); $('stats').innerHTML = `<div class="shieldInfo"><b>Shield</b> blocks <b>${Math.round(d * 100)}%</b> of a hit while raised (B, or 🛡 on a phone). Draw it bigger and use steel or gold to make it stronger.</div>`; }
 function heldShield() {
   if (AR.shieldG) { AR.shieldG.parent?.remove(AR.shieldG); AR.shieldG = null; } const code = SHIELD.g; if (!code || !AR.heroRig?.g?.armL) return;
   const g2 = dec(code), list = []; for (let i = 0; i < N * N; i++) if (g2[i]) list.push([i % N, (i / N) | 0, g2[i]]); if (!list.length) return;
@@ -1690,7 +1699,26 @@ function heldShield() {
   m.castShadow = true; const g = new THREE.Group(); g.add(m); g.position.set(0.15, -0.5, 0.25); g.rotation.y = Math.PI / 2 * 0; AR.heroRig.g.armL.add(g); AR.shieldG = g;
 }
 const blocking = () => !!(G2 && (AR.keys.KeyB || AR.blockBtn) && SHIELD.g && AR.shieldG);
-function shieldFactor() { const now = performance.now(); if (G2?.shieldUntil > now) return 0.2; return blocking() ? 1 - shieldDef(SHIELD.g) : 1 - shieldDef(SHIELD.g) * 0.2; }
+function shieldFactor() { const now = performance.now(), a = 1 - armorDef(); if (G2?.shieldUntil > now) return 0.2 * a; return a * (blocking() ? 1 - shieldDef(SHIELD.g) : 1 - shieldDef(SHIELD.g) * 0.2); }
+// a drawing becomes a plate of little cubes that fits a body part
+function gearPlate(code, w, h, flip, keep) {
+  const g2 = dec(code), list = []; let x0 = N, x1 = -1, y0 = N, y1 = -1;
+  for (let i = 0; i < N * N; i++) if (g2[i]) { const x = i % N, y = (i / N) | 0; list.push([x, y, g2[i]]); x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+  if (!list.length) return null; const mid = (x0 + x1 + 1) / 2, use = keep === 'R' ? list.filter((p) => p[0] < mid) : keep === 'L' ? list.filter((p) => p[0] >= mid) : list; if (!use.length) return null;
+  const ux0 = Math.min(...use.map((p) => p[0])), ux1 = Math.max(...use.map((p) => p[0])), cw = ux1 - ux0 + 1, ch = y1 - y0 + 1, sx = w / cw, sy = h / ch;
+  const m = new THREE.InstancedMesh(box, new THREE.MeshLambertMaterial(), use.length), o = new THREE.Object3D(), c = new THREE.Color();
+  use.forEach(([x, y, v], i) => { const px = (x - ux0 + 0.5) * sx - w / 2; o.position.set(flip ? -px : px, h / 2 - (y - y0 + 0.5) * sy, 0); o.scale.set(sx * 1.02, sy * 1.02, Math.min(sx, sy) * 1.4); o.updateMatrix(); m.setMatrixAt(i, o.matrix); m.setColorAt(i, c.set(PAL[v].hex)); });
+  m.castShadow = true; return m;
+}
+function partBox(grp) { grp.updateMatrixWorld(true); const b = new THREE.Box3(); for (const ch of grp.children) if (ch.isMesh && ch.userData.q !== undefined || ch.isMesh && !ch.isInstancedMesh) b.expandByObject(ch); if (b.isEmpty()) return null; const a = grp.worldToLocal(b.min.clone()), z = grp.worldToLocal(b.max.clone()); return { min: new THREE.Vector3(Math.min(a.x, z.x), Math.min(a.y, z.y), Math.min(a.z, z.z)), max: new THREE.Vector3(Math.max(a.x, z.x), Math.max(a.y, z.y), Math.max(a.z, z.z)) }; }
+function wearGear() {
+  for (const m of AR.gearMeshes || []) m.parent?.remove(m); AR.gearMeshes = []; const g = AR.heroRig?.g; if (!g) return;
+  const put = (code, grp, low, keep, top) => { if (!code || !grp) return; const b = partBox(grp); if (!b) return; let y0 = b.min.y, y1 = b.max.y; if (low) y1 = y0 + (y1 - y0) * 0.35;
+    const w = (b.max.x - b.min.x) * 1.14, h = (y1 - y0) * 1.04, cx = (b.min.x + b.max.x) / 2, cy = (y0 + y1) / 2, cz = (b.min.z + b.max.z) / 2, d = (b.max.z - b.min.z) * 1.14;
+    for (const [z, flip] of [[b.max.z + 0.02, false], [b.min.z - 0.02, true]]) { const m = gearPlate(code, w, h, flip, keep); if (!m) return; m.position.set(cx, cy, z); grp.add(m); AR.gearMeshes.push(m); }
+    if (top) { const m = gearPlate(code, w, d, false, keep); if (m) { m.rotation.x = -Math.PI / 2; m.position.set(cx, b.max.y + 0.02, cz); grp.add(m); AR.gearMeshes.push(m); } } };
+  put(GEAR.helmet, g.head, false, null, true); put(GEAR.chest, g.body); put(GEAR.pants, g.legL, false, 'L'); put(GEAR.pants, g.legR, false, 'R'); put(GEAR.boots, g.legL, true, 'L'); put(GEAR.boots, g.legR, true, 'R');
+}
 
 // ---------------------------------------------------------------- the shared library: inventions anyone shares (shapes, parts, moves; never code)
 const LIB = { docs: [] };
@@ -2078,7 +2106,7 @@ function breakCells(cx, cz, rad) { if (!AR.cur) return 0; let n = 0; const L = A
   if (n) { const keep = AR.world.children.filter((c) => c.userData.it && !c.isInstancedMesh); for (const c of [...AR.world.children]) if (c.isInstancedMesh && !c.userData.tnt) AR.world.remove(c); const tmp = new THREE.Group(); const v = buildView({ ...AR.cur.W, items: L.filter((it) => ITEMS[it.t].kind === 'block' || ITEMS[it.t].kind === 'tile') }, tmp); for (const m of v.inst) AR.world.add(m); } return n; }
 function playGame() { if (!analyse(grid) && !WOV) { show('forge'); toast('Draw a weapon first, then play your game'); return; } show('arena'); $('aOv').hidden = true; $('aEdit').hidden = true; loadWorld(0, null); }
 function loadWorld(wi, back) {
-  arenaInit(); setHeroLook(WE.g?.hero); setCam(AR.camMode); beastInit(); heldWeapon(); heldShield(); for (const m of AR.mons) AR.scene.remove(m.o); AR.mons = []; for (const x of AR.shots) AR.scene.remove(x.o); AR.shots = []; for (const x of AR.picks) AR.scene.remove(x.o); AR.picks = [];
+  arenaInit(); setHeroLook(WE.g?.hero); setCam(AR.camMode); beastInit(); heldWeapon(); heldShield(); wearGear(); for (const m of AR.mons) AR.scene.remove(m.o); AR.mons = []; for (const x of AR.shots) AR.scene.remove(x.o); AR.shots = []; for (const x of AR.picks) AR.scene.remove(x.o); AR.picks = [];
   const a = withOv(analyse(grid)) || { dmg: 30, spd: 50, reach: 50, crit: 10, elp: 0, el: 'none', sym: 0 };
   const keepHp = G2?.world ? G2.hp : 100, stack = back ? [...(G2.world.stack || []), back] : (G2?.world?.stack && wi !== 0 ? G2.world.stack : []);
   G2 = { a, hp: keepHp, max: 100, wave: 0, score: G2?.world ? G2.score : 0, cd: 0, swingT: 0, face: new THREE.Vector3(0, 0, -1), pos: new THREE.Vector3(), world: { wi, stack, label: wi ? `World ${wi + 1}` : (WE.g.name || 'My Game'), hadMon: false, won: false } };
@@ -2137,7 +2165,7 @@ function worldOver(win) {
 $('aEdit').onclick = () => { $('aOv').hidden = true; $('aEdit').hidden = true; $('aGo').onclick = () => { clank(260); startArena(); }; $('aGo').textContent = 'Start'; show('world'); };
 
 let ct = 0; function changed() { drawGrid(); clearTimeout(ct); ct = setTimeout(() => { renderCard(); build(); shieldCard(); }, 90); }
-$('fmWeapon').onclick = () => setForgeMode(false); $('fmShield').onclick = () => setForgeMode(true);
+document.querySelectorAll('#fmode button').forEach((b) => { b.onclick = () => setGear(b.dataset.k); });
 
 // ---------------------------------------------------------------- your weapons (this device) and the shared gallery
 let toastT = 0; function toast(s) { const t = $('toast'); t.textContent = s; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 2200); }
@@ -2179,7 +2207,7 @@ async function unpublish(id) { const me = gal.docs.find((d) => d.uid === gal.uid
 async function like(key) { if (!gal.db) return; const cur = { ...(gal.likes.find((l) => l.uid === gal.uid)?.k || {}) }; if (cur[key]) delete cur[key]; else cur[key] = 1; try { await gal.db.collection('likes').doc(gal.uid).set({ k: cur }); } catch { toast('didn’t work, try again'); } }
 $('bPub').onclick = () => { if (!A) return; const w = { id: Date.now().toString(36), name: $('wName').value.trim() || nameFor(A), g: enc(grid) }; publish(w); };
 
-function show(v) { if (v !== 'forge' && shieldMode) setForgeMode(false); for (const [k, id, sec] of [['forge', 'tForge', 'vForge'], ['beast', 'tBeast', 'vBeast'], ['arena', 'tArena', 'vArena'], ['world', 'tWorld', 'vWorld'], ['mine', 'tMine', 'vMine'], ['gal', 'tGal', 'vGal']]) { $(id).setAttribute('aria-pressed', String(k === v)); $(sec).hidden = k !== v; } if (v === 'mine') renderMine(); if (v === 'gal') renderGal(); if (v === 'forge') size(); if (v === 'beast') beastInit(); if (v === 'world') worldInit(); if (v === 'arena') { arenaInit(); monsterRow(); if (!AR.on) { AR.cam.position.set(0, 13, 11); AR.cam.lookAt(0, 0.5, 0); heldWeapon(); heldShield(); } } }
+function show(v) { if (v !== 'forge' && shieldMode) setForgeMode(false); for (const [k, id, sec] of [['forge', 'tForge', 'vForge'], ['beast', 'tBeast', 'vBeast'], ['arena', 'tArena', 'vArena'], ['world', 'tWorld', 'vWorld'], ['mine', 'tMine', 'vMine'], ['gal', 'tGal', 'vGal']]) { $(id).setAttribute('aria-pressed', String(k === v)); $(sec).hidden = k !== v; } if (v === 'mine') renderMine(); if (v === 'gal') renderGal(); if (v === 'forge') size(); if (v === 'beast') beastInit(); if (v === 'world') worldInit(); if (v === 'arena') { arenaInit(); monsterRow(); if (!AR.on) { AR.cam.position.set(0, 13, 11); AR.cam.lookAt(0, 0.5, 0); heldWeapon(); heldShield(); wearGear(); } } }
 $('tForge').onclick = () => show('forge'); $('tMine').onclick = () => show('mine'); $('tGal').onclick = () => show('gal'); $('tBeast').onclick = () => show('beast'); $('tWorld').onclick = () => show('world'); $('tArena').onclick = () => show('arena');
 
 grid = fromRows(TEMPS.sword); changed(); initGallery();
