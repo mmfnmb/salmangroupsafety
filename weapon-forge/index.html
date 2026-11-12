@@ -1,4 +1,4 @@
-<title>ورشة السلاح</title>
+<title>Weapon Forge</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lalezar&family=Cairo:wght@400;600;800&family=Silkscreen&display=swap">
@@ -156,60 +156,60 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
 @media (prefers-reduced-motion:reduce){.pop{animation-duration:.01s}.bar b{transition:none}}
 </style>
 
-<div class="wrap" dir="rtl">
+<div class="wrap" dir="ltr" lang="en">
   <header>
     <div>
-      <h1>ورشة السلاح</h1>
-      <p class="tag">ارسم سلاحك بكسل بكسل، وابني وحوشك مكعب مكعب، واعمل عوالمك ولعبتك بنفسك.</p>
+      <h1>Weapon Forge</h1>
+      <p class="tag">Draw your weapon pixel by pixel, build your monsters cube by cube, and make your own worlds and games.</p>
     </div>
-    <nav aria-label="الأقسام">
-      <button id="tForge" aria-pressed="true">الورشة</button>
-      <button id="tBeast" aria-pressed="false">الوحوش</button>
-      <button id="tArena" aria-pressed="false">الساحة</button>
-      <button id="tWorld" aria-pressed="false">اصنع لعبتك</button>
-      <button id="tMine" aria-pressed="false">سلاحي</button>
-      <button id="tGal" aria-pressed="false">المعرض</button>
+    <nav aria-label="Sections">
+      <button id="tForge" aria-pressed="true">Forge</button>
+      <button id="tBeast" aria-pressed="false">Monsters</button>
+      <button id="tArena" aria-pressed="false">Arena</button>
+      <button id="tWorld" aria-pressed="false">Make a Game</button>
+      <button id="tMine" aria-pressed="false">My Weapons</button>
+      <button id="tGal" aria-pressed="false">Gallery</button>
     </nav>
   </header>
 
   <section id="vForge" class="forge">
     <div class="panel">
-      <div class="anvil"><canvas id="grid" width="480" height="480" aria-label="شبكة الرسم"></canvas></div>
-      <div class="tools" role="toolbar" aria-label="الأدوات">
-        <button class="tool" id="toPen" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20l4-1 11-11-3-3L5 16z"/></svg>قلم</button>
-        <button class="tool" id="toErase" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 21h10M5 15l8-8 6 6-6 6H9z"/></svg>ممحاة</button>
-        <button class="tool" id="toFill" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 11l7-7 7 7-7 7z"/><path d="M20 16c0 2-1 3-2 3s-2-1-2-3 2-4 2-4 2 2 2 4z"/></svg>جردل</button>
-        <button class="tool" id="toMirror" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M8 7l-4 5 4 5M16 7l4 5-4 5"/></svg>مرآة</button>
-        <button class="tool" id="toUndo" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></svg>رجوع</button>
-        <button class="tool" id="toClear" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg><span>امسح</span></button>
+      <div class="anvil"><canvas id="grid" width="480" height="480" aria-label="Drawing grid"></canvas></div>
+      <div class="tools" role="toolbar" aria-label="Tools">
+        <button class="tool" id="toPen" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20l4-1 11-11-3-3L5 16z"/></svg>Pen</button>
+        <button class="tool" id="toErase" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 21h10M5 15l8-8 6 6-6 6H9z"/></svg>Eraser</button>
+        <button class="tool" id="toFill" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 11l7-7 7 7-7 7z"/><path d="M20 16c0 2-1 3-2 3s-2-1-2-3 2-4 2-4 2 2 2 4z"/></svg>Bucket</button>
+        <button class="tool" id="toMirror" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M8 7l-4 5 4 5M16 7l4 5-4 5"/></svg>Mirror</button>
+        <button class="tool" id="toUndo" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></svg>Undo</button>
+        <button class="tool" id="toClear" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg><span>Clear</span></button>
       </div>
-      <div class="label">الألوان: كل لون معدن أو عنصر</div>
+      <div class="label">Colors: every color is a metal or an element</div>
       <div class="pal" id="pal"></div>
-      <div class="label">ابدأ من سلاح جاهز</div>
+      <div class="label">Start from a ready weapon</div>
       <div class="temps" id="temps"></div>
     </div>
 
     <div class="panel">
-      <div class="stage" id="stage"><div class="pops" id="pops"></div><span class="hint">اسحب عشان تلف السلاح</span></div>
+      <div class="stage" id="stage"><div class="pops" id="pops"></div><span class="hint">Drag to spin the weapon</span></div>
       <div class="card" id="card">
-        <div class="nameRow"><input id="wName" maxlength="28" aria-label="اسم السلاح"><button class="btn alt" id="bName">اقترح اسم</button></div>
-        <div class="chips"><span class="chip rar" id="cRar"></span><span class="chip" id="cType"></span><span class="chip" id="cEl"></span><span class="power" id="cPow" title="القوة الكلية"></span></div>
+        <div class="nameRow"><input id="wName" maxlength="28" aria-label="Weapon name"><button class="btn alt" id="bName">Suggest a name</button></div>
+        <div class="chips"><span class="chip rar" id="cRar"></span><span class="chip" id="cType"></span><span class="chip" id="cEl"></span><span class="power" id="cPow" title="Total power"></span></div>
         <div class="stats" id="stats"></div>
-        <label class="chk"><input type="checkbox" id="wManual"> أنا اللي أحدد أرقام السلاح</label>
+        <label class="chk"><input type="checkbox" id="wManual"> I set the weapon’s numbers myself</label>
         <div class="sliders" id="wSliders" hidden>
-          <label>الضرر <input type="range" id="wsDmg" min="1" max="200"><output id="woDmg"></output></label>
-          <label>السرعة <input type="range" id="wsSpd" min="5" max="100"><output id="woSpd"></output></label>
-          <label>المدى <input type="range" id="wsReach" min="5" max="100"><output id="woReach"></output></label>
-          <label>الضربة الحرجة <input type="range" id="wsCrit" min="0" max="100"><output id="woCrit"></output></label>
-          <label>قوة العنصر <input type="range" id="wsElp" min="0" max="100"><output id="woElp"></output></label>
-          <label>العنصر <select id="wsEl"></select></label>
+          <label>Damage <input type="range" id="wsDmg" min="1" max="200"><output id="woDmg"></output></label>
+          <label>Speed <input type="range" id="wsSpd" min="5" max="100"><output id="woSpd"></output></label>
+          <label>Reach <input type="range" id="wsReach" min="5" max="100"><output id="woReach"></output></label>
+          <label>Critical hit <input type="range" id="wsCrit" min="0" max="100"><output id="woCrit"></output></label>
+          <label>Element power <input type="range" id="wsElp" min="0" max="100"><output id="woElp"></output></label>
+          <label>Element <select id="wsEl"></select></label>
         </div>
         <p class="desc" id="cDesc"></p>
         <div class="acts">
-          <button class="btn" id="bTest">جرّب على الدمية</button>
-          <button class="btn" id="bFight">حارب بيه الوحوش</button>
-          <button class="btn alt" id="bSave">احفظ في سلاحي</button>
-          <button class="btn alt" id="bPub">انشر في المعرض</button>
+          <button class="btn" id="bTest">Try it on the dummy</button>
+          <button class="btn" id="bFight">Fight monsters with it</button>
+          <button class="btn alt" id="bSave">Save to My Weapons</button>
+          <button class="btn alt" id="bPub">Publish to Gallery</button>
         </div>
       </div>
     </div>
@@ -217,118 +217,118 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
 
   <section id="vBeast" class="forge" hidden>
     <div class="panel">
-      <div class="shapeBar" id="shapeBar" hidden><b>بتصمم شكل الطلقة</b><span>ابنيها بالمكعبات زي أي وحش</span><button class="btn" id="shapeDone">خلّصت</button></div>
+      <div class="shapeBar" id="shapeBar" hidden><b>Designing the projectile</b><span>Build it from cubes like any monster</span><button class="btn" id="shapeDone">Done</button></div>
       <div class="bstage" id="bstage">
-        <div class="btools" role="toolbar" aria-label="أدوات المكعبات">
-          <button class="tool" id="bAdd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 8v8M8 12h8"/></svg>مكعب جديد</button>
-          <button class="tool" id="bMove" aria-pressed="true">تحريك</button>
-          <button class="tool" id="bSize" aria-pressed="false">تكبير</button>
-          <button class="tool" id="bTurn" aria-pressed="false">لف</button>
-          <button class="tool" id="bPaint" aria-pressed="false">ارسم على الوش</button>
+        <div class="btools" role="toolbar" aria-label="Cube tools">
+          <button class="tool" id="bAdd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 8v8M8 12h8"/></svg>New cube</button>
+          <button class="tool" id="bMove" aria-pressed="true">Move</button>
+          <button class="tool" id="bSize" aria-pressed="false">Scale</button>
+          <button class="tool" id="bTurn" aria-pressed="false">Rotate</button>
+          <button class="tool" id="bPaint" aria-pressed="false">Paint on a face</button>
         </div>
         <div class="btools bottom">
-          <button class="tool" id="bMulti" aria-pressed="false">تحديد كذا</button>
-          <button class="tool" id="bAll">حدد الكل</button>
-          <button class="tool" id="bCopy">نسخ</button>
-          <button class="tool" id="bPaste">لصق</button>
-          <button class="tool" id="bDup">كرّر</button>
-          <button class="tool" id="bMir">مرآة</button>
-          <button class="tool" id="bDel">امسح</button>
-          <button class="tool" id="bUndo">رجوع</button>
+          <button class="tool" id="bMulti" aria-pressed="false">Multi-select</button>
+          <button class="tool" id="bAll">Select all</button>
+          <button class="tool" id="bCopy">Copy</button>
+          <button class="tool" id="bPaste">Paste</button>
+          <button class="tool" id="bDup">Duplicate</button>
+          <button class="tool" id="bMir">Mirror</button>
+          <button class="tool" id="bDel">Clear</button>
+          <button class="tool" id="bUndo">Undo</button>
         </div>
       </div>
       <div class="desc" id="bSelInfo" aria-live="polite"></div>
-      <div class="desc">اختصارات: Ctrl+C نسخ · Ctrl+V لصق · Ctrl+D كرّر · Delete امسح · Ctrl+Z رجوع · 1 تحريك · 2 تكبير · 3 لف · 4 رسم · Shift+كليك تحديد كذا مكعب</div>
-      <div class="label">لون المكعب (أو لون الريشة لما ترسم على الوش)</div>
+      <div class="desc">Shortcuts: Ctrl+C Copy · Ctrl+V Paste · Ctrl+D Duplicate · Delete Clear · Ctrl+Z Undo · 1 Move · 2 Scale · 3 Rotate · 4 Paint · Shift+Click to select several cubes</div>
+      <div class="label">Cube color (or brush color when painting a face)</div>
       <div class="pal" id="bpal"></div>
-      <div class="label">ابدأ من وحش جاهز</div>
+      <div class="label">Start from a ready monster</div>
       <div class="temps" id="btemps"></div>
     </div>
     <div class="panel">
       <div class="card" id="bcard">
-        <div class="nameRow"><input id="bName" maxlength="28" aria-label="اسم الوحش"><button class="btn alt" id="bNameGo">اقترح اسم</button></div>
+        <div class="nameRow"><input id="bName" maxlength="28" aria-label="Monster name"><button class="btn alt" id="bNameGo">Suggest a name</button></div>
         <div class="chips"><span class="chip rar" id="bRar"></span><span class="chip" id="bEl"></span><span class="chip" id="bWeak"></span><span class="power" id="bPow"></span></div>
         <div class="stats" id="bStats"></div>
-        <label class="chk"><input type="checkbox" id="bFly"> الوحش ده بيطير</label>
-        <label class="chk"><input type="checkbox" id="bManual"> أنا اللي أحدد أرقامه</label>
+        <label class="chk"><input type="checkbox" id="bFly"> This monster flies</label>
+        <label class="chk"><input type="checkbox" id="bManual"> I set its numbers myself</label>
         <div class="sliders" id="bSliders" hidden>
-          <label>الصحة <input type="range" id="sHp" min="10" max="1500" step="10"><output id="oHp"></output></label>
-          <label>قوة الضربة <input type="range" id="sDmg" min="1" max="80"><output id="oDmg"></output></label>
-          <label>السرعة <input type="range" id="sSpd" min="0.5" max="8" step="0.1"><output id="oSpd"></output></label>
-          <label>العنصر <select id="sEl"></select></label>
+          <label>Health <input type="range" id="sHp" min="10" max="1500" step="10"><output id="oHp"></output></label>
+          <label>Hit power <input type="range" id="sDmg" min="1" max="80"><output id="oDmg"></output></label>
+          <label>Speed <input type="range" id="sSpd" min="0.5" max="8" step="0.1"><output id="oSpd"></output></label>
+          <label>Element <select id="sEl"></select></label>
         </div>
-        <div class="roleRow" id="roleRow" hidden><span class="label">الجزء ده:</span><select id="bRole" aria-label="دور الجزء"></select></div>
-        <div class="acts"><button class="btn alt" id="pvWalk">جرّب: مشي</button><button class="btn alt" id="pvAtk">جرّب: هجوم</button><button class="btn alt" id="pvDie">جرّب: موت</button><button class="btn alt" id="bFuse">ادمج مع وحش تاني</button></div>
+        <div class="roleRow" id="roleRow" hidden><span class="label">This part:</span><select id="bRole" aria-label="Part role"></select></div>
+        <div class="acts"><button class="btn alt" id="pvWalk">Test: walk</button><button class="btn alt" id="pvAtk">Test: attack</button><button class="btn alt" id="pvDie">Test: death</button><button class="btn alt" id="bFuse">Fuse with another monster</button></div>
         <div class="abil">
-          <div class="label">قدرات الوحش</div>
+          <div class="label">Monster abilities</div>
           <div id="abList" class="abList"></div>
-          <textarea id="abText" rows="2" maxlength="300" placeholder="اكتب القدرة بكلامك، مثلاً: لما اللاعب يقرّب يولّع فتيل ويتفرقع. أو: كل 3 ثواني يرمي 3 كور نار."></textarea>
-          <div class="acts"><button class="btn" id="abMake">حوّلها لقدرة</button><button class="btn alt" id="abNew">قدرة من القايمة</button></div>
+          <textarea id="abText" rows="2" maxlength="300" placeholder="Write the ability in your own words, e.g.: when the player gets close it lights a fuse and explodes. Or: every 3 seconds it throws 3 fireballs."></textarea>
+          <div class="acts"><button class="btn" id="abMake">Turn into an ability</button><button class="btn alt" id="abNew">Ability from the list</button></div>
           <div class="abForm" id="abForm" hidden>
-            <label>اسم القدرة <input id="afName" maxlength="30"></label>
-            <label>تشتغل إمتى <select id="afWhen"><option value="near">لما اللاعب يقرّب (مسافة)</option><option value="every">كل كام ثانية</option><option value="hit">لما يتضرب</option><option value="low">لما صحته تقل عن (٪)</option><option value="death">لما يموت</option></select></label>
-            <label data-w="near every low">الرقم <input type="number" id="afWv" min="0" max="100" step="0.5"></label>
-            <label>بيعمل إيه <select id="afAct"><option value="shoot">يرمي طلقات</option><option value="explode">يتفرقع (فتيل)</option><option value="dash">يندفع عليك</option><option value="slam">ينط ويخبط الأرض</option><option value="summon">يطلّع وحوش</option><option value="heal">يعالج نفسه</option><option value="shield">يعمل درع</option><option value="teleport">ينتقل وراك</option></select></label>
-            <label data-a="shoot explode dash slam">الضرر <input type="number" id="afDmg" min="1" max="200"></label>
-            <label data-a="shoot explode slam">نص قطر الانفجار <input type="number" id="afRad" min="0" max="12" step="0.5"></label>
-            <label data-a="shoot">عدد الطلقات <input type="number" id="afN" min="1" max="12"></label>
-            <label data-a="shoot">سرعة الطلقة <input type="number" id="afSpd" min="2" max="30"></label>
-            <label data-a="shoot explode">العنصر <select id="afEl"></select></label>
-            <label data-a="explode">وقت الفتيل (ثانية) <input type="number" id="afFuse" min="0" max="5" step="0.1"></label>
-            <label data-a="heal">العلاج <input type="number" id="afAmt" min="1" max="500"></label>
-            <label data-a="shield">مدة الدرع <input type="number" id="afSec" min="0.5" max="10" step="0.5"></label>
-            <label data-a="summon">يطلّع مين <select id="afWho"></select></label>
-            <label data-a="summon">كام واحد <input type="number" id="afCnt" min="1" max="6"></label>
-            <label>يستنّى قد إيه بين كل مرة (ثانية) <input type="number" id="afCd" min="0" max="30" step="0.5"></label>
-            <div class="acts"><button class="btn alt" id="afShape" data-a="shoot explode">ارسم شكل الطلقة بالمكعبات</button><button class="btn" id="afSave">احفظ القدرة</button><button class="btn alt" id="afCancel">إلغاء</button></div>
+            <label>Ability name <input id="afName" maxlength="30"></label>
+            <label>When it triggers <select id="afWhen"><option value="near">When the player is near (distance)</option><option value="every">Every few seconds</option><option value="hit">When it gets hit</option><option value="low">When its health drops below (%)</option><option value="death">When it dies</option></select></label>
+            <label data-w="near every low">Value <input type="number" id="afWv" min="0" max="100" step="0.5"></label>
+            <label>What it does <select id="afAct"><option value="shoot">Shoots projectiles</option><option value="explode">Explodes (fuse)</option><option value="dash">Dashes at you</option><option value="slam">Jumps and slams the ground</option><option value="summon">Summons monsters</option><option value="heal">Heals itself</option><option value="shield">Makes a shield</option><option value="teleport">Teleports behind you</option></select></label>
+            <label data-a="shoot explode dash slam">Damage <input type="number" id="afDmg" min="1" max="200"></label>
+            <label data-a="shoot explode slam">Blast radius <input type="number" id="afRad" min="0" max="12" step="0.5"></label>
+            <label data-a="shoot">Number of shots <input type="number" id="afN" min="1" max="12"></label>
+            <label data-a="shoot">Shot speed <input type="number" id="afSpd" min="2" max="30"></label>
+            <label data-a="shoot explode">Element <select id="afEl"></select></label>
+            <label data-a="explode">Fuse time (sec) <input type="number" id="afFuse" min="0" max="5" step="0.1"></label>
+            <label data-a="heal">Heal amount <input type="number" id="afAmt" min="1" max="500"></label>
+            <label data-a="shield">Shield time <input type="number" id="afSec" min="0.5" max="10" step="0.5"></label>
+            <label data-a="summon">Summons who <select id="afWho"></select></label>
+            <label data-a="summon">How many <input type="number" id="afCnt" min="1" max="6"></label>
+            <label>Wait between uses (sec) <input type="number" id="afCd" min="0" max="30" step="0.5"></label>
+            <div class="acts"><button class="btn alt" id="afShape" data-a="shoot explode">Draw the projectile with cubes</button><button class="btn" id="afSave">Save ability</button><button class="btn alt" id="afCancel">Cancel</button></div>
           </div>
         </div>
-        <div class="fuse" id="fuseBox" hidden><span class="label">اختار الوحش اللي هيتدمج مع اللي قدامك</span><div class="temps" id="fuseList"></div></div>
+        <div class="fuse" id="fuseBox" hidden><span class="label">Pick the monster to fuse with the one in front of you</span><div class="temps" id="fuseList"></div></div>
         <p class="desc" id="bDesc"></p>
         <div class="acts">
-          <button class="btn" id="bFightB">حاربه في الساحة</button>
-          <button class="btn alt" id="bSaveB">احفظ في وحوشي</button>
-          <button class="btn alt" id="bNew">وحش جديد</button>
+          <button class="btn" id="bFightB">Fight it in the Arena</button>
+          <button class="btn alt" id="bSaveB">Save to My Monsters</button>
+          <button class="btn alt" id="bNew">New monster</button>
         </div>
       </div>
-      <div class="label">وحوشي (بتنزل الساحة مع الوحوش الجاهزة)</div>
+      <div class="label">My Monsters (they join the Arena with the ready-made ones)</div>
       <div class="list" id="myBeasts"></div>
     </div>
     <div class="paint" id="paintBox" hidden>
-      <div class="pcard"><b id="paintT">ارسم على الوش</b><canvas id="paintCv" width="320" height="320"></canvas>
-        <div class="acts"><button class="btn alt" id="paintCopy">انسخ الرسمة</button><button class="btn alt" id="paintPaste">الصق الرسمة</button><button class="btn alt" id="paintErase">ممحاة</button><button class="btn alt" id="paintClear">امسح الوش</button><button class="btn" id="paintDone">تمام</button></div></div>
+      <div class="pcard"><b id="paintT">Paint on a face</b><canvas id="paintCv" width="320" height="320"></canvas>
+        <div class="acts"><button class="btn alt" id="paintCopy">Copy drawing</button><button class="btn alt" id="paintPaste">Paste drawing</button><button class="btn alt" id="paintErase">Eraser</button><button class="btn alt" id="paintClear">Clear face</button><button class="btn" id="paintDone">OK</button></div></div>
     </div>
   </section>
 
   <section id="vWorld" hidden>
     <div class="wbar">
-      <input id="gName" maxlength="28" aria-label="اسم اللعبة" placeholder="اسم لعبتك">
-      <button class="btn" id="gPlay">العب</button><button class="btn alt" id="gSave">احفظ</button><button class="btn alt" id="gNew">جديدة</button><button class="btn alt" id="gMine">ألعابي</button>
+      <input id="gName" maxlength="28" aria-label="Game name" placeholder="Your game’s name">
+      <button class="btn" id="gPlay">Play</button><button class="btn alt" id="gSave">Save</button><button class="btn alt" id="gNew">New</button><button class="btn alt" id="gMine">My Games</button>
     </div>
     <div class="wtabs" id="wTabs"></div>
     <div class="wstage" id="wstage">
-      <div class="btools" role="toolbar" aria-label="أدوات العالم">
-        <button class="tool" id="wtPlace" aria-pressed="true">حط (واسحب)</button>
-        <button class="tool" id="wtRect" aria-pressed="false">مستطيل</button>
-        <button class="tool" id="wtSel" aria-pressed="false">اختار</button>
-        <button class="tool" id="wtErase" aria-pressed="false">امسح</button>
-        <button class="tool" id="wtTurn">لف</button>
-        <button class="tool" id="wtCam" aria-pressed="false">كاميرا</button>
-        <button class="tool" id="wtMore" aria-pressed="false">إعدادات</button>
+      <div class="btools" role="toolbar" aria-label="World tools">
+        <button class="tool" id="wtPlace" aria-pressed="true">Place (and drag)</button>
+        <button class="tool" id="wtRect" aria-pressed="false">Rectangle</button>
+        <button class="tool" id="wtSel" aria-pressed="false">Select</button>
+        <button class="tool" id="wtErase" aria-pressed="false">Erase</button>
+        <button class="tool" id="wtTurn">Rotate</button>
+        <button class="tool" id="wtCam" aria-pressed="false">Camera</button>
+        <button class="tool" id="wtMore" aria-pressed="false">Settings</button>
       </div>
-      <div class="wpanel" id="wProps" hidden><button class="x" id="wpX" aria-label="اقفل">×</button><b id="wpT"></b><div class="abForm" id="wpF"></div></div>
+      <div class="wpanel" id="wProps" hidden><button class="x" id="wpX" aria-label="Close">×</button><b id="wpT"></b><div class="abForm" id="wpF"></div></div>
       <div class="wpanel" id="wMore" hidden>
-        <div class="wopts"><label>الأرض <select id="wGround"></select></label><label>ارتفاع المستطيل <input type="number" id="wH" min="1" max="8" value="1"></label><label class="chk"><input type="checkbox" id="wHollow"> مستطيل فاضي من جوه</label><button class="btn alt" id="gClear">فضّي العالم ده</button></div>
+        <div class="wopts"><label>Ground <select id="wGround"></select></label><label>Rectangle height <input type="number" id="wH" min="1" max="8" value="1"></label><label class="chk"><input type="checkbox" id="wHollow"> Hollow rectangle</label><button class="btn alt" id="gClear">Empty this world</button></div>
         <span class="desc" id="wCount"></span>
-        <p class="desc">الكاميرا: زرار الماوس اليمين يلف والعجلة تقرّب، أو صباعين على الموبايل، أو زرار "كاميرا". الصندوق البلّاع بيدخّلك عالم تاني، ولو حطيت علم بتكسب لما توصله.</p>
+        <p class="desc">Camera: right mouse button rotates and the wheel zooms, or two fingers on a phone, or the button "Camera". The swallowing box takes you to another world, and if you place a flag you win when you reach it.</p>
       </div>
-      <div class="wpanel" id="myGamesBox" hidden><b>ألعابي</b><div class="list" id="myGames"></div></div>
+      <div class="wpanel" id="myGamesBox" hidden><b>My Games</b><div class="list" id="myGames"></div></div>
       <div class="aidock" id="aiBox">
-        <div class="aiLog" id="aiLog"><div class="bot">أنا مساعدك. قولّي تبني إيه، مثلاً: "قلعة طوب في النص وحواليها حمم وجواها تنين".</div></div>
-        <div class="aiPics" id="aiPics" hidden></div><div class="aiRow"><button class="tool" id="aiToggle" aria-label="خبّي المساعد">✦</button><label class="tool picBtn" id="aiPic" title="ارفع صور">📷<input type="file" id="aiFile" accept="image/*" multiple aria-label="ارفع صور"></label><img id="aiThumb" alt="" hidden><input id="aiText" maxlength="500" placeholder="قول للمساعد يبني إيه…"><button class="btn" id="aiGo">ابنيه</button><button class="btn alt" id="aiUndo" disabled>رجّع</button></div>
+        <div class="aiLog" id="aiLog"><div class="bot">I’m your assistant. Tell me what to build, e.g.: "a brick castle in the middle with lava around it and a dragon inside".</div></div>
+        <div class="aiPics" id="aiPics" hidden></div><div class="aiRow"><button class="tool" id="aiToggle" aria-label="Hide the assistant">✦</button><label class="tool picBtn" id="aiPic" title="Upload pictures">📷<input type="file" id="aiFile" accept="image/*" multiple aria-label="Upload pictures"></label><img id="aiThumb" alt="" hidden><input id="aiText" maxlength="500" placeholder="Tell the assistant what to build…"><button class="btn" id="aiGo">Build it</button><button class="btn alt" id="aiUndo" disabled>Undo</button></div>
       </div>
     </div>
-    <div class="wcats" id="wCats"><button data-c="block" aria-pressed="true">مكعبات</button><button data-c="tile" aria-pressed="false">أرضيات</button><button data-c="smart" aria-pressed="false">حاجات بتعمل حاجات</button><button data-c="mon" aria-pressed="false">وحوش</button><button data-c="custom" aria-pressed="false">اختراعات</button></div>
+    <div class="wcats" id="wCats"><button data-c="block" aria-pressed="true">Blocks</button><button data-c="tile" aria-pressed="false">Floors</button><button data-c="smart" aria-pressed="false">Things that do things</button><button data-c="mon" aria-pressed="false">Monsters</button><button data-c="custom" aria-pressed="false">Inventions</button></div>
     <div class="istrip" id="wItems"></div>
   </section>
 
@@ -336,12 +336,12 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
     <div class="arena" id="arena">
       <div class="pops" id="apops"></div>
       <div class="hud"><span id="aWave"></span><span class="hp"><b id="aHp"></b></span><span id="aScore"></span></div>
-      <button class="tool camBtn" id="aCam">الكاميرا</button><button class="tool fsBtn" id="aFull" aria-label="شاشة كاملة">⛶ شاشة كاملة</button>
-      <div class="ov" id="aOv"><h2 id="aOvT">ساحة الوحوش</h2><p id="aOvP">انزل بالسلاح اللي في الورشة واصمد قدام موجات الوحوش. كل وحش ليه عنصر بيضعف قدامه.</p><div class="acts" style="justify-content:center"><button class="btn" id="aGo">ابدأ</button><button class="btn alt" id="aEdit" hidden>ارجع عدّل العالم</button></div></div>
+      <button class="tool camBtn" id="aCam">Camera</button><button class="tool fsBtn" id="aFull" aria-label="Full screen">⛶ Full screen</button>
+      <div class="ov" id="aOv"><h2 id="aOvT">Monster Arena</h2><p id="aOvP">Take the weapon from your forge and survive waves of monsters. Every monster has an element it’s weak to.</p><div class="acts" style="justify-content:center"><button class="btn" id="aGo">Start</button><button class="btn alt" id="aEdit" hidden>Back to editing the world</button></div></div>
       <div class="joy" id="joy"><i id="joyK"></i></div>
-      <button class="hit" id="aHit" aria-label="اضرب">اضرب</button><button class="hit act" id="aAct" aria-label="حركة خاصة" hidden>✦</button>
+      <button class="hit" id="aHit" aria-label="Hit">Hit</button><button class="hit act" id="aAct" aria-label="Special move" hidden>✦</button>
     </div>
-    <p class="desc" id="aHelp">الحركة: WASD أو الأسهم · لف الكاميرا: اسحب على الشاشة أو Q و E · الضرب: مسافة أو كليك · C تغيّر الكاميرا. على الموبايل: اتحرك بالدايرة الشمال، واسحب بصباع تاني على الشاشة عشان تلف، واضرب بالزرار.</p>
+    <p class="desc" id="aHelp">Move: WASD or arrows · turn the camera: drag on the screen or Q and E · Hit: Space or click · C changes the camera. On a phone: move with the left circle, drag with another finger to turn, and hit with the button.</p>
     <div class="list" id="bestiary" style="margin-top:12px"></div>
   </section>
 
@@ -350,7 +350,7 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
   </section>
 
   <section id="vGal" hidden>
-    <div class="who"><span class="label">اسمك في المعرض</span><input id="nick" maxlength="20" aria-label="اسمك في المعرض"><small class="desc" id="galState"></small></div>
+    <div class="who"><span class="label">Your name in the Gallery</span><input id="nick" maxlength="20" aria-label="Your name in the Gallery"><small class="desc" id="galState"></small></div>
     <div class="list" id="gal" style="margin-top:12px"></div>
   </section>
 </div>
@@ -366,36 +366,36 @@ const N = 24;
 // the palette: what each colour is made of. el = the element it gives the weapon
 const PAL = [
   { c: '.', hex: null },
-  { c: 'S', hex: '#cfd8e2', name: 'فولاذ', d: 1.0 },
-  { c: 's', hex: '#6f7b89', name: 'حديد', d: 1.1 },
-  { c: 'k', hex: '#24262b', name: 'أسود', d: 1.2 },
-  { c: 'w', hex: '#8a5a35', name: 'خشب', d: 0.5 },
-  { c: 'G', hex: '#e2b043', name: 'دهب', d: 1.4 },
-  { c: 'W', hex: '#f6f3ea', name: 'نور', d: 0.6, el: 'light' },
-  { c: 'r', hex: '#e5484d', name: 'نار', d: 0.7, el: 'fire' },
-  { c: 'o', hex: '#ff8a3d', name: 'جمر', d: 0.7, el: 'fire' },
-  { c: 'b', hex: '#3d8bff', name: 'تلج', d: 0.7, el: 'ice' },
-  { c: 'c', hex: '#9ae6ff', name: 'صقيع', d: 0.7, el: 'ice' },
-  { c: 'y', hex: '#ffe14d', name: 'برق', d: 0.7, el: 'bolt' },
-  { c: 'g', hex: '#46c96b', name: 'سم', d: 0.7, el: 'poison' },
-  { c: 'p', hex: '#9b5cff', name: 'ظل', d: 0.7, el: 'shadow' },
+  { c: 'S', hex: '#cfd8e2', name: 'Steel', d: 1.0 },
+  { c: 's', hex: '#6f7b89', name: 'Iron', d: 1.1 },
+  { c: 'k', hex: '#24262b', name: 'Black', d: 1.2 },
+  { c: 'w', hex: '#8a5a35', name: 'Wood', d: 0.5 },
+  { c: 'G', hex: '#e2b043', name: 'Gold', d: 1.4 },
+  { c: 'W', hex: '#f6f3ea', name: 'Light', d: 0.6, el: 'light' },
+  { c: 'r', hex: '#e5484d', name: 'Fire', d: 0.7, el: 'fire' },
+  { c: 'o', hex: '#ff8a3d', name: 'Ember', d: 0.7, el: 'fire' },
+  { c: 'b', hex: '#3d8bff', name: 'Ice', d: 0.7, el: 'ice' },
+  { c: 'c', hex: '#9ae6ff', name: 'Frost', d: 0.7, el: 'ice' },
+  { c: 'y', hex: '#ffe14d', name: 'Lightning', d: 0.7, el: 'bolt' },
+  { c: 'g', hex: '#46c96b', name: 'Poison', d: 0.7, el: 'poison' },
+  { c: 'p', hex: '#9b5cff', name: 'Shadow', d: 0.7, el: 'shadow' },
 ];
 const CI = Object.fromEntries(PAL.map((p, i) => [p.c, i]));
 const EL = {
-  fire: { name: 'نار', col: '#ff7a2f', words: ['اللهب', 'البركان', 'الجمر'], fx: 'يولّع في اللي يضربه ويفضل يحرق' },
-  ice: { name: 'تلج', col: '#7cc8ff', words: ['الصقيع', 'الجليد', 'الشتا'], fx: 'يجمّد اللي يضربه ويبطّأه' },
-  bolt: { name: 'برق', col: '#ffe14d', words: ['البرق', 'الرعد', 'العاصفة'], fx: 'البرق بينط منه لأقرب عدو' },
-  poison: { name: 'سم', col: '#46c96b', words: ['الأفعى', 'السم', 'المستنقع'], fx: 'يسمّم اللي يضربه وينزل منه شوية شوية' },
-  shadow: { name: 'ظل', col: '#a77bff', words: ['الظل', 'الليل', 'الكسوف'], fx: 'يسرق شوية من طاقة اللي يضربه' },
-  light: { name: 'نور', col: '#fff6d6', words: ['النور', 'الفجر', 'الشمس'], fx: 'يعمي اللي يضربه ثانية' },
-  none: { name: 'معدن', col: '#cfd8e2', words: ['الحديد', 'الفولاذ', 'المحارب'], fx: 'ضربة صافية من غير سحر' },
+  fire: { name: 'Fire', col: '#ff7a2f', words: ['Flame', 'Volcano', 'Embers'], fx: 'Sets what it hits on fire and keeps burning it' },
+  ice: { name: 'Ice', col: '#7cc8ff', words: ['Frost', 'Glacier', 'Winter'], fx: 'Freezes what it hits and slows it down' },
+  bolt: { name: 'Lightning', col: '#ffe14d', words: ['Lightning', 'Thunder', 'Storm'], fx: 'Lightning jumps from it to the nearest enemy' },
+  poison: { name: 'Poison', col: '#46c96b', words: ['Viper', 'Venom', 'Swamp'], fx: 'Poisons what it hits, draining it little by little' },
+  shadow: { name: 'Shadow', col: '#a77bff', words: ['Shadow', 'Night', 'Eclipse'], fx: 'Steals some energy from what it hits' },
+  light: { name: 'Light', col: '#fff6d6', words: ['Light', 'Dawn', 'Sun'], fx: 'Blinds what it hits for a second' },
+  none: { name: 'Metal', col: '#cfd8e2', words: ['Iron', 'Steel', 'Warrior'], fx: 'A clean hit with no magic' },
 };
 const RAR = [
-  { min: 0, name: 'عادي', col: 'var(--r-common)' }, { min: 160, name: 'نادر', col: 'var(--r-rare)' }, { min: 200, name: 'ملحمي', col: 'var(--r-epic)' },
-  { min: 235, name: 'أسطوري', col: 'var(--r-legend)' }, { min: 265, name: 'خرافي', col: 'var(--r-myth)' },
+  { min: 0, name: 'Common', col: 'var(--r-common)' }, { min: 160, name: 'Rare', col: 'var(--r-rare)' }, { min: 200, name: 'Epic', col: 'var(--r-epic)' },
+  { min: 235, name: 'Legendary', col: 'var(--r-legend)' }, { min: 265, name: 'Mythic', col: 'var(--r-myth)' },
 ];
 const TEMPS = {"sword": ["...........SS...........", "..........Sors..........", "..........Sros..........", "..........Sors..........", "..........Sros..........", "..........Sors..........", "..........Sros..........", "..........Sors..........", "..........Sros..........", "..........Sors..........", "..........Sros..........", "..........Sors..........", "..........Sros..........", "..........Sors..........", ".......G..Sros..G.......", ".......GGGGGGGGGG.......", "........GGGGGGGG........", "...........wk...........", "...........kw...........", "...........wk...........", "...........kw...........", "..........GGGG..........", "...........rr...........", "........................"], "axe": ["........................", "............ssss........", ".........ccSSww.........", ".......ccSSSSww.........", ".....ccSSSSSSwkss.......", "....cbSSSSSSSwwsss......", "...cbSSSSSSSSwwsss......", "...cbSSSSSSSSwwsss......", "....cbSSSSSSSwkss.......", ".....ccSSSSSSww.........", ".......ccSSSSww.........", ".........ccSSww.........", ".............wk.........", ".............ww.........", ".............ww.........", ".............ww.........", ".............wk.........", ".............ww.........", ".............ww.........", ".............ww.........", ".............wk.........", ".............ww.........", "............kkkk........", "........................"], "hammer": ["........................", "........................", ".....SSSSSSSSSSSSSS.....", "....kSsssysssssssssk....", "....kSssssysyssssssk....", "....kSsssssysysssssk....", "....kSssssssssyssssk....", "....kSsssssssssysssk....", ".....Ssssssssssssss.....", "..........GGGG..........", "...........ww...........", "...........ww...........", "...........wk...........", "...........ww...........", "...........ww...........", "...........wk...........", "...........ww...........", "...........ww...........", "...........wk...........", "...........ww...........", "...........ww...........", "...........wk...........", "..........GGGG..........", "........................"], "staff": ["........................", "..........p..p..........", ".........p.pp.p.........", "..........pWpp..........", "........p.ppkp.p........", "..........pppp..........", "........Gp.pp.pG........", ".........GGGGGG.........", "...........ww...........", "...........ww...........", "...........kw...........", "...........ww...........", "...........ww...........", "...........ww...........", "...........ww...........", "...........kw...........", "...........ww...........", "...........ww...........", "...........ww...........", "...........ww...........", "...........kw...........", "...........ww...........", "...........ww...........", "...........GG..........."]};
-const TEMP_NAMES = { sword: 'سيف نار', axe: 'فأس تلج', hammer: 'مطرقة برق', staff: 'عصاية ظل' };
+const TEMP_NAMES = { sword: 'Fire Sword', axe: 'Ice Axe', hammer: 'Lightning Hammer', staff: 'Shadow Staff' };
 const store = { get(k, d) { try { const v = localStorage.getItem('forge.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } }, set(k, v) { try { localStorage.setItem('forge.' + k, JSON.stringify(v)); } catch { /* storage blocked */ } } };
 
 // ---------------------------------------------------------------- the drawing
@@ -426,7 +426,7 @@ $('toPen').onclick = () => setTool('pen'); $('toErase').onclick = () => setTool(
 $('toMirror').onclick = () => { mirror = !mirror; $('toMirror').setAttribute('aria-pressed', String(mirror)); drawGrid(); };
 $('toUndo').onclick = () => { if (undo.length) { grid = undo.pop(); changed(); } };
 let clearArm = 0;
-$('toClear').onclick = () => { const sp = $('toClear').querySelector('span'); if (!clearArm) { clearArm = setTimeout(() => { clearArm = 0; sp.textContent = 'امسح'; }, 2500); sp.textContent = 'متأكد؟'; return; } clearTimeout(clearArm); clearArm = 0; sp.textContent = 'امسح'; undo.push(grid.slice()); grid = new Uint8Array(N * N); changed(); };
+$('toClear').onclick = () => { const sp = $('toClear').querySelector('span'); if (!clearArm) { clearArm = setTimeout(() => { clearArm = 0; sp.textContent = 'Clear'; }, 2500); sp.textContent = 'Sure?'; return; } clearTimeout(clearArm); clearArm = 0; sp.textContent = 'Clear'; undo.push(grid.slice()); grid = new Uint8Array(N * N); changed(); };
 const pal = $('pal');
 PAL.forEach((p, i) => { if (!i) return; const b = document.createElement('button'); b.className = 'sw'; b.setAttribute('aria-pressed', String(i === color)); b.setAttribute('aria-label', p.name); b.innerHTML = `<i style="background:${p.hex}"></i><span>${p.name}</span>`; b.onclick = () => { color = i; if (tool === 'erase') setTool('pen'); pal.querySelectorAll('.sw').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); }; pal.appendChild(b); });
 for (const k in TEMPS) { const b = document.createElement('button'); b.className = 'temp'; b.textContent = TEMP_NAMES[k]; b.onclick = () => { undo.push(grid.slice()); grid = fromRows(TEMPS[k]); $('wName').value = ''; nameTouched = false; changed(); }; $('temps').appendChild(b); }
@@ -466,22 +466,22 @@ function analyse(g) {
   const crit = clamp(tips * 4 + (shaft <= 3 ? 10 : 0), 0, 60);
   const elp = el === 'none' ? 0 : clamp(etot / n * 160, 5, 100);
   let type;
-  if (n < 30 || L < 9) type = 'خنجر';
-  else if (headEl > 0.45 && shaft <= 3) type = 'عصاية سحر';
-  else if (headW >= 2.6 * shaft && headAsym > 1.8) type = 'فأس';
-  else if (headW >= 2.6 * shaft) type = 'مطرقة';
-  else if (shaft <= 2 && el !== 'none' && L >= 14) type = 'عصاية سحر';
-  else if (shaft <= 2 && L >= 16) type = 'رمح';
-  else type = 'سيف';
+  if (n < 30 || L < 9) type = 'Dagger';
+  else if (headEl > 0.45 && shaft <= 3) type = 'Magic Staff';
+  else if (headW >= 2.6 * shaft && headAsym > 1.8) type = 'Axe';
+  else if (headW >= 2.6 * shaft) type = 'Hammer';
+  else if (shaft <= 2 && el !== 'none' && L >= 14) type = 'Magic Staff';
+  else if (shaft <= 2 && L >= 16) type = 'Spear';
+  else type = 'Sword';
   const power = Math.round(dmg * 1.1 + spd * 0.45 + reach * 0.4 + crit * 0.8 + elp * 0.7 + sym * 18 + Math.min(15, gold * 0.6));
   const rar = [...RAR].reverse().find((r) => power >= r.min);
   return { n, dmg, spd, reach, crit, elp, el, type, power, rar, sym };
 }
 function nameFor(a) {
-  const e = EL[a.el], fem = ['مطرقة', 'عصاية سحر'].includes(a.type);
-  const adj = (fem ? { 'عادي': ['الصغيرة', 'الطيبة', 'بتاعة الحتة'], 'نادر': ['الحادة', 'السريعة', 'اللامعة'], 'ملحمي': ['الملكية', 'المرعبة', 'العنيدة'], 'أسطوري': ['الأسطورية', 'اللي ملهاش حل', 'العظيمة'], 'خرافي': ['الخرافية', 'اللي هزّت الأرض', 'نهاية العالم'] } : { 'عادي': ['الصغير', 'الطيب', 'بتاع الحتة'], 'نادر': ['الحاد', 'السريع', 'اللامع'], 'ملحمي': ['الملكي', 'المرعب', 'العنيد'], 'أسطوري': ['الأسطوري', 'اللي ملوش حل', 'العظيم'], 'خرافي': ['الخرافي', 'اللي هزّ الأرض', 'نهاية العالم'] })[a.rar.name];
+  const e = EL[a.el], fem = ['Hammer', 'Magic Staff'].includes(a.type);
+  const adj = (fem ? { 'Common': ['Little', 'Kind', 'Local'], 'Rare': ['Sharp', 'Swift', 'Shining'], 'Epic': ['Royal', 'Terrifying', 'Stubborn'], 'Legendary': ['Legendary', 'Unstoppable', 'Mighty'], 'Mythic': ['Mythic', 'Earth-Shaking', 'World-Ending'] } : { 'Common': ['Little', 'Kind', 'Local'], 'Rare': ['Sharp', 'Swift', 'Shining'], 'Epic': ['Royal', 'Terrifying', 'Stubborn'], 'Legendary': ['Legendary', 'Unstoppable', 'Mighty'], 'Mythic': ['Mythic', 'Earth-Shaking', 'World-Ending'] })[a.rar.name];
   const pick = (l) => l[Math.floor(Math.random() * l.length)];
-  return `${a.type} ${pick(e.words)} ${pick(adj)}`;
+  return `The ${pick(adj)} ${a.type} of ${pick(e.words)}`;
 }
 let nameTouched = false, A = null, WOV = null;
 // your own numbers for the weapon (when ticked) replace the ones worked out from the drawing
@@ -497,13 +497,13 @@ $('wsEl').onchange = () => { if (WOV) { WOV.el = $('wsEl').value; renderCard(); 
 function renderCard() {
   A = withOv(analyse(grid)); const card = $('card'); syncW();
   for (const id of ['bTest', 'bFight', 'bSave', 'bPub']) $(id).disabled = !A;
-  if (!A) { card.style.setProperty('--rc', 'var(--edge)'); $('cRar').textContent = 'ارسم سلاحك'; $('cType').textContent = ''; $('cEl').textContent = ''; $('cPow').textContent = ''; $('stats').innerHTML = ''; $('cDesc').textContent = 'اختار لون وارسم على الشبكة، أو ابدأ من سلاح جاهز.'; return; }
+  if (!A) { card.style.setProperty('--rc', 'var(--edge)'); $('cRar').textContent = 'Draw your weapon'; $('cType').textContent = ''; $('cEl').textContent = ''; $('cPow').textContent = ''; $('stats').innerHTML = ''; $('cDesc').textContent = 'Pick a color and draw on the grid, or start from a ready weapon.'; return; }
   card.style.setProperty('--rc', A.rar.col);
   if (!nameTouched) $('wName').value = nameFor(A);
-  $('cRar').textContent = A.rar.name; $('cType').textContent = A.type; $('cEl').textContent = 'العنصر: ' + EL[A.el].name; $('cEl').style.color = EL[A.el].col; $('cPow').textContent = A.power;
-  const rows = [['الضرر', A.dmg, '#ff8a5c'], ['السرعة', A.spd, '#7cd4ff'], ['المدى', A.reach, '#b9e27c'], ['الضربة الحرجة', A.crit, '#ffd166'], ['قوة العنصر', A.elp, EL[A.el].col]];
+  $('cRar').textContent = A.rar.name; $('cType').textContent = A.type; $('cEl').textContent = 'Element: ' + EL[A.el].name; $('cEl').style.color = EL[A.el].col; $('cPow').textContent = A.power;
+  const rows = [['Damage', A.dmg, '#ff8a5c'], ['Speed', A.spd, '#7cd4ff'], ['Reach', A.reach, '#b9e27c'], ['Critical hit', A.crit, '#ffd166'], ['Element power', A.elp, EL[A.el].col]];
   $('stats').innerHTML = rows.map(([k, v, c]) => `<span>${k}</span><span class="bar"><b style="width:${Math.min(100, v)}%;background:${c}"></b></span><span class="num">${v}</span>`).join('');
-  $('cDesc').textContent = `${EL[A.el].fx}. ${A.spd > 60 ? 'خفيف وسريع.' : A.dmg > 75 ? 'تقيل وضربته بتهدّ.' : 'متوازن.'} ${A.crit >= 30 ? 'أطرافه المدببة بتجيب ضربات حرجة كتير.' : ''}`;
+  $('cDesc').textContent = `${EL[A.el].fx}. ${A.spd > 60 ? 'Light and fast.' : A.dmg > 75 ? 'Heavy, and its hits crush.' : 'Balanced.'} ${A.crit >= 30 ? 'Its pointy edges land lots of critical hits.' : ''}`;
 }
 
 // ---------------------------------------------------------------- the weapon in 3D
@@ -556,7 +556,7 @@ function frame(now) {
     spin.rotation.set(0, 0, k < 0.45 ? 0.9 * (k / 0.45) : 0.9 - 2.4 * Math.min(1, (k - 0.45) / 0.15));
     if (k >= 0.6 && test.lastHit !== Math.floor(test.t / 0.9)) {
       test.lastHit = Math.floor(test.t / 0.9); test.hits++; const crit = Math.random() * 100 < test.a.crit, d = Math.round(test.a.dmg * (0.85 + Math.random() * 0.3) * (crit ? 2 : 1));
-      pop((crit ? 'حرجة! ' : '') + d, crit); clank(crit ? 330 : 200); dummy.userData.shake = 0.35;
+      pop((crit ? 'CRIT! ' : '') + d, crit); clank(crit ? 330 : 200); dummy.userData.shake = 0.35;
       if (test.a.el !== 'none') setTimeout(() => pop('+' + Math.round(test.a.elp / 6 + 3) + ' ' + EL[test.a.el].name, false, EL[test.a.el].col), 300);
       if (test.hits >= 3) setTimeout(() => { test = null; dummy.visible = false; auto = true; }, 900);
     }
@@ -590,14 +590,14 @@ const ART = {
   dragon: ['..d........d..', '.ddd......ddd.', 'dddd..dd..dddd', 'dddddddddddddd', '.ddyrddddyrdd.', '.dddddddddddd.', '..ddkkkkkkdd..', '..dddWWWWddd..', '.dddddddddddd.', 'dddddddddddddd', 'dd.dddddddd.dd', 'd..dd....dd..d', '...dd....dd...'],
 };
 const MON = {
-  tnt: { name: 'وحش TNT', hp: 30, spd: 3.2, dmg: 4, size: 0.9, weak: 'ice', resist: 'fire', from: 2 },
-  slime: { name: 'سلايم', hp: 40, spd: 2.2, dmg: 6, size: 1.0, weak: 'fire', resist: 'poison', from: 1 },
-  bat: { name: 'خفاش', hp: 28, spd: 4.2, dmg: 5, size: 0.9, fly: true, weak: 'light', resist: 'shadow', from: 1 },
-  skel: { name: 'هيكل عظمي', hp: 60, spd: 2.6, dmg: 9, size: 1.2, weak: 'light', resist: 'poison', from: 2 },
-  imp: { name: 'عفريت نار', hp: 55, spd: 3.4, dmg: 10, size: 1.0, weak: 'ice', resist: 'fire', from: 3 },
-  golem: { name: 'عملاق تلج', hp: 140, spd: 1.6, dmg: 16, size: 1.9, weak: 'fire', resist: 'ice', from: 4 },
-  dragon: { name: 'التنين', hp: 420, spd: 2.1, dmg: 22, size: 3.4, weak: 'light', resist: 'fire', boss: true },
-  qirmiz: { name: 'قرمز', hp: 260, spd: 2.8, dmg: 18, size: 3.4, weak: 'light', resist: 'shadow', from: 5 },
+  tnt: { name: 'Monster TNT', hp: 30, spd: 3.2, dmg: 4, size: 0.9, weak: 'ice', resist: 'fire', from: 2 },
+  slime: { name: 'Slime', hp: 40, spd: 2.2, dmg: 6, size: 1.0, weak: 'fire', resist: 'poison', from: 1 },
+  bat: { name: 'Bat', hp: 28, spd: 4.2, dmg: 5, size: 0.9, fly: true, weak: 'light', resist: 'shadow', from: 1 },
+  skel: { name: 'Skeleton', hp: 60, spd: 2.6, dmg: 9, size: 1.2, weak: 'light', resist: 'poison', from: 2 },
+  imp: { name: 'Fire Imp', hp: 55, spd: 3.4, dmg: 10, size: 1.0, weak: 'ice', resist: 'fire', from: 3 },
+  golem: { name: 'Ice Golem', hp: 140, spd: 1.6, dmg: 16, size: 1.9, weak: 'fire', resist: 'ice', from: 4 },
+  dragon: { name: 'The Dragon', hp: 420, spd: 2.1, dmg: 22, size: 3.4, weak: 'light', resist: 'fire', boss: true },
+  qirmiz: { name: 'Qirmiz', hp: 260, spd: 2.8, dmg: 18, size: 3.4, weak: 'light', resist: 'shadow', from: 5 },
 };
 function voxels(rows, pal, scale = 1) {
   const list = []; const h = rows.length, w = Math.max(...rows.map((r) => r.length));
@@ -606,7 +606,7 @@ function voxels(rows, pal, scale = 1) {
   list.forEach(([x, y, col], i) => { o.position.set((x - (w - 1) / 2) * scale, (h - 1 - y) * scale + scale / 2, 0); o.scale.set(scale, scale, scale * 2.2); o.updateMatrix(); m.setMatrixAt(i, o.matrix); m.setColorAt(i, c.set(col)); });
   m.castShadow = true; return m;
 }
-const CAMS = { behind: 'من ورا', front: 'من قدام', first: 'عينه', top: 'من فوق' };
+const CAMS = { behind: 'Behind', front: 'Front', first: 'Eyes', top: 'Top' };
 const AR = { camMode: store.get('cam', 'behind'), yaw: 0, pitch: 0.3, el: $('arena'), R: null, scene: null, cam: null, on: false, mons: [], keys: {}, joy: null, best: store.get('best', 0) };
 function arenaInit() {
   if (AR.R) return; const R2 = new THREE.WebGLRenderer({ antialias: true }); R2.setPixelRatio(Math.min(2, devicePixelRatio)); R2.shadowMap.enabled = true; AR.el.prepend(R2.domElement); AR.R = R2;
@@ -643,7 +643,7 @@ function arenaInit() {
   function moveJoy(e) { const r = joy.getBoundingClientRect(); let x = (e.clientX - r.left - r.width / 2) / (r.width / 2), y = (e.clientY - r.top - r.height / 2) / (r.height / 2); const l = Math.hypot(x, y); if (l > 1) { x /= l; y /= l; } AR.joy = { x, y }; knob.style.transform = `translate(${x * 36}px,${y * 36}px)`; }
   $('aHit').addEventListener('pointerdown', (e) => { e.preventDefault(); swing(); });
   // full screen: the real one where the browser allows it, otherwise the game simply covers the whole page
-  const fsEl = $('arena'), isFs = () => document.fullscreenElement === fsEl || fsEl.classList.contains('fs'), fsLabel = () => { $('aFull').textContent = isFs() ? '✕ صغّر' : '⛶ شاشة كاملة'; };
+  const fsEl = $('arena'), isFs = () => document.fullscreenElement === fsEl || fsEl.classList.contains('fs'), fsLabel = () => { $('aFull').textContent = isFs() ? '✕ Smaller' : '⛶ Full screen'; };
   $('aFull').onclick = async () => { if (isFs()) { fsEl.classList.remove('fs'); if (document.fullscreenElement) await document.exitFullscreen().catch(() => {}); fsLabel(); return; }
     try { if (!fsEl.requestFullscreen) throw 0; await fsEl.requestFullscreen({ navigationUI: 'hide' }); } catch { fsEl.classList.add('fs'); } fsLabel(); };
   document.addEventListener('fullscreenchange', fsLabel); addEventListener('keydown', (e) => { if (e.key === 'Escape' && fsEl.classList.contains('fs')) { fsEl.classList.remove('fs'); fsLabel(); } });
@@ -665,7 +665,7 @@ function heldWeapon() {
   list.forEach(([x, y, v], i) => { o.position.set((x - hx) * s, -(y - hy) * s, 0); o.scale.set(s * 1.02, s * 1.02, s * 4); o.updateMatrix(); m.setMatrixAt(i, o.matrix); m.setColorAt(i, c.set(PAL[v].hex)); });
   m.castShadow = true; g.add(m); AR.hand.add(g); AR.blade = g;
 }
-function monsterRow() { beastInit(); $('bestiary').innerHTML = ''; for (const e of arenaPool()) { const d = document.createElement('div'); d.className = 'item mon'; const im = new Image(); im.className = 'thumb'; im.style.width = '64px'; im.style.flex = 'none'; im.src = beastThumb(e.def); im.alt = e.M.name; d.appendChild(im); const t = document.createElement('div'); t.innerHTML = `<b></b><br><small>بيضعف قدام: ${EL[e.M.weak].name} · مقاوم: ${EL[e.M.resist].name}${e.M.boss ? ' · بوس' : ''}</small>`; t.querySelector('b').textContent = e.M.name + (e.M.mine ? ' (وحشك)' : ''); d.appendChild(t); $('bestiary').appendChild(d); } }
+function monsterRow() { beastInit(); $('bestiary').innerHTML = ''; for (const e of arenaPool()) { const d = document.createElement('div'); d.className = 'item mon'; const im = new Image(); im.className = 'thumb'; im.style.width = '64px'; im.style.flex = 'none'; im.src = beastThumb(e.def); im.alt = e.M.name; d.appendChild(im); const t = document.createElement('div'); t.innerHTML = `<b></b><br><small>Weak to: ${EL[e.M.weak].name} · Resists: ${EL[e.M.resist].name}${e.M.boss ? ' · Boss' : ''}</small>`; t.querySelector('b').textContent = e.M.name + (e.M.mine ? ' (your monster)' : ''); d.appendChild(t); $('bestiary').appendChild(d); } }
 let G2 = null;
 // the arena is a world too: your game's main world when you have one, otherwise a big ready-made one
 function arenaWorld() { if (WE.g?.worlds?.[0]?.items?.length > 5) return WE.g.worlds[0]; const L = [], R = 26; for (let i = -R; i <= R; i++) for (let y = 0; y < 2; y++) L.push({ t: 'stone', x: i, z: -R, y }, { t: 'stone', x: i, z: R, y }, { t: 'stone', x: -R, z: i, y }, { t: 'stone', x: R, z: i, y });
@@ -675,7 +675,7 @@ function arenaWorld() { if (WE.g?.worlds?.[0]?.items?.length > 5) return WE.g.wo
 function freeSpot(P, r0, r1) { for (let k = 0; k < 40; k++) { const a = Math.random() * Math.PI * 2, r = r0 + Math.random() * (r1 - r0), x = P.x + Math.cos(a) * r, z = P.z + Math.sin(a) * r; if (Math.abs(x) > WS - 2 || Math.abs(z) > WS - 2 || solidAt(Math.floor(x), Math.floor(z))) continue; return { x, z }; } return { x: P.x + 10, z: P.z }; }
 function startArena() {
   arenaInit(); setCam(AR.camMode); beastInit(); heldWeapon(); for (const m of AR.mons) AR.scene.remove(m.o); AR.mons = []; for (const x of AR.shots) AR.scene.remove(x.o); AR.shots = []; for (const x of AR.picks) AR.scene.remove(x.o); AR.picks = [];
-  const a = withOv(analyse(grid)); if (!a) { show('forge'); toast('ارسم سلاح الأول'); return; }
+  const a = withOv(analyse(grid)); if (!a) { show('forge'); toast('Draw a weapon first'); return; }
   G2 = { a, hp: 100, max: 100, wave: 0, score: 0, cd: 0, swingT: 0, face: new THREE.Vector3(0, 0, -1), pos: new THREE.Vector3(), between: 1.2 };
   AR.mode = 'waves'; const W = arenaWorld(); const st = playScene(W, { noMonsters: true }); AR.hero.position.set(st.x, 0, st.z); $('aOv').hidden = true; AR.on = true; hud();
 }
@@ -699,9 +699,9 @@ function spawnWave() {
     for (let i = 0; i < Math.floor(n / 2) + 1; i++) addBeast(pickOne());
   } else if (boss) { const big = [all.find((e) => e.M.boss), ...all.filter((e) => e.M.mine)].filter(Boolean).sort((a, b) => b.M.hp - a.M.hp)[0]; addBeast(big.M.boss ? big : { ...big, M: { ...big.M, size: Math.min(4, big.M.size * 1.8), boss: true } }, big.M.boss ? 1 : 3); for (let i = 0; i < Math.floor(n / 2); i++) addBeast(pickOne()); }
   else for (let i = 0; i < 3 + n; i++) addBeast(pickOne());
-  pop2(boss ? 'البوس وصل!' : `الموجة ${n}`, new THREE.Vector3(0, 2, 0), '#ffb347', true); hud();
+  pop2(boss ? 'The boss is here!' : `Wave ${n}`, new THREE.Vector3(0, 2, 0), '#ffb347', true); hud();
 }
-function hud() { if (AR.mode === 'world' && G2?.world) { $('aWave').textContent = G2.world.label; $('aScore').textContent = `الوحوش ${AR.mons.length} · النقط ${G2.score}`; $('aHp').style.width = Math.max(0, G2.hp / G2.max * 100) + '%'; return; } $('aWave').textContent = `الموجة ${G2?.wave || 0}`; $('aScore').textContent = `النقط ${G2?.score || 0} · أحسن موجة ${AR.best}`; $('aHp').style.width = Math.max(0, G2 ? G2.hp / G2.max * 100 : 100) + '%'; }
+function hud() { if (AR.mode === 'world' && G2?.world) { $('aWave').textContent = G2.world.label; $('aScore').textContent = `Monsters ${AR.mons.length} · Points ${G2.score}`; $('aHp').style.width = Math.max(0, G2.hp / G2.max * 100) + '%'; return; } $('aWave').textContent = `Wave ${G2?.wave || 0}`; $('aScore').textContent = `Points ${G2?.score || 0} · Best wave ${AR.best}`; $('aHp').style.width = Math.max(0, G2 ? G2.hp / G2.max * 100 : 100) + '%'; }
 function pop2(text, pos, col, big) { const v = pos.clone().project(AR.cam), el = document.createElement('div'); el.className = 'pop' + (big ? ' crit' : ''); el.textContent = text; el.style.left = ((v.x + 1) / 2 * 100) + '%'; el.style.top = ((1 - v.y) / 2 * 100) + '%'; if (col) el.style.color = col; $('apops').appendChild(el); setTimeout(() => el.remove(), 1000); }
 function swing() {
   if (modsRun.list.length && AR.on) modsEv('swing');
@@ -718,12 +718,12 @@ function swing() {
 function hit(m, mult) {
   if (modsRun.list.length && modsEv('hit', m, Math.round(G2.a.dmg * mult * 0.6 * (G2.powerMul || 1))) === false) return;
   if (m.cdef?.onHit && !(m.hitEvT > 0)) { m.hitEvT = 0.6; runEvent(m.cdef.onHit, m.o.position, m); }
-  if (m.shieldT > 0) { pop2('درع!', m.o.position.clone().add(new THREE.Vector3(0, m.M.size * 1.6 + 0.5, 0)), '#7cd4ff'); return; }
+  if (m.shieldT > 0) { pop2('Shield!', m.o.position.clone().add(new THREE.Vector3(0, m.M.size * 1.6 + 0.5, 0)), '#7cd4ff'); return; }
   if (m.ab?.length) onMonsterEvent(m, 'hit');
   const a = G2.a, crit = Math.random() * 100 < a.crit, el = a.el; let k = (0.85 + Math.random() * 0.3) * mult * (crit ? 2 : 1);
   if (el === m.M.weak) k *= 2; if (el === m.M.resist) k *= 0.5;
   const d = Math.round(a.dmg * k * 0.6 * (G2.powerMul || 1)); m.hp -= d; m.hitT = 0.15; m.o.position.addScaledVector(m.o.position.clone().sub(AR.hero.position).setY(0).normalize(), 0.6 / m.M.size);
-  pop2((crit ? 'حرجة! ' : '') + d + (el === m.M.weak ? ' ضعيف!' : el === m.M.resist ? ' مقاوم' : ''), m.o.position.clone().add(new THREE.Vector3(0, m.M.size + 0.6, 0)), el === m.M.weak ? '#ffe14d' : el === m.M.resist ? '#9aa' : '#fff', crit);
+  pop2((crit ? 'CRIT! ' : '') + d + (el === m.M.weak ? ' Weak!' : el === m.M.resist ? ' Resisted' : ''), m.o.position.clone().add(new THREE.Vector3(0, m.M.size + 0.6, 0)), el === m.M.weak ? '#ffe14d' : el === m.M.resist ? '#9aa' : '#fff', crit);
   const ep = a.elp / 100;
   if (el === 'fire') m.burn = 3; if (el === 'poison') m.poison = 4; if (el === 'ice') m.slow = 2 * (0.5 + ep); if (el === 'light') m.stun = 0.5 + ep * 0.6;
   if (el === 'shadow') G2.hp = Math.min(G2.max, G2.hp + d * 0.15 * (0.5 + ep));
@@ -764,13 +764,13 @@ function shotsStep(dt) {
 function useAbility(m, a) {
   const P = AR.hero.position, k = a.act.k;
   if (k === 'shoot') { shoot(m, a); m.attT = 0.4; }
-  else if (k === 'explode') { if (!m.fuse) { m.fuse = Math.max(0.05, a.act.fuse); m.fuseAb = a; pop2('سسسسس…', m.o.position.clone().add(new THREE.Vector3(0, m.M.size * 1.6 + 0.6, 0)), '#ffe14d'); } }
+  else if (k === 'explode') { if (!m.fuse) { m.fuse = Math.max(0.05, a.act.fuse); m.fuseAb = a; pop2('Hsssss…', m.o.position.clone().add(new THREE.Vector3(0, m.M.size * 1.6 + 0.6, 0)), '#ffe14d'); } }
   else if (k === 'dash') { m.dashT = 0.4; m.dashV = P.clone().sub(m.o.position).setY(0).normalize().multiplyScalar(m.M.spd * 4 + 6); m.dashDmg = a.act.dmg; m.attT = 0.4; }
   else if (k === 'slam') { m.slamT = 0.7; m.slamAb = a; }
-  else if (k === 'summon') { const e = arenaPool().find((x) => x.def === BEASTS[a.act.who]) || arenaPool()[0]; for (let i = 0; i < (a.act.n || 1); i++) { addBeast(e); const nm = AR.mons[AR.mons.length - 1]; nm.o.position.copy(m.o.position).add(new THREE.Vector3((Math.random() - 0.5) * 4, 0, (Math.random() - 0.5) * 4)); } pop2('جت نجدة!', m.o.position.clone().add(new THREE.Vector3(0, 3, 0)), '#ffb347'); }
+  else if (k === 'summon') { const e = arenaPool().find((x) => x.def === BEASTS[a.act.who]) || arenaPool()[0]; for (let i = 0; i < (a.act.n || 1); i++) { addBeast(e); const nm = AR.mons[AR.mons.length - 1]; nm.o.position.copy(m.o.position).add(new THREE.Vector3((Math.random() - 0.5) * 4, 0, (Math.random() - 0.5) * 4)); } pop2('Help arrived!', m.o.position.clone().add(new THREE.Vector3(0, 3, 0)), '#ffb347'); }
   else if (k === 'heal') { m.hp = Math.min(m.max, m.hp + a.act.amt); pop2('+' + Math.round(a.act.amt), m.o.position.clone().add(new THREE.Vector3(0, m.M.size * 1.6 + 0.5, 0)), '#46c96b'); }
   else if (k === 'shield') { m.shieldT = a.act.sec; }
-  else if (k === 'teleport') { const f = G2.face.clone(); m.o.position.set(P.x - f.x * 2.2, m.o.position.y, P.z - f.z * 2.2); pop2('ورّاك!', m.o.position.clone().add(new THREE.Vector3(0, 2.5, 0)), '#a77bff'); }
+  else if (k === 'teleport') { const f = G2.face.clone(); m.o.position.set(P.x - f.x * 2.2, m.o.position.y, P.z - f.z * 2.2); pop2('Behind you!', m.o.position.clone().add(new THREE.Vector3(0, 2.5, 0)), '#a77bff'); }
 }
 // every ability waits for its moment
 function abilitiesTick(m, d, dt) {
@@ -793,7 +793,7 @@ const cleanCubes = (l) => (Array.isArray(l) ? l : []).slice(0, 60).map((q) => ({
 function cleanDef(d) {
   const n = (v, a, lo, hi) => { v = +v; return Number.isFinite(v) ? Math.max(lo, Math.min(hi, v)) : a; }, kind = ['entity', 'pickup', 'block'].includes(d?.kind) ? d.kind : 'entity';
   const ev = (e) => (e && typeof e === 'object' ? { say: e.say ? String(e.say).slice(0, 60) : '', drop: typeof e.drop === 'string' ? e.drop.slice(0, 30) : '', n: Math.round(n(e.n, 1, 1, 8)), spawn: typeof e.spawn === 'string' ? e.spawn.slice(0, 30) : '', explode: e.explode ? { rad: n(e.explode.rad, 2.5, 0.5, 10), dmg: n(e.explode.dmg, 20, 0, 200) } : null, heal: n(e.heal, 0, 0, 200), dmg: n(e.dmg, 0, 0, 200), speed: n(e.speed, 0, 0, 3), power: n(e.power, 0, 0, 3), sec: n(e.sec, 8, 1, 60), score: n(e.score, 0, 0, 500) } : null);
-  return { kind, name: String(d?.name || 'اختراع').slice(0, 30), cubes: cleanCubes(d?.cubes), size: n(d?.size, kind === 'pickup' ? 0.6 : 1.2, 0.2, 5), color: /^#[0-9a-f]{6}$/i.test(d?.color) ? d.color : null,
+  return { kind, name: String(d?.name || 'Invention').slice(0, 30), cubes: cleanCubes(d?.cubes), size: n(d?.size, kind === 'pickup' ? 0.6 : 1.2, 0.2, 5), color: /^#[0-9a-f]{6}$/i.test(d?.color) ? d.color : null,
     move: ['wander', 'follow', 'flee', 'still', 'fly'].includes(d?.move) ? d.move : 'wander', hp: n(d?.hp, 30, 1, 2000), dmg: n(d?.dmg, 0, 0, 200), spd: n(d?.spd, 2, 0, 10), el: EL[d?.el] ? d.el : 'none',
     onHit: ev(d?.onHit), onDeath: ev(d?.onDeath), onTouch: ev(d?.onTouch), abil: Array.isArray(d?.abil) ? d.abil.slice(0, 4).map(cleanAb) : [] };
 }
@@ -824,8 +824,8 @@ function runEvent(ev, at, src) {
   if (ev.explode) boom(pos, ev.explode.rad, ev.explode.dmg, src, 'fire');
   if (ev.heal) { G2.hp = Math.min(G2.max, G2.hp + ev.heal); pop2('+' + ev.heal, AR.hero.position.clone().add(new THREE.Vector3(0, 2, 0)), '#46c96b'); }
   if (ev.dmg && src?.isPick) hurtPlayer(ev.dmg);
-  if (ev.speed) { G2.speedMul = 1 + ev.speed; G2.speedT = ev.sec; pop2('أسرع!', AR.hero.position.clone().add(new THREE.Vector3(0, 2.4, 0)), '#7cd4ff'); }
-  if (ev.power) { G2.powerMul = 1 + ev.power; G2.powerT = ev.sec; pop2('أقوى!', AR.hero.position.clone().add(new THREE.Vector3(0, 2.4, 0)), '#ff8a5c'); }
+  if (ev.speed) { G2.speedMul = 1 + ev.speed; G2.speedT = ev.sec; pop2('Faster!', AR.hero.position.clone().add(new THREE.Vector3(0, 2.4, 0)), '#7cd4ff'); }
+  if (ev.power) { G2.powerMul = 1 + ev.power; G2.powerT = ev.sec; pop2('Stronger!', AR.hero.position.clone().add(new THREE.Vector3(0, 2.4, 0)), '#ff8a5c'); }
   if (ev.score) G2.score += ev.score; hud();
 }
 
@@ -875,16 +875,16 @@ function modFail(k, e) {
   fixMod(k);
 }
 async function fixMod(k) {
-  const md = WE.g?.mods?.[k]; if (!md || modsRun.fixing[k] || (md.fixes || 0) >= 3) { if (md && (md.fixes || 0) >= 3) toast(`«${md.name}» فيها مشكلة، اطلب من المساعد يعملها تاني`); return; }
+  const md = WE.g?.mods?.[k]; if (!md || modsRun.fixing[k] || (md.fixes || 0) >= 3) { if (md && (md.fixes || 0) >= 3) toast(`«${md.name}» has a problem, ask the assistant to make it again`); return; }
   const sm = window.claude?.use ? await window.claude.use('sample').catch(() => null) : null; if (!sm) return;
-  modsRun.fixing[k] = true; md.fixes = (md.fixes || 0) + 1; toast(`المساعد بيصلّح «${md.name}»…`);
+  modsRun.fixing[k] = true; md.fixes = (md.fixes || 0) + 1; toast(`The assistant is fixing «${md.name}»…`);
   try {
     const r = await sm.json(`You wrote this code for a feature called "${md.name}" in a kids' 3D block game, and it failed with this error: ${md.err}
 ${MOD_API}
 The code:
 ${md.code}
 Fix it so it works and still does what it was meant to do. Reply ONLY with JSON: {"code": the fixed function body}.`, { modelTier: 'complex', cache: false });
-    if (typeof r?.code === 'string' && r.code.length > 10) { modCompile(r.code); md.code = r.code.slice(0, 20000); delete md.err; saveMods(); toast(`صلّحت «${md.name}»`);
+    if (typeof r?.code === 'string' && r.code.length > 10) { modCompile(r.code); md.code = r.code.slice(0, 20000); delete md.err; saveMods(); toast(`Fixed «${md.name}»`);
       if (AR.on && AR.mode === 'world') { try { const api = modApi(k), hooks = modCompile(md.code)(api); modsRun.list.push({ k, md, api, hooks }); hooks?.start?.(); } catch (e) { md.err = String(e?.message || e); } } }
   } catch (e) { md.err = String(e?.message || e); }
   modsRun.fixing[k] = false;
@@ -919,7 +919,7 @@ function debrisStep(dt) {
   for (let i = AR.debris.length - 1; i >= 0; i--) { const d = AR.debris[i]; d.t += dt; d.v.y -= 20 * dt; d.o.position.addScaledVector(d.v, dt); if (d.o.position.y < 0.1) { d.o.position.y = 0.1; d.v.multiplyScalar(0.5); d.v.y = Math.abs(d.v.y) * 0.4; d.w.multiplyScalar(0.6); }
     d.o.rotation.x += d.w.x * dt; d.o.rotation.y += d.w.y * dt; d.o.rotation.z += d.w.z * dt; if (d.t > 1.4) { const k = Math.max(0, 1 - (d.t - 1.4) / 0.6); for (const mt of d.o.material) mt.opacity = k; if (k <= 0) { AR.scene.remove(d.o); AR.debris.splice(i, 1); } } }
 }
-function setCam(m) { if (!CAMS[m]) return; AR.camMode = m; store.set('cam', m); $('aCam').textContent = 'الكاميرا: ' + CAMS[m]; if (G2) AR.yaw = Math.atan2(G2.face.x, G2.face.z); }
+function setCam(m) { if (!CAMS[m]) return; AR.camMode = m; store.set('cam', m); $('aCam').textContent = 'Camera: ' + CAMS[m]; if (G2) AR.yaw = Math.atan2(G2.face.x, G2.face.z); }
 // where the camera sits: behind the hero (third person), in front of it, in its eyes, or high above
 function placeCam(P, dt) {
   const f = new THREE.Vector3(Math.sin(AR.yaw), 0, Math.cos(AR.yaw)), m = AR.camMode, k = Math.min(1, dt * 10); let to, look;
@@ -965,12 +965,12 @@ function arenaStep(dt, now) {
   for (let i = 0; i < AR.mons.length; i++) for (let j = i + 1; j < AR.mons.length; j++) { const A_ = AR.mons[i].o.position, B_ = AR.mons[j].o.position, d = A_.distanceTo(B_), min = (AR.mons[i].M.size + AR.mons[j].M.size) * 0.45; if (d < min && d > 0.001) { const push = B_.clone().sub(A_).setY(0).normalize().multiplyScalar((min - d) / 2); A_.sub(push); B_.add(push); } }
   worldTick(dt, now); if (!AR.on) return; if (AR.mode === 'world') modsTick(dt, now); if (!AR.on) return;
   if (G2.hp <= 0 && AR.mode === 'world') { AR.on = false; worldOver(false); return; }
-  if (G2.hp <= 0) { AR.on = false; if (G2.wave > AR.best) { AR.best = G2.wave; store.set('best', AR.best); } $('aOvT').textContent = 'وقعت!'; $('aOvP').textContent = `وصلت للموجة ${G2.wave} وجمعت ${G2.score} نقطة. ارجع الورشة وقوّي سلاحك، أو ادخل تاني.`; $('aGo').textContent = 'العب تاني'; $('aOv').hidden = false; hud(); return; }
+  if (G2.hp <= 0) { AR.on = false; if (G2.wave > AR.best) { AR.best = G2.wave; store.set('best', AR.best); } $('aOvT').textContent = 'You fell!'; $('aOvP').textContent = `You reached wave ${G2.wave} and collected ${G2.score} points. Go back to the forge and power up your weapon, or jump back in.`; $('aGo').textContent = 'Play again'; $('aOv').hidden = false; hud(); return; }
   if (AR.mode === 'waves' && !AR.mons.length) { G2.between -= dt; if (G2.between <= 0) { if (G2.wave) { G2.hp = Math.min(G2.max, G2.hp + 25); pop2('+25', P.clone().add(new THREE.Vector3(0, 2, 0)), '#46c96b'); } spawnWave(); G2.between = 2; } }
   placeCam(P, dt); if (AR.shake > 0) { AR.shake = Math.max(0, AR.shake - dt * 2); AR.cam.position.x += (Math.random() - 0.5) * AR.shake; AR.cam.position.y += (Math.random() - 0.5) * AR.shake; }
 }
 $('aGo').onclick = () => { clank(260); startArena(); };
-$('tArena').addEventListener('click', () => { AR.focus = null; $('arena').classList.remove('fs'); modsRun.list = []; $('aAct').hidden = true; if (AR.R) setHeroLook(HERO); if (AR.mode === 'world') { AR.on = false; AR.mode = 'waves'; $('aOvT').textContent = 'ساحة الوحوش'; $('aGo').textContent = 'ابدأ'; $('aEdit').hidden = true; $('aOv').hidden = false; } });
+$('tArena').addEventListener('click', () => { AR.focus = null; $('arena').classList.remove('fs'); modsRun.list = []; $('aAct').hidden = true; if (AR.R) setHeroLook(HERO); if (AR.mode === 'world') { AR.on = false; AR.mode = 'waves'; $('aOvT').textContent = 'Monster Arena'; $('aGo').textContent = 'Start'; $('aEdit').hidden = true; $('aOv').hidden = false; } });
 
 
 // ---------------------------------------------------------------- the monster workshop: monsters made of cubes, like a block modeller
@@ -981,7 +981,7 @@ const FIREBALL = [Q(0, 0, 0, 0.7, 0.7, 0.7, '#ff8a3d'), Q(0, 0, 0, 0.95, 0.45, 0
 const BONE = [Q(0, 0, 0, 0.18, 0.18, 0.9, '#f2efe6'), Q(0, 0, 0.45, 0.36, 0.22, 0.18, '#f2efe6'), Q(0, 0, -0.45, 0.36, 0.22, 0.18, '#f2efe6')];
 // the hero: a chunky knight of pixel cubes, with parts that move like the monsters'
 const R_ = (q, role) => ({ ...q, role });
-const HERO = { name: 'البطل', cubes: [
+const HERO = { name: 'Hero', cubes: [
   R_(Q(0.24, 0.45, 0, 0.4, 0.9, 0.44, '#3a3f4a'), 'legL'), R_(Q(-0.24, 0.45, 0, 0.4, 0.9, 0.44, '#3a3f4a'), 'legR'), R_(Q(0.24, 0.06, 0.06, 0.42, 0.14, 0.56, '#24262b'), 'legL'), R_(Q(-0.24, 0.06, 0.06, 0.42, 0.14, 0.56, '#24262b'), 'legR'),
   R_(Q(0, 1.32, 0, 1.0, 0.86, 0.56, '#3d6fd8'), 'body'), R_(Q(0, 0.96, 0, 1.03, 0.14, 0.58, '#7a5230'), 'body'), R_(Q(0, 1.38, 0.29, 0.32, 0.32, 0.04, '#e2b043'), 'body'),
   R_(Q(0, 2.02, 0, 0.78, 0.72, 0.72, '#f1c7a5'), 'head'), R_(Q(0, 2.36, 0, 0.84, 0.3, 0.8, '#cfd8e2'), 'head'), R_(Q(0, 2.2, 0.38, 0.84, 0.1, 0.06, '#cfd8e2'), 'head'),
@@ -994,13 +994,13 @@ function tntFace(w, h) { const F = ['###.#.#.###', '.#..###..#.', '.#..###..#.',
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const fy = y - y0 - 1, fx = x - x0; if (y >= y0 && y <= y0 + 6) c.push(fy >= 0 && fy < 5 && fx >= 0 && fx < 11 && F[fy][fx] === '#' ? '2' : '5'); else c.push('.'); } return `${w},${h}:${c.join('')}`; }
 const TNT = (() => { const q = Q(0, 0.75, 0, 1.5, 1.5, 1.5, '#e5484d'); const f = tntFace(12, 12); q.f = [f, f, '', '', f, f]; return [q, Q(0, 1.65, 0, 0.16, 0.3, 0.16, '#7a5230'), Q(0, 1.86, 0, 0.12, 0.12, 0.12, '#ffe14d')]; })();
 const BEASTS = {
-  tnt: { name: 'وحش TNT', fly: false, cubes: TNT, abil: [{ name: 'فتيل وانفجار', when: { k: 'near', v: 2.8 }, act: { k: 'explode', dmg: 35, rad: 3.6, fuse: 1.4, el: 'fire' }, cd: 0 }] },
-  slime: { name: 'سلايم', fly: false, cubes: mirrorX([Q(0, 1, 0, 2.4, 2, 2.4, '#46c96b'), Q(0, 2.25, 0, 1.6, 0.5, 1.6, '#46c96b'), Q(0.55, 1.4, 1.21, 0.5, 0.6, 0.06, '#f2efe6'), Q(0.5, 1.33, 1.25, 0.25, 0.32, 0.06, '#24262b'), Q(0, 0.75, 1.21, 0.7, 0.16, 0.06, '#24262b')]) },
-  bat: { name: 'خفاش', fly: true, cubes: mirrorX([Q(0, 1.6, 0, 1, 1.1, 0.9, '#8b54f0'), Q(0.32, 2.3, 0, 0.25, 0.45, 0.2, '#8b54f0'), Q(1.1, 1.8, 0, 1.4, 0.15, 0.9, '#5b3a8f', [0, 0, 0.35]), Q(0.22, 1.75, 0.46, 0.2, 0.2, 0.06, '#e5484d')]) },
-  skel: { name: 'هيكل عظمي', fly: false, abil: [{ name: 'رمي عضم', when: { k: 'every', v: 3.2 }, act: { k: 'shoot', dmg: 7, n: 1, spd: 13 }, cd: 3.2, shape: BONE }], cubes: mirrorX([Q(0, 3.3, 0, 1, 1, 1, '#f2efe6'), Q(0.22, 3.35, 0.51, 0.26, 0.26, 0.06, '#24262b'), Q(0, 2.3, 0, 0.3, 1.3, 0.3, '#f2efe6'), Q(0, 2.1, 0, 1.1, 0.14, 0.6, '#f2efe6'), Q(0, 2.5, 0, 1.1, 0.14, 0.6, '#f2efe6'), Q(0, 2.9, 0, 1.1, 0.14, 0.6, '#f2efe6'), Q(0.75, 2.4, 0, 0.2, 1.2, 0.2, '#f2efe6'), Q(0, 1.6, 0, 0.8, 0.26, 0.4, '#f2efe6'), Q(0.25, 0.75, 0, 0.22, 1.4, 0.22, '#f2efe6')]) },
-  imp: { name: 'عفريت نار', fly: false, abil: [{ name: 'كورة نار', when: { k: 'every', v: 2.6 }, act: { k: 'shoot', dmg: 9, n: 1, spd: 11, el: 'fire', rad: 1.2 }, cd: 2.6, shape: FIREBALL }], cubes: mirrorX([Q(0, 1.2, 0, 1, 1.2, 0.8, '#e5484d'), Q(0, 2.2, 0, 1.1, 0.9, 0.9, '#e5484d'), Q(0.4, 2.85, 0, 0.2, 0.55, 0.2, '#24262b', [0, 0, -0.4]), Q(0.25, 2.3, 0.46, 0.22, 0.18, 0.06, '#ffe14d'), Q(0.65, 1.3, 0, 0.3, 0.9, 0.3, '#e5484d'), Q(0.25, 0.35, 0, 0.3, 0.7, 0.3, '#e5484d'), Q(0, 1.1, 0.41, 0.6, 0.7, 0.06, '#ff8a3d'), Q(0, 0.9, -0.65, 0.16, 0.16, 0.9, '#e5484d', [0.6, 0, 0])]) },
-  golem: { name: 'عملاق تلج', fly: false, abil: [{ name: 'خبطة الأرض', when: { k: 'near', v: 3.5 }, act: { k: 'slam', dmg: 18, rad: 4, el: 'ice' }, cd: 5 }], cubes: mirrorX([Q(0, 2.2, 0, 2.4, 2, 1.6, '#3d6fd8'), Q(0, 3.7, 0.2, 1.2, 1, 1.1, '#9ae6ff'), Q(0.3, 3.75, 0.76, 0.26, 0.2, 0.06, '#24262b'), Q(1.6, 2, 0, 0.9, 2.2, 0.9, '#9ae6ff'), Q(1.6, 0.8, 0, 1.1, 0.8, 1.1, '#3d6fd8'), Q(0.6, 0.6, 0, 0.9, 1.2, 0.9, '#3d6fd8'), Q(0.6, 3.4, -0.5, 0.3, 0.8, 0.3, '#9ae6ff', [0.3, 0, 0.3])]) },
-  qirmiz: { name: 'قرمز', fly: false, abil: [{ name: 'طعنة الناب', when: { k: 'near', v: 4 }, act: { k: 'dash', dmg: 22 }, cd: 2.4 }, { name: 'نطّة العنكبوت', when: { k: 'every', v: 6 }, act: { k: 'slam', dmg: 16, rad: 3.5, el: 'shadow' }, cd: 6 }], cubes: (() => { const L = [], red = '#c62828', dk = '#8e1b1b', glow = '#5dff7a', bone = '#e8dcc0';
+  tnt: { name: 'Monster TNT', fly: false, cubes: TNT, abil: [{ name: 'Fuse and boom', when: { k: 'near', v: 2.8 }, act: { k: 'explode', dmg: 35, rad: 3.6, fuse: 1.4, el: 'fire' }, cd: 0 }] },
+  slime: { name: 'Slime', fly: false, cubes: mirrorX([Q(0, 1, 0, 2.4, 2, 2.4, '#46c96b'), Q(0, 2.25, 0, 1.6, 0.5, 1.6, '#46c96b'), Q(0.55, 1.4, 1.21, 0.5, 0.6, 0.06, '#f2efe6'), Q(0.5, 1.33, 1.25, 0.25, 0.32, 0.06, '#24262b'), Q(0, 0.75, 1.21, 0.7, 0.16, 0.06, '#24262b')]) },
+  bat: { name: 'Bat', fly: true, cubes: mirrorX([Q(0, 1.6, 0, 1, 1.1, 0.9, '#8b54f0'), Q(0.32, 2.3, 0, 0.25, 0.45, 0.2, '#8b54f0'), Q(1.1, 1.8, 0, 1.4, 0.15, 0.9, '#5b3a8f', [0, 0, 0.35]), Q(0.22, 1.75, 0.46, 0.2, 0.2, 0.06, '#e5484d')]) },
+  skel: { name: 'Skeleton', fly: false, abil: [{ name: 'Bone throw', when: { k: 'every', v: 3.2 }, act: { k: 'shoot', dmg: 7, n: 1, spd: 13 }, cd: 3.2, shape: BONE }], cubes: mirrorX([Q(0, 3.3, 0, 1, 1, 1, '#f2efe6'), Q(0.22, 3.35, 0.51, 0.26, 0.26, 0.06, '#24262b'), Q(0, 2.3, 0, 0.3, 1.3, 0.3, '#f2efe6'), Q(0, 2.1, 0, 1.1, 0.14, 0.6, '#f2efe6'), Q(0, 2.5, 0, 1.1, 0.14, 0.6, '#f2efe6'), Q(0, 2.9, 0, 1.1, 0.14, 0.6, '#f2efe6'), Q(0.75, 2.4, 0, 0.2, 1.2, 0.2, '#f2efe6'), Q(0, 1.6, 0, 0.8, 0.26, 0.4, '#f2efe6'), Q(0.25, 0.75, 0, 0.22, 1.4, 0.22, '#f2efe6')]) },
+  imp: { name: 'Fire Imp', fly: false, abil: [{ name: 'Fireball', when: { k: 'every', v: 2.6 }, act: { k: 'shoot', dmg: 9, n: 1, spd: 11, el: 'fire', rad: 1.2 }, cd: 2.6, shape: FIREBALL }], cubes: mirrorX([Q(0, 1.2, 0, 1, 1.2, 0.8, '#e5484d'), Q(0, 2.2, 0, 1.1, 0.9, 0.9, '#e5484d'), Q(0.4, 2.85, 0, 0.2, 0.55, 0.2, '#24262b', [0, 0, -0.4]), Q(0.25, 2.3, 0.46, 0.22, 0.18, 0.06, '#ffe14d'), Q(0.65, 1.3, 0, 0.3, 0.9, 0.3, '#e5484d'), Q(0.25, 0.35, 0, 0.3, 0.7, 0.3, '#e5484d'), Q(0, 1.1, 0.41, 0.6, 0.7, 0.06, '#ff8a3d'), Q(0, 0.9, -0.65, 0.16, 0.16, 0.9, '#e5484d', [0.6, 0, 0])]) },
+  golem: { name: 'Ice Golem', fly: false, abil: [{ name: 'Ground slam', when: { k: 'near', v: 3.5 }, act: { k: 'slam', dmg: 18, rad: 4, el: 'ice' }, cd: 5 }], cubes: mirrorX([Q(0, 2.2, 0, 2.4, 2, 1.6, '#3d6fd8'), Q(0, 3.7, 0.2, 1.2, 1, 1.1, '#9ae6ff'), Q(0.3, 3.75, 0.76, 0.26, 0.2, 0.06, '#24262b'), Q(1.6, 2, 0, 0.9, 2.2, 0.9, '#9ae6ff'), Q(1.6, 0.8, 0, 1.1, 0.8, 1.1, '#3d6fd8'), Q(0.6, 0.6, 0, 0.9, 1.2, 0.9, '#3d6fd8'), Q(0.6, 3.4, -0.5, 0.3, 0.8, 0.3, '#9ae6ff', [0.3, 0, 0.3])]) },
+  qirmiz: { name: 'Qirmiz', fly: false, abil: [{ name: 'Fang stab', when: { k: 'near', v: 4 }, act: { k: 'dash', dmg: 22 }, cd: 2.4 }, { name: 'Spider leap', when: { k: 'every', v: 6 }, act: { k: 'slam', dmg: 16, rad: 3.5, el: 'shadow' }, cd: 6 }], cubes: (() => { const L = [], red = '#c62828', dk = '#8e1b1b', glow = '#5dff7a', bone = '#e8dcc0';
     // eight spider legs, every other one on the same swing so it scuttles
     [-0.65, -0.22, 0.22, 0.65].forEach((z, i) => [1, -1].forEach((sd, j) => { const role = (i + j) % 2 ? 'legL' : 'legR';
       L.push(R_(Q(sd * 0.95, 2.45, z, 1.5, 0.2, 0.2, dk, [0, z * 0.5 * sd, sd * 0.5]), role), R_(Q(sd * 1.75, 1.25, z * 1.5, 0.2, 2.5, 0.2, red, [z * 0.3, 0, sd * -0.22]), role)); }));
@@ -1019,7 +1019,7 @@ const BEASTS = {
     [[3.25, 0.55], [2.6, 0.44], [1.95, 0.32], [1.4, 0.2], [1.0, 0.09]].forEach(([y, w]) => L.push(R_(Q(-0.95, y, 0, w, 0.66, 0.26, bone), 'armR')));
     L.push(R_(Q(-0.95, 2.4, 0.14, 0.06, 1.9, 0.02, glow), 'armR'), R_(Q(-0.85, 2.9, 0.14, 0.04, 0.8, 0.02, glow), 'armR'));
     return L; })() },
-  dragon: { name: 'التنين', fly: false, boss: true, abil: [{ name: 'نفس النار', when: { k: 'every', v: 3 }, act: { k: 'shoot', dmg: 12, n: 3, spd: 12, el: 'fire', rad: 1.6 }, cd: 3, shape: FIREBALL }, { name: 'يطلّع عفاريت', when: { k: 'low', v: 50 }, act: { k: 'summon', who: 'imp', n: 3 }, cd: 0 }], cubes: mirrorX([Q(0, 2, 0, 2.2, 1.6, 3.2, '#5b3a8f'), Q(0, 1.5, 0.2, 1.6, 0.6, 2.6, '#e2b043'), Q(0, 3, 1.6, 0.9, 1.4, 0.9, '#5b3a8f', [-0.4, 0, 0]), Q(0, 3.9, 2.3, 1.3, 1, 1.6, '#5b3a8f'), Q(0, 3.7, 3.3, 0.9, 0.6, 0.8, '#5b3a8f'), Q(0.5, 4.1, 2.6, 0.12, 0.25, 0.3, '#ffe14d'), Q(0.4, 4.6, 1.9, 0.2, 0.7, 0.2, '#f2efe6', [-0.5, 0, 0]), Q(2, 3, 0, 2.6, 0.2, 2, '#8b54f0', [0, 0, 0.5]), Q(0.8, 0.7, 1, 0.6, 1.4, 0.6, '#5b3a8f'), Q(0.8, 0.7, -1, 0.6, 1.4, 0.6, '#5b3a8f'), Q(0, 1.8, -2.5, 0.6, 0.6, 2.2, '#5b3a8f', [0.3, 0, 0])]) },
+  dragon: { name: 'The Dragon', fly: false, boss: true, abil: [{ name: 'Fire breath', when: { k: 'every', v: 3 }, act: { k: 'shoot', dmg: 12, n: 3, spd: 12, el: 'fire', rad: 1.6 }, cd: 3, shape: FIREBALL }, { name: 'Summons imps', when: { k: 'low', v: 50 }, act: { k: 'summon', who: 'imp', n: 3 }, cd: 0 }], cubes: mirrorX([Q(0, 2, 0, 2.2, 1.6, 3.2, '#5b3a8f'), Q(0, 1.5, 0.2, 1.6, 0.6, 2.6, '#e2b043'), Q(0, 3, 1.6, 0.9, 1.4, 0.9, '#5b3a8f', [-0.4, 0, 0]), Q(0, 3.9, 2.3, 1.3, 1, 1.6, '#5b3a8f'), Q(0, 3.7, 3.3, 0.9, 0.6, 0.8, '#5b3a8f'), Q(0.5, 4.1, 2.6, 0.12, 0.25, 0.3, '#ffe14d'), Q(0.4, 4.6, 1.9, 0.2, 0.7, 0.2, '#f2efe6', [-0.5, 0, 0]), Q(2, 3, 0, 2.6, 0.2, 2, '#8b54f0', [0, 0, 0.5]), Q(0.8, 0.7, 1, 0.6, 1.4, 0.6, '#5b3a8f'), Q(0.8, 0.7, -1, 0.6, 1.4, 0.6, '#5b3a8f'), Q(0, 1.8, -2.5, 0.6, 0.6, 2.2, '#5b3a8f', [0.3, 0, 0])]) },
 };
 const BPAL = [...PAL.slice(1).map((p) => p.hex), '#f1c7a5', '#ff6fb5', '#7a5230', '#2f8f4e'];
 const HUE = (hex) => { const c = new THREE.Color(hex), h = {}; c.getHSL(h); return h; };
@@ -1077,7 +1077,7 @@ function buildBeast(def) { const g = new THREE.Group(); for (const q of def.cube
 
 // ---------------------------------------------------------------- animation: each cube belongs to a part (head, arm, leg, wing, tail),
 // the part turns around its joint (hips at the top of a leg, shoulders at the top of an arm, wings at the body side...)
-const ROLES = [['', 'تلقائي'], ['body', 'جسم'], ['head', 'راس'], ['armL', 'دراع شمال'], ['armR', 'دراع يمين'], ['legL', 'رجل شمال'], ['legR', 'رجل يمين'], ['wingL', 'جناح شمال'], ['wingR', 'جناح يمين'], ['tail', 'ديل'], ['jaw', 'بوق']];
+const ROLES = [['', 'Auto'], ['body', 'Body'], ['head', 'Head'], ['armL', 'Left arm'], ['armR', 'Right arm'], ['legL', 'Left leg'], ['legR', 'Right leg'], ['wingL', 'Left wing'], ['wingR', 'Right wing'], ['tail', 'Tail'], ['jaw', 'Jaw']];
 const vol = (q) => q.s[0] * q.s[1] * q.s[2];
 const qbox = (q) => ({ x0: q.p[0] - q.s[0] / 2, x1: q.p[0] + q.s[0] / 2, y0: q.p[1] - q.s[1] / 2, y1: q.p[1] + q.s[1] / 2, z0: q.p[2] - q.s[2] / 2, z1: q.p[2] + q.s[2] / 2 });
 function rolesOf(def) {
@@ -1138,7 +1138,7 @@ function beastInit() {
   let down = null; R3.domElement.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY }; });
   R3.domElement.addEventListener('pointerup', (e) => { if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6 || BE.tc.dragging) return; down = null; pick(e); });
   new ResizeObserver(() => { const w = st.clientWidth, h = st.clientHeight; R3.setSize(w, h, false); BE.cam.aspect = w / h; BE.cam.updateProjectionMatrix(); }).observe(st);
-  BPAL.forEach((hex, i) => { const b = document.createElement('button'); b.className = 'sw'; b.setAttribute('aria-pressed', String(hex === BE.color)); b.setAttribute('aria-label', 'لون ' + (i + 1)); b.innerHTML = `<i style="background:${hex}"></i>`; b.onclick = () => { BE.color = hex; PNT.ink = i; PNT.erase = false; $('bpal').querySelectorAll('.sw').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); if (BE.sel && !$('paintBox').hidden) return; if (BE.sels.length) { pushUndo(); for (const m of BE.sels) m.userData.q.c = hex; rebuild(); } }; $('bpal').appendChild(b); });
+  BPAL.forEach((hex, i) => { const b = document.createElement('button'); b.className = 'sw'; b.setAttribute('aria-pressed', String(hex === BE.color)); b.setAttribute('aria-label', 'Color ' + (i + 1)); b.innerHTML = `<i style="background:${hex}"></i>`; b.onclick = () => { BE.color = hex; PNT.ink = i; PNT.erase = false; $('bpal').querySelectorAll('.sw').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); if (BE.sel && !$('paintBox').hidden) return; if (BE.sels.length) { pushUndo(); for (const m of BE.sels) m.userData.q.c = hex; rebuild(); } }; $('bpal').appendChild(b); });
   for (const k in BEASTS) { const b = document.createElement('button'); b.className = 'temp'; b.textContent = BEASTS[k].name; b.onclick = () => { pushUndo(); loadBeast(clone(BEASTS[k]), true); }; $('btemps').appendChild(b); }
   loadBeast(clone(BEASTS.slime), true); renderMyBeasts();
 }
@@ -1157,11 +1157,11 @@ function gizmo() {
   if (BE.sels.length === 1) { BE.tc.attach(BE.sels[0]); return; }
   const c = new THREE.Vector3(); for (const m of BE.sels) c.add(m.position); c.divideScalar(BE.sels.length);
   BE.pivot = new THREE.Group(); BE.pivot.position.copy(c); BE.root.add(BE.pivot); BE.root.updateMatrixWorld(true); for (const m of BE.sels) BE.pivot.attach(m); BE.tc.attach(BE.pivot);
-  $('bSelInfo').textContent = BE.sels.length + ' مكعبات متحددين';
+  $('bSelInfo').textContent = BE.sels.length + ' cubes selected';
 }
 function select(m, add) {
   if (add && m) { BE.sels = BE.sels.includes(m) ? BE.sels.filter((x) => x !== m) : [...BE.sels, m]; } else BE.sels = m ? [m] : [];
-  BE.sel = BE.sels[0] || null; $('bSelInfo').textContent = BE.sels.length > 1 ? BE.sels.length + ' مكعبات متحددين' : ''; gizmo(); syncRole();
+  BE.sel = BE.sels[0] || null; $('bSelInfo').textContent = BE.sels.length > 1 ? BE.sels.length + ' cubes selected' : ''; gizmo(); syncRole();
 }
 const _inv = new THREE.Matrix4(), _mx = new THREE.Matrix4(), _p = new THREE.Vector3(), _q = new THREE.Quaternion(), _s = new THREE.Vector3(), _e = new THREE.Euler();
 function commitSel() {
@@ -1179,19 +1179,19 @@ function pick(e) {
   if (BE.mode === 'paint') { select(hit.object); openPaint(hit.object, hit.face.materialIndex); return; }
   select(hit.object, BE.multi || e.shiftKey || e.ctrlKey || e.metaKey);
 }
-const setMode = (m) => { BE.mode = m; for (const [id, k] of [['bMove', 'translate'], ['bSize', 'scale'], ['bTurn', 'rotate'], ['bPaint', 'paint']]) $(id).setAttribute('aria-pressed', String(m === k)); if (m === 'paint') toast('دوس على وش أي مكعب عشان ترسم عليه'); gizmo(); };
+const setMode = (m) => { BE.mode = m; for (const [id, k] of [['bMove', 'translate'], ['bSize', 'scale'], ['bTurn', 'rotate'], ['bPaint', 'paint']]) $(id).setAttribute('aria-pressed', String(m === k)); if (m === 'paint') toast('Tap any cube’s face to paint on it'); gizmo(); };
 $('bMove').onclick = () => setMode('translate'); $('bSize').onclick = () => setMode('scale'); $('bTurn').onclick = () => setMode('rotate'); $('bPaint').onclick = () => setMode('paint');
 function addCubes(list) { pushUndo(); BE.def.cubes.push(...list); BE.sels = []; rebuild(); BE.sels = BE.root.children.filter((x) => list.includes(x.userData.q)); BE.sel = BE.sels[0] || null; if (BE.mode === 'paint') setMode('translate'); else gizmo(); }
-const needSel = () => { if (!BE.sels.length) { toast('اختار مكعب الأول'); return false; } return true; };
+const needSel = () => { if (!BE.sels.length) { toast('Pick a cube first'); return false; } return true; };
 $('bAdd').onclick = () => { const q = Q(0, 1.5, 0, 1, 1, 1, BE.color); if (BE.sel) { const o = BE.sel.userData.q; q.p = [o.p[0] + o.s[0] / 2 + 0.5, o.p[1], o.p[2]]; } addCubes([q]); };
-function copySel() { if (!needSel()) return; BE.clip = BE.sels.map((m) => clone(m.userData.q)); toast(BE.clip.length > 1 ? `اتنسخ ${BE.clip.length} مكعبات` : 'المكعب اتنسخ'); }
-function pasteClip() { if (!BE.clip) return toast('انسخ حاجة الأول'); const list = BE.clip.map((q) => ({ ...clone(q), p: [q.p[0] + 0.5, q.p[1], q.p[2] + 0.5], seed: 0 })); BE.clip = list.map(clone); addCubes(list); }
+function copySel() { if (!needSel()) return; BE.clip = BE.sels.map((m) => clone(m.userData.q)); toast(BE.clip.length > 1 ? `Copied ${BE.clip.length} Blocks` : 'Cube copied'); }
+function pasteClip() { if (!BE.clip) return toast('Copy something first'); const list = BE.clip.map((q) => ({ ...clone(q), p: [q.p[0] + 0.5, q.p[1], q.p[2] + 0.5], seed: 0 })); BE.clip = list.map(clone); addCubes(list); }
 $('bCopy').onclick = copySel; $('bPaste').onclick = pasteClip;
 $('bDup').onclick = () => { if (!needSel()) return; addCubes(BE.sels.map((m) => { const q = clone(m.userData.q); q.p[0] += 0.5; q.seed = 0; return q; })); };
-$('bMir').onclick = () => { if (!needSel()) return; addCubes(BE.sels.map((m) => { const o = m.userData.q, q = { ...clone(o), p: [Math.abs(o.p[0]) < 0.05 ? -(o.s[0] + 0.25) : -o.p[0], o.p[1], o.p[2]], r: [o.r[0], -o.r[1], -o.r[2]], seed: 0 }; return q; })); toast('اتعمل نسخة في الناحية التانية'); };
-$('bDel').onclick = () => { if (!needSel()) return; if (BE.def.cubes.length - BE.sels.length < 1) return toast('الوحش لازم يبقى فيه مكعب واحد على الأقل'); pushUndo(); const gone = BE.sels.map((m) => m.userData.q); BE.def.cubes = BE.def.cubes.filter((q) => !gone.includes(q)); BE.sels = []; rebuild(); };
-$('bMulti').onclick = () => { BE.multi = !BE.multi; $('bMulti').setAttribute('aria-pressed', String(BE.multi)); toast(BE.multi ? 'دوس على كذا مكعب عشان تحددهم مع بعض' : 'تحديد مكعب واحد'); };
-$('bAll').onclick = () => { release(); BE.sels = [...BE.root.children.filter((x) => x.userData.q)]; BE.sel = BE.sels[0]; $('bSelInfo').textContent = BE.sels.length + ' مكعبات متحددين'; gizmo(); };
+$('bMir').onclick = () => { if (!needSel()) return; addCubes(BE.sels.map((m) => { const o = m.userData.q, q = { ...clone(o), p: [Math.abs(o.p[0]) < 0.05 ? -(o.s[0] + 0.25) : -o.p[0], o.p[1], o.p[2]], r: [o.r[0], -o.r[1], -o.r[2]], seed: 0 }; return q; })); toast('A mirrored copy was made on the other side'); };
+$('bDel').onclick = () => { if (!needSel()) return; if (BE.def.cubes.length - BE.sels.length < 1) return toast('The monster needs at least one cube'); pushUndo(); const gone = BE.sels.map((m) => m.userData.q); BE.def.cubes = BE.def.cubes.filter((q) => !gone.includes(q)); BE.sels = []; rebuild(); };
+$('bMulti').onclick = () => { BE.multi = !BE.multi; $('bMulti').setAttribute('aria-pressed', String(BE.multi)); toast(BE.multi ? 'Tap several cubes to select them together' : 'Single cube select'); };
+$('bAll').onclick = () => { release(); BE.sels = [...BE.root.children.filter((x) => x.userData.q)]; BE.sel = BE.sels[0]; $('bSelInfo').textContent = BE.sels.length + ' cubes selected'; gizmo(); };
 addEventListener('keydown', (e) => {
   if ($('vBeast').hidden || !$('paintBox').hidden || /INPUT|TEXTAREA/.test(document.activeElement?.tagName || '')) return; const mod = e.ctrlKey || e.metaKey, k = e.key.toLowerCase();
   if (mod && k === 'c') { e.preventDefault(); copySel(); } else if (mod && k === 'v') { e.preventDefault(); pasteClip(); } else if (mod && k === 'd') { e.preventDefault(); $('bDup').click(); }
@@ -1205,15 +1205,15 @@ const PNT = { m: null, i: 0, ink: 3, erase: false, cells: null, w: 8, h: 8, clip
 function openPaint(m, i) {
   PNT.m = m; PNT.i = i; const q = m.userData.q; [PNT.w, PNT.h] = faceDims(q, i); PNT.cells = resample(parsePaint(q.f[i]), PNT.w, PNT.h); pushUndo();
   const c = $('paintCv'), sc = Math.max(4, Math.floor(320 / Math.max(PNT.w, PNT.h))); c.width = PNT.w * sc; c.height = PNT.h * sc; c.style.aspectRatio = PNT.w + '/' + PNT.h;
-  $('paintT').textContent = `ارسم على الوش ${['اليمين', 'الشمال', 'اللي فوق', 'اللي تحت', 'اللي قدام', 'اللي ورا'][i]} (${PNT.w}×${PNT.h} بكسل)`; $('paintBox').hidden = false; drawPaint();
+  $('paintT').textContent = `Paint on a face ${['right', 'left', 'top', 'bottom', 'front', 'back'][i]} (${PNT.w}×${PNT.h} pixels)`; $('paintBox').hidden = false; drawPaint();
 }
 function drawPaint() { const c = $('paintCv'), g = c.getContext('2d'), s2 = c.width / PNT.w, q = PNT.m.userData.q; g.fillStyle = q.c; g.fillRect(0, 0, c.width, c.height); PNT.cells.forEach((ch, k) => { if (ch !== '.') { g.fillStyle = BPAL[parseInt(ch, 36)]; g.fillRect((k % PNT.w) * s2, ((k / PNT.w) | 0) * s2, s2, s2); } }); g.strokeStyle = '#0003'; g.beginPath(); for (let k = 1; k < PNT.w; k++) { g.moveTo(k * s2, 0); g.lineTo(k * s2, c.height); } for (let k = 1; k < PNT.h; k++) { g.moveTo(0, k * s2); g.lineTo(c.width, k * s2); } g.stroke(); }
 { const c = $('paintCv'); let on = false; const at = (e) => { const r = c.getBoundingClientRect(), x = Math.floor((e.clientX - r.left) / r.width * PNT.w), y = Math.floor((e.clientY - r.top) / r.height * PNT.h); if (x < 0 || y < 0 || x >= PNT.w || y >= PNT.h) return; PNT.cells[y * PNT.w + x] = PNT.erase ? '.' : PNT.ink.toString(36); drawPaint(); };
   c.addEventListener('pointerdown', (e) => { on = true; c.setPointerCapture(e.pointerId); at(e); }); c.addEventListener('pointermove', (e) => on && at(e)); c.addEventListener('pointerup', () => { on = false; }); }
-$('paintErase').onclick = () => { PNT.erase = !PNT.erase; $('paintErase').textContent = PNT.erase ? 'قلم' : 'ممحاة'; };
+$('paintErase').onclick = () => { PNT.erase = !PNT.erase; $('paintErase').textContent = PNT.erase ? 'Pen' : 'Eraser'; };
 $('paintClear').onclick = () => { PNT.cells = PNT.cells.map(() => '.'); drawPaint(); };
-$('paintCopy').onclick = () => { PNT.clip = { w: PNT.w, h: PNT.h, d: PNT.cells.join('') }; toast('الرسمة اتنسخت، افتح وش تاني والصقها'); };
-$('paintPaste').onclick = () => { if (!PNT.clip) return toast('انسخ رسمة الأول'); PNT.cells = resample(PNT.clip, PNT.w, PNT.h); drawPaint(); };
+$('paintCopy').onclick = () => { PNT.clip = { w: PNT.w, h: PNT.h, d: PNT.cells.join('') }; toast('Drawing copied, open another face and paste it'); };
+$('paintPaste').onclick = () => { if (!PNT.clip) return toast('Copy a drawing first'); PNT.cells = resample(PNT.clip, PNT.w, PNT.h); drawPaint(); };
 $('paintDone').onclick = () => { const d = PNT.cells.join(''); PNT.m.userData.q.f[PNT.i] = /[^.]/.test(d) ? `${PNT.w},${PNT.h}:${d}` : ''; $('paintBox').hidden = true; rebuild(); };
 
 // ---------------------------------------------------------------- your numbers: health, hit and speed of a monster, set by hand
@@ -1224,8 +1224,8 @@ $('bManual').onchange = () => { if ($('bManual').checked) { const st = beastStat
 for (const [id, k, o] of [['sHp', 'hp', 'oHp'], ['sDmg', 'dmg', 'oDmg'], ['sSpd', 'spd', 'oSpd']]) $(id).addEventListener('input', () => { if (!BE.def.ov) return; BE.def.ov[k] = +$(id).value; $(o).textContent = k === 'spd' ? (+$(id).value).toFixed(1) : $(id).value; bcard(); });
 $('sEl').onchange = () => { if (BE.def.ov) { BE.def.ov.el = $('sEl').value; bcard(); } };
 // which part a cube is (for the animation): picked automatically, or by hand
-function syncRole() { const show = BE.sels.length > 0; $('roleRow').hidden = !show; if (!show) return; const roles = rolesOf(BE.def), q = BE.sels[0].userData.q; $('bRole').value = q.role || ''; $('bRole').title = 'تلقائي: ' + (ROLES.find((r) => r[0] === roles[BE.def.cubes.indexOf(q)])?.[1] || ''); }
-$('bRole').onchange = () => { pushUndo(); for (const m of BE.sels) m.userData.q.role = $('bRole').value || undefined; toast('اتغيّر دور الجزء'); };
+function syncRole() { const show = BE.sels.length > 0; $('roleRow').hidden = !show; if (!show) return; const roles = rolesOf(BE.def), q = BE.sels[0].userData.q; $('bRole').value = q.role || ''; $('bRole').title = 'Auto: ' + (ROLES.find((r) => r[0] === roles[BE.def.cubes.indexOf(q)])?.[1] || ''); }
+$('bRole').onchange = () => { pushUndo(); for (const m of BE.sels) m.userData.q.role = $('bRole').value || undefined; toast('Part role changed'); };
 // trying the animation inside the workshop: the editable cubes hide while the moving monster plays
 let pv = null;
 function preview(kind) {
@@ -1251,20 +1251,20 @@ function fuse(A_, B_) {
   if (legs.length) { const lb = bboxOf(legs), wx = (bb.x1 - bb.x0) / Math.max(0.5, lb.x1 - lb.x0); legs.forEach((q) => { q.p[0] = q.p[0] * Math.min(1.4, Math.max(0.6, wx)); }); const lb2 = bboxOf(legs); shift(legs, [bb.cx - lb2.cx, bb.y0 - lb2.y1 + 0.05, bb.cz - lb2.cz]); }
   if (wings.length) { const wb = bboxOf(wings); shift(wings, [0, bb.y0 + (bb.y1 - bb.y0) * 0.7 - (wb.y0 + wb.y1) / 2, bb.cz - wb.cz]); }
   const all = [...body, ...arms, ...head, ...legs, ...wings], g = bboxOf(all); shift(all, [-g.cx, -g.y0, -g.cz]);
-  const w1 = (A_.name || 'وحش').split(' ')[0], w2 = (B_.name || 'وحش').split(' ').slice(-1)[0];
-  const def = { name: w1 === w2 ? w1 + ' المدموج' : `${w1} ${w2}`, fly: !!(A_.fly || B_.fly) && wings.length > 0, cubes: all };
+  const w1 = (A_.name || 'Monster').split(' ')[0], w2 = (B_.name || 'Monster').split(' ').slice(-1)[0];
+  const def = { name: w1 === w2 ? 'Fused ' + w1 : `${w1} ${w2}`, fly: !!(A_.fly || B_.fly) && wings.length > 0, cubes: all };
   if (A_.ov || B_.ov) { const a = A_.ov ? A_.ov : beastStats(A_), b = B_.ov ? B_.ov : beastStats(B_); def.ov = { hp: Math.round((a.hp + b.hp) * 0.6), dmg: Math.round((a.dmg + b.dmg) * 0.6), spd: +((+a.spd + +b.spd) / 2).toFixed(1), el: a.el || 'none' }; }
   return def;
 }
 $('bFuse').onclick = () => { const box_ = $('fuseBox'); box_.hidden = !box_.hidden; if (box_.hidden) return; const L = $('fuseList'); L.innerHTML = '';
-  const opts = [...Object.values(BEASTS), ...BE.mine]; for (const d of opts) { const b = document.createElement('button'); b.className = 'temp'; b.textContent = d.name; b.onclick = () => { commitSel(); const cur = clone(BE.def); cur.name = $('bName').value.trim() || cur.name; pushUndo(); const f = fuse(cur, clone(d)); box_.hidden = true; loadBeast(f, true); $('bName').value = f.name; bNameTouched = true; syncSliders(); toast('اتدمجوا! الراس والرجلين من الأول، والجسم والإيدين من التاني'); }; L.appendChild(b); } };
+  const opts = [...Object.values(BEASTS), ...BE.mine]; for (const d of opts) { const b = document.createElement('button'); b.className = 'temp'; b.textContent = d.name; b.onclick = () => { commitSel(); const cur = clone(BE.def); cur.name = $('bName').value.trim() || cur.name; pushUndo(); const f = fuse(cur, clone(d)); box_.hidden = true; loadBeast(f, true); $('bName').value = f.name; bNameTouched = true; syncSliders(); toast('Fused! Head and legs from the first, body and arms from the second'); }; L.appendChild(b); } };
 
 
 // ---------------------------------------------------------------- monster abilities: what a monster does, written in your own words
 // { name, when: {k: near|every|hit|low|death, v}, act: {k: shoot|explode|dash|slam|summon|heal|shield|teleport, ...numbers}, cd, shape: cubes of a shot }
-const ACT = { shoot: 'يرمي طلقات', explode: 'يتفرقع', dash: 'يندفع عليك', slam: 'ينط ويخبط الأرض', summon: 'يطلّع وحوش', heal: 'يعالج نفسه', shield: 'يعمل درع', teleport: 'ينتقل وراك' };
-const WHEN = { near: (v) => `لما تقرّب ${v} متر`, every: (v) => `كل ${v} ثانية`, hit: () => 'لما يتضرب', low: (v) => `لما صحته تقل عن ${v}٪`, death: () => 'لما يموت' };
-function abText(a) { const x = a.act; const bits = [WHEN[a.when.k]?.(a.when.v) || '', ACT[x.k] || '']; if (x.k === 'shoot') bits.push(`${x.n || 1} طلقة · ضرر ${x.dmg}`); if (x.k === 'explode') bits.push(`فتيل ${x.fuse}ث · ضرر ${x.dmg} · قطر ${x.rad}`); if (x.k === 'heal') bits.push('+' + x.amt); if (x.k === 'summon') bits.push(`${x.n || 1} ${BEASTS[x.who]?.name || ''}`); return bits.filter(Boolean).join(' · '); }
+const ACT = { shoot: 'Shoots projectiles', explode: 'Explodes', dash: 'Dashes at you', slam: 'Jumps and slams the ground', summon: 'Summons monsters', heal: 'Heals itself', shield: 'Makes a shield', teleport: 'Teleports behind you' };
+const WHEN = { near: (v) => `when you get close ${v} m`, every: (v) => `every ${v} sec`, hit: () => 'When it gets hit', low: (v) => `when its health drops below ${v}%`, death: () => 'When it dies' };
+function abText(a) { const x = a.act; const bits = [WHEN[a.when.k]?.(a.when.v) || '', ACT[x.k] || '']; if (x.k === 'shoot') bits.push(`${x.n || 1} shots · damage ${x.dmg}`); if (x.k === 'explode') bits.push(`fuse ${x.fuse}s · damage ${x.dmg} · radius ${x.rad}`); if (x.k === 'heal') bits.push('+' + x.amt); if (x.k === 'summon') bits.push(`${x.n || 1} ${BEASTS[x.who]?.name || ''}`); return bits.filter(Boolean).join(' · '); }
 // a clean ability from anything (Claude's answer, the form, an old save): every number kept within the game's limits
 function cleanAb(a) {
   const n = (v, d, lo, hi) => { v = +v; return Number.isFinite(v) ? Math.max(lo, Math.min(hi, v)) : d; }, x = a?.act || {}, w = a?.when || {};
@@ -1278,28 +1278,28 @@ async function wordsToAbility(text) {
   try {
     const sm = window.claude?.use ? await window.claude.use('sample') : null;
     if (sm) {
-      const r = await sm.json(`A player of a kids' block game describes, in Egyptian Arabic or any language, a special ability for a monster they built. Turn it into ONE ability as JSON, nothing else:
-{"name": short Arabic name, "when": {"k": "near"|"every"|"hit"|"low"|"death", "v": number (near: distance in metres 1-12; every: seconds 0.5-30; low: health percent; else 0)},
+      const r = await sm.json(`A player of a kids' block game describes, in English or any language, a special ability for a monster they built. Turn it into ONE ability as JSON, nothing else:
+{"name": short name in the player's language, "when": {"k": "near"|"every"|"hit"|"low"|"death", "v": number (near: distance in metres 1-12; every: seconds 0.5-30; low: health percent; else 0)},
  "act": {"k": "shoot"|"explode"|"dash"|"slam"|"summon"|"heal"|"shield"|"teleport", "dmg": 1-200, "rad": explosion radius 0-12, "n": shots 1-12, "spd": shot speed 2-30, "el": "fire"|"ice"|"bolt"|"poison"|"shadow"|"light"|"none", "fuse": seconds before exploding 0-5, "amt": heal amount, "sec": shield seconds, "who": "slime"|"bat"|"skel"|"imp"|"golem"|"tnt" (for summon)},
  "cd": seconds between uses (0 for a one-time explosion)}
 "explode" means the monster blows itself up like TNT after the fuse. Pick sensible numbers when the player gives none.
 Player's words: ${JSON.stringify(text)}`, { modelTier: 'quick', cache: false });
       return cleanAb(r?.abilities?.[0] || r);
     }
-  } catch (e) { if (e?.code === 'not_granted') toast('Claude مش متاح هنا، هفهمها بالكلمات'); }
+  } catch (e) { if (e?.code === 'not_granted') toast('Claude isn’t available here, I’ll read it from the words'); }
   const t = text, has = (...w) => w.some((x) => t.includes(x)), num = (+(t.match(/\d+(\.\d+)?/) || [])[0]) || null;
-  const el = has('نار', 'ولع', 'لهب') ? 'fire' : has('تلج', 'ثلج', 'جليد') ? 'ice' : has('برق', 'كهربا') ? 'bolt' : has('سم') ? 'poison' : has('ظل', 'ظلام') ? 'shadow' : has('نور') ? 'light' : 'none';
-  const every = +(t.match(/كل\s*(\d+(\.\d+)?)/) || [])[1];
-  const when = has('يموت', 'مات') ? { k: 'death', v: 0 } : has('يتضرب', 'اضربه') ? { k: 'hit', v: 0 } : has('صحته', 'يتعب') ? { k: 'low', v: num || 30 } : has('كل ') ? { k: 'every', v: every || 3 } : { k: 'near', v: 3 };
-  const k = has('يتفرقع', 'ينفجر', 'يفجر', 'تفرقع', 'فتيل', 'tnt', 'TNT') ? 'explode' : has('يرمي', 'يضرب كور', 'كور', 'طلق', 'يطلق') ? 'shoot' : has('يندفع', 'يجري عليك', 'يهجم') ? 'dash' : has('ينط', 'يخبط الأرض') ? 'slam' : has('يطلع وحوش', 'يستدعي', 'ينادي') ? 'summon' : has('يعالج', 'صحته ترجع') ? 'heal' : has('درع') ? 'shield' : has('ينتقل', 'يختفي') ? 'teleport' : 'shoot';
-  const nShots = +(t.match(/(\d+)\s*(كور|طلق|صاروخ|حج|سهم)/) || [])[1] || (k === 'shoot' && num && when.k !== 'every' ? num : 1);
+  const el = has('نار', 'ولع', 'لهب', 'fire', 'flame', 'burn') ? 'fire' : has('تلج', 'ثلج', 'جليد', 'ice', 'frost', 'freeze') ? 'ice' : has('برق', 'كهربا', 'lightning', 'electric', 'thunder') ? 'bolt' : has('سم', 'poison', 'venom') ? 'poison' : has('ظل', 'ظلام', 'shadow', 'dark') ? 'shadow' : has('نور', 'light', 'holy') ? 'light' : 'none';
+  const every = +(t.match(/every\s*(\d+(\.\d+)?)/) || [])[1];
+  const when = has('يموت', 'مات', 'dies', 'death', 'dead') ? { k: 'death', v: 0 } : has('يتضرب', 'اضربه', 'hit', 'hurt') ? { k: 'hit', v: 0 } : has('صحته', 'يتعب', 'health', 'low') ? { k: 'low', v: num || 30 } : has('كل ', 'every ') ? { k: 'every', v: every || 3 } : { k: 'near', v: 3 };
+  const k = has('يتفرقع', 'ينفجر', 'يفجر', 'تفرقع', 'فتيل', 'explode', 'blow up', 'boom', 'fuse', 'tnt', 'TNT') ? 'explode' : has('يرمي', 'يضرب كور', 'كور', 'طلق', 'يطلق', 'shoot', 'throw', 'fire ', 'ball') ? 'shoot' : has('يندفع', 'يجري عليك', 'يهجم', 'dash', 'charge', 'rush') ? 'dash' : has('ينط', 'يخبط الأرض', 'jump', 'slam', 'stomp') ? 'slam' : has('يطلع وحوش', 'يستدعي', 'ينادي', 'summon', 'spawn', 'call') ? 'summon' : has('يعالج', 'صحته ترجع', 'heal', 'regen') ? 'heal' : has('درع', 'shield', 'block') ? 'shield' : has('ينتقل', 'يختفي', 'teleport', 'vanish') ? 'teleport' : 'shoot';
+  const nShots = +(t.match(/(\d+)\s*(كور|طلق|صاروخ|حج|سهم|balls?|shots?|bullets?|rockets?|arrows?|fireballs?)/) || [])[1] || (k === 'shoot' && num && when.k !== 'every' ? num : 1);
   return cleanAb({ name: ACT[k], when, act: { k, el, n: nShots, dmg: k === 'explode' ? 35 : 10, rad: k === 'explode' ? 3.5 : 0, fuse: 1.3 }, cd: k === 'explode' ? 0 : 3 });
 }
 function renderAbils() {
   const L = $('abList'); L.innerHTML = ''; const list = BE.def.abil || [];
-  if (!list.length) { L.innerHTML = '<div class="desc">الوحش ده لسه ملوش قدرات. اكتب قدرة بكلامك تحت، أو اختار من القايمة.</div>'; return; }
+  if (!list.length) { L.innerHTML = '<div class="desc">This monster has no abilities yet. Write an ability in your own words below, or pick one from the list.</div>'; return; }
   list.forEach((a, i) => { const d = document.createElement('div'); d.className = 'ab'; d.innerHTML = '<b></b><span></span>'; d.querySelector('b').textContent = a.name; d.querySelector('span').textContent = abText(a);
-    const e = document.createElement('button'); e.className = 'btn alt'; e.textContent = 'عدّل'; e.onclick = () => openAbForm(i); const x = document.createElement('button'); x.className = 'btn alt'; x.textContent = 'شيل'; x.onclick = () => { BE.def.abil.splice(i, 1); renderAbils(); bcard(); };
+    const e = document.createElement('button'); e.className = 'btn alt'; e.textContent = 'Edit'; e.onclick = () => openAbForm(i); const x = document.createElement('button'); x.className = 'btn alt'; x.textContent = 'Remove'; x.onclick = () => { BE.def.abil.splice(i, 1); renderAbils(); bcard(); };
     d.append(e, x); L.appendChild(d); });
 }
 $('afEl').innerHTML = Object.keys(EL).map((k) => `<option value="${k}">${EL[k].name}</option>`).join('');
@@ -1313,10 +1313,10 @@ function openAbForm(i, draft) {
 function formVis() { const w = $('afWhen').value, a = $('afAct').value; $('abForm').querySelectorAll('[data-w]').forEach((x) => { x.hidden = !x.dataset.w.split(' ').includes(w); }); $('abForm').querySelectorAll('[data-a]').forEach((x) => { x.hidden = !x.dataset.a.split(' ').includes(a); }); }
 $('afWhen').onchange = formVis; $('afAct').onchange = formVis;
 function readForm() { const a = abDraft; return cleanAb({ ...a, name: $('afName').value.trim() || ACT[$('afAct').value], when: { k: $('afWhen').value, v: $('afWv').value }, act: { k: $('afAct').value, dmg: $('afDmg').value, rad: $('afRad').value, n: $('afAct').value === 'summon' ? $('afCnt').value : $('afN').value, spd: $('afSpd').value, el: $('afEl').value, fuse: $('afFuse').value, amt: $('afAmt').value, sec: $('afSec').value, who: $('afWho').value }, cd: $('afCd').value }); }
-$('afSave').onclick = () => { const a = readForm(); BE.def.abil ||= []; if (abEdit >= 0) BE.def.abil[abEdit] = a; else BE.def.abil.push(a); $('abForm').hidden = true; renderAbils(); bcard(); toast('القدرة اتحفظت'); };
+$('afSave').onclick = () => { const a = readForm(); BE.def.abil ||= []; if (abEdit >= 0) BE.def.abil[abEdit] = a; else BE.def.abil.push(a); $('abForm').hidden = true; renderAbils(); bcard(); toast('Ability saved'); };
 $('afCancel').onclick = () => { $('abForm').hidden = true; };
 $('abNew').onclick = () => openAbForm(-1);
-$('abMake').onclick = async () => { const t = $('abText').value.trim(); if (!t) return toast('اكتب القدرة الأول'); $('abMake').disabled = true; $('abMake').textContent = 'بيفهمها…'; const a = await wordsToAbility(t); $('abMake').disabled = false; $('abMake').textContent = 'حوّلها لقدرة'; openAbForm(-1, a); toast('راجع القدرة وعدّل لو حابب، وبعدين احفظها'); };
+$('abMake').onclick = async () => { const t = $('abText').value.trim(); if (!t) return toast('Write the ability first'); $('abMake').disabled = true; $('abMake').textContent = 'Thinking…'; const a = await wordsToAbility(t); $('abMake').disabled = false; $('abMake').textContent = 'Turn into an ability'; openAbForm(-1, a); toast('Check the ability and tweak it if you like, then save it'); };
 // drawing the shot's shape: the workshop edits the shot for a while, then goes back to the monster
 let shapeEdit = null;
 $('afShape').onclick = () => { abDraft = readForm(); commitSel(); shapeEdit = { mon: BE.def, idx: abEdit, draft: abDraft, name: $('bName').value, touched: bNameTouched };
@@ -1325,15 +1325,15 @@ $('shapeDone').onclick = () => { if (!shapeEdit) return; commitSel(); const cube
   BE.def = se.mon; se.draft.shape = cubes; $('shapeBar').hidden = true; $('bcard').hidden = false; BE.sels = []; rebuild(); $('bName').value = se.name; bNameTouched = se.touched; openAbForm(se.idx, se.draft); };
 
 let bNameTouched = false; $('bName').addEventListener('input', () => { bNameTouched = true; });
-function beastName(st) { const pick = (l) => l[Math.floor(Math.random() * l.length)]; return `${pick(['الوحش', 'المخلوق', 'الكائن', 'الغول', 'العملاق'])} ${pick(EL[st.el].words)} ${pick(['الرهيب', 'الغضبان', 'الجعان', 'المجنون', 'الكبير', 'اللي محدش يقدر عليه'])}`; }
+function beastName(st) { const pick = (l) => l[Math.floor(Math.random() * l.length)]; return `The ${pick(['Dreadful', 'Angry', 'Hungry', 'Crazy', 'Huge', 'Unbeatable'])} ${pick(['Beast', 'Creature', 'Thing', 'Ghoul', 'Giant'])} of ${pick(EL[st.el].words)}`; }
 $('bNameGo').onclick = () => { $('bName').value = beastName(beastStats(BE.def)); bNameTouched = true; };
 function bcard() {
   if (!BE.def || shapeEdit) return; syncRole(); if (document.activeElement?.closest?.('#abForm') == null) renderAbils(); const st = beastStats(BE.def); $('bcard').style.setProperty('--rc', st.rar.col);
   if (!bNameTouched) $('bName').value = BE.def.name || beastName(st);
-  $('bRar').textContent = st.rar.name; $('bEl').textContent = 'العنصر: ' + EL[st.el].name; $('bEl').style.color = EL[st.el].col; $('bWeak').textContent = 'بيضعف قدام: ' + EL[st.weak].name; $('bPow').textContent = st.power;
-  const rows = [['الصحة', Math.min(100, st.hp / 6), st.hp, '#46c96b'], ['الضرر', st.dmg * 2.5, st.dmg, '#ff8a5c'], ['السرعة', st.spd * 20, st.spd.toFixed(1), '#7cd4ff'], ['المكعبات', Math.min(100, st.cubes * 3), st.cubes, '#d6c3a8']];
+  $('bRar').textContent = st.rar.name; $('bEl').textContent = 'Element: ' + EL[st.el].name; $('bEl').style.color = EL[st.el].col; $('bWeak').textContent = 'Weak to: ' + EL[st.weak].name; $('bPow').textContent = st.power;
+  const rows = [['Health', Math.min(100, st.hp / 6), st.hp, '#46c96b'], ['Damage', st.dmg * 2.5, st.dmg, '#ff8a5c'], ['Speed', st.spd * 20, st.spd.toFixed(1), '#7cd4ff'], ['cubes', Math.min(100, st.cubes * 3), st.cubes, '#d6c3a8']];
   $('bStats').innerHTML = rows.map(([k, w, v, c]) => `<span>${k}</span><span class="bar"><b style="width:${Math.min(100, w)}%;background:${c}"></b></span><span class="num">${v}</span>`).join('');
-  $('bDesc').textContent = `${st.V > 30 ? 'ضخم وتقيل، صحته كبيرة وماشي ببطء.' : st.V < 6 ? 'صغير وسريع، بس يموت من ضربتين.' : 'حجمه متوسط.'} سلاح ${EL[st.weak].name} بيعمل فيه ضرر مضاعف، وسلاح ${EL[st.el].name} بيعمل نص الضرر.`;
+  $('bDesc').textContent = `${st.V > 30 ? 'Huge and heavy, with lots of health but slow.' : st.V < 6 ? 'Small and fast, but dies in two hits.' : 'Medium sized.'} weapon ${EL[st.weak].name} weapons deal double damage to it, and ${EL[st.el].name} weapons deal half damage.`;
 }
 function beastThumb(def) { // a picture of a monster, rendered once with the workshop's renderer
   const R3 = BE.R, sc = new THREE.Scene(); sc.add(new THREE.HemisphereLight(0xfff4e8, 0x40302a, 1.3)); const d = new THREE.DirectionalLight(0xffffff, 0.8); d.position.set(5, 10, 7); sc.add(d);
@@ -1342,46 +1342,46 @@ function beastThumb(def) { // a picture of a monster, rendered once with the wor
   const w = R3.domElement.width, h = R3.domElement.height; R3.setSize(256, 256, false); R3.render(sc, cam); const url = R3.domElement.toDataURL('image/png'); R3.setSize(w, h, false); return url;
 }
 function renderMyBeasts() {
-  const L = $('myBeasts'); L.innerHTML = ''; if (!BE.mine.length) { L.innerHTML = '<div class="empty">لسه معملتش وحوش. ابني وحش ودوس "احفظ في وحوشي"، وهينزل الساحة.</div>'; return; }
+  const L = $('myBeasts'); L.innerHTML = ''; if (!BE.mine.length) { L.innerHTML = '<div class="empty">You haven’t made any monsters yet. Build a monster and tap "Save to My Monsters", and it will join the Arena.</div>'; return; }
   BE.mine.forEach((def, i) => { const st = beastStats(def), d = document.createElement('div'); d.className = 'item'; d.style.setProperty('--rc', st.rar.col); const im = new Image(); im.className = 'thumb'; im.alt = def.name; im.src = beastThumb(def); d.appendChild(im);
-    d.insertAdjacentHTML('beforeend', `<b></b><small>${st.rar.name} · ${EL[st.el].name} · الصحة ${st.hp}</small>`); d.querySelector('b').textContent = def.name;
+    d.insertAdjacentHTML('beforeend', `<b></b><small>${st.rar.name} · ${EL[st.el].name} · Health ${st.hp}</small>`); d.querySelector('b').textContent = def.name;
     const r = document.createElement('div'); r.className = 'row'; const mk = (t, fn, alt) => { const b = document.createElement('button'); b.className = 'btn' + (alt ? ' alt' : ''); b.textContent = t; b.onclick = () => fn(b); r.appendChild(b); };
-    mk('افتح', () => { pushUndo(); loadBeast(clone(def), true); $('bName').value = def.name; bNameTouched = true; }); mk('حاربه', () => fightBeast(def), true);
-    mk('نسخة', () => { const c2 = { ...clone(def), id: Date.now().toString(36), name: def.name + ' 2' }; BE.mine.unshift(c2); store.set('beasts', BE.mine); renderMyBeasts(); toast('اتعملت نسخة من الوحش'); }, true);
-    mk('امسح', (b) => { if (!b.dataset.arm) { b.dataset.arm = 1; b.textContent = 'متأكد؟'; return; } BE.mine.splice(i, 1); store.set('beasts', BE.mine); renderMyBeasts(); }, true);
+    mk('Open', () => { pushUndo(); loadBeast(clone(def), true); $('bName').value = def.name; bNameTouched = true; }); mk('Fight', () => fightBeast(def), true);
+    mk('Copy', () => { const c2 = { ...clone(def), id: Date.now().toString(36), name: def.name + ' 2' }; BE.mine.unshift(c2); store.set('beasts', BE.mine); renderMyBeasts(); toast('A copy of the monster was made'); }, true);
+    mk('Clear', (b) => { if (!b.dataset.arm) { b.dataset.arm = 1; b.textContent = 'Sure?'; return; } BE.mine.splice(i, 1); store.set('beasts', BE.mine); renderMyBeasts(); }, true);
     d.appendChild(r); L.appendChild(d); });
 }
-$('bSaveB').onclick = () => { commitSel(); const def = clone(BE.def); def.name = $('bName').value.trim() || beastName(beastStats(def)); def.id = def.id || Date.now().toString(36); const i = BE.mine.findIndex((x) => x.id === def.id); if (i >= 0) BE.mine[i] = def; else BE.mine.unshift(def); BE.def.id = def.id; BE.mine = BE.mine.slice(0, 24); store.set('beasts', BE.mine); renderMyBeasts(); toast('الوحش اتحفظ وهينزل الساحة'); };
+$('bSaveB').onclick = () => { commitSel(); const def = clone(BE.def); def.name = $('bName').value.trim() || beastName(beastStats(def)); def.id = def.id || Date.now().toString(36); const i = BE.mine.findIndex((x) => x.id === def.id); if (i >= 0) BE.mine[i] = def; else BE.mine.unshift(def); BE.def.id = def.id; BE.mine = BE.mine.slice(0, 24); store.set('beasts', BE.mine); renderMyBeasts(); toast('Monster saved, it will join the Arena'); };
 $('bNew').onclick = () => { pushUndo(); loadBeast({ name: '', fly: false, cubes: [Q(0, 1, 0, 1.5, 1.5, 1.5, BE.color)] }, true); };
 $('bFightB').onclick = () => { commitSel(); const def = clone(BE.def); def.name = $('bName').value.trim() || beastName(beastStats(def)); fightBeast(def); };
-function fightBeast(def) { if (!analyse(grid)) { show('forge'); toast('ارسم سلاح الأول، وبعدين ارجع حارب'); return; } AR.focus = def; show('arena'); startArena(); }
+function fightBeast(def) { if (!analyse(grid)) { show('forge'); toast('Draw a weapon first, then come back and fight'); return; } AR.focus = def; show('arena'); startArena(); }
 
 
 // ---------------------------------------------------------------- make your own game: worlds of pixel blocks and things that do things
 const WS = 64; // a world is 128 x 128 cells, from -64 to 64
-const GROUNDS = { grass: ['نجيلة', '#3f5a2e'], sand: ['رمل', '#c9a86a'], snow: ['تلج', '#dfe8ee'], stone: ['حجر', '#5d5852'], dark: ['أرض سحرية', '#3a2f45'], lava: ['أرض نار', '#4a2a1e'] };
+const GROUNDS = { grass: ['Grass', '#3f5a2e'], sand: ['Sand', '#c9a86a'], snow: ['Ice', '#dfe8ee'], stone: ['Stone', '#5d5852'], dark: ['Magic ground', '#3a2f45'], lava: ['Fire ground', '#4a2a1e'] };
 const plain = () => ['', '', '', '', '', ''];
 const C1 = (p, s, c, f) => ({ p, s, r: [0, 0, 0], c, f: f || plain() });
 const ITEMS = {
   // blocks you can't walk through (they stack)
-  stone: { n: 'حجر', c: '#7a736b', kind: 'block' }, dirt: { n: 'تراب', c: '#7a5230', kind: 'block' }, grass: { n: 'نجيلة', c: '#4f9a3a', kind: 'block' }, wood: { n: 'خشب', c: '#a0703c', kind: 'block' },
-  brick: { n: 'طوب', c: '#b04a3a', kind: 'block' }, ice: { n: 'تلج', c: '#9ae6ff', kind: 'block' }, gold: { n: 'دهب', c: '#e2b043', kind: 'block' }, night: { n: 'حجر أسود', c: '#2a2236', kind: 'block' },
+  stone: { n: 'Stone', c: '#7a736b', kind: 'block' }, dirt: { n: 'Dirt', c: '#7a5230', kind: 'block' }, grass: { n: 'Grass', c: '#4f9a3a', kind: 'block' }, wood: { n: 'Wood', c: '#a0703c', kind: 'block' },
+  brick: { n: 'Brick', c: '#b04a3a', kind: 'block' }, ice: { n: 'Ice', c: '#9ae6ff', kind: 'block' }, gold: { n: 'Gold', c: '#e2b043', kind: 'block' }, night: { n: 'Black stone', c: '#2a2236', kind: 'block' },
   // floors you walk on
-  lava: { n: 'حمم', c: '#ff6a1f', kind: 'tile', fx: 'بتحرق اللي يمشي عليها' }, spikes: { n: 'شوك', c: '#8a8f99', kind: 'tile', fx: 'بتجرح اللي يدوس عليها' },
-  pad: { n: 'نطّاطة', c: '#46c96b', kind: 'tile', fx: 'بتطيّرك لقدام' }, heal: { n: 'قلب', c: '#ff6fb5', kind: 'tile', fx: 'بترجّعلك صحة مرة واحدة' },
+  lava: { n: 'Lava', c: '#ff6a1f', kind: 'tile', fx: 'Burns whoever walks on it' }, spikes: { n: 'Spikes', c: '#8a8f99', kind: 'tile', fx: 'Hurts whoever steps on it' },
+  pad: { n: 'Jump pad', c: '#46c96b', kind: 'tile', fx: 'Launches you forward' }, heal: { n: 'Heart', c: '#ff6fb5', kind: 'tile', fx: 'Gives you health back once' },
   // things that do things
   tnt: { n: 'TNT', c: '#e5484d', kind: 'smart', pr: { trig: 'hit', fuse: 1.5, rad: 3.5, dmg: 40 } },
-  chest: { n: 'صندوق بلسان', c: '#8a5a35', kind: 'smart', pr: { hp: 80, dmg: 14 } },
-  swallow: { n: 'صندوق بلّاع', c: '#6b3fa0', kind: 'smart', pr: { to: 1 } },
-  spawner: { n: 'بيطلّع وحوش', c: '#3a3f4a', kind: 'smart', pr: { who: 'slime', every: 4, max: 4 } },
-  door: { n: 'باب', c: '#6f5434', kind: 'smart', pr: {} },
-  flag: { n: 'علم الفوز', c: '#ffe14d', kind: 'smart', pr: {} },
-  start: { n: 'مكان البداية', c: '#4aa3ff', kind: 'smart', pr: {} },
-  mon: { n: 'وحش', c: '#46c96b', kind: 'mon', pr: { who: 'slime' } },
+  chest: { n: 'Chest with a tongue', c: '#8a5a35', kind: 'smart', pr: { hp: 80, dmg: 14 } },
+  swallow: { n: 'Swallowing box', c: '#6b3fa0', kind: 'smart', pr: { to: 1 } },
+  spawner: { n: 'Spawns monsters', c: '#3a3f4a', kind: 'smart', pr: { who: 'slime', every: 4, max: 4 } },
+  door: { n: 'Door', c: '#6f5434', kind: 'smart', pr: {} },
+  flag: { n: 'Winning flag', c: '#ffe14d', kind: 'smart', pr: {} },
+  start: { n: 'Start spot', c: '#4aa3ff', kind: 'smart', pr: {} },
+  mon: { n: 'Monster', c: '#46c96b', kind: 'mon', pr: { who: 'slime' } },
 };
-const MIMIC = { name: 'صندوق بلسان', fly: false, cubes: [C1([0, 0.35, 0], [1.2, 0.7, 1], '#8a5a35'), { ...C1([0, 0.9, 0], [1.24, 0.4, 1.04], '#7a5230'), role: 'head' }, { ...C1([0, 0.78, 0.53], [0.22, 0.26, 0.08], '#e2b043'), role: 'head' },
+const MIMIC = { name: 'Chest with a tongue', fly: false, cubes: [C1([0, 0.35, 0], [1.2, 0.7, 1], '#8a5a35'), { ...C1([0, 0.9, 0], [1.24, 0.4, 1.04], '#7a5230'), role: 'head' }, { ...C1([0, 0.78, 0.53], [0.22, 0.26, 0.08], '#e2b043'), role: 'head' },
   { ...C1([0, 0.62, 0.45], [0.5, 0.08, 0.5], '#e5484d', null), role: 'jaw' }, { ...C1([0.3, 0.72, 0.48], [0.1, 0.14, 0.06], '#f2efe6'), role: 'head' }, { ...C1([-0.3, 0.72, 0.48], [0.1, 0.14, 0.06], '#f2efe6'), role: 'head' }],
-  abil: [{ name: 'عضّة', when: { k: 'near', v: 1.6 }, act: { k: 'dash', dmg: 14 }, cd: 1.6 }] };
+  abil: [{ name: 'Bite', when: { k: 'near', v: 1.6 }, act: { k: 'dash', dmg: 14 }, cd: 1.6 }] };
 // what a placed thing looks like: pixel cubes again
 function itemMesh(it) {
   const D = ITEMS[it.t], g = new THREE.Group(), y = it.y || 0; let cubes;
@@ -1454,7 +1454,7 @@ function worldInit() {
   R4.domElement.addEventListener('touchstart', (e) => { WE.touches = e.touches.length; if (e.touches.length > 1) stroke = null; }, { passive: true }); R4.domElement.addEventListener('touchend', (e) => { WE.touches = e.touches.length; }, { passive: true });
   new ResizeObserver(() => { const w = st.clientWidth, h = st.clientHeight; R4.setSize(w, h, false); WE.cam.aspect = w / h; WE.cam.updateProjectionMatrix(); }).observe(st);
   const btn = (k, host) => { const D = ITEMS[k], b = document.createElement('button'); b.className = 'it'; b.dataset.k = k; b.setAttribute('aria-pressed', String(k === WE.item)); b.innerHTML = `<i style="background:${D.c}"></i><span></span>`; b.querySelector('span').textContent = D.n; b.onclick = () => { WE.item = k; if (WE.tool !== 'rect') setWTool('place'); document.querySelectorAll('.it').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); }; host.appendChild(b); };
-  const showCat = (c) => { $('wItems').innerHTML = ''; for (const k in ITEMS) if (ITEMS[k].kind === c || (c === 'custom' && ITEMS[k].custom)) btn(k, $('wItems')); if (c === 'custom' && !$('wItems').children.length) $('wItems').innerHTML = '<span class="desc">لسه مفيش اختراعات. اطلب من المساعد حاجة مش موجودة، زي "بقرة لما أضربها تطلّع لحمة".</span>'; $('wCats').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.c === c))); };
+  const showCat = (c) => { $('wItems').innerHTML = ''; for (const k in ITEMS) if (ITEMS[k].kind === c || (c === 'custom' && ITEMS[k].custom)) btn(k, $('wItems')); if (c === 'custom' && !$('wItems').children.length) $('wItems').innerHTML = '<span class="desc">No inventions yet. Ask the assistant for something that doesn’t exist, like "a cow that drops beef when I hit it".</span>'; $('wCats').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.c === c))); };
   $('wCats').querySelectorAll('button').forEach((b) => { b.onclick = () => showCat(b.dataset.c); }); showCat('block');
   $('wGround').innerHTML = Object.entries(GROUNDS).map(([k, [n]]) => `<option value="${k}">${n}</option>`).join(''); $('wGround').onchange = () => { W_().ground = $('wGround').value; renderWorld(); };
   WE.g = store.get('gameDraft2', null) || newGame(); registerDefs(WE.g); $('gName').value = WE.g.name || ''; setWTool('place'); renderWorld(); renderTabs(); renderGames();
@@ -1465,10 +1465,10 @@ let rwT = 0, rwPending = false;
 function renderWorld(now) { // redraws at most every 60 ms while painting
   if (!now && performance.now() - rwT < 60) { if (!rwPending) { rwPending = true; setTimeout(() => { rwPending = false; renderWorld(true); }, 70); } return; } rwT = performance.now();
   WV = buildView(W_(), WE.root); if (WE.sel) for (const m of WV.singles) if (m.userData.it === WE.sel) m.traverse((o) => { if (o.isMesh) for (const mt of [].concat(o.material)) mt.emissive?.setHex(0x3a2410); });
-  $('wGround').value = W_().ground || 'grass'; $('wCount').textContent = `${W_().items.length} حاجة في العالم ده`; saveDraft();
+  $('wGround').value = W_().ground || 'grass'; $('wCount').textContent = `${W_().items.length} things in this world`; saveDraft();
 }
-function renderTabs() { const T = $('wTabs'); T.innerHTML = ''; WE.g.worlds.forEach((w, i) => { const b = document.createElement('button'); b.textContent = i ? `عالم ${i + 1}` : 'العالم الأساسي'; b.setAttribute('aria-pressed', String(i === WE.wi)); b.onclick = () => { WE.wi = i; WE.sel = null; renderWorld(true); renderTabs(); props(); }; T.appendChild(b); });
-  const add = document.createElement('button'); add.textContent = '+ عالم جديد'; add.onclick = () => { if (WE.g.worlds.length >= 6) return toast('أقصى حاجة 6 عوالم'); WE.g.worlds.push({ ground: 'dark', items: [{ t: 'start', x: 0, z: 4, y: 0 }] }); WE.wi = WE.g.worlds.length - 1; renderWorld(true); renderTabs(); toast('عالم جديد. حط فيه وحوش، والصندوق البلّاع هيوديك هنا'); }; T.appendChild(add); }
+function renderTabs() { const T = $('wTabs'); T.innerHTML = ''; WE.g.worlds.forEach((w, i) => { const b = document.createElement('button'); b.textContent = i ? `World ${i + 1}` : 'Main world'; b.setAttribute('aria-pressed', String(i === WE.wi)); b.onclick = () => { WE.wi = i; WE.sel = null; renderWorld(true); renderTabs(); props(); }; T.appendChild(b); });
+  const add = document.createElement('button'); add.textContent = '+ New world'; add.onclick = () => { if (WE.g.worlds.length >= 6) return toast('6 worlds at most'); WE.g.worlds.push({ ground: 'dark', items: [{ t: 'start', x: 0, z: 4, y: 0 }] }); WE.wi = WE.g.worlds.length - 1; renderWorld(true); renderTabs(); toast('New world. Put monsters in it, and the swallowing box will bring you here'); }; T.appendChild(add); }
 function setWTool(t) { WE.tool = t; for (const [id, k] of [['wtPlace', 'place'], ['wtRect', 'rect'], ['wtSel', 'select'], ['wtErase', 'erase'], ['wtCam', 'cam']]) $(id).setAttribute('aria-pressed', String(t === k));
   if (!WE.orbit) return; const R_ = THREE.MOUSE, T_ = THREE.TOUCH; WE.orbit.mouseButtons = { LEFT: t === 'cam' ? R_.ROTATE : -1, MIDDLE: R_.DOLLY, RIGHT: R_.ROTATE }; WE.orbit.touches = { ONE: t === 'cam' ? T_.ROTATE : -1, TWO: T_.DOLLY_PAN }; }
 $('wtPlace').onclick = () => setWTool('place'); $('wtRect').onclick = () => setWTool('rect'); $('wtSel').onclick = () => setWTool('select'); $('wtErase').onclick = () => setWTool('erase'); $('wtCam').onclick = () => setWTool('cam');
@@ -1476,7 +1476,7 @@ const panel = (id) => { for (const x of ['wMore', 'myGamesBox']) $(x).hidden = x
 $('wtMore').onclick = () => panel('wMore'); $('gMine').onclick = () => panel('myGamesBox');
 $('aiToggle').onclick = () => $('aiBox').classList.toggle('min');
 $('wpX').onclick = () => { $('wProps').hidden = true; };
-$('wtTurn').onclick = () => { if (!WE.sel) return toast('اختار حاجة الأول'); WE.sel.r = ((WE.sel.r || 0) + 1) % 4; renderWorld(true); };
+$('wtTurn').onclick = () => { if (!WE.sel) return toast('Pick something first'); WE.sel.r = ((WE.sel.r || 0) + 1) % 4; renderWorld(true); };
 const wray = new THREE.Raycaster(), _pl = new THREE.Plane(), _hp = new THREE.Vector3();
 function rayFrom(e) { const r = WE.R.domElement.getBoundingClientRect(); wray.setFromCamera({ x: (e.clientX - r.left) / r.width * 2 - 1, y: -((e.clientY - r.top) / r.height) * 2 + 1 }, WE.cam); }
 function cellOnPlane(e, y) { rayFrom(e); _pl.set(new THREE.Vector3(0, 1, 0), -y); if (!wray.ray.intersectPlane(_pl, _hp)) return null; const x = Math.floor(_hp.x), z = Math.floor(_hp.z); return x < -WS || z < -WS || x >= WS || z >= WS ? null : { x, z }; }
@@ -1501,7 +1501,7 @@ function worldTap(e, base) {
   const nu = putItem(WE.item, x, z, y); if (nu) { WE.sel = ITEMS[nu.t].kind === 'smart' || nu.t === 'mon' ? nu : null; renderWorld(); props(); } return { y: nu ? nu.y : 0 };
 }
 function showRect(a, b) { const x0 = Math.min(a.x, b.x), x1 = Math.max(a.x, b.x) + 1, z0 = Math.min(a.z, b.z), z1 = Math.max(a.z, b.z) + 1; WE.rectBox.visible = true; WE.rectBox.scale.set(x1 - x0, 1, z1 - z0); WE.rectBox.position.set((x0 + x1) / 2, 0.5, (z0 + z1) / 2); }
-function fillRect(a, b) { const x0 = Math.min(a.x, b.x), x1 = Math.max(a.x, b.x), z0 = Math.min(a.z, b.z), z1 = Math.max(a.z, b.z); if ((x1 - x0 + 1) * (z1 - z0 + 1) > 4096) return toast('المساحة كبيرة قوي، قسّمها');
+function fillRect(a, b) { const x0 = Math.min(a.x, b.x), x1 = Math.max(a.x, b.x), z0 = Math.min(a.z, b.z), z1 = Math.max(a.z, b.z); if ((x1 - x0 + 1) * (z1 - z0 + 1) > 4096) return toast('That area is too big, split it up');
   const hollow = $('wHollow').checked && ITEMS[WE.item].kind === 'block', hgt = ITEMS[WE.item].kind === 'block' ? +$('wH').value || 1 : 1;
   for (let x = x0; x <= x1; x++) for (let z = z0; z <= z1; z++) { if (hollow && x > x0 && x < x1 && z > z0 && z < z1) continue; for (let y = 0; y < hgt; y++) putItem(WE.item, x, z, y); } renderWorld(true); }
 // the selected thing's settings
@@ -1509,13 +1509,13 @@ function props() {
   const it = WE.sel, F = $('wpF'); F.innerHTML = ''; $('wProps').hidden = !it || !(ITEMS[it.t].kind === 'smart' || it.t === 'mon'); if (!it) return; const D = ITEMS[it.t]; $('wpT').textContent = D.n + (D.fx ? ' · ' + D.fx : '');
   const field = (label, html, on) => { const l = document.createElement('label'); l.innerHTML = `<span></span>${html}`; l.querySelector('span').textContent = label; const inp = l.querySelector('input,select'); inp.onchange = () => { on(inp.value); renderWorld(); }; F.appendChild(l); return inp; };
   const num = (label, k, min, max, step = 1) => { const i = field(label, `<input type="number" min="${min}" max="${max}" step="${step}">`, (v) => { it.pr[k] = Math.max(min, Math.min(max, +v || 0)); }); i.value = it.pr[k]; };
-  const monOpts = () => [...Object.keys(BEASTS).map((k) => [k, BEASTS[k].name]), ...BE.mine.map((d) => ['m:' + d.id, d.name + ' (وحشك)'])].map(([k, n]) => `<option value="${k}">${n}</option>`).join('');
-  if (it.t === 'tnt') { const s1 = field('بتتفرقع إمتى', '<select><option value="hit">لما تضربها</option><option value="near">لما حد يقرّب</option><option value="touch">لما تلمسها</option></select>', (v) => { it.pr.trig = v; }); s1.value = it.pr.trig; num('وقت الفتيل', 'fuse', 0, 6, 0.1); num('نص قطر الانفجار', 'rad', 1, 10, 0.5); num('الضرر', 'dmg', 1, 200); }
-  if (it.t === 'chest') { num('صحته', 'hp', 10, 600, 10); num('قوة العضّة', 'dmg', 1, 80); }
-  if (it.t === 'swallow') { const s1 = field('بيوديك فين', `<select>${WE.g.worlds.map((w, i) => (i === WE.wi ? '' : `<option value="${i}">${i ? 'عالم ' + (i + 1) : 'العالم الأساسي'}</option>`)).join('')}<option value="new">عالم جديد</option></select>`, (v) => { if (v === 'new') { WE.g.worlds.push({ ground: 'dark', items: [{ t: 'start', x: 0, z: 4, y: 0 }, { t: 'mon', x: 0, z: -3, y: 0, pr: { who: 'imp' } }] }); it.pr.to = WE.g.worlds.length - 1; renderTabs(); props(); } else it.pr.to = +v; }); s1.value = it.pr.to; }
-  if (it.t === 'spawner') { const s1 = field('بيطلّع مين', `<select>${monOpts()}</select>`, (v) => { it.pr.who = v; }); s1.value = it.pr.who; num('كل كام ثانية', 'every', 1, 30, 0.5); num('أقصى عدد في نفس الوقت', 'max', 1, 12); }
-  if (it.t === 'mon') { const s1 = field('الوحش', `<select>${monOpts()}</select>`, (v) => { it.pr.who = v; }); s1.value = it.pr.who; }
-  if (!F.children.length) F.innerHTML = '<span class="desc">الحاجة دي ملهاش إعدادات.</span>';
+  const monOpts = () => [...Object.keys(BEASTS).map((k) => [k, BEASTS[k].name]), ...BE.mine.map((d) => ['m:' + d.id, d.name + ' (your monster)'])].map(([k, n]) => `<option value="${k}">${n}</option>`).join('');
+  if (it.t === 'tnt') { const s1 = field('When it explodes', '<select><option value="hit">When you hit it</option><option value="near">When someone gets close</option><option value="touch">When you touch it</option></select>', (v) => { it.pr.trig = v; }); s1.value = it.pr.trig; num('Fuse time', 'fuse', 0, 6, 0.1); num('Blast radius', 'rad', 1, 10, 0.5); num('Damage', 'dmg', 1, 200); }
+  if (it.t === 'chest') { num('Health', 'hp', 10, 600, 10); num('Bite power', 'dmg', 1, 80); }
+  if (it.t === 'swallow') { const s1 = field('Where it takes you', `<select>${WE.g.worlds.map((w, i) => (i === WE.wi ? '' : `<option value="${i}">${i ? 'World ' + (i + 1) : 'Main world'}</option>`)).join('')}<option value="new">New world</option></select>`, (v) => { if (v === 'new') { WE.g.worlds.push({ ground: 'dark', items: [{ t: 'start', x: 0, z: 4, y: 0 }, { t: 'mon', x: 0, z: -3, y: 0, pr: { who: 'imp' } }] }); it.pr.to = WE.g.worlds.length - 1; renderTabs(); props(); } else it.pr.to = +v; }); s1.value = it.pr.to; }
+  if (it.t === 'spawner') { const s1 = field('Spawns who', `<select>${monOpts()}</select>`, (v) => { it.pr.who = v; }); s1.value = it.pr.who; num('Every few seconds', 'every', 1, 30, 0.5); num('Most at the same time', 'max', 1, 12); }
+  if (it.t === 'mon') { const s1 = field('Monster', `<select>${monOpts()}</select>`, (v) => { it.pr.who = v; }); s1.value = it.pr.who; }
+  if (!F.children.length) F.innerHTML = '<span class="desc">This thing has no settings.</span>';
 }
 
 // ---------------------------------------------------------------- the assistant: you ask, Claude builds it in front of you
@@ -1576,18 +1576,18 @@ function savePics() { for (;;) { try { localStorage.setItem('forge.pics', JSON.s
 async function picFromUrl(url) { const im = new Image(); im.src = url; await im.decode(); const cv = document.createElement('canvas'); cv.width = im.naturalWidth; cv.height = im.naturalHeight; cv.getContext('2d').drawImage(im, 0, 0); const blob = await new Promise((r) => cv.toBlob(r, 'image/png')); return { blob, cv, url }; }
 function renderPics() {
   const L = $('aiPics'); L.innerHTML = ''; L.hidden = !PICS.list.length;
-  PICS.list.forEach((p) => { const d = document.createElement('div'); d.className = 'pic' + (PICS.sel === p.id ? ' on' : ''); const im = document.createElement('img'); im.src = p.url; im.alt = 'صورة'; d.appendChild(im);
-    const x = document.createElement('button'); x.textContent = '✕'; x.setAttribute('aria-label', 'امسح الصورة'); x.onclick = (e) => { e.stopPropagation(); PICS.list = PICS.list.filter((q) => q !== p); if (PICS.sel === p.id) { PICS.sel = null; aiPic = null; } savePics(); renderPics(); }; d.appendChild(x);
+  PICS.list.forEach((p) => { const d = document.createElement('div'); d.className = 'pic' + (PICS.sel === p.id ? ' on' : ''); const im = document.createElement('img'); im.src = p.url; im.alt = 'Picture'; d.appendChild(im);
+    const x = document.createElement('button'); x.textContent = '✕'; x.setAttribute('aria-label', 'Delete the picture'); x.onclick = (e) => { e.stopPropagation(); PICS.list = PICS.list.filter((q) => q !== p); if (PICS.sel === p.id) { PICS.sel = null; aiPic = null; } savePics(); renderPics(); }; d.appendChild(x);
     d.onclick = async () => { if (PICS.sel === p.id) { PICS.sel = null; aiPic = null; } else { PICS.sel = p.id; aiPic = await picFromUrl(p.url).catch(() => null); } renderPics(); }; L.appendChild(d); });
-  if (PICS.sel) { const row = document.createElement('div'); row.className = 'picActs'; row.innerHTML = '<span>الصورة المختارة هتتبعت مع طلبك الجاي. أو انسخها بكسل بكسل من غير المساعد:</span>';
+  if (PICS.sel) { const row = document.createElement('div'); row.className = 'picActs'; row.innerHTML = '<span>The selected picture will be sent with your next request. Or copy it pixel by pixel without the assistant:</span>';
     const mk = (t, fn) => { const b = document.createElement('button'); b.className = 'tool'; b.textContent = t; b.onclick = fn; row.appendChild(b); };
-    mk('🧍 خليها شخصيتي', () => pixelCopy('hero')); mk('👾 خليها كائن', () => pixelCopy('mon')); L.appendChild(row); }
+    mk('🧍 Make it my character', () => pixelCopy('hero')); mk('👾 Make it a creature', () => pixelCopy('mon')); L.appendChild(row); }
 }
 function pixelCopy(what) {
-  if (!aiPic) return; const cubes = voxelize(aiPic.cv); if (!cubes) return toast('مش لاقي شكل في الصورة دي');
-  if (what === 'hero') { WE.g.hero = { name: 'نسخة من صورة', cubes }; aiSay('bot', `نسخت الصورة بكسل بكسل وبقت شخصيتك (${cubes.length} حتة). العب وشوفها.`); }
-  else { WE.g.defs ||= {}; let k = 'pic1'; for (let i = 1; WE.g.defs[k = 'pic' + i]; i++); const d = cleanDef({ kind: 'entity', name: 'كائن ' + k.slice(3), move: 'follow', hp: 40, dmg: 8, spd: 2.2, size: 2 }); d.cubes = cubes; WE.g.defs[k] = d; registerDefs(WE.g);
-    WE.item = k; aiSay('bot', `نسخت الصورة بكسل بكسل وبقت كائن اسمه «${d.name}». تلاقيه في «اختراعات»، حطه في العالم، أو قول للمساعد يغيّر اسمه وقوته.`); }
+  if (!aiPic) return; const cubes = voxelize(aiPic.cv); if (!cubes) return toast('I can’t find a shape in this picture');
+  if (what === 'hero') { WE.g.hero = { name: 'Copy of a picture', cubes }; aiSay('bot', `I copied the picture pixel by pixel and it’s now your character (${cubes.length} pieces). Play and see it.`); }
+  else { WE.g.defs ||= {}; let k = 'pic1'; for (let i = 1; WE.g.defs[k = 'pic' + i]; i++); const d = cleanDef({ kind: 'entity', name: 'Creature ' + k.slice(3), move: 'follow', hp: 40, dmg: 8, spd: 2.2, size: 2 }); d.cubes = cubes; WE.g.defs[k] = d; registerDefs(WE.g);
+    WE.item = k; aiSay('bot', `I copied the picture pixel by pixel and it’s now a creature called «${d.name}». Find it in "Inventions", place it in the world, or ask the assistant to change its name and power.`); }
   saveDraft(); PICS.sel = null; aiPic = null; renderPics();
 }
 function applyOps(ops) {
@@ -1603,7 +1603,7 @@ function applyOps(ops) {
     if (!o || typeof o !== 'object') continue; const h = Math.max(1, Math.min(8, Math.round(+o.h || 1))), y0 = Math.max(0, Math.round(+o.y || 0));
     if (o.op === 'ground' && GROUNDS[o.g]) { W_().ground = o.g; continue; }
     if (o.op === 'code' && typeof o.key === 'string' && /^[a-z][a-z0-9_]{1,24}$/.test(o.key) && typeof o.code === 'string') { WE.g.mods ||= {}; WE.g.mods[o.key] = { name: String(o.name || o.key).slice(0, 40), code: o.code.slice(0, 20000) }; try { modCompile(o.code); } catch (e) { WE.g.mods[o.key].err = String(e.message); fixMod(o.key); } n++; continue; }
-    if (o.op === 'hero') { if (o.reset) delete WE.g.hero; else if (Array.isArray(o.cubes) && o.cubes.length >= 3) { WE.g.hero = { name: String(o.name || 'البطل').slice(0, 30), cubes: cleanCubes(o.cubes) }; WE.g.hero.cubes.forEach((q, i) => picFaces(q, o.cubes[i])); } n++; continue; }
+    if (o.op === 'hero') { if (o.reset) delete WE.g.hero; else if (Array.isArray(o.cubes) && o.cubes.length >= 3) { WE.g.hero = { name: String(o.name || 'Hero').slice(0, 30), cubes: cleanCubes(o.cubes) }; WE.g.hero.cubes.forEach((q, i) => picFaces(q, o.cubes[i])); } n++; continue; }
     if (o.op === 'uncode' && WE.g.mods?.[o.key]) { delete WE.g.mods[o.key]; n++; continue; }
     if (o.op === 'define' && typeof o.key === 'string' && /^[a-z][a-z0-9_]{1,24}$/.test(o.key) && (!ITEMS[o.key] || ITEMS[o.key].custom || ITEMS[o.key].kind === 'custom')) { WE.g.defs ||= {}; WE.g.defs[o.key] = cleanDef(o.def); WE.g.defs[o.key].cubes.forEach((q, i) => picFaces(q, o.def?.cubes?.[i])); registerDefs(WE.g); n++; continue; }
     if (o.op === 'setting') { W_().settings ||= {}; if (CAMS[o.camera]) W_().settings.camera = o.camera; if (/^#[0-9a-f]{6}$/i.test(o.sky)) W_().settings.sky = o.sky; n++; continue; }
@@ -1625,18 +1625,18 @@ $('aiFile').onchange = () => { const fs = [...$('aiFile').files]; $('aiFile').va
 addEventListener('paste', (e) => { const fs = [...(e.clipboardData?.files || [])].filter((f) => f.type.startsWith('image/')); if (fs.length) { e.preventDefault(); addPics(fs); } });
 addEventListener('dragover', (e) => { if ([...(e.dataTransfer?.items || [])].some((i) => i.kind === 'file')) e.preventDefault(); });
 addEventListener('drop', (e) => { const fs = [...(e.dataTransfer?.files || [])].filter((f) => f.type.startsWith('image/')); if (fs.length) { e.preventDefault(); addPics(fs); } });
-async function addPics(fs) { let last = null; for (const f of fs) { try { const p = await loadPic(f), k = Math.min(1, 640 / Math.max(p.cv.width, p.cv.height)), c = document.createElement('canvas'); c.width = Math.round(p.cv.width * k); c.height = Math.round(p.cv.height * k); c.getContext('2d').drawImage(p.cv, 0, 0, c.width, c.height); last = { id: Date.now() + '-' + Math.random().toString(36).slice(2, 6), url: c.toDataURL('image/png').length < 400000 ? c.toDataURL('image/png') : c.toDataURL('image/jpeg', 0.9) }; PICS.list.push(last); } catch { toast('مقدرتش أفتح صورة منهم'); } }
-  if (!last) return; savePics(); PICS.sel = last.id; aiPic = await picFromUrl(last.url).catch(() => null); renderPics(); toast(fs.length > 1 ? `اترفعت ${fs.length} صور. مش هيحصل حاجة لحد ما تطلب` : 'الصورة اترفعت. مش هيحصل حاجة لحد ما تطلب'); }
+async function addPics(fs) { let last = null; for (const f of fs) { try { const p = await loadPic(f), k = Math.min(1, 640 / Math.max(p.cv.width, p.cv.height)), c = document.createElement('canvas'); c.width = Math.round(p.cv.width * k); c.height = Math.round(p.cv.height * k); c.getContext('2d').drawImage(p.cv, 0, 0, c.width, c.height); last = { id: Date.now() + '-' + Math.random().toString(36).slice(2, 6), url: c.toDataURL('image/png').length < 400000 ? c.toDataURL('image/png') : c.toDataURL('image/jpeg', 0.9) }; PICS.list.push(last); } catch { toast('I couldn’t open one of them'); } }
+  if (!last) return; savePics(); PICS.sel = last.id; aiPic = await picFromUrl(last.url).catch(() => null); renderPics(); toast(fs.length > 1 ? `Uploaded ${fs.length} pictures. Nothing will happen until you ask` : 'Picture uploaded. Nothing will happen until you ask'); }
 renderPics();
-$('aiThumb').onclick = () => { aiPic = null; $('aiThumb').hidden = true; toast('شلت الصورة'); };
+$('aiThumb').onclick = () => { aiPic = null; $('aiThumb').hidden = true; toast('Picture removed'); };
 $('aiText').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); $('aiGo').click(); } });
 $('aiGo').onclick = async () => {
-  const text = $('aiText').value.trim(); if (!text) return toast('اكتب طلبك الأول');
-  const sm = window.claude?.use ? await window.claude.use('sample').catch(() => null) : null; if (!sm) { toast('المساعد شغّال بس جوه Claude. ابني بإيدك هنا'); return; }
-  aiSay('me', text + (aiPic ? ' 📷' : '')); $('aiText').value = ''; let imgs = null; if (aiPic) { const lim = await sm.limits?.().catch(() => null); if (lim?.images) imgs = [aiPic.blob]; else toast('الصور مش متاحة هنا، هبني من الكلام بس'); } $('aiGo').disabled = true; $('aiGo').textContent = 'بيبني…'; const before = JSON.stringify(W_());
+  const text = $('aiText').value.trim(); if (!text) return toast('Write your request first');
+  const sm = window.claude?.use ? await window.claude.use('sample').catch(() => null) : null; if (!sm) { toast('The assistant only works inside Claude. Build by hand here'); return; }
+  aiSay('me', text + (aiPic ? ' 📷' : '')); $('aiText').value = ''; let imgs = null; if (aiPic) { const lim = await sm.limits?.().catch(() => null); if (lim?.images) imgs = [aiPic.blob]; else toast('Pictures aren’t available here, I’ll build from the words only'); } $('aiGo').disabled = true; $('aiGo').textContent = 'Building…'; const before = JSON.stringify(W_());
   const mons = [...Object.keys(BEASTS).map((k) => `${k} (${BEASTS[k].name})`), ...BE.mine.map((d) => `m:${d.id} (${d.name})`)].join(', ');
   try {
-    const r = await sm.json(`You build worlds in a kids' block game from what the player asks (Egyptian Arabic or any language). The world is a grid: x and z from -64 to 63 (cells of 1 m), y = stack height 0..12 (only blocks stack). The player's view starts around (0,0).
+    const r = await sm.json(`You build worlds in a kids' block game from what the player asks (English or any language). The world is a grid: x and z from -64 to 63 (cells of 1 m), y = stack height 0..12 (only blocks stack). The player's view starts around (0,0).
 Things you can place (t):
 blocks (solid, stack): stone, dirt, grass, wood, brick, ice, gold, night
 floors (y 0, walkable): lava (burns), spikes (hurt), pad (launches you), heal (heart, one use)
@@ -1647,40 +1647,40 @@ Current world: ${worldSummary(W_())}. This game has ${WE.g.worlds.length} worlds
 Inventions already in this game: ${Object.entries(WE.g.defs || {}).map(([k, d]) => k + ' (' + d.name + ', ' + d.kind + ')').join(', ') || 'none'}.
 Code features already in this game: ${Object.entries(WE.g.mods || {}).map(([k, m]) => `\n--- ${k} (${m.name})${m.err ? ' [BROKEN: ' + m.err + ']' : ''}:\n` + m.code.slice(0, 3000)).join('') || 'none'}.
 IMPORTANT: the player may ask for ANYTHING, including things this game has never had (animals, food, magic items, new blocks, characters...). Never refuse and never swap it for something else: INVENT it with a "define" step, then place it with "put" (or rect/line/circle for blocks).
-An invention: {"op":"define","key": short lowercase english id like "cow","def":{"kind":"entity"|"pickup"|"block","name": Arabic name,
+An invention: {"op":"define","key": short lowercase english id like "cow","def":{"kind":"entity"|"pickup"|"block","name": name in the player's language,
  "cubes": its 3D model built from 3-40 boxes [{"p":[x,y,z] centre,"s":[w,h,d] size,"c":"#rrggbb","r":[rx,ry,rz] radians,"role": optional "body"|"head"|"legL"|"legR"|"armL"|"armR"|"wingL"|"wingR"|"tail"}] (y up, feet at y=0, about 1-3 units tall, front faces +z; give legs, arms, wings and the head roles so they animate; make it recognisable and cute, with eyes, spots, horns...),
  "size": height in metres in the game, "move":"wander"|"follow"|"flee"|"still"|"fly", "hp", "dmg" (0 = harmless/friendly), "spd", "el": element,
  "onHit": event, "onDeath": event, "onTouch": event}}
-An event: {"say": short Arabic text, "drop": key of an invention to drop (define pickups BEFORE what drops them), "n": count, "spawn": key or monster to create, "explode": {"rad","dmg"}, "heal", "dmg", "speed": extra speed 0-3, "power": extra hit power 0-3, "sec": seconds, "score"}.
+An event: {"say": short text in the player's language, "drop": key of an invention to drop (define pickups BEFORE what drops them), "n": count, "spawn": key or monster to create, "explode": {"rad","dmg"}, "heal", "dmg", "speed": extra speed 0-3, "power": extra hit power 0-3, "sec": seconds, "score"}.
 Pickups ("kind":"pickup") are picked up when the player walks into them and run their "onTouch" event (beef: {"heal":30}). Blocks ("kind":"block") are new solid block types with a "color".
-NEW RULES AND MECHANICS (jumping, flying, double jump, gravity, dashing, a boss that splits, a monster whose hand falls off and becomes enemies, day and night, a timer, collecting coins to win, a pet that follows you and fights...): anything "define" can't do, PROGRAM it: {"op":"code","key": short lowercase english id,"name": Arabic name,"code": JavaScript}. To change a code feature write it again with the same key; to remove one: {"op":"uncode","key"}. Write complete, careful, working code; tell the player in "say" which key/button to use (phones have a ✦ button that sends "Action").
+NEW RULES AND MECHANICS (jumping, flying, double jump, gravity, dashing, a boss that splits, a monster whose hand falls off and becomes enemies, day and night, a timer, collecting coins to win, a pet that follows you and fights...): anything "define" can't do, PROGRAM it: {"op":"code","key": short lowercase english id,"name": name in the player's language,"code": JavaScript}. To change a code feature write it again with the same key; to remove one: {"op":"uncode","key"}. Write complete, careful, working code; tell the player in "say" which key/button to use (phones have a ✦ button that sends "Action").
 ${MOD_API}
 The player's character (the hero) right now, in boxes: ${JSON.stringify(heroNow())}
-To change how the player looks (another character, a zombie, a robot, red clothes, a hat, a cape...): {"op":"hero","name": Arabic name,"cubes": the whole new list}. Start from the boxes above: for a small change (colours, a hat) keep the others as they are; for a new character design all boxes but keep the size (about 2.4 tall, feet at y=0, front +z) and the roles body, head, legL, legR, armL, armR (the weapon goes in armR's hand). {"op":"hero","reset":true} brings the normal hero back.
+To change how the player looks (another character, a zombie, a robot, red clothes, a hat, a cape...): {"op":"hero","name": name in the player's language,"cubes": the whole new list}. Start from the boxes above: for a small change (colours, a hat) keep the others as they are; for a new character design all boxes but keep the size (about 2.4 tall, feet at y=0, front +z) and the roles body, head, legL, legR, armL, armR (the weapon goes in armR's hand). {"op":"hero","reset":true} brings the normal hero back.
 Settings: {"op":"setting","camera":"behind"|"front"|"first"|"top","sky":"#rrggbb"}.
-Reply ONLY with JSON: {"say": one short friendly sentence in Egyptian Arabic about what you built, "ops": [steps]}. Steps:
+Reply ONLY with JSON: {"say": one short friendly sentence about what you built, in the same language the player used, "ops": [steps]}. Steps:
 {"op":"ground","g":...} · {"op":"clear"} (only if asked to start over) · {"op":"put","t":...,"x","z","y","pr"} · {"op":"rect","t","x0","z0","x1","z1","y","h","hollow":true|false,"pr"} · {"op":"line","t","x0","z0","x1","z1","y","h"} · {"op":"circle","t","cx","cz","r","y","h","hollow"} · {"op":"erase","x0","z0","x1","z1"} · {"op":"fill","t","y","h"} (covers the WHOLE world, every cell from -64 to 63)
 SIZE: do exactly the size the player says. "All the floor", "the whole ground", "everywhere", "كل الأرض", "الأرضية كلها", "في كل حتة" means the WHOLE world (use fill, or rect from -64 to 63), never a small patch. "Big" means really big (40+ cells), "huge" means most of the world. Never quietly make less than asked.
 Build generously and with care for how it looks (walls with towers, paths, decorations, varied blocks), keep it playable (paths the player can walk, a start spot if there is none), and use at most 150 steps (inventions first, then placing them).
 ${imgs ? `THE PLAYER ATTACHED A PICTURE. Copy it as exactly as you can, with the same quality and every detail. A character or creature: make it the hero (if they want to play as it or say "me"/"my character") or define it (an entity or pickup). Study the picture closely first: proportions, every colour, clothes, hair, face, accessories. Build 15-45 boxes that match its shape. For EVERY box add "uv":[x0,y0,x1,y1] = the tight rectangle of the picture (fractions 0..1 of its width and height, from the top-left) that shows that box's front; the game pastes those exact pixels on the box's front (and its edge pixels on the sides), so the front looks exactly like the picture, pixel for pixel. Rectangles must hug the part (no background). Add "uvBack" only if the picture also shows the back. Set "c" to that part's main colour. A place or building in the picture: build it with blocks in its colours instead.
 ` : ''}Player asks: ${JSON.stringify(text)}`, { modelTier: 'complex', cache: false, ...(imgs ? { images: imgs } : {}) });
     aiUndo = before; const n = applyOps(r?.ops); if (imgs) { aiPic = null; PICS.sel = null; renderPics(); } renderWorld(true); renderTabs(); $('aiUndo').disabled = false;
-    aiSay('bot', (r?.say || 'خلصت') + (n ? ` (${n} حاجة)` : ' (مفيش حاجة اتحطت، جرّب توضّح أكتر)'));
-  } catch (e) { aiSay('bot', e?.code === 'rate_limited' ? 'المساعد محتاج يرتاح شوية، جرّب كمان دقيقة.' : 'معرفتش أبني ده، جرّب تقوله بطريقة تانية.'); }
-  $('aiGo').disabled = false; $('aiGo').textContent = 'ابنيه';
+    aiSay('bot', (r?.say || 'Done') + (n ? ` (${n} things)` : ' (nothing was placed, try explaining more)'));
+  } catch (e) { aiSay('bot', e?.code === 'rate_limited' ? 'The assistant needs a short rest, try again in a minute.' : "I couldn’t build that, try saying it another way."); }
+  $('aiGo').disabled = false; $('aiGo').textContent = 'Build it';
 };
-$('aiUndo').onclick = () => { if (!aiUndo) return; WE.g.worlds[WE.wi] = JSON.parse(aiUndo); aiUndo = null; $('aiUndo').disabled = true; WE.sel = null; renderWorld(true); aiSay('bot', 'رجّعت العالم زي ما كان'); };
+$('aiUndo').onclick = () => { if (!aiUndo) return; WE.g.worlds[WE.wi] = JSON.parse(aiUndo); aiUndo = null; $('aiUndo').disabled = true; WE.sel = null; renderWorld(true); aiSay('bot', 'I put the world back the way it was'); };
 
 function saveDraft() { WE.g.name = $('gName').value.trim(); store.set('gameDraft2', WE.g); }
 $('gName').addEventListener('input', saveDraft);
-$('gSave').onclick = () => { saveDraft(); const g = clone(WE.g); g.name = g.name || 'لعبتي ' + (WE.games.length + 1); const i = WE.games.findIndex((x) => x.id === g.id); if (i >= 0) WE.games[i] = g; else WE.games.unshift(g); WE.games = WE.games.slice(0, 20); store.set('games', WE.games); renderGames(); toast('اللعبة اتحفظت'); };
+$('gSave').onclick = () => { saveDraft(); const g = clone(WE.g); g.name = g.name || 'My Game ' + (WE.games.length + 1); const i = WE.games.findIndex((x) => x.id === g.id); if (i >= 0) WE.games[i] = g; else WE.games.unshift(g); WE.games = WE.games.slice(0, 20); store.set('games', WE.games); renderGames(); toast('Game saved'); };
 $('gNew').onclick = () => { WE.g = newGame(); WE.g.worlds = [{ ground: 'grass', items: [{ t: 'start', x: 0, z: 4, y: 0 }] }]; WE.wi = 0; WE.sel = null; $('gName').value = ''; renderWorld(true); renderTabs(); props(); };
-let clearArm2 = 0; $('gClear').onclick = () => { if (!clearArm2) { $('gClear').textContent = 'متأكد؟'; clearArm2 = setTimeout(() => { clearArm2 = 0; $('gClear').textContent = 'فضّي العالم ده'; }, 2500); return; } clearTimeout(clearArm2); clearArm2 = 0; $('gClear').textContent = 'فضّي العالم ده'; W_().items = [{ t: 'start', x: 0, z: 4, y: 0 }]; WE.sel = null; renderWorld(true); props(); };
-function renderGames() { const L = $('myGames'); L.innerHTML = ''; if (!WE.games.length) { L.innerHTML = '<div class="empty">لسه محفظتش ألعاب.</div>'; return; }
-  WE.games.forEach((g, i) => { const d = document.createElement('div'); d.className = 'item'; d.innerHTML = '<b></b><small></small><div class="row"></div>'; d.querySelector('b').textContent = g.name; d.querySelector('small').textContent = `${g.worlds.length} عوالم`;
+let clearArm2 = 0; $('gClear').onclick = () => { if (!clearArm2) { $('gClear').textContent = 'Sure?'; clearArm2 = setTimeout(() => { clearArm2 = 0; $('gClear').textContent = 'Empty this world'; }, 2500); return; } clearTimeout(clearArm2); clearArm2 = 0; $('gClear').textContent = 'Empty this world'; W_().items = [{ t: 'start', x: 0, z: 4, y: 0 }]; WE.sel = null; renderWorld(true); props(); };
+function renderGames() { const L = $('myGames'); L.innerHTML = ''; if (!WE.games.length) { L.innerHTML = '<div class="empty">No saved games yet.</div>'; return; }
+  WE.games.forEach((g, i) => { const d = document.createElement('div'); d.className = 'item'; d.innerHTML = '<b></b><small></small><div class="row"></div>'; d.querySelector('b').textContent = g.name; d.querySelector('small').textContent = `${g.worlds.length} worlds`;
     const r = d.querySelector('.row'), mk = (t, fn, alt) => { const b = document.createElement('button'); b.className = 'btn' + (alt ? ' alt' : ''); b.textContent = t; b.onclick = () => fn(b); r.appendChild(b); };
-    mk('العب', () => { WE.g = clone(g); registerDefs(WE.g); playGame(); }); mk('عدّل', () => { WE.g = clone(g); registerDefs(WE.g); WE.wi = 0; WE.sel = null; $('gName').value = g.name; renderWorld(true); renderTabs(); props(); }, true);
-    mk('امسح', (b) => { if (!b.dataset.arm) { b.dataset.arm = 1; b.textContent = 'متأكد؟'; return; } WE.games.splice(i, 1); store.set('games', WE.games); renderGames(); }, true); L.appendChild(d); }); }
+    mk('Play', () => { WE.g = clone(g); registerDefs(WE.g); playGame(); }); mk('Edit', () => { WE.g = clone(g); registerDefs(WE.g); WE.wi = 0; WE.sel = null; $('gName').value = g.name; renderWorld(true); renderTabs(); props(); }, true);
+    mk('Clear', (b) => { if (!b.dataset.arm) { b.dataset.arm = 1; b.textContent = 'Sure?'; return; } WE.games.splice(i, 1); store.set('games', WE.games); renderGames(); }, true); L.appendChild(d); }); }
 $('gPlay').onclick = () => { saveDraft(); playGame(); };
 
 // ---- playing a world in the arena
@@ -1698,19 +1698,19 @@ function playScene(W, opts = {}) {
   if (!opts.noMonsters) for (const it of AR.cur.items) { const cx = it.x + 0.5, cz = it.z + 0.5;
     if (ITEMS[it.t]?.kind === 'custom') { const m = spawnCustom(it.t, cx, cz, it.y || 0); if (m && !m.friendly && m.M && G2?.world) G2.world.hadMon = true; continue; }
     if (it.t === 'mon') { addBeast(whoEntry(it.pr?.who)); AR.mons[AR.mons.length - 1].o.position.set(cx, 0, cz); if (G2?.world) G2.world.hadMon = true; }
-    if (it.t === 'chest') { addBeast({ def: MIMIC, M: { name: 'صندوق بلسان', hp: it.pr.hp, spd: 3.8, dmg: it.pr.dmg, size: 0.75, weak: 'fire', resist: 'none' } }); const m = AR.mons[AR.mons.length - 1]; m.o.position.set(cx, 0, cz); m.sleep = true; m.ab.forEach((x) => { x.act.dmg = it.pr.dmg; }); if (G2?.world) G2.world.hadMon = true; } }
+    if (it.t === 'chest') { addBeast({ def: MIMIC, M: { name: 'Chest with a tongue', hp: it.pr.hp, spd: 3.8, dmg: it.pr.dmg, size: 0.75, weak: 'fire', resist: 'none' } }); const m = AR.mons[AR.mons.length - 1]; m.o.position.set(cx, 0, cz); m.sleep = true; m.ab.forEach((x) => { x.act.dmg = it.pr.dmg; }); if (G2?.world) G2.world.hadMon = true; } }
   if (AR.objs.some((o) => o.t === 'spawner') && G2?.world) G2.world.hadMon = true;
   return start;
 }
 // knocking out blocks (an explosion): they leave the world and the view is rebuilt
 function breakCells(cx, cz, rad) { if (!AR.cur) return 0; let n = 0; const L = AR.cur.items; for (let i = L.length - 1; i >= 0; i--) { const it = L[i]; if (ITEMS[it.t].kind !== 'block' && ITEMS[it.t].kind !== 'tile') continue; if (Math.hypot(it.x + 0.5 - cx, it.z + 0.5 - cz) < rad) { L.splice(i, 1); n++; const k = it.x + ',' + it.z; if (ITEMS[it.t].kind === 'block') { const c = (AR.solid.get(k) || 1) - 1; if (c <= 0) AR.solid.delete(k); else AR.solid.set(k, c); } else AR.tiles.delete(k); } }
   if (n) { const keep = AR.world.children.filter((c) => c.userData.it && !c.isInstancedMesh); for (const c of [...AR.world.children]) if (c.isInstancedMesh && !c.userData.tnt) AR.world.remove(c); const tmp = new THREE.Group(); const v = buildView({ ...AR.cur.W, items: L.filter((it) => ITEMS[it.t].kind === 'block' || ITEMS[it.t].kind === 'tile') }, tmp); for (const m of v.inst) AR.world.add(m); } return n; }
-function playGame() { if (!analyse(grid) && !WOV) { show('forge'); toast('ارسم سلاح الأول، وبعدين العب لعبتك'); return; } show('arena'); $('aOv').hidden = true; $('aEdit').hidden = true; loadWorld(0, null); }
+function playGame() { if (!analyse(grid) && !WOV) { show('forge'); toast('Draw a weapon first, then play your game'); return; } show('arena'); $('aOv').hidden = true; $('aEdit').hidden = true; loadWorld(0, null); }
 function loadWorld(wi, back) {
   arenaInit(); setHeroLook(WE.g?.hero); setCam(AR.camMode); beastInit(); heldWeapon(); for (const m of AR.mons) AR.scene.remove(m.o); AR.mons = []; for (const x of AR.shots) AR.scene.remove(x.o); AR.shots = []; for (const x of AR.picks) AR.scene.remove(x.o); AR.picks = [];
   const a = withOv(analyse(grid)) || { dmg: 30, spd: 50, reach: 50, crit: 10, elp: 0, el: 'none', sym: 0 };
   const keepHp = G2?.world ? G2.hp : 100, stack = back ? [...(G2.world.stack || []), back] : (G2?.world?.stack && wi !== 0 ? G2.world.stack : []);
-  G2 = { a, hp: keepHp, max: 100, wave: 0, score: G2?.world ? G2.score : 0, cd: 0, swingT: 0, face: new THREE.Vector3(0, 0, -1), pos: new THREE.Vector3(), world: { wi, stack, label: wi ? `عالم ${wi + 1}` : (WE.g.name || 'لعبتي'), hadMon: false, won: false } };
+  G2 = { a, hp: keepHp, max: 100, wave: 0, score: G2?.world ? G2.score : 0, cd: 0, swingT: 0, face: new THREE.Vector3(0, 0, -1), pos: new THREE.Vector3(), world: { wi, stack, label: wi ? `World ${wi + 1}` : (WE.g.name || 'My Game'), hadMon: false, won: false } };
   AR.mode = 'world'; const W = WE.g.worlds[wi]; let start = playScene(W);
   if (back === null && G2.world.stack.length && G2.world.returnTo) start = G2.world.returnTo;
   AR.hero.position.set(start.x, 0, start.z); AR.cam.position.set(start.x, 11, start.z + 10); AR.on = true; hud(); modsStart(); $('aAct').hidden = !modsRun.list.length;
@@ -1749,7 +1749,7 @@ function worldTick(dt, now) {
     if (o.t === 'spawner') { o.timer -= dt; if (o.timer <= 0) { o.timer = o.pr.every; if ((o.kids || (o.kids = [])).filter((m) => !m.dead).length < o.pr.max) { addBeast(whoEntry(o.pr.who)); const m = AR.mons[AR.mons.length - 1]; m.o.position.set(o.x, 0, o.z + 0.9); o.kids.push(m); } } }
     if (o.t === 'swallow' && W && d < 1.1 && !o.used) { o.used = true; clank(150); o.m.scale.set(1.4, 0.7, 1.4); const to = Math.min(WE.g.worlds.length - 1, o.pr.to ?? 1); W.returnTo = { x: o.x, z: o.z + 1.6 }; setTimeout(() => { const back = { wi: W.wi, x: o.x, z: o.z + 1.6, objKey: o.x + ',' + o.z }; loadWorld(to, back); }, 350); AR.on = false; setTimeout(() => { AR.on = true; }, 360); return; }
     if (o.t === 'flag' && d < 1) { W.won = true; }
-    if (o.t === 'door' && !AR.mons.length && !AR.objs.some((x) => x.t === 'spawner' && !x.gone)) { o.gone = true; unsolid(o); AR.world.remove(o.m); pop2('الباب اتفتح', new THREE.Vector3(o.x, 2, o.z), '#ffe14d'); }
+    if (o.t === 'door' && !AR.mons.length && !AR.objs.some((x) => x.t === 'spawner' && !x.gone)) { o.gone = true; unsolid(o); AR.world.remove(o.m); pop2('The door opened', new THREE.Vector3(o.x, 2, o.z), '#ffe14d'); }
   }
   if (!W) return; const hasFlag = AR.objs.some((o) => o.t === 'flag'), cleared = W.hadMon && !AR.mons.some((m) => !m.friendly) && !AR.objs.some((x) => x.t === 'spawner' && !x.gone);
   if (W.won || (!hasFlag && cleared)) { W.won = true; worldOver(true); }
@@ -1757,12 +1757,12 @@ function worldTick(dt, now) {
 }
 function worldOver(win) {
   const W = G2.world;
-  if (win && W.stack.length) { const back = W.stack[W.stack.length - 1], rest = W.stack.slice(0, -1); AR.on = false; pop2('خلّصته! راجع…', AR.hero.position.clone().add(new THREE.Vector3(0, 2, 0)), '#ffe14d', true);
+  if (win && W.stack.length) { const back = W.stack[W.stack.length - 1], rest = W.stack.slice(0, -1); AR.on = false; pop2('Cleared! Heading back…', AR.hero.position.clone().add(new THREE.Vector3(0, 2, 0)), '#ffe14d', true);
     setTimeout(() => { G2.world.stack = rest; loadWorld(back.wi, null); G2.world.stack = rest; AR.hero.position.set(back.x, 0, back.z); const box = AR.objs.find((o) => o.t === 'swallow' && o.x + ',' + o.z === back.objKey); if (box) { box.used = true; box.gone = true; AR.world.remove(box.m); } }, 900); return; }
-  AR.on = false; $('aOvT').textContent = win ? 'كسبت!' : 'وقعت!'; $('aOvP').textContent = win ? `خلّصت ${WE.g.name || 'لعبتك'} وجمعت ${G2.score} نقطة.` : 'الوحوش غلبتك المرة دي. جرّب تاني أو ارجع عدّل العالم.';
-  $('aGo').textContent = win ? 'العب تاني' : 'جرّب تاني'; $('aGo').onclick = () => { clank(260); $('aOv').hidden = true; $('aGo').onclick = () => { clank(260); startArena(); }; G2.world = null; playGame(); }; $('aEdit').hidden = false; $('aOv').hidden = false;
+  AR.on = false; $('aOvT').textContent = win ? 'You won!' : 'You fell!'; $('aOvP').textContent = win ? `Done ${WE.g.name || 'your game'} and collected ${G2.score} points.` : 'The monsters beat you this time. Try again or go back and edit the world.';
+  $('aGo').textContent = win ? 'Play again' : 'Try again'; $('aGo').onclick = () => { clank(260); $('aOv').hidden = true; $('aGo').onclick = () => { clank(260); startArena(); }; G2.world = null; playGame(); }; $('aEdit').hidden = false; $('aOv').hidden = false;
 }
-$('aEdit').onclick = () => { $('aOv').hidden = true; $('aEdit').hidden = true; $('aGo').onclick = () => { clank(260); startArena(); }; $('aGo').textContent = 'ابدأ'; show('world'); };
+$('aEdit').onclick = () => { $('aOv').hidden = true; $('aEdit').hidden = true; $('aGo').onclick = () => { clank(260); startArena(); }; $('aGo').textContent = 'Start'; show('world'); };
 
 let ct = 0; function changed() { drawGrid(); clearTimeout(ct); ct = setTimeout(() => { renderCard(); build(); }, 90); }
 
@@ -1770,39 +1770,39 @@ let ct = 0; function changed() { drawGrid(); clearTimeout(ct); ct = setTimeout((
 let toastT = 0; function toast(s) { const t = $('toast'); t.textContent = s; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 2200); }
 let mine = store.get('mine', []);
 function thumb(code) { const c = document.createElement('canvas'); c.width = c.height = N; const g = c.getContext('2d'); for (let i = 0; i < N * N; i++) { const p = PAL[CI[code[i]] || 0]; if (!p.hex) continue; g.fillStyle = p.hex; g.fillRect(i % N, (i / N) | 0, 1, 1); } return c; }
-function item(w, btns) { const a = analyse(dec(w.g)), d = document.createElement('div'); d.className = 'item'; if (a) d.style.setProperty('--rc', a.rar.col); d.appendChild(thumb(w.g)); const b = document.createElement('b'); b.textContent = w.name; d.appendChild(b); const s = document.createElement('small'); s.textContent = a ? `${a.rar.name} · ${a.type} · ${EL[a.el].name} · القوة ${a.power}` : ''; d.appendChild(s); const r = document.createElement('div'); r.className = 'row'; for (const [t, fn, alt] of btns) { const x = document.createElement('button'); x.className = 'btn' + (alt ? ' alt' : ''); x.textContent = t; x.onclick = () => fn(x); r.appendChild(x); } d.appendChild(r); return d; }
+function item(w, btns) { const a = analyse(dec(w.g)), d = document.createElement('div'); d.className = 'item'; if (a) d.style.setProperty('--rc', a.rar.col); d.appendChild(thumb(w.g)); const b = document.createElement('b'); b.textContent = w.name; d.appendChild(b); const s = document.createElement('small'); s.textContent = a ? `${a.rar.name} · ${a.type} · ${EL[a.el].name} · Power ${a.power}` : ''; d.appendChild(s); const r = document.createElement('div'); r.className = 'row'; for (const [t, fn, alt] of btns) { const x = document.createElement('button'); x.className = 'btn' + (alt ? ' alt' : ''); x.textContent = t; x.onclick = () => fn(x); r.appendChild(x); } d.appendChild(r); return d; }
 function openW(w) { undo.push(grid.slice()); WOV = w.ov ? { ...w.ov } : null; grid = dec(w.g); $('wName').value = w.name; nameTouched = true; changed(); show('forge'); }
-function renderMine() { const L = $('mine'); L.innerHTML = ''; if (!mine.length) { L.innerHTML = '<div class="empty">لسه مفيش أسلحة محفوظة. ارسم سلاح في الورشة ودوس "احفظ في سلاحي".</div>'; return; }
-  mine.forEach((w, i) => L.appendChild(item(w, [['افتح', () => openW(w)], ['انشر', () => publish(w), true], ['امسح', (x) => { if (!x.dataset.arm) { x.dataset.arm = 1; x.textContent = 'متأكد؟'; return; } mine.splice(i, 1); store.set('mine', mine); renderMine(); }, true]]))); }
-$('bSave').onclick = () => { if (!A) return; const w = { id: Date.now().toString(36), name: $('wName').value.trim() || nameFor(A), g: enc(grid), at: Date.now(), ov: WOV ? { ...WOV } : null }; mine.unshift(w); mine = mine.slice(0, 40); store.set('mine', mine); toast('اتحفظ في سلاحك'); };
+function renderMine() { const L = $('mine'); L.innerHTML = ''; if (!mine.length) { L.innerHTML = '<div class="empty">No saved weapons yet. Draw a weapon in the forge and tap "Save to My Weapons".</div>'; return; }
+  mine.forEach((w, i) => L.appendChild(item(w, [['Open', () => openW(w)], ['Publish', () => publish(w), true], ['Clear', (x) => { if (!x.dataset.arm) { x.dataset.arm = 1; x.textContent = 'Sure?'; return; } mine.splice(i, 1); store.set('mine', mine); renderMine(); }, true]]))); }
+$('bSave').onclick = () => { if (!A) return; const w = { id: Date.now().toString(36), name: $('wName').value.trim() || nameFor(A), g: enc(grid), at: Date.now(), ov: WOV ? { ...WOV } : null }; mine.unshift(w); mine = mine.slice(0, 40); store.set('mine', mine); toast('Saved to your weapons'); };
 
 // shared gallery: every smith's published weapons live in their own document; likes too
 const gal = { db: null, uid: null, docs: [], likes: [], ready: false };
-$('nick').value = store.get('nick', 'حداد ' + Math.floor(100 + Math.random() * 900)); $('nick').addEventListener('change', () => store.set('nick', $('nick').value.trim()));
+$('nick').value = store.get('nick', 'Smith ' + Math.floor(100 + Math.random() * 900)); $('nick').addEventListener('change', () => store.set('nick', $('nick').value.trim()));
 async function initGallery() {
-  $('galState').textContent = 'بيحمّل المعرض…';
+  $('galState').textContent = 'Loading the gallery…';
   const c = window.claude; const [db, user] = c?.use ? await Promise.all([c.use('db'), c.use('user')]) : [null, null];
-  if (!db || !user) { $('galState').textContent = 'المعرض بيشتغل لما تفتح الورشة من اللينك المنشور وإنت مسجّل دخول.'; renderGal(); return; }
-  gal.db = db; gal.uid = await user.id(); const timer = setTimeout(() => { if (!gal.ready) $('galState').textContent = 'المعرض لسه مش بيرد، استنّى شوية.'; }, 10000);
-  db.collection('armory').onSnapshot((s) => { clearTimeout(timer); gal.ready = true; gal.docs = s.docs.map((d) => ({ uid: d.id, ...d.data() })); $('galState').textContent = ''; renderGal(); }, () => { clearTimeout(timer); $('galState').textContent = 'المعرض مش متاح دلوقتي.'; });
+  if (!db || !user) { $('galState').textContent = 'The gallery works when you open the forge from the published link while signed in.'; renderGal(); return; }
+  gal.db = db; gal.uid = await user.id(); const timer = setTimeout(() => { if (!gal.ready) $('galState').textContent = 'The gallery isn’t answering yet, wait a bit.'; }, 10000);
+  db.collection('armory').onSnapshot((s) => { clearTimeout(timer); gal.ready = true; gal.docs = s.docs.map((d) => ({ uid: d.id, ...d.data() })); $('galState').textContent = ''; renderGal(); }, () => { clearTimeout(timer); $('galState').textContent = 'The gallery isn’t available right now.'; });
   db.collection('likes').onSnapshot((s) => { gal.likes = s.docs.map((d) => ({ uid: d.id, ...d.data() })); renderGal(); }, () => {});
 }
 const likeCount = (key) => gal.likes.filter((l) => l.k && l.k[key]).length;
 const iLike = (key) => !!gal.likes.find((l) => l.uid === gal.uid)?.k?.[key];
 function renderGal() {
   const L = $('gal'); L.innerHTML = ''; const all = [];
-  for (const d of gal.docs) for (const w of d.list || []) all.push({ ...w, key: d.uid + ':' + w.id, author: d.author || 'حداد', mine: d.uid === gal.uid });
+  for (const d of gal.docs) for (const w of d.list || []) all.push({ ...w, key: d.uid + ':' + w.id, author: d.author || 'Smith', mine: d.uid === gal.uid });
   all.sort((a, b) => likeCount(b.key) - likeCount(a.key) || b.at - a.at);
-  if (!all.length) { L.innerHTML = '<div class="empty">المعرض فاضي. ارسم أول سلاح وانشره، وهيظهر هنا لكل اللي بيفتحوا الورشة.</div>'; return; }
-  for (const w of all) { const it = item(w, [[`♥ ${likeCount(w.key)}`, () => like(w.key), !iLike(w.key)], ['افتح نسخة', () => openW(w), true], ...(w.mine ? [['شيله', () => unpublish(w.id), true]] : [])]); const by = document.createElement('small'); by.textContent = 'بإيد ' + w.author; it.insertBefore(by, it.querySelector('.row')); L.appendChild(it); }
+  if (!all.length) { L.innerHTML = '<div class="empty">The gallery is empty. Draw the first weapon and publish it, and it will show up here for everyone who opens the forge.</div>'; return; }
+  for (const w of all) { const it = item(w, [[`♥ ${likeCount(w.key)}`, () => like(w.key), !iLike(w.key)], ['Open a copy', () => openW(w), true], ...(w.mine ? [['Remove it', () => unpublish(w.id), true]] : [])]); const by = document.createElement('small'); by.textContent = 'by hand ' + w.author; it.insertBefore(by, it.querySelector('.row')); L.appendChild(it); }
 }
 async function publish(w) {
-  if (!gal.db) { toast('المعرض مش متاح هنا'); return; } const me = gal.docs.find((d) => d.uid === gal.uid) || { list: [] };
+  if (!gal.db) { toast('The gallery isn’t available here'); return; } const me = gal.docs.find((d) => d.uid === gal.uid) || { list: [] };
   const list = [{ id: w.id, name: w.name, g: w.g, at: Date.now() }, ...(me.list || []).filter((x) => x.id !== w.id)].slice(0, 12);
-  try { await gal.db.collection('armory').doc(gal.uid).set({ author: ($('nick').value.trim() || 'حداد').slice(0, 20), list }); toast('اتنشر في المعرض'); } catch { toast('النشر مانفعش، جرّب تاني'); }
+  try { await gal.db.collection('armory').doc(gal.uid).set({ author: ($('nick').value.trim() || 'Smith').slice(0, 20), list }); toast('Published to the gallery'); } catch { toast('Publishing didn’t work, try again'); }
 }
-async function unpublish(id) { const me = gal.docs.find((d) => d.uid === gal.uid); if (!me) return; try { await gal.db.collection('armory').doc(gal.uid).set({ author: me.author, list: (me.list || []).filter((x) => x.id !== id) }); } catch { toast('مانفعش، جرّب تاني'); } }
-async function like(key) { if (!gal.db) return; const cur = { ...(gal.likes.find((l) => l.uid === gal.uid)?.k || {}) }; if (cur[key]) delete cur[key]; else cur[key] = 1; try { await gal.db.collection('likes').doc(gal.uid).set({ k: cur }); } catch { toast('مانفعش، جرّب تاني'); } }
+async function unpublish(id) { const me = gal.docs.find((d) => d.uid === gal.uid); if (!me) return; try { await gal.db.collection('armory').doc(gal.uid).set({ author: me.author, list: (me.list || []).filter((x) => x.id !== id) }); } catch { toast('didn’t work, try again'); } }
+async function like(key) { if (!gal.db) return; const cur = { ...(gal.likes.find((l) => l.uid === gal.uid)?.k || {}) }; if (cur[key]) delete cur[key]; else cur[key] = 1; try { await gal.db.collection('likes').doc(gal.uid).set({ k: cur }); } catch { toast('didn’t work, try again'); } }
 $('bPub').onclick = () => { if (!A) return; const w = { id: Date.now().toString(36), name: $('wName').value.trim() || nameFor(A), g: enc(grid) }; publish(w); };
 
 function show(v) { for (const [k, id, sec] of [['forge', 'tForge', 'vForge'], ['beast', 'tBeast', 'vBeast'], ['arena', 'tArena', 'vArena'], ['world', 'tWorld', 'vWorld'], ['mine', 'tMine', 'vMine'], ['gal', 'tGal', 'vGal']]) { $(id).setAttribute('aria-pressed', String(k === v)); $(sec).hidden = k !== v; } if (v === 'mine') renderMine(); if (v === 'gal') renderGal(); if (v === 'forge') size(); if (v === 'beast') beastInit(); if (v === 'world') worldInit(); if (v === 'arena') { arenaInit(); monsterRow(); if (!AR.on) { AR.cam.position.set(0, 13, 11); AR.cam.lookAt(0, 0.5, 0); heldWeapon(); } } }
