@@ -80,7 +80,7 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
 .hud{position:absolute;inset:10px 12px auto;display:flex;gap:12px;align-items:center;justify-content:space-between;font-weight:800;pointer-events:none;text-shadow:0 2px 4px #000}
 .hud .hp{flex:1;max-width:260px;height:12px;border-radius:6px;background:#0008;overflow:hidden;box-shadow:0 0 0 1px #fff3}
 .hud .hp b{display:block;height:100%;width:100%;background:linear-gradient(90deg,#46c96b,#b9e27c);transition:width .2s}
-.camBtn{position:absolute;top:38px;inset-inline-start:12px;z-index:2;background:#211c19cc;font-size:12px;padding:4px 10px}
+.camBtn{position:absolute;top:38px;inset-inline-start:12px;z-index:2;background:#211c19cc;font-size:12px;padding:4px 10px}.fsBtn{position:absolute;top:38px;inset-inline-end:12px;z-index:2;background:#211c19cc;font-size:12px;padding:4px 10px}.arena.fs,.arena:fullscreen{position:fixed;inset:0;width:100vw;height:100vh;height:100dvh;max-height:none;aspect-ratio:auto;border-radius:0;z-index:1000}
 .ov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:20px;background:#0b0907cc}
 .ov h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,5vw,44px);margin:0;color:var(--ember-2)}
 .ov p{margin:0;max-width:46ch;color:var(--bone)}
@@ -336,7 +336,7 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
     <div class="arena" id="arena">
       <div class="pops" id="apops"></div>
       <div class="hud"><span id="aWave"></span><span class="hp"><b id="aHp"></b></span><span id="aScore"></span></div>
-      <button class="tool camBtn" id="aCam">الكاميرا</button>
+      <button class="tool camBtn" id="aCam">الكاميرا</button><button class="tool fsBtn" id="aFull" aria-label="شاشة كاملة">⛶ شاشة كاملة</button>
       <div class="ov" id="aOv"><h2 id="aOvT">ساحة الوحوش</h2><p id="aOvP">انزل بالسلاح اللي في الورشة واصمد قدام موجات الوحوش. كل وحش ليه عنصر بيضعف قدامه.</p><div class="acts" style="justify-content:center"><button class="btn" id="aGo">ابدأ</button><button class="btn alt" id="aEdit" hidden>ارجع عدّل العالم</button></div></div>
       <div class="joy" id="joy"><i id="joyK"></i></div>
       <button class="hit" id="aHit" aria-label="اضرب">اضرب</button><button class="hit act" id="aAct" aria-label="حركة خاصة" hidden>✦</button>
@@ -641,6 +641,11 @@ function arenaInit() {
   const end = () => { AR.joy = null; knob.style.transform = ''; }; joy.addEventListener('pointerup', end); joy.addEventListener('pointercancel', end);
   function moveJoy(e) { const r = joy.getBoundingClientRect(); let x = (e.clientX - r.left - r.width / 2) / (r.width / 2), y = (e.clientY - r.top - r.height / 2) / (r.height / 2); const l = Math.hypot(x, y); if (l > 1) { x /= l; y /= l; } AR.joy = { x, y }; knob.style.transform = `translate(${x * 36}px,${y * 36}px)`; }
   $('aHit').addEventListener('pointerdown', (e) => { e.preventDefault(); swing(); });
+  // full screen: the real one where the browser allows it, otherwise the game simply covers the whole page
+  const fsEl = $('arena'), isFs = () => document.fullscreenElement === fsEl || fsEl.classList.contains('fs'), fsLabel = () => { $('aFull').textContent = isFs() ? '✕ صغّر' : '⛶ شاشة كاملة'; };
+  $('aFull').onclick = async () => { if (isFs()) { fsEl.classList.remove('fs'); if (document.fullscreenElement) await document.exitFullscreen().catch(() => {}); fsLabel(); return; }
+    try { if (!fsEl.requestFullscreen) throw 0; await fsEl.requestFullscreen({ navigationUI: 'hide' }); } catch { fsEl.classList.add('fs'); } fsLabel(); };
+  document.addEventListener('fullscreenchange', fsLabel); addEventListener('keydown', (e) => { if (e.key === 'Escape' && fsEl.classList.contains('fs')) { fsEl.classList.remove('fs'); fsLabel(); } });
   $('aAct').addEventListener('pointerdown', (e) => { e.preventDefault(); AR.keys.Action = true; modsEv('key', 'Action'); }); $('aAct').addEventListener('pointerup', () => { AR.keys.Action = false; }); $('aAct').addEventListener('pointercancel', () => { AR.keys.Action = false; });
 }
 // the player's character can be redesigned per game (by hand-made cubes from the assistant)
@@ -731,9 +736,9 @@ function hurtPlayer(d, col) { if (!G2 || !AR.on) return; d = Math.round(d); if (
 function boom(pos, rad, dmg, from, el) {
   // a burst of little pixel cubes, a flash of light and the screen shakes
   const cols = el === 'ice' ? ['#9ae6ff', '#f2efe6', '#3d6fd8'] : el === 'poison' ? ['#46c96b', '#2f8f4e', '#b9e27c'] : el === 'shadow' ? ['#8b54f0', '#24262b', '#5b3a8f'] : el === 'bolt' ? ['#ffe14d', '#f2efe6', '#ffb347'] : ['#ffe14d', '#ff8a3d', '#e5484d', '#6f6a64'];
-  const n = Math.min(40, 10 + rad * 6); for (let i = 0; i < n; i++) { const c = cubeMesh({ p: [pos.x, pos.y + 0.4, pos.z], s: [0.3, 0.3, 0.3].map((v) => v * (0.6 + Math.random())), r: [0, 0, 0], c: cols[i % cols.length], f: ['', '', '', '', '', ''], seed: i + 1 }); for (const mt of c.material) mt.transparent = true; AR.scene.add(c);
+  const n = AR.debris.length > 400 ? 2 : Math.min(40, 10 + rad * 6); for (let i = 0; i < n; i++) { const c = cubeMesh({ p: [pos.x, pos.y + 0.4, pos.z], s: [0.3, 0.3, 0.3].map((v) => v * (0.6 + Math.random())), r: [0, 0, 0], c: cols[i % cols.length], f: ['', '', '', '', '', ''], seed: i + 1 }); for (const mt of c.material) mt.transparent = true; AR.scene.add(c);
     const a = Math.random() * Math.PI * 2, sp = 3 + Math.random() * rad * 3; AR.debris.push({ o: c, v: new THREE.Vector3(Math.cos(a) * sp, 3 + Math.random() * 7, Math.sin(a) * sp), w: new THREE.Vector3(Math.random(), Math.random(), Math.random()).multiplyScalar(12), t: 0.4 }); }
-  const fl = new THREE.PointLight(el === 'ice' ? 0x9ae6ff : 0xffa040, 4, rad * 5 + 4); fl.position.copy(pos).setY(2); AR.scene.add(fl); setTimeout(() => AR.scene.remove(fl), 160);
+  if ((AR.lights = (AR.lights || 0)) < 4) { AR.lights++; const fl = new THREE.PointLight(el === 'ice' ? 0x9ae6ff : 0xffa040, 4, rad * 5 + 4); fl.position.copy(pos).setY(2); AR.scene.add(fl); setTimeout(() => { AR.scene.remove(fl); AR.lights--; }, 160); }
   AR.shake = Math.min(1, AR.shake + 0.25 + rad * 0.06); clank(70);
   if (rad > 0) { const P = AR.hero.position, d = Math.hypot(P.x - pos.x, P.z - pos.z); if (d < rad && dmg) hurtPlayer(dmg * (1 - (d / rad) * 0.5));
     for (const m of [...AR.mons]) { if (m === from) continue; const dd = m.o.position.distanceTo(pos); if (dd < rad) { m.hp -= dmg * 0.5; m.hitT = 0.15; if (m.hp <= 0) kill(m); } } }
@@ -964,7 +969,7 @@ function arenaStep(dt, now) {
   placeCam(P, dt); if (AR.shake > 0) { AR.shake = Math.max(0, AR.shake - dt * 2); AR.cam.position.x += (Math.random() - 0.5) * AR.shake; AR.cam.position.y += (Math.random() - 0.5) * AR.shake; }
 }
 $('aGo').onclick = () => { clank(260); startArena(); };
-$('tArena').addEventListener('click', () => { AR.focus = null; modsRun.list = []; $('aAct').hidden = true; if (AR.R) setHeroLook(HERO); if (AR.mode === 'world') { AR.on = false; AR.mode = 'waves'; $('aOvT').textContent = 'ساحة الوحوش'; $('aGo').textContent = 'ابدأ'; $('aEdit').hidden = true; $('aOv').hidden = false; } });
+$('tArena').addEventListener('click', () => { AR.focus = null; $('arena').classList.remove('fs'); modsRun.list = []; $('aAct').hidden = true; if (AR.R) setHeroLook(HERO); if (AR.mode === 'world') { AR.on = false; AR.mode = 'waves'; $('aOvT').textContent = 'ساحة الوحوش'; $('aGo').textContent = 'ابدأ'; $('aEdit').hidden = true; $('aOv').hidden = false; } });
 
 
 // ---------------------------------------------------------------- the monster workshop: monsters made of cubes, like a block modeller
@@ -1380,15 +1385,16 @@ function blockMat(t) { if (blockMats[t]) return blockMats[t]; const D = ITEMS[t]
     col.set(base).getHSL(h); let l = h.l + (hash3(x, y, t.length * 13) - 0.5) * 0.12; if (x === 0 || y === 0 || x === 7 || y === 7) l -= 0.06; col.setHSL(h.h, h.s, Math.max(0, Math.min(1, l))); g.fillStyle = '#' + col.getHexString(); g.fillRect(x, y, 1, 1); }
   const tx = new THREE.CanvasTexture(c); tx.magFilter = THREE.NearestFilter; tx.minFilter = THREE.NearestFilter; return (blockMats[t] = new THREE.MeshLambertMaterial({ map: tx, transparent: t === 'ice', opacity: t === 'ice' ? 0.85 : 1 })); }
 const tileGeo = new THREE.BoxGeometry(1, 0.1, 1);
+let tntMats = null; const tntMat = () => (tntMats ||= cubeMesh({ ...TNT[0], p: [0, 0, 0], s: [1, 1, 1], seed: 7 }).material);
 // the whole world as meshes: blocks and floors instanced per kind (fast with thousands), the smart things one by one
 function buildView(W, group, opts = {}) {
   while (group.children.length) group.remove(group.children[0]);
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(WS * 2, WS * 2), new THREE.MeshLambertMaterial({ map: floorTex(GROUNDS[W.ground || 'grass'][1]) })); ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; ground.userData.ground = true; group.add(ground);
   const by = {}, inst = [], singles = [];
-  for (const it of W.items) { const D = ITEMS[it.t]; if (!D || opts.skip?.(it)) continue; if (D.kind === 'block' || D.kind === 'tile') (by[it.t] ||= []).push(it); else { const m = itemMesh(it); group.add(m); singles.push(m); } }
+  for (const it of W.items) { const D = ITEMS[it.t]; if (!D || opts.skip?.(it)) continue; if (D.kind === 'block' || D.kind === 'tile' || it.t === 'tnt') (by[it.t] ||= []).push(it); else { const m = itemMesh(it); group.add(m); singles.push(m); } }
   const o = new THREE.Object3D();
-  for (const t in by) { const list = by[t], tile = ITEMS[t].kind === 'tile', m = new THREE.InstancedMesh(tile ? tileGeo : box, blockMat(t), list.length);
-    list.forEach((it, i) => { o.position.set(it.x + 0.5, (it.y || 0) + (tile ? 0.05 : 0.5), it.z + 0.5); o.updateMatrix(); m.setMatrixAt(i, o.matrix); }); m.castShadow = !tile; m.receiveShadow = true; m.userData.items = list; group.add(m); inst.push(m); }
+  for (const t in by) { const list = by[t], tile = ITEMS[t].kind === 'tile', m = new THREE.InstancedMesh(tile ? tileGeo : box, t === 'tnt' ? tntMat() : blockMat(t), list.length); if (t === 'tnt') m.userData.tnt = true;
+    list.forEach((it, i) => { o.position.set(it.x + 0.5, (it.y || 0) + (tile ? 0.05 : 0.5), it.z + 0.5); o.updateMatrix(); m.setMatrixAt(i, o.matrix); }); m.castShadow = !tile && list.length < 3000; m.receiveShadow = true; m.userData.items = list; group.add(m); inst.push(m); }
   return { ground, inst, singles };
 }
 function whoDef(w) { if (w?.startsWith?.('m:')) return BE.mine.find((d) => d.id === w.slice(2)) || BEASTS.slime; return BEASTS[w] || BEASTS.slime; }
@@ -1493,8 +1499,14 @@ function worldSummary(W) { const c = {}; let x0 = 99, x1 = -99, z0 = 99, z1 = -9
 // building steps Claude can use; each is checked and kept inside the world
 function applyOps(ops) {
   let n = 0; const cl = (v) => Math.max(-WS, Math.min(WS - 1, Math.round(+v || 0))), ok = (t) => !!ITEMS[t], monOk = (w) => !!BEASTS[w] || BE.mine.some((d) => 'm:' + d.id === w);
-  const put = (t, x, z, y, pr) => { if (n > 6000) return; const it = putItem(t, cl(x), cl(z), Math.max(0, Math.min(12, Math.round(+y || 0)))); if (it) { n++; if (pr && it.pr) { if (it.t === 'mon' || it.t === 'spawner') { if (monOk(pr.who)) it.pr.who = pr.who; } for (const k of ['trig', 'fuse', 'rad', 'dmg', 'hp', 'every', 'max', 'to']) if (pr[k] != null) it.pr[k] = k === 'trig' ? String(pr[k]) : +pr[k]; } } };
-  for (const o of ops || []) {
+  let ix = null; const K3 = (x, z, y) => x + ',' + z + ',' + y;
+  const fastPut = (t, x, z, y) => { const D = ITEMS[t]; if (!D) return null; if (D.kind !== 'block' && y > 0) y = 0; if (x < -WS || z < -WS || x >= WS || z >= WS || y > 12) return null;
+    if (!ix) { ix = new Map(); for (const it of W_().items) ix.set(K3(it.x, it.z, it.y || 0), it); }
+    if (t === 'start') for (const [k, v] of ix) if (v.t === 'start') ix.delete(k);
+    const nu = { t, x, z, y, r: 0, pr: D.pr ? clone(D.pr) : undefined }; if (t === 'swallow') nu.pr.to = Math.min(WE.g.worlds.length - 1, Math.max(1, WE.wi === 0 ? 1 : 0)); ix.set(K3(x, z, y), nu); ix.dirty = true; return nu; };
+  const flush = () => { if (ix?.dirty) W_().items = [...ix.values()]; ix = null; };
+  const put = (t, x, z, y, pr) => { if (n > 40000) return; const it = fastPut(t, cl(x), cl(z), Math.max(0, Math.min(12, Math.round(+y || 0)))); if (it) { n++; if (pr && it.pr) { if (it.t === 'mon' || it.t === 'spawner') { if (monOk(pr.who)) it.pr.who = pr.who; } for (const k of ['trig', 'fuse', 'rad', 'dmg', 'hp', 'every', 'max', 'to']) if (pr[k] != null) it.pr[k] = k === 'trig' ? String(pr[k]) : +pr[k]; } } };
+  for (let o of ops || []) {
     if (!o || typeof o !== 'object') continue; const h = Math.max(1, Math.min(8, Math.round(+o.h || 1))), y0 = Math.max(0, Math.round(+o.y || 0));
     if (o.op === 'ground' && GROUNDS[o.g]) { W_().ground = o.g; continue; }
     if (o.op === 'code' && typeof o.key === 'string' && /^[a-z][a-z0-9_]{1,24}$/.test(o.key) && typeof o.code === 'string') { WE.g.mods ||= {}; WE.g.mods[o.key] = { name: String(o.name || o.key).slice(0, 40), code: o.code.slice(0, 20000) }; try { modCompile(o.code); } catch (e) { WE.g.mods[o.key].err = String(e.message); fixMod(o.key); } n++; continue; }
@@ -1502,16 +1514,18 @@ function applyOps(ops) {
     if (o.op === 'uncode' && WE.g.mods?.[o.key]) { delete WE.g.mods[o.key]; n++; continue; }
     if (o.op === 'define' && typeof o.key === 'string' && /^[a-z][a-z0-9_]{1,24}$/.test(o.key) && (!ITEMS[o.key] || ITEMS[o.key].custom || ITEMS[o.key].kind === 'custom')) { WE.g.defs ||= {}; WE.g.defs[o.key] = cleanDef(o.def); registerDefs(WE.g); n++; continue; }
     if (o.op === 'setting') { W_().settings ||= {}; if (CAMS[o.camera]) W_().settings.camera = o.camera; if (/^#[0-9a-f]{6}$/i.test(o.sky)) W_().settings.sky = o.sky; n++; continue; }
+    if (o.op === 'clear' || o.op === 'erase') flush();
     if (o.op === 'clear') { W_().items = []; continue; }
+    if (o.op === 'fill') o = { ...o, op: 'rect', x0: -WS, z0: -WS, x1: WS - 1, z1: WS - 1, hollow: false };
     if (!ok(o.t) && o.op !== 'erase') continue;
     if (o.op === 'put') put(o.t, o.x, o.z, o.y, o.pr);
-    else if (o.op === 'rect' || o.op === 'erase') { const xa = Math.min(cl(o.x0), cl(o.x1)), xb = Math.max(cl(o.x0), cl(o.x1)), za = Math.min(cl(o.z0), cl(o.z1)), zb = Math.max(cl(o.z0), cl(o.z1)); if ((xb - xa + 1) * (zb - za + 1) > 6000) continue;
+    else if (o.op === 'rect' || o.op === 'erase') { const xa = Math.min(cl(o.x0), cl(o.x1)), xb = Math.max(cl(o.x0), cl(o.x1)), za = Math.min(cl(o.z0), cl(o.z1)), zb = Math.max(cl(o.z0), cl(o.z1)); if ((xb - xa + 1) * (zb - za + 1) > 4 * WS * WS) continue;
       if (o.op === 'erase') { W_().items = W_().items.filter((it) => !(it.x >= xa && it.x <= xb && it.z >= za && it.z <= zb)); continue; }
       for (let x = xa; x <= xb; x++) for (let z = za; z <= zb; z++) { if (o.hollow && x > xa && x < xb && z > za && z < zb) continue; for (let y = y0; y < y0 + h; y++) put(o.t, x, z, y, o.pr); } }
     else if (o.op === 'line') { const xa = cl(o.x0), za = cl(o.z0), xb = cl(o.x1), zb = cl(o.z1), st = Math.max(Math.abs(xb - xa), Math.abs(zb - za), 1); for (let i = 0; i <= st; i++) { const x = Math.round(xa + (xb - xa) * i / st), z = Math.round(za + (zb - za) * i / st); for (let y = y0; y < y0 + h; y++) put(o.t, x, z, y, o.pr); } }
     else if (o.op === 'circle') { const cx = cl(o.cx), cz = cl(o.cz), r = Math.max(1, Math.min(40, +o.r || 3)); for (let x = cx - r; x <= cx + r; x++) for (let z = cz - r; z <= cz + r; z++) { const d = Math.hypot(x - cx, z - cz); if (d > r + 0.5 || (o.hollow && d < r - 0.5)) continue; for (let y = y0; y < y0 + h; y++) put(o.t, x, z, y, o.pr); } }
   }
-  return n;
+  flush(); return n;
 }
 $('aiText').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); $('aiGo').click(); } });
 $('aiGo').onclick = async () => {
@@ -1543,7 +1557,8 @@ The player's character (the hero) right now, in boxes: ${JSON.stringify(heroNow(
 To change how the player looks (another character, a zombie, a robot, red clothes, a hat, a cape...): {"op":"hero","name": Arabic name,"cubes": the whole new list}. Start from the boxes above: for a small change (colours, a hat) keep the others as they are; for a new character design all boxes but keep the size (about 2.4 tall, feet at y=0, front +z) and the roles body, head, legL, legR, armL, armR (the weapon goes in armR's hand). {"op":"hero","reset":true} brings the normal hero back.
 Settings: {"op":"setting","camera":"behind"|"front"|"first"|"top","sky":"#rrggbb"}.
 Reply ONLY with JSON: {"say": one short friendly sentence in Egyptian Arabic about what you built, "ops": [steps]}. Steps:
-{"op":"ground","g":...} · {"op":"clear"} (only if asked to start over) · {"op":"put","t":...,"x","z","y","pr"} · {"op":"rect","t","x0","z0","x1","z1","y","h","hollow":true|false,"pr"} · {"op":"line","t","x0","z0","x1","z1","y","h"} · {"op":"circle","t","cx","cz","r","y","h","hollow"} · {"op":"erase","x0","z0","x1","z1"}
+{"op":"ground","g":...} · {"op":"clear"} (only if asked to start over) · {"op":"put","t":...,"x","z","y","pr"} · {"op":"rect","t","x0","z0","x1","z1","y","h","hollow":true|false,"pr"} · {"op":"line","t","x0","z0","x1","z1","y","h"} · {"op":"circle","t","cx","cz","r","y","h","hollow"} · {"op":"erase","x0","z0","x1","z1"} · {"op":"fill","t","y","h"} (covers the WHOLE world, every cell from -64 to 63)
+SIZE: do exactly the size the player says. "All the floor", "the whole ground", "everywhere", "كل الأرض", "الأرضية كلها", "في كل حتة" means the WHOLE world (use fill, or rect from -64 to 63), never a small patch. "Big" means really big (40+ cells), "huge" means most of the world. Never quietly make less than asked.
 Build generously and with care for how it looks (walls with towers, paths, decorations, varied blocks), keep it playable (paths the player can walk, a start spot if there is none), and use at most 150 steps (inventions first, then placing them).
 Player asks: ${JSON.stringify(text)}`, { modelTier: 'complex', cache: false });
     aiUndo = before; const n = applyOps(r?.ops); renderWorld(true); renderTabs(); $('aiUndo').disabled = false;
@@ -1574,6 +1589,7 @@ function playScene(W, opts = {}) {
   const live = (it) => ['tnt', 'swallow', 'spawner', 'flag', 'door', 'chest', 'mon', 'start'].includes(it.t) || ITEMS[it.t]?.kind === 'custom';
   AR.view = buildView({ ...W, items: AR.cur.items }, AR.world, { skip: (it) => live(it) && it.t !== 'door' && it.t !== 'tnt' && it.t !== 'swallow' && it.t !== 'spawner' && it.t !== 'flag' });
   for (const it of AR.cur.items) { const D = ITEMS[it.t]; if (D.kind === 'block' || it.t === 'door' || it.t === 'tnt' || it.t === 'spawner') AR.solid.set(it.x + ',' + it.z, (AR.solid.get(it.x + ',' + it.z) || 0) + 1); if (D.kind === 'tile') AR.tiles.set(it.x + ',' + it.z, { t: it.t, it, used: false, cd: 0 }); }
+  AR.tntMap = new Map(); for (const m of AR.view.inst) if (m.userData.tnt) m.userData.items.forEach((it, i) => AR.tntMap.set(it.x + ',' + it.z, { it, i, m }));
   for (const m of AR.view.singles) { const it = m.userData.it; if (['tnt', 'swallow', 'spawner', 'flag', 'door'].includes(it.t)) AR.objs.push({ t: it.t, it, pr: it.pr || {}, m, x: it.x + 0.5, z: it.z + 0.5, timer: 1, hp: 60 }); }
   let start = { x: 0.5, z: 4.5 }; for (const it of AR.cur.items) if (it.t === 'start') start = { x: it.x + 0.5, z: it.z + 0.5 };
   if (!opts.noMonsters) for (const it of AR.cur.items) { const cx = it.x + 0.5, cz = it.z + 0.5;
@@ -1585,7 +1601,7 @@ function playScene(W, opts = {}) {
 }
 // knocking out blocks (an explosion): they leave the world and the view is rebuilt
 function breakCells(cx, cz, rad) { if (!AR.cur) return 0; let n = 0; const L = AR.cur.items; for (let i = L.length - 1; i >= 0; i--) { const it = L[i]; if (ITEMS[it.t].kind !== 'block' && ITEMS[it.t].kind !== 'tile') continue; if (Math.hypot(it.x + 0.5 - cx, it.z + 0.5 - cz) < rad) { L.splice(i, 1); n++; const k = it.x + ',' + it.z; if (ITEMS[it.t].kind === 'block') { const c = (AR.solid.get(k) || 1) - 1; if (c <= 0) AR.solid.delete(k); else AR.solid.set(k, c); } else AR.tiles.delete(k); } }
-  if (n) { const keep = AR.world.children.filter((c) => c.userData.it && !c.isInstancedMesh); for (const c of [...AR.world.children]) if (c.isInstancedMesh) AR.world.remove(c); const tmp = new THREE.Group(); const v = buildView({ ...AR.cur.W, items: L.filter((it) => ITEMS[it.t].kind === 'block' || ITEMS[it.t].kind === 'tile') }, tmp); for (const m of v.inst) AR.world.add(m); } return n; }
+  if (n) { const keep = AR.world.children.filter((c) => c.userData.it && !c.isInstancedMesh); for (const c of [...AR.world.children]) if (c.isInstancedMesh && !c.userData.tnt) AR.world.remove(c); const tmp = new THREE.Group(); const v = buildView({ ...AR.cur.W, items: L.filter((it) => ITEMS[it.t].kind === 'block' || ITEMS[it.t].kind === 'tile') }, tmp); for (const m of v.inst) AR.world.add(m); } return n; }
 function playGame() { if (!analyse(grid) && !WOV) { show('forge'); toast('ارسم سلاح الأول، وبعدين العب لعبتك'); return; } show('arena'); $('aOv').hidden = true; $('aEdit').hidden = true; loadWorld(0, null); }
 function loadWorld(wi, back) {
   arenaInit(); setHeroLook(WE.g?.hero); setCam(AR.camMode); beastInit(); heldWeapon(); for (const m of AR.mons) AR.scene.remove(m.o); AR.mons = []; for (const x of AR.shots) AR.scene.remove(x.o); AR.shots = []; for (const x of AR.picks) AR.scene.remove(x.o); AR.picks = [];
@@ -1597,9 +1613,13 @@ function loadWorld(wi, back) {
   AR.hero.position.set(start.x, 0, start.z); AR.cam.position.set(start.x, 11, start.z + 10); AR.on = true; hud(); modsStart(); $('aAct').hidden = !modsRun.list.length;
   pop2(G2.world.label, new THREE.Vector3(start.x, 2, start.z), '#ffb347', true);
 }
-function worldSwing(P, reach) { let n = 0; for (const o of AR.objs) { if (o.gone) continue; const d = Math.hypot(o.x - P.x, o.z - P.z); if (d > reach + 0.5) continue;
+function worldSwing(P, reach) { let n = 0; tntAround(P.x, P.z, reach + 0.5, (e, x, z) => { wakeTnt(x, z, e.it.pr?.fuse || 0.05); }); for (const o of AR.objs) { if (o.gone) continue; const d = Math.hypot(o.x - P.x, o.z - P.z); if (d > reach + 0.5) continue;
   if (o.t === 'tnt' && !o.fuse) { o.fuse = o.pr.fuse || 0.05; n++; }
   if (o.t === 'spawner') { o.hp -= G2.a.dmg * 0.6; o.m.position.y = 0.08; setTimeout(() => { o.m.position.y = 0; }, 80); n++; if (o.hp <= 0) { o.gone = true; AR.world.remove(o.m); unsolid(o); boom(new THREE.Vector3(o.x, 0.5, o.z), 0, 0); } } } return n; }
+const ZERO = new THREE.Matrix4().makeScale(0, 0, 0);
+function wakeTnt(x, z, fuse) { const e = AR.tntMap?.get(x + ',' + z); if (!e) return null; AR.tntMap.delete(x + ',' + z); e.m.setMatrixAt(e.i, ZERO); e.m.instanceMatrix.needsUpdate = true;
+  const mesh = itemMesh(e.it); AR.world.add(mesh); const o = { t: 'tnt', it: e.it, pr: e.it.pr || {}, m: mesh, x: e.it.x + 0.5, z: e.it.z + 0.5, timer: 1, hp: 60, fuse }; AR.objs.push(o); return o; }
+function tntAround(cx, cz, rad, fn) { if (!AR.tntMap?.size) return; const r = Math.ceil(rad); for (let x = Math.floor(cx) - r; x <= Math.floor(cx) + r; x++) for (let z = Math.floor(cz) - r; z <= Math.floor(cz) + r; z++) { const e = AR.tntMap.get(x + ',' + z); if (e && Math.hypot(x + 0.5 - cx, z + 0.5 - cz) < rad) fn(e, x, z, Math.hypot(x + 0.5 - cx, z + 0.5 - cz)); } }
 function unsolid(o) { const k = o.it.x + ',' + o.it.z, c = (AR.solid.get(k) || 1) - 1; if (c <= 0) AR.solid.delete(k); else AR.solid.set(k, c); }
 function worldTick(dt, now) {
   const P = AR.hero.position, W = G2.world; if (!AR.cur) return;
@@ -1615,11 +1635,13 @@ function worldTick(dt, now) {
   for (const m of AR.mons) { const t2 = AR.tiles.get(Math.floor(m.o.position.x) + ',' + Math.floor(m.o.position.z)); if (t2?.t === 'lava' && !m.M.fly) { m.hp -= 10 * dt; if (m.hp <= 0) kill(m); } }
   // a sleeping chest wakes up when you come close
   for (const m of AR.mons) if (m.sleep) { const d = m.o.position.distanceTo(P); if (d < 3.2) { m.sleep = false; pop2('!', m.o.position.clone().add(new THREE.Vector3(0, 1.8, 0)), '#ffe14d', true); clank(320); } }
+  tntAround(P.x, P.z, 2.2, (e, x, z, d) => { const tr = e.it.pr?.trig; if ((tr === 'near' && d < 2.2) || (tr === 'touch' && d < 1.1)) wakeTnt(x, z, e.it.pr.fuse || 0.05); });
+  if (AR.tntMap?.size) for (const m of AR.mons) tntAround(m.o.position.x, m.o.position.z, 1.6, (e, x, z) => { if (e.it.pr?.trig === 'near') wakeTnt(x, z, e.it.pr.fuse || 0.05); });
   for (const o of AR.objs) { if (o.gone) continue; const d = Math.hypot(o.x - P.x, o.z - P.z);
     if (o.t === 'tnt') { if (!o.fuse && ((o.pr.trig === 'near' && d < 2.2) || (o.pr.trig === 'touch' && d < 1.1) || AR.mons.some((m) => o.pr.trig === 'near' && Math.hypot(m.o.position.x - o.x, m.o.position.z - o.z) < 1.6))) o.fuse = o.pr.fuse || 0.05;
       if (o.fuse) { o.fuse -= dt; const f = Math.sin(now / (o.fuse < 0.5 ? 35 : 80)) > 0; o.m.traverse((x) => { if (x.isMesh) for (const mt of x.material) mt.emissive.setHex(f ? 0xffffff : 0); }); o.m.scale.setScalar(1 + Math.max(0, 1 - o.fuse) * 0.2);
         if (o.fuse <= 0) { o.gone = true; AR.world.remove(o.m); unsolid(o); boom(new THREE.Vector3(o.x, 0.4, o.z), o.pr.rad, o.pr.dmg, null, 'fire');
-          for (const x of AR.objs) if (x.t === 'tnt' && !x.gone && Math.hypot(x.x - o.x, x.z - o.z) < o.pr.rad) x.fuse = x.fuse ? Math.min(x.fuse, 0.3) : 0.3; // chain reaction
+          for (const x of AR.objs) if (x.t === 'tnt' && !x.gone && Math.hypot(x.x - o.x, x.z - o.z) < o.pr.rad) x.fuse = x.fuse ? Math.min(x.fuse, 0.3) : 0.3; tntAround(o.x, o.z, o.pr.rad, (e, x, z) => wakeTnt(x, z, 0.3 + Math.random() * 0.15)); // chain reaction
           breakCells(o.x, o.z, o.pr.rad * 0.6); } } }
     if (o.t === 'spawner') { o.timer -= dt; if (o.timer <= 0) { o.timer = o.pr.every; if ((o.kids || (o.kids = [])).filter((m) => !m.dead).length < o.pr.max) { addBeast(whoEntry(o.pr.who)); const m = AR.mons[AR.mons.length - 1]; m.o.position.set(o.x, 0, o.z + 0.9); o.kids.push(m); } } }
     if (o.t === 'swallow' && W && d < 1.1 && !o.used) { o.used = true; clank(150); o.m.scale.set(1.4, 0.7, 1.4); const to = Math.min(WE.g.worlds.length - 1, o.pr.to ?? 1); W.returnTo = { x: o.x, z: o.z + 1.6 }; setTimeout(() => { const back = { wi: W.wi, x: o.x, z: o.z + 1.6, objKey: o.x + ',' + o.z }; loadWorld(to, back); }, 350); AR.on = false; setTimeout(() => { AR.on = true; }, 360); return; }
