@@ -54,14 +54,14 @@ body{font:20px/1.2 var(--hud);user-select:none;-webkit-user-select:none;touch-ac
 <div class="hud" id="cross"></div>
 <div class="hud" id="prompt" hidden></div>
 <div class="hud" id="toast"></div>
-<div class="hud" id="battery">FLASHLIGHT <i></i></div>
+<div class="hud" id="battery">HEADLAMP <i></i></div>
 <button id="bHint" hidden>HINT</button>
 <div id="touch">
   <div id="joy"><i id="joyK"></i></div>
   <button class="tb" id="bJump">JUMP</button>
   <button class="tb" id="bUse">USE</button>
-  <button class="tb" id="bRed">PULL</button>
-  <button class="tb" id="bBlue">PUSH</button>
+  <button class="tb" id="bRed">GRAB</button>
+  <button class="tb" id="bBlue">SHOVE</button>
   <button class="tb" id="bLight">LIGHT</button>
 </div>
 <div id="card"><div class="in">
@@ -70,7 +70,7 @@ body{font:20px/1.2 var(--hud);user-select:none;-webkit-user-select:none;touch-ac
   <p>The toy factory shut down overnight and nobody came back. The lights are dead. Something still walks the halls.</p>
   <div class="keys" id="keys">
     <div>WASD move · MOUSE look · SPACE jump · SHIFT run</div>
-    <div>E pick up, use, put down · F flashlight · HOLD LEFT CLICK pull (red magnet) · HOLD RIGHT CLICK push (blue)</div>
+    <div>E pick up, use, put down · F headlamp</div><div>HOLD LEFT CLICK fire the red hand: it grabs and drags · HOLD RIGHT CLICK fire the blue hand: it shoves</div>
   </div>
   <div><button id="go">ENTER THE FACTORY</button></div>
 </div></div>
@@ -81,7 +81,7 @@ body{font:20px/1.2 var(--hud);user-select:none;-webkit-user-select:none;touch-ac
 'use strict';
 const $ = (id) => document.getElementById(id);
 const touch = matchMedia('(pointer:coarse)').matches; if (touch) document.body.classList.add('touch');
-if (touch) $('keys').innerHTML = '<div>Left circle moves · drag the screen to look</div><div>USE picks up, uses and puts down · JUMP · LIGHT · hold PULL (red magnet) · hold PUSH (blue)</div>';
+if (touch) $('keys').innerHTML = '<div>Left circle moves · drag the screen to look</div><div>USE picks up, uses and puts down · JUMP · LIGHT · hold GRAB (red hand) · hold SHOVE (blue hand)</div>';
 let seed = 11; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
 const V3 = THREE.Vector3;
 
@@ -176,9 +176,9 @@ function slab(w, h, d, mat, tile = 2) { const g = new THREE.BoxGeometry(w, h, d)
 // ---------------------------------------------------------------- renderer and scene
 const R = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' }); R.setPixelRatio(Math.min(1.5, devicePixelRatio)); R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFShadowMap;
 $('game').appendChild(R.domElement);
-const scene = new THREE.Scene(); scene.background = new THREE.Color(0x040405); scene.fog = new THREE.FogExp2(0x040405, 0.04);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x040405); scene.fog = new THREE.FogExp2(0x0b0b0d, 0.018); scene.background.set(0x0b0b0d);
 const cam = new THREE.PerspectiveCamera(72, 1, 0.03, 160); scene.add(cam);
-const amb = new THREE.HemisphereLight(0x8a90a0, 0x1a1410, 0.07); scene.add(amb);
+const amb = new THREE.HemisphereLight(0xa8b0c0, 0x2a2018, 0.42); scene.add(amb);
 const resize = () => { R.setSize(innerWidth, innerHeight, false); cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); }; addEventListener('resize', resize); resize();
 
 // ---------------------------------------------------------------- collision world: axis-aligned boxes. You can stand on top of any of them.
@@ -277,29 +277,133 @@ const blueDoor = place(G.magdoorBlue(), 16.15, 0, 5.5, Math.PI / 2); const blueS
 const sockets = [{ p: new V3(11.2, CW + 1.1, 65.22), filled: false }, { p: new V3(12.7, CW + 1.1, 65.22), filled: false }];
 const socketMarks = sockets.map((s) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.72, 0.02), new THREE.MeshBasicMaterial({ color: 0x220a08 })); m.position.copy(s.p); scene.add(m); return m; });
 
-// ---------------------------------------------------------------- the player's hands, made of tiny cubes: left holds the flashlight, right wears the magnet gauntlet
+// ---------------------------------------------------------------- the launcher hands: each glove flies out on a thick cable.
+// RED (left) grabs: pulls crates and things to you, or pulls YOU up to a yellow grab handle. BLUE (right) shoves: knocks crates away, presses buttons, opens blue locks.
 const hands = new THREE.Group(); cam.add(hands);
-const sleeve = H('#2a3a5a'), skin = H('#d9a77f'), skinD = H('#c08d68'), glove = H('#3a3f45');
-const armR = vmesh(vox(12, 12, 30, 0.012, (x, y, z) => { // sleeve, wrist, gauntlet with the two magnet prongs
-  const cx = x - 5.5, cy = y - 5.5, r = Math.hypot(cx, cy);
-  if (z >= 16) return r < 5.6 ? (z % 6 === 0 ? H('#22304a') : sleeve) : 0;
-  if (z >= 12) return r < 5 ? glove : 0;
-  if (z >= 4 && r < 5.2) { if (y >= 9) return (x === 3 || x === 8) ? H('#ffd34d') : H('#b5562b'); return z === 4 ? H('#2f363c') : glove; }
-  if (z < 4 && y >= 7 && y <= 10) { if (x >= 1 && x <= 3) return z < 2 ? H('#ff4a3d') : H('#9aa0a6'); if (x >= 8 && x <= 10) return z < 2 ? H('#3da2ff') : H('#9aa0a6'); }
-  if (z < 4 && y < 6 && x > 1 && x < 10 && (x % 2 === 0)) return z === 0 ? skinD : skin; return 0; }), VMAT);
-armR.position.set(0.26, -0.31, -0.44); armR.scale.setScalar(0.72); hands.add(armR);
-const armL = vmesh(vox(12, 14, 30, 0.012, (x, y, z) => { // sleeve, hand gripping the flashlight
-  const cx = x - 5.5, cy = y - 5.5, r = Math.hypot(cx, cy);
-  if (z >= 16) return r < 5.6 ? (z % 6 === 0 ? H('#22304a') : sleeve) : 0;
-  if (z >= 9) return r < 4.8 ? (y > 7 ? skin : skinD) : 0;
-  const fl = Math.hypot(x - 5.5, y - 9.5); if (fl < 2.6 && z < 12) return z < 2 ? H('#fff1c0') : z < 4 ? H('#1a1c1e') : H('#2a2e31');
-  if (z < 9 && z > 2 && r < 4.6 && y < 9 && (z % 2 === 0 || y < 4)) return y < 3 ? skinD : skin; return 0; }), VMAT);
-armL.position.set(-0.27, -0.32, -0.46); armL.scale.setScalar(0.72); hands.add(armL);
-const lens = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.01), new THREE.MeshBasicMaterial({ color: 0xfff1c0 })); lens.position.set(-0.27, -0.32 + 0.035, -0.465 - 0.16); hands.add(lens);
-const flash = new THREE.SpotLight(0xfff1d8, 2.6, 34, 0.46, 0.5, 1.1); flash.castShadow = true; flash.shadow.mapSize.set(1024, 1024); flash.shadow.camera.near = 0.3; flash.shadow.camera.far = 34; flash.position.set(-0.2, -0.15, -0.3); cam.add(flash); flash.target.position.set(0, 0, -6); cam.add(flash.target);
-const carryPivot = new THREE.Group(); carryPivot.position.set(0.02, -0.28, -0.62); cam.add(carryPivot);
-const beamMat = new THREE.LineBasicMaterial({ color: 0xff4a3d, transparent: true, opacity: 0.85 }); const beam = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new V3(), new V3()]), beamMat); beam.frustumCulled = false; scene.add(beam); beam.visible = false;
+const sleeve = H('#2a3a5a'), sleeveD = H('#22304a'), metalD = H('#2f363c'), metalM = H('#4a545c'), metalL = H('#7d858c');
+// a big glove, palm facing +z, fingers up (+y). open or closed into a fist
+function gloveVox(col, colD, open) { return vox(12, open ? 18 : 12, 6, 0.02, (x, y, z) => {
+  if (y < 3) return (x > 1 && x < 10 && z > 0 && z < 5) ? (y === 0 ? metalD : metalM) : 0;                 // cuff where the cable plugs in
+  if (y < 10) { if (x < 1 || x > 10) return 0; if (z === 5 && y > 4 && y < 9 && x > 3 && x < 8) return colD; return z < 5 ? col : 0; } // palm and back
+  if (x === 0 && y < 13 && z > 1 && z < 4) return colD;                                                      // thumb
+  if (open) { const f = x - 1; if (f < 0 || x > 10) return 0; if (f % 3 === 2) return 0; if (z < 1 || z > 3) return 0; const len = [6, 8, 8, 6][Math.floor(f / 3)] ?? 0; return y < 10 + len ? (y === 9 + len ? colD : col) : 0; }
+  if (x < 1 || x > 10) return 0; if (y > 11) return 0; return z > 3 ? ((x % 3 === 0) ? colD : col) : z < 5 ? col : 0; }); }
+const GLOVE = { red: { open: gloveVox(H('#d23a2e'), H('#8a2018'), true), fist: gloveVox(H('#d23a2e'), H('#8a2018'), false), c: 0xd23a2e },
+  blue: { open: gloveVox(H('#2f86d6'), H('#1b4f82'), true), fist: gloveVox(H('#2f86d6'), H('#1b4f82'), false), c: 0x2f86d6 } };
+// the launcher on each forearm
+const launcherG = vox(12, 11, 30, 0.014, (x, y, z) => { const r = Math.hypot(x - 5.5, y - 5.5);
+  if (z >= 18) return r < 5.5 ? (z % 5 === 0 ? sleeveD : sleeve) : 0;
+  if (r < 5.4) { if (y > 8 && z % 4 === 1) return H('#d9a21b'); if (z < 2) return r < 2.6 ? H('#0d0e0f') : metalD; return (z + y) % 7 === 0 ? metalL : metalM; } return 0; });
+function makeHand(color, side) {
+  const arm = vmesh(launcherG); arm.position.set(side * 0.24, -0.3, -0.42); arm.scale.setScalar(0.85); hands.add(arm);
+  const glove = new THREE.Group(), open = vmesh(GLOVE[color].open), fist = vmesh(GLOVE[color].fist); glove.add(open, fist); fist.visible = false;
+  const homeSlot = new THREE.Object3D(); homeSlot.position.set(side * 0.24, -0.25, -0.66); hands.add(homeSlot);
+  const N = 22, rope = { pts: Array.from({ length: N }, () => new V3()), prev: Array.from({ length: N }, () => new V3()), mesh: null, len: 1 };
+  const ropeMat = new THREE.MeshLambertMaterial({ color: 0x1b1c1e });
+  const h = { color, side, arm, glove, open, fist, homeSlot, state: 'home', pos: new V3(), target: null, held: false, rope, ropeMat, charge: 0, offset: new V3() };
+  dock(h); return h;
+}
+function dock(h) { h.state = 'home'; h.homeSlot.add(h.glove); h.glove.position.set(0, -0.06, 0); h.glove.rotation.set(-0.25, 0, 0); h.glove.scale.setScalar(0.9); h.open.visible = true; h.fist.visible = false; if (h.rope.mesh) h.rope.mesh.visible = false; }
+const HANDS = { red: makeHand('red', -1), blue: makeHand('blue', 1) };
+// a headlamp, so both hands are free
+const flash = new THREE.SpotLight(0xfff1d8, 3.2, 45, 0.55, 0.45, 1); flash.castShadow = true; flash.shadow.mapSize.set(1024, 1024); flash.shadow.camera.near = 0.3; flash.shadow.camera.far = 45; flash.position.set(0, 0.08, 0); cam.add(flash); flash.target.position.set(0, -0.2, -6); cam.add(flash.target);
+const carryPivot = new THREE.Group(); carryPivot.position.set(0.05, -0.36, -0.75); cam.add(carryPivot);
+const MAX_REACH = 18, SPEED = 34;
+const slotWorld = (h) => h.homeSlot.getWorldPosition(new V3());
 
+function launch(color) {
+  const h = HANDS[color]; h.held = true; if (h.state !== 'home') return;
+  cam.updateMatrixWorld(); let a = aimed(MAX_REACH); const from = slotWorld(h); const dir = new V3(0, 0, -1).applyQuaternion(cam.quaternion);
+  // aim help: small things (handles, fuses) close to where you point count as hit, if nothing nearer is in the way
+  let best = null; for (const o of [...handleList, ...items.filter((i) => i !== P.carry).map((i) => i.o)]) { const c = o.getWorldPosition(new V3()), v = c.clone().sub(cam.position), d = v.length(); if (d > MAX_REACH) continue; const ang = v.normalize().angleTo(dir); if (ang < 0.09 && (!best || ang < best.ang) && (!a || d < a.d + 0.6)) best = { o, p: c, d, ang }; }
+  if (best) a = best;
+  h.target = a ? { p: a.p.clone(), o: a.o, d: a.d } : { p: cam.position.clone().addScaledVector(dir, MAX_REACH), o: null };
+  scene.attach(h.glove); h.pos.copy(from); h.glove.position.copy(from); h.glove.scale.setScalar(1); h.state = 'out';
+  // the cable starts coiled at the launcher
+  for (let i = 0; i < h.rope.pts.length; i++) { h.rope.pts[i].copy(from); h.rope.prev[i].copy(from); }
+  sfx.launch(); }
+function release(color) { const h = HANDS[color]; h.held = false; if (h.state === 'out' || h.state === 'stuck') { if (h.target?.item && h.state === 'stuck') { /* let go of the thing */ } h.state = 'back'; h.charge = 0; } }
+
+const handleList = []; // yellow grab handles: the red hand can pull you up to them
+function grabHandle(x, y, z, ry = 0) { const g = vmesh(vox(10, 4, 4, 0.06, (vx, vy, vz) => ((vx < 2 || vx > 7) ? (vz < 2 ? H('#2f363c') : 0) : vy === 3 || vy === 0 ? (vz === 3 ? H('#ffd34d') : 0) : vz === 3 && (vx === 2 || vx === 7) ? H('#ffd34d') : 0))); g.position.set(x, y, z); g.rotation.y = ry; scene.add(g); handleList.push(g); return g; }
+
+function handsStep(dt) {
+  for (const h of Object.values(HANDS)) {
+    const slot = slotWorld(h);
+    if (h.state === 'out') { const to = h.target.p.clone().sub(h.pos), d = to.length(), stepL = SPEED * dt;
+      if (d <= stepL) { h.pos.copy(h.target.p); arrive(h); } else h.pos.addScaledVector(to.normalize(), stepL);
+      h.glove.position.copy(h.pos); h.glove.lookAt(h.pos.clone().add(h.pos.clone().sub(slot))); }
+    else if (h.state === 'stuck') stuck(h, dt, slot);
+    else if (h.state === 'back') { const to = slot.clone().sub(h.pos), d = to.length(), stepL = SPEED * 1.2 * dt; h.fist.visible = false; h.open.visible = true;
+      if (d <= stepL + 0.05) { dock(h); sfx.dock(); continue; } h.pos.addScaledVector(to.normalize(), stepL); h.glove.position.copy(h.pos); h.glove.lookAt(slot.clone().add(to)); }
+    if (h.state !== 'home') { if (h.pos.distanceTo(slot) > MAX_REACH + 2 && h.state !== 'back') h.state = 'back'; ropeStep(h, slot, dt); }
+    // the launcher kicks a little when the hand is away
+    h.arm.position.z += ((h.state === 'home' ? -0.42 : -0.46) - h.arm.position.z) * Math.min(1, dt * 12);
+  }
+}
+function arrive(h) {
+  const o = h.target.o, color = h.color; sfx.thunk();
+  const crate = metalBoxes.find((c) => c.o === o), item = items.find((i) => i.o === o && i !== P.carry), handle = handleList.includes(o);
+  if (color === 'red') {
+    h.fist.visible = true; h.open.visible = false;
+    if (crate) { h.state = 'stuck'; h.target.crate = crate; h.offset.copy(h.pos).sub(crate.o.position); return; }
+    if (item) { h.state = 'stuck'; h.target.item = item; return; }
+    if (handle) { h.state = 'stuck'; h.target.handle = o; return; }
+    h.state = 'back'; return;                              // nothing to hold on to: it bounces back
+  }
+  // blue: shove
+  if (crate) { const dir = crate.o.position.clone().sub(P.pos).setY(0).normalize(); crate.push = dir.multiplyScalar(5); }
+  if (o === blueDoor && !blueDoor.userData.open) { h.state = 'stuck'; h.target.door = true; return; }
+  if (item) { const dir = item.o.position.clone().sub(P.pos).setY(0).normalize(); item.o.position.addScaledVector(dir, 0.6); }
+  h.state = 'stuck'; h.target.bump = 0.25;              // stays a moment, then comes back
+}
+function stuck(h, dt, slot) {
+  const t = h.target;
+  if (t.bump !== undefined) { t.bump -= dt; if (t.bump <= 0) h.state = 'back'; return; }
+  if (!h.held) { h.state = 'back'; return; }
+  if (t.crate) { // drag the crate toward you
+    const cr = t.crate, to = new V3(P.pos.x - cr.o.position.x, 0, P.pos.z - cr.o.position.z), d = to.length();
+    if (d > 1.9) slideCrate(cr, to.normalize().multiplyScalar(3.4 * dt));
+    h.pos.copy(cr.o.position).add(h.offset); h.glove.position.copy(h.pos); return; }
+  if (t.item) { // reel the thing in; when it reaches you it goes into your hands
+    const it = t.item, to = cam.position.clone().add(new V3(0, -0.3, 0)).sub(it.o.position), d = to.length();
+    it.o.position.addScaledVector(to.normalize(), Math.min(d, 9 * dt)); h.pos.copy(it.o.position); h.glove.position.copy(h.pos);
+    if (d < 1.1 && !P.carry) { take(it); h.state = 'back'; } return; }
+  if (t.handle) { // pull yourself to the handle and hang there
+    const anchor = t.handle.position.clone().add(new V3(0, -1.0, 0)), to = anchor.clone().sub(P.pos), d = to.length();
+    P.hanging = true; if (d > 0.3) { P.pullV = to.normalize().multiplyScalar(Math.min(10, d * 6)); } else P.pullV = new V3(); return; }
+  if (t.door) { h.charge += dt; if (h.charge > 1.2 && !blueDoor.userData.open) { blueDoor.userData.open = true; solids.splice(solids.indexOf(blueSolid), 1); sfx.gate(); toast('The blue lock lets go.'); h.state = 'back'; } }
+}
+function slideCrate(cr, mv) { const old = cr.o.position.clone(); cr.o.position.add(mv); cr.o.updateMatrixWorld(); const b = new THREE.Box3().setFromObject(cr.o), test = { min: b.min.clone().add(new V3(0.02, 0.05, 0.02)), max: b.max.clone().sub(new V3(0.02, 0, 0.02)) };
+  const blocked = solids.some((o) => o !== cr.s && o.max.y > 0.05 && test.min.x < o.max.x && test.max.x > o.min.x && test.min.z < o.max.z && test.max.z > o.min.z && test.min.y < o.max.y && test.max.y > o.min.y) || overlaps(P.pos, { min: test.min, max: test.max }, P.w, P.h);
+  if (blocked) { cr.o.position.copy(old); return false; } cr.s.min.copy(b.min); cr.s.max.copy(b.max);
+  for (const it of items) if (it !== P.carry && Math.abs(it.o.position.x - old.x) < 0.6 && Math.abs(it.o.position.z - old.z) < 0.6 && Math.abs(it.o.position.y - 1.2) < 0.15) it.o.position.add(cr.o.position.clone().sub(old)); return true; }
+
+// the cable: a chain of points with gravity (it sags when slack, goes straight when pulled tight) that bumps around pillars and crates
+const TUBE_R = 0.038;
+function ropeStep(h, slot, dt) {
+  const R_ = h.rope, n = R_.pts.length, end = h.pos, dist = slot.distanceTo(end);
+  const taut = h.state === 'stuck' && (h.target.crate || h.target.handle || h.target.item);
+  const total = Math.max(0.05, dist * (taut ? 1.0 : h.state === 'out' ? 1.04 : 1.12)), seg = total / (n - 1);
+  const g = new V3(0, -9.8 * dt * dt, 0);
+  for (let i = 1; i < n - 1; i++) { const p = R_.pts[i], v = p.clone().sub(R_.prev[i]).multiplyScalar(0.94); R_.prev[i].copy(p); p.add(v).add(g); }
+  R_.pts[0].copy(slot); R_.pts[n - 1].copy(end);
+  for (let k = 0; k < 14; k++) { for (let i = 0; i < n - 1; i++) { const a = R_.pts[i], b = R_.pts[i + 1], d = b.clone().sub(a), l = d.length() || 1e-6, diff = (l - seg) / l;
+      if (i === 0) b.addScaledVector(d, -diff); else if (i === n - 2) a.addScaledVector(d, diff); else { a.addScaledVector(d, diff * 0.5); b.addScaledVector(d, -diff * 0.5); } }
+    R_.pts[0].copy(slot); R_.pts[n - 1].copy(end); }
+  // keep the cable out of solid things (pillars, crates, the floor)
+  for (let i = 1; i < n - 1; i++) { const p = R_.pts[i]; if (p.y < 0.04) p.y = 0.04;
+    for (const s of solids) { if (s.max.y - s.min.y > 40) continue; if (p.x > s.min.x - TUBE_R && p.x < s.max.x + TUBE_R && p.y > s.min.y - TUBE_R && p.y < s.max.y + TUBE_R && p.z > s.min.z - TUBE_R && p.z < s.max.z + TUBE_R) {
+        const pen = [[p.x - (s.min.x - TUBE_R), 'x', s.min.x - TUBE_R], [(s.max.x + TUBE_R) - p.x, 'x', s.max.x + TUBE_R], [p.y - (s.min.y - TUBE_R), 'y', s.min.y - TUBE_R], [(s.max.y + TUBE_R) - p.y, 'y', s.max.y + TUBE_R], [p.z - (s.min.z - TUBE_R), 'z', s.min.z - TUBE_R], [(s.max.z + TUBE_R) - p.z, 'z', s.max.z + TUBE_R]].sort((u, w) => u[0] - w[0])[0];
+        p[pen[1]] = pen[2]; } } }
+  // draw it as a thick tube
+  const curve = new THREE.CatmullRomCurve3(R_.pts), geo = new THREE.TubeGeometry(curve, 44, TUBE_R, 6, false);
+  if (!R_.mesh) { R_.mesh = new THREE.Mesh(geo, h.ropeMat); R_.mesh.castShadow = true; R_.mesh.frustumCulled = false; scene.add(R_.mesh); } else { R_.mesh.geometry.dispose(); R_.mesh.geometry = geo; }
+  R_.mesh.visible = true;
+}
+function take(it) { P.carry = it; scene.remove(it.o); carryPivot.add(it.o); it.o.position.set(0, 0, 0); it.o.rotation.set(0.3, 0.6, 0); it.o.scale.setScalar(0.8); sfx.pick(); toast('Got the ' + it.name); if (it.kind === 'fuse' && !power) objective('Carry the fuse to the generator up on the catwalk.'); }
+
+grabHandle(-12.7, 8.4, 36, Math.PI / 2); grabHandle(-6, 8.2, 40, 0);
 // ---------------------------------------------------------------- player physics: a box 0.6 wide, 1.75 tall; steps up to 0.45 m without jumping
 const P = { pos: new V3(8, 0, 3), vy: 0, yaw: Math.PI, pitch: 0, onGround: true, carry: null, w: 0.3, h: 1.75 };
 const keys = {}; let started = false, ended = false, flashOn = true, battery = 1, magMode = null, magT = 0, power = false;
@@ -315,8 +419,8 @@ addEventListener('keydown', (e) => { keys[e.code] = true; if (!started || ended)
 addEventListener('keyup', (e) => { keys[e.code] = false; });
 const cv = R.domElement; let locked = false;
 cv.addEventListener('contextmenu', (e) => e.preventDefault());
-cv.addEventListener('mousedown', (e) => { if (!started || touch) return; if (!locked) cv.requestPointerLock?.()?.catch?.(() => {}); magMode = e.button === 2 ? 'blue' : 'red'; });
-addEventListener('mouseup', () => { if (!touch) magMode = null; });
+cv.addEventListener('mousedown', (e) => { if (!started || touch) return; if (!locked) cv.requestPointerLock?.()?.catch?.(() => {}); launch(e.button === 2 ? 'blue' : 'red'); });
+addEventListener('mouseup', (e) => { if (!touch) release(e.button === 2 ? 'blue' : 'red'); });
 document.addEventListener('pointerlockchange', () => { locked = document.pointerLockElement === cv; });
 addEventListener('mousemove', (e) => { if (started && !touch && locked) look(e.movementX, e.movementY); });
 function look(dx, dy) { P.yaw -= dx * 0.0024; P.pitch = Math.max(-1.45, Math.min(1.45, P.pitch - dy * 0.0024)); }
@@ -329,14 +433,14 @@ cv.addEventListener('pointerdown', (e) => { if (!touch || lookT.id !== null) ret
 cv.addEventListener('pointermove', (e) => { if (e.pointerId !== lookT.id) return; look((e.clientX - lookT.x) * 1.6, (e.clientY - lookT.y) * 1.6); lookT.x = e.clientX; lookT.y = e.clientY; });
 const endLook = (e) => { if (e.pointerId === lookT.id) lookT.id = null; }; cv.addEventListener('pointerup', endLook); cv.addEventListener('pointercancel', endLook);
 const hold = (id, on, off) => { const b = $(id); b.addEventListener('pointerdown', (e) => { e.preventDefault(); on(); }); if (off) { b.addEventListener('pointerup', off); b.addEventListener('pointercancel', off); b.addEventListener('pointerleave', off); } };
-hold('bJump', () => jump()); hold('bUse', () => use()); hold('bLight', () => toggleFlash()); hold('bRed', () => { magMode = 'red'; }, () => { magMode = null; }); hold('bBlue', () => { magMode = 'blue'; }, () => { magMode = null; });
+hold('bJump', () => jump()); hold('bUse', () => use()); hold('bLight', () => toggleFlash()); hold('bRed', () => launch('red'), () => release('red')); hold('bBlue', () => launch('blue'), () => release('blue'));
 function jump() { if (P.onGround) { P.vy = 7; P.onGround = false; sfx.step(0.7); } }
 function toggleFlash() { flashOn = !flashOn; sfx.click(); }
 
 // ---------------------------------------------------------------- what you look at
 const ray = new THREE.Raycaster(); ray.far = 12;
-const hitList = () => [...items.filter((i) => i !== P.carry).map((i) => i.o), ...metalBoxes.map((c) => c.o), blueDoor, gen, shutter, ...scene.children.filter((o) => o.isMesh && o.geometry.type === 'BoxGeometry' && o.material !== VMAT && o.geometry.parameters.width > 2.5)];
-function aimed() { ray.setFromCamera({ x: 0, y: 0 }, cam); const h = ray.intersectObjects(hitList(), false)[0]; return h ? { o: h.object, d: h.distance, p: h.point } : null; }
+const hitList = () => [...handleList, ...items.filter((i) => i !== P.carry).map((i) => i.o), ...metalBoxes.map((c) => c.o), blueDoor, gen, shutter, ...scene.children.filter((o) => o.isMesh && o.geometry.type === 'BoxGeometry' && o.material !== VMAT && o.geometry.parameters.width > 2.5)];
+function aimed(far = 12) { ray.far = far; ray.setFromCamera({ x: 0, y: 0 }, cam); const h = ray.intersectObjects(hitList(), false)[0]; return h ? { o: h.object, d: h.distance, p: h.point } : null; }
 function use() {
   const a = aimed();
   if (P.carry) { // hands full: put it in the generator if you're looking at a socket, otherwise put it down in front of you
@@ -344,7 +448,7 @@ function use() {
       if (sockets.every((x) => x.filled)) powerOn(); else { toast('One fuse in. The generator needs another.'); objective('The generator needs one more fuse.'); } return; } }
     drop(); return; }
   if (!a || a.d > 3.2) return;
-  const it = items.find((i) => i.o === a.o); if (it) { P.carry = it; scene.remove(it.o); carryPivot.add(it.o); it.o.position.set(0, 0, 0); it.o.rotation.set(0.3, 0.6, 0); it.o.scale.setScalar(1.4); sfx.pick(); toast('Picked up a ' + it.name); if (it.kind === 'fuse') objective(power ? '' : 'Carry the fuse to the generator up on the catwalk.'); return; }
+  const it = items.find((i) => i.o === a.o); if (it) { P.carry = it; scene.remove(it.o); carryPivot.add(it.o); it.o.position.set(0, 0, 0); it.o.rotation.set(0.3, 0.6, 0); it.o.scale.setScalar(0.8); sfx.pick(); toast('Picked up a ' + it.name); if (it.kind === 'fuse') objective(power ? '' : 'Carry the fuse to the generator up on the catwalk.'); return; }
   if (a.o === gen) { sfx.deny(); toast(sockets.some((s) => s.filled) ? 'One more fuse.' : 'Two empty fuse sockets.'); if (!power) objective('The generator needs two fuses. Find them in the factory.'); hintStep = Math.max(hintStep, 2); return; }
   if (a.o === shutter && !power) { sfx.deny(); toast('A rolling shutter. It needs power.'); return; }
   if (a.o === blueDoor) { toast('A magnet lock with a blue sign.'); }
@@ -355,11 +459,11 @@ function drop() { const it = P.carry; if (!it) return; carryPivot.remove(it.o); 
 function objective(t) { $('obj').innerHTML = t ? `<small>OBJECTIVE</small>${t}` : ''; }
 let toastT = 0; function toast(t) { const el = $('toast'); el.textContent = t; el.style.opacity = 1; clearTimeout(toastT); toastT = setTimeout(() => { el.style.opacity = 0; }, 2800); }
 let hintStep = 0;
-const HINTS = ['The factory has no power. Find what makes it.', 'The generator is up on the catwalk at the back of the big hall. Take the stairs on the left wall.', 'It needs two fuses. One is in the warehouse, the other is behind a door with a blue sign.', 'A low rack in the warehouse holds a fuse. Pull a metal crate there with the red magnet and climb it.', 'The blue sign means the blue magnet: aim at the door and hold PUSH.'];
+const HINTS = ['The factory has no power. Find what makes it.', 'The generator is up on the catwalk at the back of the big hall. Take the stairs on the left wall, or find a yellow handle and let the red hand pull you up.', 'It needs two fuses. One is in the warehouse, the other is behind a door with a blue sign.', 'A low rack in the warehouse holds a fuse. Drag a metal crate there with the red hand and climb it.', 'The blue sign answers to the blue hand: hit the door with it and hold.'];
 $('bHint').onclick = () => { toast(HINTS[Math.min(HINTS.length - 1, hintStep)]); hintStep = Math.min(HINTS.length - 1, hintStep + 1); };
 function powerOn() { power = true; sfx.power(); toast('The generator coughs, then roars.'); objective('');
   lamps.forEach((L, i) => setTimeout(() => { L.on = true; sfx.clunk(); }, 900 + i * 450)); emergency.forEach((l) => { l.intensity = 0; });
-  setTimeout(() => { amb.intensity = 0.16; objective('The big shutter at the back of the hall is opening.'); shutterOpen = true; sfx.gate(); }, 900 + lamps.length * 450 + 600); }
+  setTimeout(() => { amb.intensity = 0.62; objective('The big shutter at the back of the hall is opening.'); shutterOpen = true; sfx.gate(); }, 900 + lamps.length * 450 + 600); }
 let shutterOpen = false;
 
 // ---------------------------------------------------------------- sound, made here
@@ -370,33 +474,27 @@ const sfx = (() => { let ac = null, master; const on = () => { if (ac) return; t
   function hum() { const o1 = ac.createOscillator(), o2 = ac.createOscillator(), f = ac.createBiquadFilter(), g = ac.createGain(); o1.type = o2.type = 'sawtooth'; o1.frequency.value = 41; o2.frequency.value = 41.7; f.type = 'lowpass'; f.frequency.value = 120; g.gain.value = 0.07; o1.connect(f); o2.connect(f); f.connect(g); g.connect(master); o1.start(); o2.start();
     const creak = () => { if (!ac) return; const r = Math.random(); if (r < 0.4) tone(60 + Math.random() * 50, 1.6, 0.05, 'sawtooth', 35); else if (r < 0.8) noiseHit(0.5, 0.14, 200 + Math.random() * 800); else { for (let i = 0; i < 3; i++) setTimeout(() => noiseHit(0.08, 0.1, 900), i * 380); } setTimeout(creak, 5000 + Math.random() * 9000); }; setTimeout(creak, 3500); }
   return { on, step: (k = 1) => noiseHit(0.07, 0.07 * k, 160 + Math.random() * 60), metalStep: () => noiseHit(0.09, 0.08, 1400, 3), click: () => tone(1400, 0.04, 0.08), pick: () => { tone(660, 0.08, 0.12); setTimeout(() => tone(990, 0.12, 0.12), 80); }, deny: () => tone(140, 0.25, 0.15, 'square', 90),
-    gate: () => { noiseHit(2.5, 0.25, 120); tone(55, 2.2, 0.12, 'sawtooth', 35); }, power: () => { tone(40, 2.5, 0.25, 'sawtooth', 120); }, clunk: () => { noiseHit(0.25, 0.25, 300, 0.8); tone(90, 0.3, 0.12, 'square', 60); }, mag: (f) => tone(f, 0.12, 0.03, 'sine') }; })();
+    gate: () => { noiseHit(2.5, 0.25, 120); tone(55, 2.2, 0.12, 'sawtooth', 35); }, power: () => { tone(40, 2.5, 0.25, 'sawtooth', 120); }, clunk: () => { noiseHit(0.25, 0.25, 300, 0.8); tone(90, 0.3, 0.12, 'square', 60); }, mag: (f) => tone(f, 0.12, 0.03, 'sine'), launch: () => { noiseHit(0.18, 0.18, 1800, 2); tone(300, 0.15, 0.06, 'sawtooth', 900); }, dock: () => { tone(500, 0.05, 0.08); noiseHit(0.05, 0.12, 2500, 3); }, thunk: () => { noiseHit(0.12, 0.25, 600, 1.5); tone(120, 0.12, 0.1, 'square', 70); } }; })();
 
 // ---------------------------------------------------------------- the loop
 let last = performance.now(), stepT = 0, bobT = 0;
 function frame(now) { requestAnimationFrame(frame); const dt = Math.min(0.05, (now - last) / 1000); last = now; if (started && !ended) step(dt, now); render(dt); }
 function step(dt, now) {
+  P.hanging = false; handsStep(dt);
   let mx = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0) + joy.x, mz = (keys.KeyS || keys.ArrowDown ? 1 : 0) - (keys.KeyW || keys.ArrowUp ? 1 : 0) + joy.y;
   const l = Math.hypot(mx, mz); if (l > 1) { mx /= l; mz /= l; }
   const run = keys.ShiftLeft || keys.ShiftRight ? 1.75 : 1, sp = 3.6 * run, s = Math.sin(P.yaw), c = Math.cos(P.yaw);
   const vx = (mx * c + mz * s) * sp * dt, vz = (-mx * s + mz * c) * sp * dt;
   moveAxis(P.pos, 'x', vx); moveAxis(P.pos, 'z', vz);
-  P.vy -= 18 * dt; const landed = moveY(P.pos, P.vy * dt); if (landed) { if (!P.onGround && P.vy < -5) sfx.step(1.4); P.vy = 0; P.onGround = true; } else P.onGround = false;
+  if (P.hanging && P.pullV) { moveAxis(P.pos, 'x', P.pullV.x * dt); moveAxis(P.pos, 'z', P.pullV.z * dt); P.vy = 0; moveY(P.pos, P.pullV.y * dt); }
+  P.vy -= (P.hanging ? 0 : 18) * dt; const landed = moveY(P.pos, P.vy * dt); if (landed) { if (!P.onGround && P.vy < -5) sfx.step(1.4); P.vy = 0; P.onGround = true; } else P.onGround = false;
   if (P.pos.y < -5) P.pos.set(8, 0, 3);
   if (l > 0.1 && P.onGround) { bobT += dt * 9 * run; stepT -= dt * run; if (stepT <= 0) { stepT = 0.42; if (P.pos.y > 1) sfx.metalStep(); else sfx.step(); } }
   // flashlight battery
   battery = Math.max(0, Math.min(1, battery + (flashOn ? -dt / 300 : dt / 50))); if (battery <= 0) flashOn = false;
-  flash.intensity = flashOn ? 2.6 * (battery < 0.15 ? 0.6 + Math.random() * 0.4 : 1) : 0; lens.material.color.set(flashOn ? 0xfff1c0 : 0x333333); document.documentElement.style.setProperty('--b', (battery * 100).toFixed(0) + '%');
-  // magnet
-  beam.visible = false; const reach = magMode ? 1 : 0; armR.position.z += ((-0.44 - reach * 0.08) - armR.position.z) * Math.min(1, dt * 12);
-  if (magMode) { const a = aimed(); const from = new V3(magMode === 'red' ? 0.225 : 0.27, -0.24, -0.6).applyMatrix4(cam.matrixWorld); magT -= dt; if (magT <= 0) { magT = 0.1; sfx.mag(magMode === 'red' ? 220 : 330); }
-    if (a && a.d < 11) { beam.visible = true; beamMat.color.set(magMode === 'red' ? 0xff4a3d : 0x3da2ff); beam.geometry.setFromPoints([from, a.p]);
-      const cr = metalBoxes.find((x) => x.o === a.o); if (cr) { const to = new V3(P.pos.x - cr.o.position.x, 0, P.pos.z - cr.o.position.z), d = to.length(); to.normalize(); if (magMode === 'blue') to.negate(); else if (d < 1.7) to.set(0, 0, 0);
-        const mv = to.multiplyScalar(3.2 * dt), old = cr.o.position.clone(); cr.o.position.add(mv); const b = new THREE.Box3().setFromObject(cr.o); const test = { min: b.min.clone().add(new V3(0.02, 0.05, 0.02)), max: b.max.clone().sub(new V3(0.02, 0, 0.02)) };
-        if (solids.some((o) => o !== cr.s && o.max.y > 0.05 && test.min.x < o.max.x && test.max.x > o.min.x && test.min.z < o.max.z && test.max.z > o.min.z && test.min.y < o.max.y && test.max.y > o.min.y)) cr.o.position.copy(old); else { cr.s.min.copy(b.min); cr.s.max.copy(b.max); }
-        // anything resting on it rides along
-        for (const it of items) if (it !== P.carry && Math.abs(it.o.position.x - old.x) < 0.6 && Math.abs(it.o.position.z - old.z) < 0.6 && Math.abs(it.o.position.y - 1.2) < 0.1) it.o.position.add(cr.o.position.clone().sub(old)); }
-      if (a.o === blueDoor && blueSolid && a.d < 8) { if (magMode === 'blue') { blueDoor.userData.charge = (blueDoor.userData.charge || 0) + dt; if (blueDoor.userData.charge > 1.3 && !blueDoor.userData.open) { blueDoor.userData.open = true; solids.splice(solids.indexOf(blueSolid), 1); sfx.gate(); toast('The blue lock lets go.'); } } else blueDoor.userData.charge = 0; } } }
+  flash.intensity = flashOn ? 3.2 * (battery < 0.15 ? 0.6 + Math.random() * 0.4 : 1) : 0; document.documentElement.style.setProperty('--b', (battery * 100).toFixed(0) + '%');
+  // crates shoved by the blue hand slide and slow down
+  for (const cr of metalBoxes) if (cr.push) { if (!slideCrate(cr, cr.push.clone().multiplyScalar(dt))) cr.push = null; else { cr.push.multiplyScalar(Math.pow(0.12, dt)); if (cr.push.length() < 0.3) cr.push = null; } }
   if (blueDoor.userData.open && blueDoor.position.y < 4.6) blueDoor.position.y += dt * 2;
   if (shutterOpen && shutter.position.y < 6) { shutter.position.y += dt * 0.9; if (shutter.position.y > 2.2 && solids.includes(shutterSolid)) solids.splice(solids.indexOf(shutterSolid), 1); }
   // lamps: off until the power is back; the lobby one flickers
@@ -407,8 +505,9 @@ function step(dt, now) {
   if (P.carry) pr = a && a.o === gen && a.d < 3 && P.carry.kind === 'fuse' ? (touch ? 'USE · put the fuse in' : '[E] Put the fuse in') : (touch ? 'USE · put it down' : '[E] Put it down');
   else if (a && a.d < 3.2 && items.some((i) => i.o === a.o)) pr = (touch ? 'USE · ' : '[E] ') + 'Pick up';
   else if (a && a.o === gen && a.d < 3) pr = 'Generator';
-  else if (a && metalBoxes.some((c) => c.o === a.o) && a.d < 11 && !magMode) pr = touch ? 'Metal crate · hold PULL or PUSH' : 'Metal crate · hold LEFT to pull, RIGHT to push';
-  else if (a && a.o === blueDoor && !blueDoor.userData.open && a.d < 8 && !magMode) pr = touch ? 'Blue magnet lock · hold PUSH' : 'Blue magnet lock · hold RIGHT CLICK';
+  else if (a && metalBoxes.some((c) => c.o === a.o) && a.d < MAX_REACH) pr = touch ? 'Metal crate · hold GRAB to drag it, SHOVE to knock it away' : 'Metal crate · hold LEFT to drag it, RIGHT to shove it';
+  else if (a && handleList.includes(a.o) && a.d < MAX_REACH) pr = touch ? 'Grab handle · hold GRAB' : 'Grab handle · hold LEFT to pull yourself up';
+  else if (a && a.o === blueDoor && !blueDoor.userData.open && a.d < MAX_REACH) pr = touch ? 'Blue lock · hold SHOVE on it' : 'Blue lock · hold RIGHT CLICK on it';
   $('prompt').hidden = !pr; $('prompt').textContent = pr;
   $('inv').innerHTML = P.carry ? 'CARRYING <b>' + P.carry.name.toUpperCase() + '</b>' : '';
   if (!power && hintStep < 1 && P.pos.z > 16) hintStep = 1;
@@ -418,12 +517,12 @@ function render(dt) {
   const moving = started && P.onGround && (Math.hypot(joy.x, joy.y) > 0.1 || keys.KeyW || keys.KeyA || keys.KeyS || keys.KeyD); const bob = moving ? Math.sin(bobT) * 0.035 : 0;
   cam.position.set(P.pos.x, P.pos.y + 1.62 + bob, P.pos.z); cam.rotation.set(0, 0, 0); cam.rotateY(P.yaw); cam.rotateX(P.pitch);
   hands.position.set(moving ? Math.cos(bobT / 2) * 0.012 : 0, moving ? Math.abs(Math.sin(bobT / 2)) * -0.01 : 0, 0);
-  armL.visible = !P.carry; lens.visible = !P.carry; R.render(scene, cam);
+  R.render(scene, cam);
 }
 function finish() { ended = true; document.exitPointerLock?.(); $('card').hidden = false; $('card').querySelector('.in').innerHTML = '<div class="sign">PART 1 OF THE FACTORY</div><h1>THE ASSEMBLY LINE</h1><p>The shutter grinds open onto the assembly line. The machines down there are still switched on, and something heard the generator start.</p><p style="color:var(--sodium)">The next part of Gearhollow is coming.</p><div><button id="again">PLAY AGAIN</button></div>'; $('again').onclick = () => location.reload(); }
 
 $('go').onclick = () => { $('card').hidden = true; started = true; sfx.on(); objective('Find a way to bring the power back.'); $('bHint').hidden = false; if (!touch) cv.requestPointerLock?.()?.catch?.(() => {}); toast(touch ? 'Drag to look around' : 'Click to look around'); };
 requestAnimationFrame(frame);
-window.__G = { step, jump, MODELS, R, scene, cam, flash, lamps, P, items, metalBoxes, sockets, use, aimed, keys, setMag: (m) => { magMode = m; }, blueDoor, gen, power: () => power, shutter, solids };
+window.__G = { step, jump, MODELS, R, scene, cam, flash, lamps, P, items, metalBoxes, sockets, use, aimed, keys, HANDS, launch, release, handleList, handsStep, blueDoor, gen, power: () => power, shutter, solids };
 })();
 </script>
