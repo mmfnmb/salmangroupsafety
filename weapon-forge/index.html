@@ -125,7 +125,7 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
 .aidock .aiLog .me{background:#2c2622ee;align-self:flex-start}.aidock .aiLog .bot{background:#3a2417ee;border:1px solid var(--edge);align-self:flex-end}
 .aiRow{display:flex;gap:6px;align-items:center;background:#211c19ee;border:1px solid var(--edge);border-radius:12px;padding:5px}
 .aiRow input{flex:1;min-width:0;background:var(--coal);border:1px solid var(--edge);border-radius:9px;padding:7px 10px;color:var(--bone);font:600 14px var(--body)}
-.aiRow .btn{padding:7px 12px}.dz{display:flex;gap:6px;flex-wrap:wrap}.dz input{flex:1 1 220px;min-width:0;background:var(--coal);border:1px solid var(--edge);border-radius:9px;padding:8px 10px;color:var(--bone);font:600 14px var(--body)}.picBtn{position:relative;overflow:hidden;cursor:pointer;display:inline-flex;align-items:center}.picBtn input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;font-size:0}.aiPics{display:flex;flex-wrap:wrap;gap:6px;padding:6px;background:#211c19ee;border:1px solid var(--edge);border-radius:12px;margin-bottom:6px;max-height:190px;overflow:auto}.aiPics .pic{position:relative;width:52px;height:52px;border-radius:8px;overflow:hidden;border:2px solid transparent;cursor:pointer;background:#0d0b0a}.aiPics .pic.on{border-color:var(--ember)}.aiPics .pic img{width:100%;height:100%;object-fit:contain}.aiPics .pic button{position:absolute;top:0;inset-inline-end:0;border:0;background:#000a;color:#fff;font-size:11px;width:18px;height:18px;padding:0;cursor:pointer}.picActs{display:flex;flex-wrap:wrap;gap:6px;align-items:center;width:100%;font-size:12px;color:var(--ash,#bbb)}.picActs .tool{font-size:12px;padding:5px 9px}#aiThumb{width:34px;height:34px;object-fit:cover;border-radius:7px;border:2px solid var(--ember);cursor:pointer}
+.aiRow .btn{padding:7px 12px}.anim .row2{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}.anim label{display:flex;flex-direction:column;gap:2px;font-size:12px;flex:1 1 120px;min-width:0}.anim select{background:var(--coal);color:var(--bone);border:1px solid var(--edge);border-radius:8px;padding:4px}.fmode{display:flex;gap:6px;margin-bottom:8px}.shieldMode #card .acts,.shieldMode #wSliders,.shieldMode #card .chk{display:none}.shieldInfo{font-size:14px;line-height:1.5}.arena .hit.blk{bottom:126px;right:auto;left:auto;inset-inline-end:max(96px,calc(env(safe-area-inset-right,0px) + 96px));width:64px;height:64px;font-size:24px;background:radial-gradient(circle at 40% 35%,#cfd8e2,#6f7b89)}.arena.touch .hit.blk[hidden]{display:none}.dz{display:flex;gap:6px;flex-wrap:wrap}.dz input{flex:1 1 220px;min-width:0;background:var(--coal);border:1px solid var(--edge);border-radius:9px;padding:8px 10px;color:var(--bone);font:600 14px var(--body)}.picBtn{position:relative;overflow:hidden;cursor:pointer;display:inline-flex;align-items:center}.picBtn input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;font-size:0}.aiPics{display:flex;flex-wrap:wrap;gap:6px;padding:6px;background:#211c19ee;border:1px solid var(--edge);border-radius:12px;margin-bottom:6px;max-height:190px;overflow:auto}.aiPics .pic{position:relative;width:52px;height:52px;border-radius:8px;overflow:hidden;border:2px solid transparent;cursor:pointer;background:#0d0b0a}.aiPics .pic.on{border-color:var(--ember)}.aiPics .pic img{width:100%;height:100%;object-fit:contain}.aiPics .pic button{position:absolute;top:0;inset-inline-end:0;border:0;background:#000a;color:#fff;font-size:11px;width:18px;height:18px;padding:0;cursor:pointer}.picActs{display:flex;flex-wrap:wrap;gap:6px;align-items:center;width:100%;font-size:12px;color:var(--ash,#bbb)}.picActs .tool{font-size:12px;padding:5px 9px}#aiThumb{width:34px;height:34px;object-fit:cover;border-radius:7px;border:2px solid var(--ember);cursor:pointer}
 .wcats{display:flex;gap:6px;margin-top:8px;overflow-x:auto}
 .wcats button{flex:none;background:var(--plate);border:1px solid var(--edge);border-radius:999px;padding:5px 12px;font-weight:800;font-size:13px}
 .wcats button[aria-pressed="true"]{border-color:var(--ember);color:var(--ember-2)}
@@ -174,6 +174,7 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
 
   <section id="vForge" class="forge">
     <div class="panel">
+      <div class="fmode" role="group" aria-label="What you draw"><button class="tool" id="fmWeapon" aria-pressed="true">Weapon</button><button class="tool" id="fmShield" aria-pressed="false">Shield</button></div>
       <div class="anvil"><canvas id="grid" width="480" height="480" aria-label="Drawing grid"></canvas></div>
       <div class="tools" role="toolbar" aria-label="Tools">
         <button class="tool" id="toPen" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20l4-1 11-11-3-3L5 16z"/></svg>Pen</button>
@@ -252,6 +253,18 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
       <div class="temps" id="bParts"></div>
       <div class="label">Shapes (select pieces first to change their shape)</div>
       <div class="temps" id="bShapes"></div>
+      <div class="label">Animation: make each move your own</div>
+      <div class="anim">
+        <div class="row2"><label>Move <select id="anState"><option value="idle">Standing</option><option value="walk">Walking</option><option value="attack">Attacking</option></select></label><label>Part <select id="anPart"></select></label><label>When in the move <input type="range" id="anT" min="0" max="99" value="0"></label></div>
+        <div class="row2"><label>Tilt <input type="range" id="anX" min="-180" max="180" value="0"></label><label>Turn <input type="range" id="anY" min="-180" max="180" value="0"></label><label>Lean <input type="range" id="anZ" min="-180" max="180" value="0"></label></div>
+        <div class="acts"><button class="btn alt" id="anKey">Save pose</button><button class="btn alt" id="anPlay">Play</button><button class="btn alt" id="anClear">Reset move</button></div>
+        <div class="temps" id="anKeys"></div>
+        <div class="label">Ready moves</div><div class="temps" id="anPresets"></div>
+      </div>
+      <div class="label">Use it</div>
+      <div class="acts"><button class="btn" id="bHero">Use as my character</button><button class="btn alt" id="bShare">Share to the library</button></div>
+      <div class="label">Shared library (made by players)</div>
+      <div class="temps" id="bLib"></div>
     </div>
     <div class="panel">
       <div class="card" id="bcard">
@@ -351,7 +364,7 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
       <button class="tool camBtn" id="aCam">Camera</button><button class="tool fsBtn" id="aFull" aria-label="Full screen">⛶ Full screen</button>
       <div class="ov" id="aOv"><h2 id="aOvT">Monster Arena</h2><p id="aOvP">Take the weapon from your forge and survive waves of monsters. Every monster has an element it’s weak to.</p><div class="acts" style="justify-content:center"><button class="btn" id="aGo">Start</button><button class="btn alt" id="aEdit" hidden>Back to editing the world</button></div></div>
       <div class="joy" id="joy"><i id="joyK"></i></div>
-      <button class="hit" id="aHit" aria-label="Hit">Hit</button><button class="hit act" id="aAct" aria-label="Special move" hidden>✦</button>
+      <button class="hit" id="aHit" aria-label="Hit">Hit</button><button class="hit act" id="aAct" aria-label="Special move" hidden>✦</button><button class="hit blk" id="aBlock" aria-label="Raise shield" hidden>🛡</button>
     </div>
     <p class="desc" id="aHelp">Move: WASD or arrows · turn the camera: drag on the screen or Q and E · Hit: Space or click · C changes the camera. On a phone: move with the left circle, drag with another finger to turn, and hit with the button.</p>
     <div class="list" id="bestiary" style="margin-top:12px"></div>
@@ -641,7 +654,7 @@ function arenaInit() {
   new ResizeObserver(() => { const w = AR.el.clientWidth, h = AR.el.clientHeight; R2.setSize(w, h, false); AR.cam.aspect = w / h; AR.cam.updateProjectionMatrix(); }).observe(AR.el);
   if (matchMedia('(pointer:coarse)').matches) AR.el.classList.add('touch');
   // controls
-  addEventListener('keydown', (e) => { if (!AR.on || $('vArena').hidden) return; AR.keys[e.code] = true; if (!e.repeat && modsRun.list.length && AR.mode === 'world') modsEv('key', e.code); if (e.code === 'Space' || e.code === 'KeyJ') { e.preventDefault(); swing(); } if (e.code === 'KeyC') $('aCam').click(); if (e.code.startsWith('Arrow')) e.preventDefault(); });
+  addEventListener('keydown', (e) => { if (!AR.on || $('vArena').hidden) return; AR.keys[e.code] = true; if (!e.repeat && modsRun.list.length && AR.mode === 'world') modsEv('key', e.code); if (e.code === 'Space' || e.code === 'KeyJ') { e.preventDefault(); swing(); } if (e.code === 'KeyR' && !e.repeat) heroSpecial(); if (e.code === 'KeyC') $('aCam').click(); if (e.code.startsWith('Arrow')) e.preventDefault(); });
   addEventListener('keyup', (e) => { AR.keys[e.code] = false; });
   // drag on the view to turn the camera; a click (no drag) swings
   let drag = null; R2.domElement.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, y: e.clientY, moved: false, id: e.pointerId }; R2.domElement.setPointerCapture(e.pointerId); });
@@ -659,7 +672,8 @@ function arenaInit() {
   $('aFull').onclick = async () => { if (isFs()) { fsEl.classList.remove('fs'); if (document.fullscreenElement) await document.exitFullscreen().catch(() => {}); fsLabel(); return; }
     try { if (!fsEl.requestFullscreen) throw 0; await fsEl.requestFullscreen({ navigationUI: 'hide' }); } catch { fsEl.classList.add('fs'); } fsLabel(); };
   document.addEventListener('fullscreenchange', fsLabel); addEventListener('keydown', (e) => { if (e.key === 'Escape' && fsEl.classList.contains('fs')) { fsEl.classList.remove('fs'); fsLabel(); } });
-  $('aAct').addEventListener('pointerdown', (e) => { e.preventDefault(); AR.keys.Action = true; modsEv('key', 'Action'); }); $('aAct').addEventListener('pointerup', () => { AR.keys.Action = false; }); $('aAct').addEventListener('pointercancel', () => { AR.keys.Action = false; });
+  $('aAct').addEventListener('pointerdown', (e) => { e.preventDefault(); AR.keys.Action = true; modsEv('key', 'Action'); heroSpecial(); });
+  $('aBlock').addEventListener('pointerdown', (e) => { e.preventDefault(); AR.blockBtn = true; }); for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) $('aBlock').addEventListener(ev, () => { AR.blockBtn = false; }); $('aAct').addEventListener('pointerup', () => { AR.keys.Action = false; }); $('aAct').addEventListener('pointercancel', () => { AR.keys.Action = false; });
 }
 // the player's character can be redesigned per game (by hand-made cubes from the assistant)
 function setHeroLook(def) {
@@ -686,7 +700,7 @@ function arenaWorld() { if (WE.g?.worlds?.[0]?.items?.length > 5) return WE.g.wo
   return { ground: 'grass', items: L }; }
 function freeSpot(P, r0, r1) { for (let k = 0; k < 40; k++) { const a = Math.random() * Math.PI * 2, r = r0 + Math.random() * (r1 - r0), x = P.x + Math.cos(a) * r, z = P.z + Math.sin(a) * r; if (Math.abs(x) > WS - 2 || Math.abs(z) > WS - 2 || solidAt(Math.floor(x), Math.floor(z))) continue; return { x, z }; } return { x: P.x + 10, z: P.z }; }
 function startArena() {
-  arenaInit(); setCam(AR.camMode); beastInit(); heldWeapon(); for (const m of AR.mons) AR.scene.remove(m.o); AR.mons = []; for (const x of AR.shots) AR.scene.remove(x.o); AR.shots = []; for (const x of AR.picks) AR.scene.remove(x.o); AR.picks = [];
+  arenaInit(); setCam(AR.camMode); beastInit(); heldWeapon(); heldShield(); for (const m of AR.mons) AR.scene.remove(m.o); AR.mons = []; for (const x of AR.shots) AR.scene.remove(x.o); AR.shots = []; for (const x of AR.picks) AR.scene.remove(x.o); AR.picks = [];
   const a = withOv(analyse(grid)); if (!a) { show('forge'); toast('Draw a weapon first'); return; }
   G2 = { a, hp: 100, max: 100, wave: 0, score: 0, cd: 0, swingT: 0, face: new THREE.Vector3(0, 0, -1), pos: new THREE.Vector3(), between: 1.2 };
   AR.mode = 'waves'; const W = arenaWorld(); const st = playScene(W, { noMonsters: true }); AR.hero.position.set(st.x, 0, st.z); $('aOv').hidden = true; AR.on = true; hud();
@@ -699,7 +713,7 @@ function arenaPool() {
 function addBeast(e, hpMul = 1) {
   const n = G2.wave, M_ = e.M, g = new THREE.Group(), R_ = buildRig(e.def), b = R_.root, bx = new THREE.Box3().setFromObject(b), h = Math.max(0.3, bx.max.y - bx.min.y);
   const k = (M_.size * 1.6) / h; b.scale.setScalar(k); b.position.y = -bx.min.y * k; g.add(b);
-  const mats = []; g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.material = o.material.map((x) => x.clone()); mats.push(...o.material); } });
+  const mats = []; g.traverse((o) => { if (o.isMesh) { o.castShadow = true; const arr = [].concat(o.material).map((x) => x.clone()); o.material = Array.isArray(o.material) ? arr : arr[0]; mats.push(...arr.filter((x) => x.emissive)); } });
   const sp = freeSpot(AR.hero.position, 14, 24); g.position.set(sp.x, 0, sp.z); AR.scene.add(g);
   b.userData.k0 = k; const ab = (e.def.abil || []).map((a) => ({ ...cleanAb(a), t: 0.8 + Math.random() })); const hpScale = (1 + (n - 1) * 0.18) * hpMul; AR.mons.push({ def: e.def, ab, M: M_, o: g, b, R_, mats, hp: M_.hp * hpScale, max: M_.hp * hpScale, hitT: 0, atk: 0, attT: 0, burn: 0, poison: 0, slow: 0, stun: 0, bob: Math.random() * 6, moving: 0 });
 }
@@ -745,7 +759,7 @@ function kill(m) { if (m.dead) return; m.dead = true; if (modsRun.list.length) m
 
 // ---------------------------------------------------------------- abilities in the arena: shots, fuses, explosions, dashes, slams...
 AR.shots = []; AR.shake = 0;
-function hurtPlayer(d, col) { if (!G2 || !AR.on) return; d = Math.round(d); if (modsRun.list.length) modsEv('hurt', d); G2.hp -= d; pop2('-' + d, AR.hero.position.clone().add(new THREE.Vector3(0, 2, 0)), col || '#ff5a5a'); hud(); }
+function hurtPlayer(d, col) { if (!G2 || !AR.on) return; d = Math.round(d * shieldFactor()); if (modsRun.list.length) modsEv('hurt', d); G2.hp -= d; pop2('-' + d, AR.hero.position.clone().add(new THREE.Vector3(0, 2, 0)), col || '#ff5a5a'); hud(); }
 function boom(pos, rad, dmg, from, el) {
   // a burst of little pixel cubes, a flash of light and the screen shakes
   const cols = el === 'ice' ? ['#9ae6ff', '#f2efe6', '#3d6fd8'] : el === 'poison' ? ['#46c96b', '#2f8f4e', '#b9e27c'] : el === 'shadow' ? ['#8b54f0', '#24262b', '#5b3a8f'] : el === 'bolt' ? ['#ffe14d', '#f2efe6', '#ffb347'] : ['#ffe14d', '#ff8a3d', '#e5484d', '#6f6a64'];
@@ -924,7 +938,7 @@ function pushBoxes(p, rad) { if (!AR.solid?.size) return; const cx = Math.floor(
 function pushOut(p, rad) { for (const w of AR.walls || []) { const dx = p.x - w.x, dz = p.z - w.z, d = Math.hypot(dx, dz), min = w.r + rad; if (d < min && d > 0.001) { p.x = w.x + dx / d * min; p.z = w.z + dz / d * min; } } }
 function shatter(m) {
   m.o.updateMatrixWorld(true); const list = []; m.o.traverse((x) => { if (x.isMesh) list.push(x); });
-  for (const x of list) { AR.scene.attach(x); for (const mt of x.material) { mt.emissive.setHex(0); mt.transparent = true; } const out = x.position.clone().sub(m.o.position).setY(0).normalize();
+  for (const x of list) { AR.scene.attach(x); for (const mt of [].concat(x.material)) { mt.emissive?.setHex(0); mt.transparent = true; } const out = x.position.clone().sub(m.o.position).setY(0).normalize();
     AR.debris.push({ o: x, v: new THREE.Vector3(out.x * (2 + Math.random() * 4), 4 + Math.random() * 5, out.z * (2 + Math.random() * 4)), w: new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(10), t: 0 }); }
   clank(90);
 }
@@ -946,18 +960,18 @@ function placeCam(P, dt) {
   AR.cam.lookAt(look); AR.hero.visible = m !== 'first';
 }
 function arenaStep(dt, now) {
-  debrisStep(dt); shotsStep(dt); picksStep(dt, now); regrowStep(dt);
+  debrisStep(dt); shotsStep(dt); picksStep(dt, now); regrowStep(dt); alliesStep(dt, now);
   if (!AR.on || !G2) return; const P = AR.hero.position, a = G2.a;
   // move
   if (AR.keys.KeyQ) AR.yaw += dt * 2.2; if (AR.keys.KeyE) AR.yaw -= dt * 2.2;
   let mx = 0, mz = 0; const K = AR.keys; if (K.KeyA || K.ArrowLeft) mx -= 1; if (K.KeyD || K.ArrowRight) mx += 1; if (K.KeyW || K.ArrowUp) mz -= 1; if (K.KeyS || K.ArrowDown) mz += 1; if (AR.joy) { mx += AR.joy.x; mz += AR.joy.y; }
   // moving is relative to the camera (except the top view, where up on the screen is north)
   if (AR.camMode !== 'top') { const fx = Math.sin(AR.yaw), fz = Math.cos(AR.yaw), sgn = AR.camMode === 'front' ? -1 : 1, X = (-fz * mx + fx * -mz) * sgn, Z = (fx * mx + fz * -mz) * sgn; mx = X; mz = Z; }
-  const l = Math.hypot(mx, mz); if (l > 0.1) { const sp = (5 + a.spd / 30) * (G2.speedMul || 1) * dt / Math.max(1, l); P.x += mx * sp; P.z += mz * sp; if (G2.swingT <= 0) G2.face.set(mx, 0, mz).normalize(); }
+  const l = Math.hypot(mx, mz); if (l > 0.1) { const sp = (5 + a.spd / 30) * (G2.speedMul || 1) * (blocking() ? 0.5 : 1) * dt / Math.max(1, l); P.x += mx * sp; P.z += mz * sp; if (G2.swingT <= 0) G2.face.set(mx, 0, mz).normalize(); }
   else if (AR.camMode === 'first' && G2.swingT <= 0) G2.face.set(Math.sin(AR.yaw), 0, Math.cos(AR.yaw));
   P.x = Math.max(-WS + 0.5, Math.min(WS - 0.5, P.x)); P.z = Math.max(-WS + 0.5, Math.min(WS - 0.5, P.z)); pushOut(P, 0.5); pushBoxes(P, 0.45);
   { const want = Math.atan2(G2.face.x, G2.face.z); let dr = want - AR.hero.rotation.y; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); AR.hero.rotation.y += dr * Math.min(1, dt * 14); } if (!(G2.launch > 0)) AR.hero.position.y = 0;
-  G2.walkK = (G2.walkK || 0) + ((l > 0.1 ? 1 : 0) - (G2.walkK || 0)) * Math.min(1, dt * 8); animRig(AR.heroRig, now / 1000 * 1.2, G2.walkK, G2.swingT > 0 ? 1 - G2.swingT / 0.3 : 0);
+  G2.walkK = (G2.walkK || 0) + ((l > 0.1 ? 1 : 0) - (G2.walkK || 0)) * Math.min(1, dt * 8); animRig(AR.heroRig, now / 1000 * 1.2, G2.walkK, G2.swingT > 0 ? 1 - G2.swingT / 0.3 : 0); if (blocking() && AR.heroRig.g.armL) AR.heroRig.g.armL.rotation.set(-1.4, 0.2, 0.35);
   G2.cd -= dt; G2.swingT -= dt;
   // monsters
   for (const m of [...AR.mons]) {
@@ -971,12 +985,13 @@ function arenaStep(dt, now) {
     if (!(m.slamT > 0)) o.position.y = m.M.fly ? 1.4 + Math.sin(now / 200 + m.bob) * 0.4 : 0;
     if (d > 0.05) o.rotation.y = Math.atan2(to.x, to.z); m.attT = Math.max(0, m.attT - dt); animRig(m.R_, now / 1000 + m.bob, m.stun > 0 ? 0 : m.moving * (m.slow > 0 ? 0.5 : 1), m.attT > 0 ? 1 - m.attT / 0.4 : 0);
     if (!m.fuse) { const em = m.shieldT > 0 ? 0x1a4a7a : m.hitT > 0 ? 0xffffff : m.burn > 0 ? 0x661800 : m.slow > 0 ? 0x10304a : m.poison > 0 ? 0x0a3a12 : 0; if (m.em !== em) { m.em = em; for (const mt of m.mats) mt.emissive.setHex(em); } }
-    m.atk -= dt; if (d < m.M.size * 0.5 + 0.9 && m.atk <= 0 && m.stun <= 0) { m.atk = 0.9; m.attT = 0.4; G2.hp -= m.M.dmg; pop2('-' + m.M.dmg, P.clone().add(new THREE.Vector3(0, 2, 0)), '#ff5a5a'); hud(); clank(110); }
+    m.atk -= dt; if (d < m.M.size * 0.5 + 0.9 && m.atk <= 0 && m.stun <= 0) { m.atk = 0.9; m.attT = 0.4; const dd = Math.round(m.M.dmg * shieldFactor()); G2.hp -= dd; pop2((blocking() ? 'Blocked! -' : '-') + dd, P.clone().add(new THREE.Vector3(0, 2, 0)), '#ff5a5a'); hud(); clank(110); }
   }
   for (const m of AR.mons) if (!m.M.fly) { pushOut(m.o.position, m.M.size * 0.45); pushBoxes(m.o.position, m.M.size * 0.4); }
   // monsters keep a little apart
   for (let i = 0; i < AR.mons.length; i++) for (let j = i + 1; j < AR.mons.length; j++) { const A_ = AR.mons[i].o.position, B_ = AR.mons[j].o.position, d = A_.distanceTo(B_), min = (AR.mons[i].M.size + AR.mons[j].M.size) * 0.45; if (d < min && d > 0.001) { const push = B_.clone().sub(A_).setY(0).normalize().multiplyScalar((min - d) / 2); A_.sub(push); B_.add(push); } }
   worldTick(dt, now); if (!AR.on) return; if (AR.mode === 'world') modsTick(dt, now); if (!AR.on) return;
+  if (G2.hp <= 0 && AR.mode === 'world' && G2.world?.checkpoint) { const cp = G2.world.checkpoint; G2.hp = G2.max; AR.hero.position.set(cp.x, 0, cp.z); pop2('Back to the checkpoint', AR.hero.position.clone().add(new THREE.Vector3(0, 2.4, 0)), '#46c96b', true); hud(); }
   if (G2.hp <= 0 && AR.mode === 'world') { AR.on = false; worldOver(false); return; }
   if (G2.hp <= 0) { AR.on = false; if (G2.wave > AR.best) { AR.best = G2.wave; store.set('best', AR.best); } $('aOvT').textContent = 'You fell!'; $('aOvP').textContent = `You reached wave ${G2.wave} and collected ${G2.score} points. Go back to the forge and power up your weapon, or jump back in.`; $('aGo').textContent = 'Play again'; $('aOv').hidden = false; hud(); return; }
   if (AR.mode === 'waves' && !AR.mons.length) { G2.between -= dt; if (G2.between <= 0) { if (G2.wave) { G2.hp = Math.min(G2.max, G2.hp + 25); pop2('+25', P.clone().add(new THREE.Vector3(0, 2, 0)), '#46c96b'); } spawnWave(); G2.between = 2; } }
@@ -1085,7 +1100,7 @@ function faceMat(q, i) {
   return new THREE.MeshLambertMaterial({ map: t });
 }
 function cubeMesh(q) { if (!q.seed) q.seed = 1 + ((Math.random() * 1e6) | 0); const m = new THREE.Mesh(q.sh && q.sh !== 'box' ? geoOf(q.sh) : box, [0, 1, 2, 3, 4, 5].map((i) => faceMat(q, i))); m.position.fromArray(q.p); m.scale.fromArray(q.s); m.rotation.set(...q.r); m.castShadow = true; m.userData.q = q; return m; }
-function buildBeast(def) { const g = new THREE.Group(); for (const q of def.cubes) g.add(cubeMesh(q)); return g; }
+function buildBeast(def) { const g = new THREE.Group(); for (const q of def.cubes) g.add(cubeMesh(q)); const co = codeModel(def); if (co) g.add(co); return g; }
 
 
 // ---------------------------------------------------------------- animation: each cube belongs to a part (head, arm, leg, wing, tail),
@@ -1120,7 +1135,8 @@ function buildRig(def) {
   def.cubes.forEach((q, i) => { const g = groups[roles[i]], gp = gps[roles[i]]; if (q.flat) { (vox[roles[i]] ||= []).push({ p: [q.p[0] - gp.x, q.p[1] - gp.y, q.p[2] - gp.z], s: q.s, c: q.c }); return; } const m = cubeMesh(q); m.position.set(q.p[0] - gp.x, q.p[1] - gp.y, q.p[2] - gp.z); g.add(m); });
   for (const r in vox) { const m = voxMesh(vox[r]); m.castShadow = true; groups[r].add(m); }
   let top = -1e9, bot = 1e9; for (const r in boxes) { top = Math.max(top, boxes[r].y1); bot = Math.min(bot, boxes[r].y0); }
-  return { root, g: groups, hasLegs: !!(groups.legL || groups.legR), H: Math.max(0.5, top - bot), fly: !!def.fly };
+  const co = codeModel(def); if (co) groups.body.add(co);
+  return { root, g: groups, hasLegs: !!(groups.legL || groups.legR), H: Math.max(0.5, top - bot), fly: !!def.fly, anims: def.anims, codeAnim: co?.userData?.animate || null };
 }
 // one pose of the animation. walk 0..1 how much it is walking, atk 0..1 through an attack
 function animRig(R_, t, walk, atk) {
@@ -1135,6 +1151,7 @@ function animRig(R_, t, walk, atk) {
   if (!R_.hasLegs && !R_.fly) { const hop = Math.abs(Math.sin(t * 5.5)); b.position.y = (R_.y0 ??= b.position.y) + hop * H * 0.28 * (0.4 + walk); b.scale.set(1 + (1 - hop) * 0.12, 1 - (1 - hop) * 0.16 + sw * 0.1, 1 + (1 - hop) * 0.12); }
   else { b.position.y = (R_.y0 ??= b.position.y) + Math.abs(s) * H * 0.03 * walk; b.scale.y = 1 + Math.sin(t * 2) * 0.02; }
   b.rotation.x = sw * 0.25;
+  customAnim(R_, t, walk, atk);
 }
 
 const BE = { R: null, scene: null, cam: null, orbit: null, tc: null, root: null, def: null, sel: null, sels: [], pivot: null, multi: false, clip: null, mode: 'translate', undo: [], color: '#46c96b', mine: store.get('beasts', []) };
@@ -1153,10 +1170,11 @@ function beastInit() {
   new ResizeObserver(() => { const w = st.clientWidth, h = st.clientHeight; R3.setSize(w, h, false); BE.cam.aspect = w / h; BE.cam.updateProjectionMatrix(); }).observe(st);
   BPAL.forEach((hex, i) => { const b = document.createElement('button'); b.className = 'sw'; b.setAttribute('aria-pressed', String(hex === BE.color)); b.setAttribute('aria-label', 'Color ' + (i + 1)); b.innerHTML = `<i style="background:${hex}"></i>`; b.onclick = () => { BE.color = hex; PNT.ink = i; PNT.erase = false; $('bpal').querySelectorAll('.sw').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); if (BE.sel && !$('paintBox').hidden) return; if (BE.sels.length) { pushUndo(); for (const m of BE.sels) m.userData.q.c = hex; rebuild(); } }; $('bpal').appendChild(b); });
   for (const k in BEASTS) { const b = document.createElement('button'); b.className = 'temp'; b.textContent = BEASTS[k].name; b.onclick = () => { pushUndo(); loadBeast(clone(BEASTS[k]), true); }; $('btemps').appendChild(b); }
-  loadBeast(clone(BEASTS.slime), true); renderMyBeasts(); libUI();
+  loadBeast(clone(BEASTS.slime), true); renderMyBeasts(); libUI(); animUI(); renderLib();
+  $('bHero').onclick = useAsHero; $('bShare').onclick = shareToLib;
 }
 const clone = (o) => JSON.parse(JSON.stringify(o));
-function loadBeast(def, fresh) { if (pv) { BE.scene.remove(pv.R_.root); if (pv.parts) for (const d of pv.parts) BE.scene.remove(d.o); pv = null; BE.root && (BE.root.visible = true); } BE.def = def; BE.sels = []; if (fresh) { bNameTouched = false; $('bFly').checked = !!def.fly; } rebuild(); select(null); syncSliders(); }
+function loadBeast(def, fresh) { if (pv) { BE.scene.remove(pv.R_.root); if (pv.parts) for (const d of pv.parts) BE.scene.remove(d.o); pv = null; BE.root && (BE.root.visible = true); } BE.def = def; BE.sels = []; if (fresh) { bNameTouched = false; $('bFly').checked = !!def.fly; } rebuild(); select(null); syncSliders(); AN.refresh?.(); }
 function rebuild() {
   const keep = BE.sels.map((m) => m.userData.q); release(); if (BE.root) BE.scene.remove(BE.root); BE.root = buildBeast(BE.def); BE.scene.add(BE.root);
   BE.sels = BE.root.children.filter((x) => keep.includes(x.userData.q)); BE.sel = BE.sels[0] || null; gizmo(); bcard();
@@ -1164,7 +1182,7 @@ function rebuild() {
 // several cubes move together inside a pivot; when they are let go, their places are written back into the monster
 function release() { if (!BE.pivot) return; BE.tc.detach(); for (const m of [...BE.pivot.children]) BE.root.attach(m); BE.root.remove(BE.pivot); BE.pivot = null; }
 function gizmo() {
-  release(); for (const c of BE.root?.children || []) for (const mt of c.material) mt.emissive?.setHex(BE.sels.includes(c) ? 0x3a2410 : 0);
+  release(); for (const c of BE.root?.children || []) if (c.userData.q) for (const mt of c.material) mt.emissive?.setHex(BE.sels.includes(c) ? 0x3a2410 : 0);
   if (!BE.sels.length || BE.mode === 'paint') { BE.tc.detach(); return; }
   BE.tc.setMode(BE.mode);
   if (BE.sels.length === 1) { BE.tc.attach(BE.sels[0]); return; }
@@ -1246,11 +1264,13 @@ function preview(kind) {
 }
 function previewStep(dt) {
   if (!pv) return; pv.t += dt; const { R_, kind, t } = pv;
-  if (kind === 'walk') { animRig(R_, t, 1, 0); R_.root.position.z = Math.sin(t * 1.2) * 0.8; }
+  if (kind === 'idle') animRig(R_, t, 0, 0);
+  else if (kind === 'pose') { animRig(R_, 0, 0, 0); if (pv.pose && R_.g[pv.pose.part]) R_.g[pv.pose.part].rotation.set(...pv.pose.r); }
+  else if (kind === 'walk') { animRig(R_, t, 1, 0); R_.root.position.z = Math.sin(t * 1.2) * 0.8; }
   else if (kind === 'atk') animRig(R_, t, 0.2, (t % 1.1) < 0.4 ? (t % 1.1) / 0.4 : 0);
   else if (kind === 'die') { if (!pv.parts) { pv.parts = []; R_.root.updateMatrixWorld(true); const ms = []; R_.root.traverse((x) => { if (x.isMesh) ms.push(x); }); for (const x of ms) { BE.scene.attach(x); pv.parts.push({ o: x, v: new THREE.Vector3(x.position.x * 2 + Math.random() - 0.5, 3 + Math.random() * 4, x.position.z * 2 + Math.random() - 0.5), w: new THREE.Vector3(Math.random(), Math.random(), Math.random()).multiplyScalar(8) }); } }
     for (const d of pv.parts) { d.v.y -= 18 * dt; d.o.position.addScaledVector(d.v, dt); if (d.o.position.y < d.o.scale.y / 2) { d.o.position.y = d.o.scale.y / 2; d.v.multiplyScalar(0.5); d.v.y = Math.abs(d.v.y) * 0.3; d.w.multiplyScalar(0.5); } d.o.rotation.x += d.w.x * dt; d.o.rotation.z += d.w.z * dt; } }
-  if (t > (kind === 'die' ? 2.2 : 3.2)) { if (pv.parts) for (const d of pv.parts) BE.scene.remove(d.o); BE.scene.remove(R_.root); pv = null; BE.root.visible = true; gizmo(); }
+  if (t > (kind === 'die' ? 2.2 : kind === 'pose' ? 8 : 3.2)) { if (pv.parts) for (const d of pv.parts) BE.scene.remove(d.o); BE.scene.remove(R_.root); pv = null; BE.root.visible = true; gizmo(); }
 }
 $('pvWalk').onclick = () => preview('walk'); $('pvAtk').onclick = () => preview('atk'); $('pvDie').onclick = () => preview('die');
 // ---------------------------------------------------------------- fusion: two monsters become one
@@ -1465,7 +1485,7 @@ const POWERS = { fire: ['fire', 'flame', 'نار', 'لهب', 'يولع'], ice: [
 const NUMS = { 'اتنين': 2, 'اثنين': 2, 'تلات': 3, 'تلاته': 3, 'ثلاث': 3, 'اربع': 4, 'اربعه': 4, 'خمس': 5, 'خمسه': 5, 'ست': 6, 'سته': 6, 'تمن': 8, 'تمانيه': 8, two: 2, three: 3, four: 4, five: 5, six: 6, eight: 8 };
 const PART_ROLES = { 'دراعه': 'armR', 'ايد': 'armR', 'ايده': 'armR', 'ايدي': 'armR', 'دراع': 'armR', 'hand': 'armR', 'arm': 'armR', 'راس': 'head', 'راسه': 'head', 'head': 'head', 'رجل': 'legL', 'رجله': 'legL', 'leg': 'legL', 'ديل': 'tail', 'ديله': 'tail', 'tail': 'tail', 'جناح': 'wingL', 'جناحه': 'wingL', 'wing': 'wingL' };
 const INTO = [[/فار|فيران|rat|mouse|mice/, 'mons', 'slime'], [/خفاش|خفافيش|bat/, 'mons', 'bat'], [/سلايم|slime/, 'mons', 'slime'], [/قنبله|تنفجر|تفرقع|bomb|explode/, 'bomb'], [/تزحف|crawl|لوحد|by itself|alone|وحش/, 'crawler'], [/تعالج|صحه|heal/, 'heal'], [/وحوش|monsters|عفاريت|imps/, 'mons', 'imp']];
-function has_(t, list) { return list.some((w) => t.includes(w)); }
+function has_(t, list) { return list.some((w) => (/^[a-z ]+$/.test(w) ? new RegExp('(^|[^a-z])' + w).test(t) : t.includes(w))); }
 function design(raw) {
   let t = ' ' + normAr(raw) + ' '; for (const [k, v] of Object.entries(DZ.words)) t = t.split(k).join(' ' + v + ' ');
   // teaching: "when I say X it means Y" / "لما اقول X يعني Y"
@@ -1510,9 +1530,10 @@ function design(raw) {
     if (!into) { if (has_(after, ['حاجات', 'things', 'something', 'حاجه'])) ask = 'Into what? Monsters, a bomb, a crawling part, or something that heals? (I made it a crawling part for now.)'; into = 'crawler'; }
     const when = has_(t, ['lose health', 'صحته تقل', 'صحته بتقل', 'low']) ? { k: 'low', v: 50 } : /كل\s*(\d+)|every\s*(\d+)/.test(t) ? { k: 'every', v: +(/كل\s*(\d+)|every\s*(\d+)/.exec(t).slice(1).find(Boolean)) } : { k: 'hit', v: 0 };
     abil.push({ name: 'Part breaks off', when, act: { k: 'detach', part, into, who, n }, cd: 6 }); said.push(`its ${ROLES.find((r) => r[0] === part)?.[1].toLowerCase() || part} breaks off and turns into ${into === 'mons' ? n + ' ' + (BEASTS[who]?.name || who).toLowerCase() + (n > 1 ? 's' : '') : into === 'bomb' ? 'a bomb' : into === 'heal' ? 'a healing burst' : 'a crawling monster'}`); }
+  for (const [k, l] of Object.entries(ANIM_WORDS)) if (has_(t, l)) { presetInto(def, k); said.push(ANIM_PRESETS[k][0].toLowerCase()); }
   def.abil = abil.slice(0, 4).map(cleanAb);
   // the words it did not understand, so the player can teach it
-  const known = [...Object.values(COLORS), ...Object.values(BASES), ...Object.values(PART_WORDS), ...Object.values(POWERS)].flat(), skip = /^(a|an|the|and|with|that|it|its|his|is|of|to|on|in|when|make|me|وحش|اعمل|اعملي|عايز|و|ب|في|على|لما|من|ده|دي|اللي|بيطلع|يطلع|ليه|له|عنده|راسه|ايده|monster)$/;
+  const known = [...Object.values(ANIM_WORDS), ...Object.values(BASES), ...Object.values(PART_WORDS), ...Object.values(POWERS)].flat(), skip = /^(a|an|the|and|with|that|it|its|his|is|of|to|on|in|when|make|me|وحش|اعمل|اعملي|عايز|و|ب|في|على|لما|من|ده|دي|اللي|بيطلع|يطلع|ليه|له|عنده|راسه|ايده|monster)$/;
   const strip = (w) => { let x = w; for (let i = 0; i < 2; i++) { if (/^(و|ب|ف|ل)/.test(x) && x.length > 3) x = x.slice(1); if (/^ال/.test(x) && x.length > 4) x = x.slice(2); } return x; };
   const unknown = t.split(/[^a-z؀-ۿ]+/).map(strip).filter((w) => w.length > 2 && !/^(explodes?|blows?|jumps?|slams?|dash|charges?|heals?|shields?|teleports?|vanish|shoots?|throws?|bites?|يطلع|بيطلع|بيرمي|يرمي|ينفجر|يتفرقع|ينط|يهجم|يجري|يعالج|يختفي|اربع|اربعه|راسه|ايده|عنده|بيعمل|يعمل|ورجول|رجول)$/.test(w) && !skip.test(w) && !known.some((k) => k.includes(w) || w.includes(k)) && !Object.keys(PART_ROLES).includes(w) && !Object.keys(NUMS).includes(w) && !/تتقطع|يتقطع|تقع|يقع|تتحول|يتحول|تبقى|يبقى|كبير|صغير|عملاق|ضخم|طاير|يطير|بيطير|حاجات|حاجه|كتير|كل|ثواني|ثانيه|فيران|فار|قنبله|تنفجر|وحوش|لوحد|تزحف|giant|huge|small|tiny|flies|fly|turns|into|breaks|falls|off|cut|rats|bomb|seconds|every/.test(w));
   def.name = (cols.length ? cols[0][1][0].toUpperCase() + cols[0][1].slice(1) + ' ' : '') + (def.name || 'Monster');
@@ -1550,7 +1571,7 @@ function libUI() {
     shapes.appendChild(b); });
   for (const [k, [n]] of Object.entries(PARTS)) { const b = document.createElement('button'); b.className = 'temp'; b.textContent = n; b.onclick = () => { const k2 = BE.def.sizeK || Math.max(0.6, Math.min(2.5, (bboxOf(BE.def.cubes).y1 - bboxOf(BE.def.cubes).y0) / 2.4)); addCubes(partCubes(k, BE.def, k2)); toast(n + ' added. Move, resize or recolor it'); }; parts.appendChild(b); }
   for (const [k, f] of Object.entries(MODEL_LIB)) { const b = document.createElement('button'); b.className = 'temp'; b.textContent = f().name; b.onclick = () => { pushUndo(); loadBeast(f(), true); $('bName').value = f().name; renderAbils?.(); }; models.appendChild(b); }
-  $('dzGo').onclick = () => { const t = $('dzText').value.trim(); if (!t) return toast('Describe a monster first'); const r = design(t); $('dzSay').textContent = r.say; if (r.def) { pushUndo(); loadBeast(r.def, true); $('bName').value = r.def.name; bNameTouched = true; renderAbils(); } };
+  $('dzGo').onclick = () => { const t = $('dzText').value.trim(); if (!t) return toast('Describe a monster first'); const r = design(t); const lm = libMatches(t); $('dzSay').textContent = r.say + (lm.length ? ' Players also made: ' + lm.map((e) => e.name).join(', ') + ' (in the Shared library below).' : ''); if (r.def) { pushUndo(); loadBeast(r.def, true); $('bName').value = r.def.name; bNameTouched = true; renderAbils(); } };
   $('dzText').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); $('dzGo').click(); } });
   // Claude, when available, can design anything from scratch with the same shapes
   $('dzClaude').onclick = async () => { const t = $('dzText').value.trim(); if (!t) return toast('Describe a monster first'); const sm = window.claude?.use ? await window.claude.use('sample').catch(() => null) : null; if (!sm) { $('dzSay').textContent = 'Claude is not available here, so I used the built-in designer.'; $('dzGo').click(); return; }
@@ -1558,11 +1579,147 @@ function libUI() {
     try { const r = await sm.json(`Design a creature or thing for a kids' 3D block game from this description (any language): ${JSON.stringify(t)}.
 Build it from 6-60 shapes: {"sh":"box"|"ball"|"cyl"|"hex"|"spike"|"ramp"|"ring","p":[x,y,z] centre,"s":[w,h,d] size,"c":"#rrggbb","r":[rx,ry,rz] radians,"role":"body"|"head"|"armL"|"armR"|"legL"|"legR"|"wingL"|"wingR"|"tail"|"jaw"}. y up, feet at y=0, about 2-3 units tall, front faces +z, the left side is +x. Give legs, arms, head, wings, tail and jaw their roles so they animate. Make it detailed and recognisable (eyes, mouth, textures made of small shapes).
 Abilities (0-4): {"name","when":{"k":"near"|"every"|"hit"|"low"|"death","v":number},"act":{"k":"shoot"|"explode"|"dash"|"slam"|"summon"|"heal"|"shield"|"teleport"|"detach","dmg","rad","n","spd","el":"fire"|"ice"|"bolt"|"poison"|"shadow"|"light"|"none","fuse","amt","sec","who":"slime"|"bat"|"skel"|"imp"|"golem","part":"armR"|"armL"|"head"|"tail"|"legL"|"wingL","into":"crawler"|"mons"|"bomb"|"heal"},"cd"}. "detach" = that body part breaks off and turns into something.
-Reply ONLY with JSON: {"name": short name in the player's language, "fly": true|false, "say": one short friendly sentence in the player's language, "cubes": [...], "abil": [...]}`, { modelTier: 'complex', cache: false });
+Moves (optional): "anims": {"idle"|"walk"|"attack": {"keys": [{"t": 0..1, "parts": {"armR": [rx,ry,rz] radians, "head": [...], ...}}]}}.
+If shapes alone can't capture it (smooth, organic, glowing, particles, anything new), ALSO give "code": the body of function(THREE) that returns a THREE.Group about 2-3 units tall (feet at y=0, front +z) built from any three.js r128 geometry with MeshLambertMaterial or MeshStandardMaterial; it may set group.userData.animate = (t, walk, attack) => {...} to move itself every frame. Still give at least one cube.
+Reply ONLY with JSON: {"name": short name in the player's language, "fly": true|false, "say": one short friendly sentence in the player's language, "cubes": [...], "abil": [...], "anims": {...}, "code": "..."}`, { modelTier: 'complex', cache: false });
       const cubes = (Array.isArray(r?.cubes) ? r.cubes : []).slice(0, 80).map((q) => ({ ...cleanCubes([q])[0], sh: SHAPES.some((s) => s[0] === q?.sh) ? q.sh : 'box' }));
-      if (cubes.length) { pushUndo(); loadBeast({ name: String(r.name || 'Creature').slice(0, 28), fly: !!r.fly, cubes, abil: (r.abil || []).slice(0, 4).map(cleanAb) }, true); $('bName').value = String(r.name || 'Creature').slice(0, 28); bNameTouched = true; renderAbils(); $('dzSay').textContent = r.say || 'Done.'; } else $('dzSay').textContent = 'That didn’t come out right. Try again or use the built-in designer.';
-    } catch (e) { $('dzSay').textContent = (e?.code === 'rate_limited' ? 'Claude needs a short rest.' : 'Claude couldn’t do it right now.') + ' The built-in designer still works.'; }
+      const code = typeof r?.code === 'string' && r.code.length > 20 ? r.code.slice(0, 20000) : undefined, anims = r?.anims && typeof r.anims === 'object' ? r.anims : undefined;
+      if (cubes.length) { pushUndo(); const nd = { name: String(r.name || 'Creature').slice(0, 28), fly: !!r.fly, cubes, abil: (r.abil || []).slice(0, 4).map(cleanAb), anims, code }; if (code && !codeModel(nd)) delete nd.code; loadBeast(nd, true); $('bName').value = String(r.name || 'Creature').slice(0, 28); bNameTouched = true; renderAbils(); $('dzSay').textContent = r.say || 'Done.'; } else $('dzSay').textContent = 'That didn’t come out right. Try again or use the built-in designer.';
+    } catch (e) { console.warn('designer', e); $('dzSay').textContent = (e?.code === 'rate_limited' ? 'Claude needs a short rest.' : 'Claude couldn’t do it right now.') + ' The built-in designer still works.'; }
     $('dzClaude').disabled = false; };
+}
+
+// ---------------------------------------------------------------- hand-made animation: poses ("keys") for each part, the game moves smoothly between them
+// def.anims = { idle | walk | attack: { keys: [{ t: 0..1, parts: { role: [rx, ry, rz] } }] } }
+function animPose(R_, A, ph) {
+  const ks = (A?.keys || []).slice().sort((a, b) => a.t - b.t); if (!ks.length) return;
+  for (const role in R_.g) { const g = R_.g[role], have = ks.filter((k) => k.parts[role]); if (!have.length) continue;
+    let a = have[have.length - 1], b = have[0], ta = a.t - 1, tb = b.t;
+    for (let i = 0; i < have.length; i++) if (have[i].t <= ph) { a = have[i]; ta = a.t; b = have[(i + 1) % have.length]; tb = b.t <= ph ? b.t + 1 : b.t; }
+    const f = tb > ta ? Math.min(1, Math.max(0, (ph - ta) / (tb - ta))) : 0, e = f * f * (3 - 2 * f), ra = a.parts[role], rb = b.parts[role];
+    g.rotation.set(ra[0] + (rb[0] - ra[0]) * e, ra[1] + (rb[1] - ra[1]) * e, ra[2] + (rb[2] - ra[2]) * e); }
+}
+function customAnim(R_, t, walk, atk) {
+  const A = R_.anims; if (A) { if (atk > 0 && A.attack?.keys?.length) animPose(R_, A.attack, Math.min(0.999, atk)); else if (walk > 0.1 && A.walk?.keys?.length) animPose(R_, A.walk, (t * 0.9) % 1); else if (A.idle?.keys?.length) animPose(R_, A.idle, (t * 0.4) % 1); }
+  if (R_.codeAnim) { try { R_.codeAnim(t, walk, atk); } catch { R_.codeAnim = null; } }
+}
+const ANIM_PRESETS = {
+  dance: ['Dance', 'idle', [{ t: 0, parts: { armL: [0, 0, 2.4], armR: [0, 0, -0.4], body: [0, 0, 0.15], head: [0, 0, 0.2] } }, { t: 0.5, parts: { armL: [0, 0, 0.4], armR: [0, 0, -2.4], body: [0, 0, -0.15], head: [0, 0, -0.2] } }]],
+  wave: ['Wave', 'idle', [{ t: 0, parts: { armR: [0, 0, -2.6] } }, { t: 0.5, parts: { armR: [0, 0, -2.0] } }]],
+  nod: ['Nod', 'idle', [{ t: 0, parts: { head: [0.35, 0, 0] } }, { t: 0.5, parts: { head: [-0.1, 0, 0] } }]],
+  flap: ['Flap arms', 'walk', [{ t: 0, parts: { armL: [0, 0, 1.2], armR: [0, 0, -1.2] } }, { t: 0.5, parts: { armL: [0, 0, 0.2], armR: [0, 0, -0.2] } }]],
+  stomp: ['Stomp', 'walk', [{ t: 0, parts: { legL: [-0.9, 0, 0], legR: [0.3, 0, 0], body: [0, 0, 0.1] } }, { t: 0.5, parts: { legL: [0.3, 0, 0], legR: [-0.9, 0, 0], body: [0, 0, -0.1] } }]],
+  creep: ['Creepy walk', 'walk', [{ t: 0, parts: { body: [0.4, 0, 0], head: [-0.3, 0, 0.2], armL: [-1.2, 0, 0], armR: [-1.0, 0, 0] } }, { t: 0.5, parts: { body: [0.45, 0, 0.08], head: [-0.25, 0, -0.2], armL: [-1.0, 0, 0], armR: [-1.25, 0, 0] } }]],
+  punch: ['Punch', 'attack', [{ t: 0, parts: { armR: [0, 0, 0], body: [0, 0, 0] } }, { t: 0.4, parts: { armR: [-1.6, 0, 0], body: [0, -0.4, 0] } }, { t: 0.8, parts: { armR: [0, 0, 0], body: [0, 0, 0] } }]],
+  spin: ['Spin attack', 'attack', [{ t: 0, parts: { body: [0, 0, 0] } }, { t: 0.5, parts: { body: [0, 3.14, 0] } }, { t: 0.99, parts: { body: [0, 6.28, 0] } }]],
+  bite: ['Big bite', 'attack', [{ t: 0, parts: { head: [0, 0, 0], jaw: [0, 0, 0] } }, { t: 0.35, parts: { head: [-0.5, 0, 0], jaw: [0.9, 0, 0] } }, { t: 0.7, parts: { head: [0.3, 0, 0], jaw: [0, 0, 0] } }]],
+};
+const ANIM_WORDS = { dance: ['dance', 'يرقص', 'بيرقص'], wave: ['wave', 'يسلم', 'بيسلم', 'يشاور', 'بيشاور'], nod: ['nod', 'يهز راسه'], flap: ['flap', 'يرفرف', 'بيرفرف'], stomp: ['stomp', 'يدب', 'بيدب'], creep: ['creepy', 'creep', 'مخيف', 'يزحف'], punch: ['punch', 'يلكم', 'بوكس', 'بيضرب بايده'], spin: ['spin', 'يلف', 'بيلف'], bite: ['bite', 'يعض', 'بيعض'] };
+function presetInto(def, k) { const [, state, keys] = ANIM_PRESETS[k]; def.anims ||= {}; def.anims[state] = { keys: clone(keys) }; }
+
+// a Claude-made model can be code: it builds any shape, and can animate itself (it is kept with the monster and runs without Claude afterwards)
+function codeModel(def) { if (!def.code) return null; try { const o = new Function('THREE', '"use strict";\n' + def.code)(THREE); return o && o.isObject3D ? o : null; } catch { return null; } }
+
+// ---------------------------------------------------------------- the animation editor in the monster workshop
+const AN = { state: 'idle', pose: null };
+function animUI() {
+  const parts = () => { const r = new Set(rolesOf(BE.def)); return ROLES.filter((x) => x[0] && r.has(x[0])); };
+  const fillParts = () => { $('anPart').innerHTML = parts().map(([k, n]) => `<option value="${k}">${n}</option>`).join(''); };
+  const keysOf = () => ((BE.def.anims ||= {})[AN.state] ||= { keys: [] }).keys;
+  const list = () => { const L = $('anKeys'); L.innerHTML = ''; const ks = keysOf().slice().sort((a, b) => a.t - b.t); if (!ks.length) { L.innerHTML = '<span class="desc">No poses yet for this move. Pick a part, turn it with the sliders, and tap “Save pose”. Or start from a ready move.</span>'; return; }
+    ks.forEach((k) => { const b = document.createElement('button'); b.className = 'temp'; b.textContent = `${Math.round(k.t * 100)}% · ${Object.keys(k.parts).length} part${Object.keys(k.parts).length > 1 ? 's' : ''} ✕`; b.title = 'Remove this pose'; b.onclick = () => { const all = keysOf(); all.splice(all.indexOf(k), 1); list(); }; L.appendChild(b); }); };
+  const showPose = () => { const part = $('anPart').value; if (!part) return; if (!pv || pv.kind !== 'pose') preview('pose'); pv.t = 0; pv.pose = { part, r: ['anX', 'anY', 'anZ'].map((id) => +$(id).value * Math.PI / 180) }; };
+  $('anState').onchange = () => { AN.state = $('anState').value; list(); };
+  for (const id of ['anX', 'anY', 'anZ']) $(id).addEventListener('input', showPose);
+  $('anPart').addEventListener('change', () => { const k = keysOf().find((x) => Math.abs(x.t - +$('anT').value / 100) < 0.02 && x.parts[$('anPart').value]); const r = k ? k.parts[$('anPart').value] : [0, 0, 0]; ['anX', 'anY', 'anZ'].forEach((id, i) => { $(id).value = Math.round(r[i] * 180 / Math.PI); }); showPose(); });
+  $('anKey').onclick = () => { const part = $('anPart').value; if (!part) return toast('This monster has no parts to move yet'); const t = +$('anT').value / 100, r = ['anX', 'anY', 'anZ'].map((id) => +(+$(id).value * Math.PI / 180).toFixed(3)); const ks = keysOf(); let k = ks.find((x) => Math.abs(x.t - t) < 0.02); if (!k) { k = { t, parts: {} }; ks.push(k); } k.parts[part] = r; list(); toast('Pose saved'); };
+  $('anPlay').onclick = () => preview(AN.state === 'attack' ? 'atk' : AN.state);
+  $('anClear').onclick = () => { if (BE.def.anims) delete BE.def.anims[AN.state]; list(); toast('This move is back to the automatic one'); };
+  for (const [k, [n]] of Object.entries(ANIM_PRESETS)) { const b = document.createElement('button'); b.className = 'temp'; b.textContent = n; b.onclick = () => { presetInto(BE.def, k); AN.state = ANIM_PRESETS[k][1]; $('anState').value = AN.state; list(); preview(AN.state === 'attack' ? 'atk' : AN.state); }; $('anPresets').appendChild(b); }
+  AN.refresh = () => { fillParts(); list(); }; AN.refresh();
+}
+
+// ---------------------------------------------------------------- your own character: any monster you build can be the hero you play as in your game
+function useAsHero() { commitSel(); const d = clone(BE.def); if (!WE.R) worldInit(); WE.g ||= newGame(); WE.g.hero = { name: d.name || $('bName').value || 'My character', cubes: d.cubes, anims: d.anims, abil: d.abil, code: d.code, fly: d.fly }; saveDraft(); toast('This is now your character in “Make a Game”. Press R (or ✦) in the game for its special move'); }
+const heroDef = () => (AR.mode === 'world' && WE.g?.hero?.cubes?.length ? WE.g.hero : null);
+const heroAbil = () => (heroDef()?.abil || []).filter((a) => ['detach', 'heal', 'dash', 'shield', 'teleport'].includes(a.act?.k)).sort((a, b) => (b.act.k === 'detach') - (a.act.k === 'detach'));
+AR.allies = [];
+function heroSpecial() {
+  if (!AR.on || !G2) return; const a = heroAbil()[0]; if (!a) return; const now = performance.now(); if (G2.specialT > now) { pop2('Not ready', AR.hero.position.clone().add(new THREE.Vector3(0, 2.4, 0)), '#9aa'); return; } G2.specialT = now + (a.cd || 4) * 1000;
+  const P = AR.hero.position, k = a.act.k;
+  if (k === 'heal') { G2.hp = Math.min(G2.max, G2.hp + (a.act.amt || 30)); pop2('+' + (a.act.amt || 30), P.clone().add(new THREE.Vector3(0, 2, 0)), '#46c96b'); hud(); return; }
+  if (k === 'shield') { G2.shieldUntil = now + (a.act.sec || 3) * 1000; pop2('Shield!', P.clone().add(new THREE.Vector3(0, 2.4, 0)), '#7cd4ff'); return; }
+  if (k === 'dash' || k === 'teleport') { P.addScaledVector(G2.face, k === 'dash' ? 4 : 6); pop2(k === 'dash' ? 'Dash!' : 'Blink!', P.clone().add(new THREE.Vector3(0, 2.4, 0)), '#a77bff'); return; }
+  // the hero's own part breaks off and turns into something that fights for you
+  const g = AR.heroRig.g; let part = a.act.part; if (!g[part] || G2.gone?.[part]) part = ['armL', 'armR', 'head', 'tail', 'wingL'].find((r) => g[r] && !G2.gone?.[r]); if (!part) return;
+  G2.gone ||= {}; G2.gone[part] = true; const grp = g[part], parent = grp.parent, home = { p: grp.position.clone(), r: grp.rotation.clone(), s: grp.scale.clone() };
+  const at = grp.getWorldPosition(new THREE.Vector3()); AR.scene.attach(grp); clank(150); pop2('Snap!', at.clone().add(new THREE.Vector3(0, 0.6, 0)), '#ffb347', true);
+  const v = G2.face.clone().multiplyScalar(4).add(new THREE.Vector3(0, 4, 0)); let t = 0;
+  regrow.push({ step(dt) { t += dt; v.y -= 14 * dt; grp.position.addScaledVector(v, dt); grp.rotation.x += dt * 7; if (grp.position.y < 0.2) { grp.position.y = 0.2; v.set(0, 0, 0); } if (t < 0.7) return false;
+    AR.scene.remove(grp); const p = grp.position.clone().setY(0);
+    if (a.act.into === 'bomb') setTimeout(() => boom(p, 3.5, 40, null, 'fire'), 500);
+    else if (a.act.into === 'heal') { G2.hp = Math.min(G2.max, G2.hp + 30); hud(); }
+    else { const hd = heroDef() || HERO, roles = rolesOf(hd); let def;
+      if (a.act.into === 'mons') def = whoDef(a.act.who || 'slime'); else { const cubes = hd.cubes.filter((q, i) => roles[i] === part).map(clone); const b = bboxOf(cubes); cubes.forEach((q) => { q.p = [q.p[0] - b.cx, q.p[1] - b.y0, q.p[2] - b.cz]; q.role = 'body'; }); def = { cubes }; }
+      for (let i = 0; i < (a.act.into === 'mons' ? a.act.n || 2 : 1); i++) addAlly(def, p.clone().add(new THREE.Vector3((Math.random() - 0.5) * 1.5, 0, (Math.random() - 0.5) * 1.5))); }
+    let w = 0; regrow.push({ step(dt2) { w += dt2; if (w < 6) return false; parent.add(grp); grp.position.copy(home.p); grp.rotation.copy(home.r); grp.scale.copy(home.s); G2.gone[part] = false; pop2('Grew back', AR.hero.position.clone().add(new THREE.Vector3(0, 2.4, 0)), '#46c96b'); return true; } });
+    return true; } });
+}
+function addAlly(def, pos) { const R_ = buildRig(def), b = R_.root, bx = new THREE.Box3().setFromObject(b), h = Math.max(0.2, bx.max.y - bx.min.y), k = 0.9 / h; b.scale.setScalar(k); b.position.y = -bx.min.y * k; const g = new THREE.Group(); g.add(b); g.position.copy(pos); AR.scene.add(g); AR.allies.push({ o: g, R_, t: 15, hitT: 0 }); pop2('Ally!', pos.clone().add(new THREE.Vector3(0, 1.4, 0)), '#46c96b'); }
+function alliesStep(dt, now) {
+  for (let i = AR.allies.length - 1; i >= 0; i--) { const a = AR.allies[i]; a.t -= dt; a.hitT -= dt; let best = null, bd = 25; for (const m of AR.mons) { if (m.friendly || m.dead) continue; const d = m.o.position.distanceTo(a.o.position); if (d < bd) { bd = d; best = m; } }
+    let moving = 0; if (best) { const to = best.o.position.clone().sub(a.o.position).setY(0); if (bd > 1.2) { a.o.position.addScaledVector(to.normalize(), 4.2 * dt); moving = 1; } else if (a.hitT <= 0) { a.hitT = 0.8; hit(best, 0.6); } a.o.rotation.y = Math.atan2(to.x, to.z); }
+    animRig(a.R_, now / 1000 + i, moving, a.hitT > 0.5 ? 1 - (a.hitT - 0.5) / 0.3 : 0);
+    if (a.t <= 0) { AR.scene.remove(a.o); AR.allies.splice(i, 1); } }
+}
+
+// ---------------------------------------------------------------- shields: drawn pixel by pixel in the forge, held in the left hand, raised with B (or 🛡)
+let shieldMode = false, wGrid = null; const SHIELD = { g: store.get('shield', null) };
+const shieldDef = (code) => { if (!code) return 0; let n = 0, metal = 0; for (const ch of code) { if (ch === '.' || !CI[ch]) continue; n++; if ('SsG'.includes(ch)) metal++; } return n ? Math.min(0.85, 0.12 + n / 320 + metal / 900) : 0; };
+function setForgeMode(sh) {
+  if (sh === shieldMode) return; if (sh) { wGrid = grid; grid = SHIELD.g ? dec(SHIELD.g) : new Uint8Array(N * N); } else { SHIELD.g = enc(grid); store.set('shield', SHIELD.g); grid = wGrid || grid; wGrid = null; }
+  shieldMode = sh; $('fmWeapon').setAttribute('aria-pressed', String(!sh)); $('fmShield').setAttribute('aria-pressed', String(sh)); document.body.classList.toggle('shieldMode', sh); changed();
+  toast(sh ? 'Draw your shield. More cubes and more metal block more' : 'Back to your weapon');
+}
+function shieldCard() { if (!shieldMode) return; SHIELD.g = enc(grid); store.set('shield', SHIELD.g); const d = shieldDef(SHIELD.g); $('stats').innerHTML = `<div class="shieldInfo"><b>Shield</b> blocks <b>${Math.round(d * 100)}%</b> of a hit while raised (B, or 🛡 on a phone). Draw it bigger and use steel or gold to make it stronger.</div>`; }
+function heldShield() {
+  if (AR.shieldG) { AR.shieldG.parent?.remove(AR.shieldG); AR.shieldG = null; } const code = SHIELD.g; if (!code || !AR.heroRig?.g?.armL) return;
+  const g2 = dec(code), list = []; for (let i = 0; i < N * N; i++) if (g2[i]) list.push([i % N, (i / N) | 0, g2[i]]); if (!list.length) return;
+  const s = 0.06 / (1.9 / AR.heroRig.H), m = new THREE.InstancedMesh(box, new THREE.MeshLambertMaterial(), list.length), o = new THREE.Object3D(), c = new THREE.Color();
+  list.forEach(([x, y, v], i) => { o.position.set((x - N / 2) * s, -(y - N / 2) * s, 0); o.scale.set(s * 1.02, s * 1.02, s * 2); o.updateMatrix(); m.setMatrixAt(i, o.matrix); m.setColorAt(i, c.set(PAL[v].hex)); });
+  m.castShadow = true; const g = new THREE.Group(); g.add(m); g.position.set(0.15, -0.5, 0.25); g.rotation.y = Math.PI / 2 * 0; AR.heroRig.g.armL.add(g); AR.shieldG = g;
+}
+const blocking = () => !!(G2 && (AR.keys.KeyB || AR.blockBtn) && SHIELD.g && AR.shieldG);
+function shieldFactor() { const now = performance.now(); if (G2?.shieldUntil > now) return 0.2; return blocking() ? 1 - shieldDef(SHIELD.g) : 1 - shieldDef(SHIELD.g) * 0.2; }
+
+// ---------------------------------------------------------------- the shared library: inventions anyone shares (shapes, parts, moves; never code)
+const LIB = { docs: [] };
+function libEntries() { const out = []; for (const d of LIB.docs) for (const e of d.list || []) out.push({ ...e, author: d.author }); return out; }
+async function shareToLib() { commitSel(); if (!gal.db || !gal.uid) return toast('The shared library works in the published game while signed in'); const me = LIB.docs.find((d) => d.uid === gal.uid), list = (me?.list || []).slice(-29);
+  const d = clone(BE.def); list.push({ name: d.name || $('bName').value || 'Creature', cubes: d.cubes.slice(0, 120), anims: d.anims || null, abil: d.abil || [], fly: !!d.fly, words: normAr(($('dzText').value || '') + ' ' + (d.name || '')).slice(0, 200) });
+  try { await gal.db.collection('inventions').doc(gal.uid).set({ author: ($('nick')?.value.trim() || 'Maker').slice(0, 20), list }); toast('Shared to the library'); } catch { toast('Sharing didn’t work, try again'); } }
+function renderLib() { const L = $('bLib'); if (!L) return; L.innerHTML = ''; const all = libEntries().slice(-30).reverse(); if (!all.length) { L.innerHTML = '<span class="desc">Nothing shared yet. Build something and tap “Share to the library”.</span>'; return; }
+  for (const e of all) { const b = document.createElement('button'); b.className = 'temp'; b.textContent = e.name + ' · ' + e.author; b.onclick = () => { pushUndo(); loadBeast({ name: e.name, cubes: clone(e.cubes), anims: e.anims ? clone(e.anims) : undefined, abil: (e.abil || []).map(cleanAb), fly: !!e.fly }, true); $('bName').value = e.name; renderAbils(); AN.refresh?.(); }; L.appendChild(b); } }
+function libMatches(text) { const w = normAr(text).split(/[^a-z؀-ۿ]+/).filter((x) => x.length > 2); return libEntries().map((e) => ({ e, n: w.filter((x) => (e.words + ' ' + normAr(e.name)).includes(x)).length })).filter((x) => x.n >= 2).sort((a, b) => b.n - a.n).slice(0, 3).map((x) => x.e); }
+
+// ---------------------------------------------------------------- new things for your worlds: portals, checkpoints, treasure, a monster that swallows you
+const GADGET_CUBES = {
+  portal: () => MODEL_LIB.portal().cubes.map((q) => ({ ...q, p: q.p.map((v) => v * 0.6), s: q.s.map((v) => v * 0.6) })),
+  checkpoint: () => [S('cyl', 0, 0.9, 0, 0.1, 1.8, 0.1, '#cfd8e2'), B_(0.32, 1.55, 0, 0.6, 0.4, 0.04, '#46c96b'), S('ball', 0, 1.85, 0, 0.16, 0.16, 0.16, '#ffe14d'), S('cyl', 0, 0.05, 0, 0.5, 0.1, 0.5, '#5d666e')],
+  treasure: () => MODEL_LIB.chest().cubes.map((q) => ({ ...q, p: q.p.map((v) => v * 0.75), s: q.s.map((v) => v * 0.75) })),
+  gulper: () => [S('ball', 0, 0.85, 0, 1.6, 1.5, 1.5, '#c4475a'), B_(0, 0.75, 0.62, 1.1, 0.5, 0.3, '#24262b'), ...[-0.4, -0.13, 0.13, 0.4].map((x) => S('spike', x, 0.95, 0.75, 0.14, 0.24, 0.1, '#f2efe6', [Math.PI, 0, 0])), ...[-0.3, 0, 0.3].map((x) => S('spike', x, 0.55, 0.75, 0.14, 0.22, 0.1, '#f2efe6')), S('ball', 0.35, 1.4, 0.55, 0.3, 0.3, 0.2, '#f2efe6'), S('ball', -0.35, 1.4, 0.55, 0.3, 0.3, 0.2, '#f2efe6'), S('ball', 0.37, 1.4, 0.64, 0.12, 0.12, 0.06, '#24262b'), S('ball', -0.33, 1.4, 0.64, 0.12, 0.12, 0.06, '#24262b'), B_(0, 0.55, 0.8, 0.3, 0.06, 0.4, '#e5484d', [0.3, 0, 0])],
+};
+function gadgetTick(o, P, W, dt, now) {
+  const d = Math.hypot(o.x - P.x, o.z - P.z);
+  if (o.t === 'portal' && d < 0.9 && !(AR.portalCd > 0)) { const others = AR.objs.filter((x) => x.t === 'portal' && x !== o && (x.pr.ch ?? 1) === (o.pr.ch ?? 1)); if (others.length) { const all = AR.objs.filter((x) => x.t === 'portal' && (x.pr.ch ?? 1) === (o.pr.ch ?? 1)), to = all[(all.indexOf(o) + 1) % all.length]; P.set(to.x, P.y, to.z + 1.3); AR.portalCd = 1.2; clank(620); pop2('Whoosh!', P.clone().add(new THREE.Vector3(0, 2.2, 0)), '#a77bff', true); } }
+  if (o.t === 'portal') o.m.rotation.y += dt * 0.6;
+  if (o.t === 'checkpoint' && d < 1.4 && !o.used) { o.used = true; W.checkpoint = { x: o.x, z: o.z + 1 }; pop2('Checkpoint!', P.clone().add(new THREE.Vector3(0, 2.2, 0)), '#46c96b', true); clank(700); for (const x of AR.objs) if (x.t === 'checkpoint' && x !== o) x.used = false; }
+  if (o.t === 'treasure' && d < 1.2 && !o.gone) { o.gone = true; AR.world.remove(o.m); const gold = o.pr.gold || 50; G2.score += gold; G2.hp = Math.min(G2.max, G2.hp + 25); pop2('+' + gold + ' treasure!', P.clone().add(new THREE.Vector3(0, 2.2, 0)), '#ffe14d', true); clank(880); hud(); }
+  if (o.t === 'gulper' && !o.gone && !o.used) { const to = new THREE.Vector3(P.x - o.x, 0, P.z - o.z); if (d > 1) { to.normalize(); o.x += to.x * 1.7 * dt; o.z += to.z * 1.7 * dt; } o.m.position.set(o.x, 0, o.z); o.m.rotation.y = Math.atan2(P.x - o.x, P.z - o.z); o.m.scale.set(1, 1 + Math.sin(now / 160) * 0.08, 1);
+    if (d < 1.1) { o.used = true; clank(140); pop2('GULP!', P.clone().add(new THREE.Vector3(0, 2.2, 0)), '#e5484d', true);
+      if (WE.g.worlds.length < 2) { hurtPlayer(20); P.addScaledVector(G2.face.clone().negate(), 3); setTimeout(() => { o.used = false; }, 2500); return false; }
+      const toW = Math.min(WE.g.worlds.length - 1, o.pr.to ?? 1); W.returnTo = { x: o.x, z: o.z + 1.6 }; setTimeout(() => { loadWorld(toW, { wi: W.wi, x: o.x, z: o.z + 2, objKey: o.it.x + ',' + o.it.z }); }, 350); AR.on = false; setTimeout(() => { AR.on = true; }, 360); return true; } }
+  return false;
 }
 
 const WS = 64; // a world is 128 x 128 cells, from -64 to 64
@@ -1583,6 +1740,10 @@ const ITEMS = {
   spawner: { n: 'Spawns monsters', c: '#3a3f4a', kind: 'smart', pr: { who: 'slime', every: 4, max: 4 } },
   door: { n: 'Door', c: '#6f5434', kind: 'smart', pr: {} },
   flag: { n: 'Winning flag', c: '#ffe14d', kind: 'smart', pr: {} },
+  portal: { n: 'Portal', c: '#8b54f0', kind: 'smart', pr: { ch: 1 } },
+  checkpoint: { n: 'Checkpoint flag', c: '#46c96b', kind: 'smart', pr: {} },
+  treasure: { n: 'Treasure chest', c: '#e2b043', kind: 'smart', pr: { gold: 50 } },
+  gulper: { n: 'Swallowing monster', c: '#c4475a', kind: 'smart', pr: { to: 1 } },
   start: { n: 'Start spot', c: '#4aa3ff', kind: 'smart', pr: {} },
   mon: { n: 'Monster', c: '#46c96b', kind: 'mon', pr: { who: 'slime' } },
 };
@@ -1600,6 +1761,7 @@ function itemMesh(it) {
   else if (it.t === 'tnt') cubes = TNT.map((q) => ({ ...q, p: [q.p[0], q.p[1] * 0.67, q.p[2]], s: q.s.map((v) => v * 0.67) }));
   else if (it.t === 'chest') cubes = MIMIC.cubes.filter((q) => q.role !== 'jaw' && q.c !== '#f2efe6');
   else if (it.t === 'swallow') cubes = [C1([0, 0.5, 0], [1, 1, 1], D.c), C1([0, 0.5, 0.51], [0.7, 0.3, 0.04], '#24262b'), C1([0.25, 0.8, 0.51], [0.15, 0.15, 0.04], '#ffe14d'), C1([-0.25, 0.8, 0.51], [0.15, 0.15, 0.04], '#ffe14d'), C1([0, 0.38, 0.52], [0.3, 0.06, 0.04], '#e5484d')];
+  else if (GADGET_CUBES[it.t]) cubes = GADGET_CUBES[it.t]();
   else if (it.t === 'spawner') cubes = [C1([0, 0.06, 0], [1, 0.12, 1], '#24262b'), ...[[-0.42, -0.42], [0.42, -0.42], [-0.42, 0.42], [0.42, 0.42]].map(([x, z]) => C1([x, 0.55, z], [0.12, 1, 0.12], D.c)), C1([0, 1.05, 0], [1, 0.1, 1], D.c), C1([0, 0.5, 0], [0.4, 0.4, 0.4], '#ff4d6d')];
   else if (it.t === 'door') cubes = [C1([0, 1, 0], [1, 2, 0.3], D.c), C1([0.3, 1, 0.16], [0.1, 0.1, 0.06], '#e2b043')];
   else if (it.t === 'flag') cubes = [C1([0, 1.1, 0], [0.1, 2.2, 0.1], '#cfd8e2'), C1([0.35, 1.9, 0], [0.6, 0.4, 0.06], D.c)];
@@ -1694,7 +1856,7 @@ function putItem(t, x, z, y) {
   const D = ITEMS[t]; if (!D) return null; if (D.kind !== 'block' && y > 0) y = 0; if (x < -WS || z < -WS || x >= WS || z >= WS || y > 12) return null; const L = W_().items;
   for (let i = L.length - 1; i >= 0; i--) if (L[i].x === x && L[i].z === z && (L[i].y || 0) === y) L.splice(i, 1);
   if (t === 'start') for (let i = L.length - 1; i >= 0; i--) if (L[i].t === 'start') L.splice(i, 1);
-  const nu = { t, x, z, y, r: 0, pr: D.pr ? clone(D.pr) : undefined }; if (t === 'swallow') nu.pr.to = Math.min(WE.g.worlds.length - 1, Math.max(1, WE.wi === 0 ? 1 : 0)); L.push(nu); return nu;
+  const nu = { t, x, z, y, r: 0, pr: D.pr ? clone(D.pr) : undefined }; if (t === 'swallow' || t === 'gulper') nu.pr.to = Math.min(WE.g.worlds.length - 1, Math.max(1, WE.wi === 0 ? 1 : 0)); L.push(nu); return nu;
 }
 // a tap or a drag step: returns the layer a stroke paints on, so a drag keeps building on the same height
 function worldTap(e, base) {
@@ -1805,7 +1967,7 @@ function applyOps(ops) {
   const fastPut = (t, x, z, y) => { const D = ITEMS[t]; if (!D) return null; if (D.kind !== 'block' && y > 0) y = 0; if (x < -WS || z < -WS || x >= WS || z >= WS || y > 12) return null;
     if (!ix) { ix = new Map(); for (const it of W_().items) ix.set(K3(it.x, it.z, it.y || 0), it); }
     if (t === 'start') for (const [k, v] of ix) if (v.t === 'start') ix.delete(k);
-    const nu = { t, x, z, y, r: 0, pr: D.pr ? clone(D.pr) : undefined }; if (t === 'swallow') nu.pr.to = Math.min(WE.g.worlds.length - 1, Math.max(1, WE.wi === 0 ? 1 : 0)); ix.set(K3(x, z, y), nu); ix.dirty = true; return nu; };
+    const nu = { t, x, z, y, r: 0, pr: D.pr ? clone(D.pr) : undefined }; if (t === 'swallow' || t === 'gulper') nu.pr.to = Math.min(WE.g.worlds.length - 1, Math.max(1, WE.wi === 0 ? 1 : 0)); ix.set(K3(x, z, y), nu); ix.dirty = true; return nu; };
   const flush = () => { if (ix?.dirty) W_().items = [...ix.values()]; ix = null; };
   const put = (t, x, z, y, pr) => { if (n > 40000) return; const it = fastPut(t, cl(x), cl(z), Math.max(0, Math.min(12, Math.round(+y || 0)))); if (it) { n++; if (pr && it.pr) { if (it.t === 'mon' || it.t === 'spawner') { if (monOk(pr.who)) it.pr.who = pr.who; } for (const k of ['trig', 'fuse', 'rad', 'dmg', 'hp', 'every', 'max', 'to']) if (pr[k] != null) it.pr[k] = k === 'trig' ? String(pr[k]) : +pr[k]; } } };
   for (let o of ops || []) {
@@ -1849,7 +2011,7 @@ $('aiGo').onclick = async () => {
 Things you can place (t):
 blocks (solid, stack): stone, dirt, grass, wood, brick, ice, gold, night
 floors (y 0, walkable): lava (burns), spikes (hurt), pad (launches you), heal (heart, one use)
-smart: tnt {pr: trig "hit"|"near"|"touch", fuse sec, rad, dmg}, chest (sleeping mimic monster {pr: hp, dmg}), swallow (box that swallows the player into another world {pr: to: world index}), spawner (spawns monsters {pr: who, every sec, max}), door (opens when monsters are gone), flag (reach it to win), start (where the player starts; only one)
+smart: tnt {pr: trig "hit"|"near"|"touch", fuse sec, rad, dmg}, chest (sleeping mimic monster {pr: hp, dmg}), swallow (box that swallows the player into another world {pr: to: world index}), spawner (spawns monsters {pr: who, every sec, max}), door (opens when monsters are gone), flag (reach it to win), start (where the player starts; only one), portal (step into one, come out of the next portal with the same {pr: ch} number), checkpoint (the player comes back here instead of losing), treasure (gold and health {pr: gold}), gulper (a monster that walks to the player and swallows them into another world {pr: to: world index})
 mon (a monster {pr: who}); who is one of: ${mons}
 Grounds: grass, sand, snow, stone, dark, lava.
 Current world: ${worldSummary(W_())}. This game has ${WE.g.worlds.length} worlds; this is world ${WE.wi}.
@@ -1898,11 +2060,11 @@ function clearWorld() { if (!AR.world) return; while (AR.world.children.length) 
 function playScene(W, opts = {}) {
   clearWorld(); AR.ring.visible = false; AR.walls = []; AR.cur = { W, items: W.items.map((it) => ({ ...it })) };
   AR.scene.background = new THREE.Color(W.settings?.sky || (W.ground === 'dark' || W.ground === 'lava' ? 0x1a1420 : 0x8fc3e8)); if (W.settings?.camera) setCam(W.settings.camera); AR.scene.fog = new THREE.Fog(AR.scene.background.getHex(), 40, 110);
-  const live = (it) => ['tnt', 'swallow', 'spawner', 'flag', 'door', 'chest', 'mon', 'start'].includes(it.t) || ITEMS[it.t]?.kind === 'custom';
-  AR.view = buildView({ ...W, items: AR.cur.items }, AR.world, { skip: (it) => live(it) && it.t !== 'door' && it.t !== 'tnt' && it.t !== 'swallow' && it.t !== 'spawner' && it.t !== 'flag' });
+  const live = (it) => ['tnt', 'swallow', 'spawner', 'flag', 'door', 'chest', 'mon', 'start', 'portal', 'checkpoint', 'treasure', 'gulper'].includes(it.t) || ITEMS[it.t]?.kind === 'custom';
+  AR.view = buildView({ ...W, items: AR.cur.items }, AR.world, { skip: (it) => live(it) && it.t !== 'door' && it.t !== 'tnt' && it.t !== 'swallow' && it.t !== 'spawner' && it.t !== 'flag' && !GADGET_CUBES[it.t] });
   for (const it of AR.cur.items) { const D = ITEMS[it.t]; if (D.kind === 'block' || it.t === 'door' || it.t === 'tnt' || it.t === 'spawner') AR.solid.set(it.x + ',' + it.z, (AR.solid.get(it.x + ',' + it.z) || 0) + 1); if (D.kind === 'tile') AR.tiles.set(it.x + ',' + it.z, { t: it.t, it, used: false, cd: 0 }); }
   AR.tntMap = new Map(); for (const m of AR.view.inst) if (m.userData.tnt) m.userData.items.forEach((it, i) => AR.tntMap.set(it.x + ',' + it.z, { it, i, m }));
-  for (const m of AR.view.singles) { const it = m.userData.it; if (['tnt', 'swallow', 'spawner', 'flag', 'door'].includes(it.t)) AR.objs.push({ t: it.t, it, pr: it.pr || {}, m, x: it.x + 0.5, z: it.z + 0.5, timer: 1, hp: 60 }); }
+  for (const m of AR.view.singles) { const it = m.userData.it; if (['tnt', 'swallow', 'spawner', 'flag', 'door', 'portal', 'checkpoint', 'treasure', 'gulper'].includes(it.t)) AR.objs.push({ t: it.t, it, pr: it.pr || {}, m, x: it.x + 0.5, z: it.z + 0.5, timer: 1, hp: 60 }); }
   let start = { x: 0.5, z: 4.5 }; for (const it of AR.cur.items) if (it.t === 'start') start = { x: it.x + 0.5, z: it.z + 0.5 };
   if (!opts.noMonsters) for (const it of AR.cur.items) { const cx = it.x + 0.5, cz = it.z + 0.5;
     if (ITEMS[it.t]?.kind === 'custom') { const m = spawnCustom(it.t, cx, cz, it.y || 0); if (m && !m.friendly && m.M && G2?.world) G2.world.hadMon = true; continue; }
@@ -1916,13 +2078,13 @@ function breakCells(cx, cz, rad) { if (!AR.cur) return 0; let n = 0; const L = A
   if (n) { const keep = AR.world.children.filter((c) => c.userData.it && !c.isInstancedMesh); for (const c of [...AR.world.children]) if (c.isInstancedMesh && !c.userData.tnt) AR.world.remove(c); const tmp = new THREE.Group(); const v = buildView({ ...AR.cur.W, items: L.filter((it) => ITEMS[it.t].kind === 'block' || ITEMS[it.t].kind === 'tile') }, tmp); for (const m of v.inst) AR.world.add(m); } return n; }
 function playGame() { if (!analyse(grid) && !WOV) { show('forge'); toast('Draw a weapon first, then play your game'); return; } show('arena'); $('aOv').hidden = true; $('aEdit').hidden = true; loadWorld(0, null); }
 function loadWorld(wi, back) {
-  arenaInit(); setHeroLook(WE.g?.hero); setCam(AR.camMode); beastInit(); heldWeapon(); for (const m of AR.mons) AR.scene.remove(m.o); AR.mons = []; for (const x of AR.shots) AR.scene.remove(x.o); AR.shots = []; for (const x of AR.picks) AR.scene.remove(x.o); AR.picks = [];
+  arenaInit(); setHeroLook(WE.g?.hero); setCam(AR.camMode); beastInit(); heldWeapon(); heldShield(); for (const m of AR.mons) AR.scene.remove(m.o); AR.mons = []; for (const x of AR.shots) AR.scene.remove(x.o); AR.shots = []; for (const x of AR.picks) AR.scene.remove(x.o); AR.picks = [];
   const a = withOv(analyse(grid)) || { dmg: 30, spd: 50, reach: 50, crit: 10, elp: 0, el: 'none', sym: 0 };
   const keepHp = G2?.world ? G2.hp : 100, stack = back ? [...(G2.world.stack || []), back] : (G2?.world?.stack && wi !== 0 ? G2.world.stack : []);
   G2 = { a, hp: keepHp, max: 100, wave: 0, score: G2?.world ? G2.score : 0, cd: 0, swingT: 0, face: new THREE.Vector3(0, 0, -1), pos: new THREE.Vector3(), world: { wi, stack, label: wi ? `World ${wi + 1}` : (WE.g.name || 'My Game'), hadMon: false, won: false } };
   AR.mode = 'world'; const W = WE.g.worlds[wi]; let start = playScene(W);
   if (back === null && G2.world.stack.length && G2.world.returnTo) start = G2.world.returnTo;
-  AR.hero.position.set(start.x, 0, start.z); AR.cam.position.set(start.x, 11, start.z + 10); AR.on = true; hud(); modsStart(); $('aAct').hidden = !modsRun.list.length;
+  AR.hero.position.set(start.x, 0, start.z); AR.cam.position.set(start.x, 11, start.z + 10); AR.on = true; hud(); modsStart(); $('aAct').hidden = !modsRun.list.length && !heroAbil().length; $('aBlock').hidden = !SHIELD.g; for (const a of AR.allies) AR.scene.remove(a.o); AR.allies = [];
   pop2(G2.world.label, new THREE.Vector3(start.x, 2, start.z), '#ffb347', true);
 }
 function worldSwing(P, reach) { let n = 0; tntAround(P.x, P.z, reach + 0.5, (e, x, z) => { wakeTnt(x, z, e.it.pr?.fuse || 0.05); }); for (const o of AR.objs) { if (o.gone) continue; const d = Math.hypot(o.x - P.x, o.z - P.z); if (d > reach + 0.5) continue;
@@ -1949,7 +2111,8 @@ function worldTick(dt, now) {
   for (const m of AR.mons) if (m.sleep) { const d = m.o.position.distanceTo(P); if (d < 3.2) { m.sleep = false; pop2('!', m.o.position.clone().add(new THREE.Vector3(0, 1.8, 0)), '#ffe14d', true); clank(320); } }
   tntAround(P.x, P.z, 2.2, (e, x, z, d) => { const tr = e.it.pr?.trig; if ((tr === 'near' && d < 2.2) || (tr === 'touch' && d < 1.1)) wakeTnt(x, z, e.it.pr.fuse || 0.05); });
   if (AR.tntMap?.size) for (const m of AR.mons) tntAround(m.o.position.x, m.o.position.z, 1.6, (e, x, z) => { if (e.it.pr?.trig === 'near') wakeTnt(x, z, e.it.pr.fuse || 0.05); });
-  for (const o of AR.objs) { if (o.gone) continue; const d = Math.hypot(o.x - P.x, o.z - P.z);
+  if (AR.portalCd > 0) AR.portalCd -= dt;
+  for (const o of AR.objs) { if (o.gone) continue; if (GADGET_CUBES[o.t]) { if (gadgetTick(o, P, W, dt, now)) return; continue; } const d = Math.hypot(o.x - P.x, o.z - P.z);
     if (o.t === 'tnt') { if (!o.fuse && ((o.pr.trig === 'near' && d < 2.2) || (o.pr.trig === 'touch' && d < 1.1) || AR.mons.some((m) => o.pr.trig === 'near' && Math.hypot(m.o.position.x - o.x, m.o.position.z - o.z) < 1.6))) o.fuse = o.pr.fuse || 0.05;
       if (o.fuse) { o.fuse -= dt; const f = Math.sin(now / (o.fuse < 0.5 ? 35 : 80)) > 0; o.m.traverse((x) => { if (x.isMesh) for (const mt of x.material) mt.emissive.setHex(f ? 0xffffff : 0); }); o.m.scale.setScalar(1 + Math.max(0, 1 - o.fuse) * 0.2);
         if (o.fuse <= 0) { o.gone = true; AR.world.remove(o.m); unsolid(o); boom(new THREE.Vector3(o.x, 0.4, o.z), o.pr.rad, o.pr.dmg, null, 'fire');
@@ -1973,7 +2136,8 @@ function worldOver(win) {
 }
 $('aEdit').onclick = () => { $('aOv').hidden = true; $('aEdit').hidden = true; $('aGo').onclick = () => { clank(260); startArena(); }; $('aGo').textContent = 'Start'; show('world'); };
 
-let ct = 0; function changed() { drawGrid(); clearTimeout(ct); ct = setTimeout(() => { renderCard(); build(); }, 90); }
+let ct = 0; function changed() { drawGrid(); clearTimeout(ct); ct = setTimeout(() => { renderCard(); build(); shieldCard(); }, 90); }
+$('fmWeapon').onclick = () => setForgeMode(false); $('fmShield').onclick = () => setForgeMode(true);
 
 // ---------------------------------------------------------------- your weapons (this device) and the shared gallery
 let toastT = 0; function toast(s) { const t = $('toast'); t.textContent = s; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 2200); }
@@ -1993,6 +2157,7 @@ async function initGallery() {
   const c = window.claude; const [db, user] = c?.use ? await Promise.all([c.use('db'), c.use('user')]) : [null, null];
   if (!db || !user) { $('galState').textContent = 'The gallery works when you open the forge from the published link while signed in.'; renderGal(); return; }
   gal.db = db; gal.uid = await user.id(); const timer = setTimeout(() => { if (!gal.ready) $('galState').textContent = 'The gallery isn’t answering yet, wait a bit.'; }, 10000);
+  db.collection('inventions').onSnapshot((s) => { LIB.docs = s.docs.map((d) => ({ uid: d.id, ...d.data() })); renderLib(); }, () => {});
   db.collection('armory').onSnapshot((s) => { clearTimeout(timer); gal.ready = true; gal.docs = s.docs.map((d) => ({ uid: d.id, ...d.data() })); $('galState').textContent = ''; renderGal(); }, () => { clearTimeout(timer); $('galState').textContent = 'The gallery isn’t available right now.'; });
   db.collection('likes').onSnapshot((s) => { gal.likes = s.docs.map((d) => ({ uid: d.id, ...d.data() })); renderGal(); }, () => {});
 }
@@ -2014,7 +2179,7 @@ async function unpublish(id) { const me = gal.docs.find((d) => d.uid === gal.uid
 async function like(key) { if (!gal.db) return; const cur = { ...(gal.likes.find((l) => l.uid === gal.uid)?.k || {}) }; if (cur[key]) delete cur[key]; else cur[key] = 1; try { await gal.db.collection('likes').doc(gal.uid).set({ k: cur }); } catch { toast('didn’t work, try again'); } }
 $('bPub').onclick = () => { if (!A) return; const w = { id: Date.now().toString(36), name: $('wName').value.trim() || nameFor(A), g: enc(grid) }; publish(w); };
 
-function show(v) { for (const [k, id, sec] of [['forge', 'tForge', 'vForge'], ['beast', 'tBeast', 'vBeast'], ['arena', 'tArena', 'vArena'], ['world', 'tWorld', 'vWorld'], ['mine', 'tMine', 'vMine'], ['gal', 'tGal', 'vGal']]) { $(id).setAttribute('aria-pressed', String(k === v)); $(sec).hidden = k !== v; } if (v === 'mine') renderMine(); if (v === 'gal') renderGal(); if (v === 'forge') size(); if (v === 'beast') beastInit(); if (v === 'world') worldInit(); if (v === 'arena') { arenaInit(); monsterRow(); if (!AR.on) { AR.cam.position.set(0, 13, 11); AR.cam.lookAt(0, 0.5, 0); heldWeapon(); } } }
+function show(v) { if (v !== 'forge' && shieldMode) setForgeMode(false); for (const [k, id, sec] of [['forge', 'tForge', 'vForge'], ['beast', 'tBeast', 'vBeast'], ['arena', 'tArena', 'vArena'], ['world', 'tWorld', 'vWorld'], ['mine', 'tMine', 'vMine'], ['gal', 'tGal', 'vGal']]) { $(id).setAttribute('aria-pressed', String(k === v)); $(sec).hidden = k !== v; } if (v === 'mine') renderMine(); if (v === 'gal') renderGal(); if (v === 'forge') size(); if (v === 'beast') beastInit(); if (v === 'world') worldInit(); if (v === 'arena') { arenaInit(); monsterRow(); if (!AR.on) { AR.cam.position.set(0, 13, 11); AR.cam.lookAt(0, 0.5, 0); heldWeapon(); heldShield(); } } }
 $('tForge').onclick = () => show('forge'); $('tMine').onclick = () => show('mine'); $('tGal').onclick = () => show('gal'); $('tBeast').onclick = () => show('beast'); $('tWorld').onclick = () => show('world'); $('tArena').onclick = () => show('arena');
 
 grid = fromRows(TEMPS.sword); changed(); initGallery();
