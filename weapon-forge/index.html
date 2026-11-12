@@ -125,7 +125,7 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
 .aidock .aiLog .me{background:#2c2622ee;align-self:flex-start}.aidock .aiLog .bot{background:#3a2417ee;border:1px solid var(--edge);align-self:flex-end}
 .aiRow{display:flex;gap:6px;align-items:center;background:#211c19ee;border:1px solid var(--edge);border-radius:12px;padding:5px}
 .aiRow input{flex:1;min-width:0;background:var(--coal);border:1px solid var(--edge);border-radius:9px;padding:7px 10px;color:var(--bone);font:600 14px var(--body)}
-.aiRow .btn{padding:7px 12px}#aiThumb{width:34px;height:34px;object-fit:cover;border-radius:7px;border:2px solid var(--ember);cursor:pointer}
+.aiRow .btn{padding:7px 12px}.aiPics{display:flex;flex-wrap:wrap;gap:6px;padding:6px;background:#211c19ee;border:1px solid var(--edge);border-radius:12px;margin-bottom:6px;max-height:190px;overflow:auto}.aiPics .pic{position:relative;width:52px;height:52px;border-radius:8px;overflow:hidden;border:2px solid transparent;cursor:pointer;background:#0d0b0a}.aiPics .pic.on{border-color:var(--ember)}.aiPics .pic img{width:100%;height:100%;object-fit:contain}.aiPics .pic button{position:absolute;top:0;inset-inline-end:0;border:0;background:#000a;color:#fff;font-size:11px;width:18px;height:18px;padding:0;cursor:pointer}.picActs{display:flex;flex-wrap:wrap;gap:6px;align-items:center;width:100%;font-size:12px;color:var(--ash,#bbb)}.picActs .tool{font-size:12px;padding:5px 9px}#aiThumb{width:34px;height:34px;object-fit:cover;border-radius:7px;border:2px solid var(--ember);cursor:pointer}
 .wcats{display:flex;gap:6px;margin-top:8px;overflow-x:auto}
 .wcats button{flex:none;background:var(--plate);border:1px solid var(--edge);border-radius:999px;padding:5px 12px;font-weight:800;font-size:13px}
 .wcats button[aria-pressed="true"]{border-color:var(--ember);color:var(--ember-2)}
@@ -325,7 +325,7 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
       <div class="wpanel" id="myGamesBox" hidden><b>ألعابي</b><div class="list" id="myGames"></div></div>
       <div class="aidock" id="aiBox">
         <div class="aiLog" id="aiLog"><div class="bot">أنا مساعدك. قولّي تبني إيه، مثلاً: "قلعة طوب في النص وحواليها حمم وجواها تنين".</div></div>
-        <div class="aiRow"><button class="tool" id="aiToggle" aria-label="خبّي المساعد">✦</button><button class="tool" id="aiPic" aria-label="ابعت صورة" title="ابعت صورة للمساعد">📷</button><input type="file" id="aiFile" accept="image/*" hidden><img id="aiThumb" alt="" hidden><input id="aiText" maxlength="500" placeholder="قول للمساعد يبني إيه…"><button class="btn" id="aiGo">ابنيه</button><button class="btn alt" id="aiUndo" disabled>رجّع</button></div>
+        <div class="aiPics" id="aiPics" hidden></div><div class="aiRow"><button class="tool" id="aiToggle" aria-label="خبّي المساعد">✦</button><button class="tool" id="aiPic" aria-label="ابعت صورة" title="ابعت صورة للمساعد">📷</button><input type="file" id="aiFile" accept="image/*" multiple hidden><img id="aiThumb" alt="" hidden><input id="aiText" maxlength="500" placeholder="قول للمساعد يبني إيه…"><button class="btn" id="aiGo">ابنيه</button><button class="btn alt" id="aiUndo" disabled>رجّع</button></div>
       </div>
     </div>
     <div class="wcats" id="wCats"><button data-c="block" aria-pressed="true">مكعبات</button><button data-c="tile" aria-pressed="false">أرضيات</button><button data-c="smart" aria-pressed="false">حاجات بتعمل حاجات</button><button data-c="mon" aria-pressed="false">وحوش</button><button data-c="custom" aria-pressed="false">اختراعات</button></div>
@@ -654,7 +654,7 @@ function setHeroLook(def) {
   AR.hero.remove(AR.body); AR.heroRig = buildRig(d); AR.heroRig.root.scale.setScalar(1.9 / AR.heroRig.H); AR.body = AR.heroRig.root; AR.hero.add(AR.body);
   AR.body.traverse((o) => { if (o.isMesh) o.castShadow = true; }); (AR.heroRig.g.armR || AR.heroRig.g.body || AR.body).add(AR.hand);
 }
-const heroNow = () => (WE.g?.hero?.cubes?.length ? WE.g.hero : HERO).cubes.map((q) => ({ p: q.p, s: q.s, c: q.c, ...(q.r && q.r.some((v) => v) ? { r: q.r } : {}), ...(q.role ? { role: q.role } : {}) }));
+const heroNow = () => WE.g?.hero?.cubes?.some((q) => q.flat) ? `a pixel copy of a picture (${WE.g.hero.cubes.length} little cubes; to change it, design a whole new hero, or keep it)` : (WE.g?.hero?.cubes?.length ? WE.g.hero : HERO).cubes.map((q) => ({ p: q.p, s: q.s, c: q.c, ...(q.r && q.r.some((v) => v) ? { r: q.r } : {}), ...(q.role ? { role: q.role } : {}) }));
 function heldWeapon() {
   while (AR.hand.children.length) AR.hand.remove(AR.hand.children[0]);
   const g = new THREE.Group(), list = []; let hx = 0, hy = 0, hn = 0;
@@ -1083,7 +1083,9 @@ function buildRig(def) {
   const piv = (r) => { const b = boxes[r], cx = (b.x0 + b.x1) / 2, cz = (b.z0 + b.z1) / 2; if (r.startsWith('leg') || r.startsWith('arm')) return [cx, b.y1, cz]; if (r === 'head') return [cx, b.y0, cz]; if (r === 'wingL') return [b.x0, (b.y0 + b.y1) / 2, cz]; if (r === 'wingR') return [b.x1, (b.y0 + b.y1) / 2, cz]; if (r === 'tail') return [cx, (b.y0 + b.y1) / 2, b.z1]; if (r === 'jaw') return [cx, b.y1, b.z0]; return [cx, b.y0, cz]; };
   const bodyP = boxes.body ? piv('body') : [0, 0, 0], body = new THREE.Group(); body.position.fromArray(bodyP); root.add(body); groups.body = body;
   for (const r in boxes) { if (r === 'body') continue; const g = new THREE.Group(), pp = piv(r); g.position.set(pp[0] - bodyP[0], pp[1] - bodyP[1], pp[2] - bodyP[2]); body.add(g); groups[r] = g; }
-  def.cubes.forEach((q, i) => { const m = cubeMesh(q), g = groups[roles[i]], gp = new THREE.Vector3(); g.updateMatrixWorld(true); root.updateMatrixWorld(true); g.getWorldPosition(gp); m.position.set(q.p[0] - gp.x, q.p[1] - gp.y, q.p[2] - gp.z); g.add(m); });
+  const vox = {}; root.updateMatrixWorld(true); const gps = {}; for (const r in groups) { gps[r] = groups[r].getWorldPosition(new THREE.Vector3()); }
+  def.cubes.forEach((q, i) => { const g = groups[roles[i]], gp = gps[roles[i]]; if (q.flat) { (vox[roles[i]] ||= []).push({ p: [q.p[0] - gp.x, q.p[1] - gp.y, q.p[2] - gp.z], s: q.s, c: q.c }); return; } const m = cubeMesh(q); m.position.set(q.p[0] - gp.x, q.p[1] - gp.y, q.p[2] - gp.z); g.add(m); });
+  for (const r in vox) { const m = voxMesh(vox[r]); m.castShadow = true; groups[r].add(m); }
   let top = -1e9, bot = 1e9; for (const r in boxes) { top = Math.max(top, boxes[r].y1); bot = Math.min(bot, boxes[r].y0); }
   return { root, g: groups, hasLegs: !!(groups.legL || groups.legR), H: Math.max(0.5, top - bot), fly: !!def.fly };
 }
@@ -1515,6 +1517,59 @@ function picFaces(q, src) {
   q.im = [cropPic([x1 - ex, y0, x1, y1], 6, 64, bg), cropPic([x0, y0, x0 + ex, y1], 6, 64, bg), cropPic([x0, y0, x1, y0 + ey], 64, 6, bg), cropPic([x0, y1 - ey, x1, y1], 64, 6, bg), cropPic(src.uv, 96, 96, bg),
     Array.isArray(src.uvBack) && src.uvBack.length === 4 ? cropPic(src.uvBack, 96, 96, bg) : cropPic([x0, y0, x1, y0 + ey], 64, 6, bg)];
 }
+// ---------------------------------------------------------------- pixel copy: a picture becomes a figure made of little cubes, pixel for pixel, no assistant needed
+function voxMesh(list) {
+  const bp = box.attributes.position.array, bn = box.attributes.normal.array, bi = box.index.array, pos = [], nor = [], col = [], idx = [], c = new THREE.Color();
+  for (const q of list) { const base = pos.length / 3; c.set(q.c);
+    for (let k = 0; k < bp.length; k += 3) { pos.push(bp[k] * q.s[0] + q.p[0], bp[k + 1] * q.s[1] + q.p[1], bp[k + 2] * q.s[2] + q.p[2]); nor.push(bn[k], bn[k + 1], bn[k + 2]); const sh = bn[k + 1] > 0.5 ? 1.08 : bn[k + 1] < -0.5 ? 0.7 : bn[k] !== 0 ? 0.86 : 1; col.push(Math.min(1, c.r * sh), Math.min(1, c.g * sh), Math.min(1, c.b * sh)); }
+    for (const i of bi) idx.push(base + i); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setIndex(idx); g.addGroup(0, idx.length, 0);
+  return new THREE.Mesh(g, [new THREE.MeshLambertMaterial({ vertexColors: true })]);
+}
+function voxelize(src, rows = 40) {
+  const k0 = Math.min(1, 256 / Math.max(src.width, src.height)), a = document.createElement('canvas'); a.width = Math.max(1, Math.round(src.width * k0)); a.height = Math.max(1, Math.round(src.height * k0));
+  const ga = a.getContext('2d', { willReadFrequently: true }); ga.drawImage(src, 0, 0, a.width, a.height); const W = a.width, H = a.height, D = ga.getImageData(0, 0, W, H).data, keep = new Uint8Array(W * H);
+  for (let i = 0; i < W * H; i++) keep[i] = D[i * 4 + 3] > 128 ? 1 : 0;
+  // the background: the most common colour on the border, removed by flooding in from the edges (so white eyes inside stay)
+  const tally = new Map(); const bkey = (i) => (D[i * 4] >> 4) + ',' + (D[i * 4 + 1] >> 4) + ',' + (D[i * 4 + 2] >> 4);
+  const border = []; for (let x = 0; x < W; x++) border.push(x, (H - 1) * W + x); for (let y = 0; y < H; y++) border.push(y * W, y * W + W - 1);
+  for (const i of border) if (keep[i]) tally.set(bkey(i), (tally.get(bkey(i)) || 0) + 1);
+  const top = [...tally.entries()].sort((p, q) => q[1] - p[1])[0];
+  if (top && top[1] > border.length * 0.3) { let r = 0, g = 0, b = 0, n = 0; for (const i of border) if (keep[i] && bkey(i) === top[0]) { r += D[i * 4]; g += D[i * 4 + 1]; b += D[i * 4 + 2]; n++; } r /= n; g /= n; b /= n;
+    const near = (i) => Math.hypot(D[i * 4] - r, D[i * 4 + 1] - g, D[i * 4 + 2] - b) < 46, st = border.filter((i) => keep[i] && near(i)); for (const i of st) keep[i] = 0;
+    while (st.length) { const i = st.pop(), x = i % W, y = (i / W) | 0; for (const j of [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, y > 0 ? i - W : -1, y < H - 1 ? i + W : -1]) if (j >= 0 && keep[j] && near(j)) { keep[j] = 0; st.push(j); } } }
+  let x0 = W, x1 = -1, y0 = H, y1 = -1; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (keep[y * W + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+  if (x1 < 0) return null;
+  const bw = x1 - x0 + 1, bh = y1 - y0 + 1, R = Math.min(rows, bh), C = Math.max(1, Math.min(48, Math.round(bw * R / bh))), cw = bw / C, ch = bh / R, u = 2.4 / R, cells = [];
+  for (let cy = 0; cy < R; cy++) for (let cx = 0; cx < C; cx++) { let r = 0, g = 0, b = 0, n = 0, t = 0;
+    for (let y = Math.floor(y0 + cy * ch); y < Math.min(y1 + 1, Math.floor(y0 + (cy + 1) * ch) || y0 + cy * ch + 1); y++) for (let x = Math.floor(x0 + cx * cw); x < Math.min(x1 + 1, Math.floor(x0 + (cx + 1) * cw) || x0 + cx * cw + 1); x++) { t++; const i = y * W + x; if (!keep[i]) continue; n++; r += D[i * 4]; g += D[i * 4 + 1]; b += D[i * 4 + 2]; }
+    cells[cy * C + cx] = n && n >= t * 0.45 ? '#' + [r, g, b].map((v) => Math.min(255, Math.round(v / n / 6) * 6).toString(16).padStart(2, '0')).join('') : null; }
+  // parts so it walks and swings: head on top, legs at the bottom (split in the middle), arms at the sides
+  const role = (cx, cy) => { const fy = cy / R, xm = (cx + 0.5) / C - 0.5; if (fy < 0.27) return 'head'; if (fy > 0.62) return xm < 0 ? 'legR' : 'legL'; if (Math.abs(xm) > 0.24 && C >= 6) return xm < 0 ? 'armR' : 'armL'; return 'body'; };
+  const cubes = []; for (let cy = 0; cy < R; cy++) { let cx = 0; while (cx < C) { const c = cells[cy * C + cx]; if (!c) { cx++; continue; } const rl = role(cx, cy); let e = cx + 1; while (e < C && cells[cy * C + e] === c && role(e, cy) === rl) e++;
+    cubes.push({ p: [((cx + e) / 2 - C / 2) * u, (R - cy - 0.5) * u, 0], s: [(e - cx) * u, u, u * 4], r: [0, 0, 0], c, f: plain(), role: rl, flat: true }); cx = e; } }
+  return cubes.length ? cubes : null;
+}
+// the player's own pictures, kept in this browser; nothing happens to them until the player asks
+const PICS = { list: store.get('pics', []), sel: null };
+function savePics() { for (;;) { try { localStorage.setItem('forge.pics', JSON.stringify(PICS.list)); return; } catch (e) { if (!/quota/i.test(e?.name + e?.message) || PICS.list.length < 2) return; PICS.list.shift(); } } }
+async function picFromUrl(url) { const im = new Image(); im.src = url; await im.decode(); const cv = document.createElement('canvas'); cv.width = im.naturalWidth; cv.height = im.naturalHeight; cv.getContext('2d').drawImage(im, 0, 0); const blob = await new Promise((r) => cv.toBlob(r, 'image/png')); return { blob, cv, url }; }
+function renderPics() {
+  const L = $('aiPics'); L.innerHTML = ''; L.hidden = !PICS.list.length;
+  PICS.list.forEach((p) => { const d = document.createElement('div'); d.className = 'pic' + (PICS.sel === p.id ? ' on' : ''); const im = document.createElement('img'); im.src = p.url; im.alt = 'صورة'; d.appendChild(im);
+    const x = document.createElement('button'); x.textContent = '✕'; x.setAttribute('aria-label', 'امسح الصورة'); x.onclick = (e) => { e.stopPropagation(); PICS.list = PICS.list.filter((q) => q !== p); if (PICS.sel === p.id) { PICS.sel = null; aiPic = null; } savePics(); renderPics(); }; d.appendChild(x);
+    d.onclick = async () => { if (PICS.sel === p.id) { PICS.sel = null; aiPic = null; } else { PICS.sel = p.id; aiPic = await picFromUrl(p.url).catch(() => null); } renderPics(); }; L.appendChild(d); });
+  if (PICS.sel) { const row = document.createElement('div'); row.className = 'picActs'; row.innerHTML = '<span>الصورة المختارة هتتبعت مع طلبك الجاي. أو انسخها بكسل بكسل من غير المساعد:</span>';
+    const mk = (t, fn) => { const b = document.createElement('button'); b.className = 'tool'; b.textContent = t; b.onclick = fn; row.appendChild(b); };
+    mk('🧍 خليها شخصيتي', () => pixelCopy('hero')); mk('👾 خليها كائن', () => pixelCopy('mon')); L.appendChild(row); }
+}
+function pixelCopy(what) {
+  if (!aiPic) return; const cubes = voxelize(aiPic.cv); if (!cubes) return toast('مش لاقي شكل في الصورة دي');
+  if (what === 'hero') { WE.g.hero = { name: 'نسخة من صورة', cubes }; aiSay('bot', `نسخت الصورة بكسل بكسل وبقت شخصيتك (${cubes.length} حتة). العب وشوفها.`); }
+  else { WE.g.defs ||= {}; let k = 'pic1'; for (let i = 1; WE.g.defs[k = 'pic' + i]; i++); const d = cleanDef({ kind: 'entity', name: 'كائن ' + k.slice(3), move: 'follow', hp: 40, dmg: 8, spd: 2.2, size: 2 }); d.cubes = cubes; WE.g.defs[k] = d; registerDefs(WE.g);
+    WE.item = k; aiSay('bot', `نسخت الصورة بكسل بكسل وبقت كائن اسمه «${d.name}». تلاقيه في «اختراعات»، حطه في العالم، أو قول للمساعد يغيّر اسمه وقوته.`); }
+  saveDraft(); PICS.sel = null; aiPic = null; renderPics();
+}
 function applyOps(ops) {
   let n = 0; const cl = (v) => Math.max(-WS, Math.min(WS - 1, Math.round(+v || 0))), ok = (t) => !!ITEMS[t], monOk = (w) => !!BEASTS[w] || BE.mine.some((d) => 'm:' + d.id === w);
   let ix = null; const K3 = (x, z, y) => x + ',' + z + ',' + y;
@@ -1546,7 +1601,9 @@ function applyOps(ops) {
   flush(); return n;
 }
 $('aiPic').onclick = () => $('aiFile').click();
-$('aiFile').onchange = async () => { const f = $('aiFile').files[0]; $('aiFile').value = ''; if (!f) return; try { aiPic = await loadPic(f); $('aiThumb').src = aiPic.url; $('aiThumb').hidden = false; toast('الصورة جاهزة، اكتب عايز إيه منها'); } catch { toast('مقدرتش أفتح الصورة دي'); } };
+$('aiFile').onchange = async () => { const fs = [...$('aiFile').files]; $('aiFile').value = ''; let last = null; for (const f of fs) { try { const p = await loadPic(f), k = Math.min(1, 640 / Math.max(p.cv.width, p.cv.height)), c = document.createElement('canvas'); c.width = Math.round(p.cv.width * k); c.height = Math.round(p.cv.height * k); c.getContext('2d').drawImage(p.cv, 0, 0, c.width, c.height); last = { id: Date.now() + '-' + Math.random().toString(36).slice(2, 6), url: c.toDataURL('image/png').length < 400000 ? c.toDataURL('image/png') : c.toDataURL('image/jpeg', 0.9) }; PICS.list.push(last); } catch { toast('مقدرتش أفتح صورة منهم'); } }
+  if (!last) return; savePics(); PICS.sel = last.id; aiPic = await picFromUrl(last.url).catch(() => null); renderPics(); toast(fs.length > 1 ? `اترفعت ${fs.length} صور. مش هيحصل حاجة لحد ما تطلب` : 'الصورة اترفعت. مش هيحصل حاجة لحد ما تطلب'); };
+renderPics();
 $('aiThumb').onclick = () => { aiPic = null; $('aiThumb').hidden = true; toast('شلت الصورة'); };
 $('aiText').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); $('aiGo').click(); } });
 $('aiGo').onclick = async () => {
@@ -1583,7 +1640,7 @@ SIZE: do exactly the size the player says. "All the floor", "the whole ground", 
 Build generously and with care for how it looks (walls with towers, paths, decorations, varied blocks), keep it playable (paths the player can walk, a start spot if there is none), and use at most 150 steps (inventions first, then placing them).
 ${imgs ? `THE PLAYER ATTACHED A PICTURE. Copy it as exactly as you can, with the same quality and every detail. A character or creature: make it the hero (if they want to play as it or say "me"/"my character") or define it (an entity or pickup). Study the picture closely first: proportions, every colour, clothes, hair, face, accessories. Build 15-45 boxes that match its shape. For EVERY box add "uv":[x0,y0,x1,y1] = the tight rectangle of the picture (fractions 0..1 of its width and height, from the top-left) that shows that box's front; the game pastes those exact pixels on the box's front (and its edge pixels on the sides), so the front looks exactly like the picture, pixel for pixel. Rectangles must hug the part (no background). Add "uvBack" only if the picture also shows the back. Set "c" to that part's main colour. A place or building in the picture: build it with blocks in its colours instead.
 ` : ''}Player asks: ${JSON.stringify(text)}`, { modelTier: 'complex', cache: false, ...(imgs ? { images: imgs } : {}) });
-    aiUndo = before; const n = applyOps(r?.ops); if (imgs) { aiPic = null; $('aiThumb').hidden = true; } renderWorld(true); renderTabs(); $('aiUndo').disabled = false;
+    aiUndo = before; const n = applyOps(r?.ops); if (imgs) { aiPic = null; PICS.sel = null; renderPics(); } renderWorld(true); renderTabs(); $('aiUndo').disabled = false;
     aiSay('bot', (r?.say || 'خلصت') + (n ? ` (${n} حاجة)` : ' (مفيش حاجة اتحطت، جرّب توضّح أكتر)'));
   } catch (e) { aiSay('bot', e?.code === 'rate_limited' ? 'المساعد محتاج يرتاح شوية، جرّب كمان دقيقة.' : 'معرفتش أبني ده، جرّب تقوله بطريقة تانية.'); }
   $('aiGo').disabled = false; $('aiGo').textContent = 'ابنيه';
