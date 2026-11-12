@@ -70,7 +70,7 @@ body{font:20px/1.2 var(--hud);user-select:none;-webkit-user-select:none;touch-ac
   <p>The toy factory shut down overnight and nobody came back. The lights are dead. Something still walks the halls.</p>
   <div class="keys" id="keys">
     <div>WASD move · MOUSE look · SPACE jump · SHIFT run</div>
-    <div>E use · F flashlight · LEFT CLICK pull (red magnet) · RIGHT CLICK push (blue)</div>
+    <div>E pick up, use, put down · F flashlight · HOLD LEFT CLICK pull (red magnet) · HOLD RIGHT CLICK push (blue)</div>
   </div>
   <div><button id="go">ENTER THE FACTORY</button></div>
 </div></div>
@@ -80,142 +80,246 @@ body{font:20px/1.2 var(--hud);user-select:none;-webkit-user-select:none;touch-ac
 (() => {
 'use strict';
 const $ = (id) => document.getElementById(id);
-const CELL = 2, WALL = 4;
 const touch = matchMedia('(pointer:coarse)').matches; if (touch) document.body.classList.add('touch');
-if (touch) $('keys').innerHTML = '<div>Left circle moves · drag the screen to look</div><div>USE · JUMP · LIGHT · PULL (red magnet) · PUSH (blue magnet)</div>';
+if (touch) $('keys').innerHTML = '<div>Left circle moves · drag the screen to look</div><div>USE picks up, uses and puts down · JUMP · LIGHT · hold PULL (red magnet) · hold PUSH (blue)</div>';
+let seed = 11; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+const V3 = THREE.Vector3;
 
-// ---------------------------------------------------------------- pixel textures, drawn by hand in code (16 px per tile, sharp)
-function tex(draw, w = 16, h = 16, rep = [1, 1]) {
-  const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); draw(g, w, h);
-  const t = new THREE.CanvasTexture(c); t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep[0], rep[1]); return t;
+// ---------------------------------------------------------------- voxel models: lots of small cubes, with corner shading, merged into one mesh each
+const VMAT = new THREE.MeshLambertMaterial({ vertexColors: true });
+const DIRS = [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]];
+const FACE_SHADE = [0.86, 0.8, 1, 0.55, 0.92, 0.74];
+function vox(nx, ny, nz, vs, fill, opt = {}) {
+  const N = nx * ny * nz, data = new Int32Array(N), id = (x, y, z) => x + nx * (y + ny * z);
+  for (let z = 0; z < nz; z++) for (let y = 0; y < ny; y++) for (let x = 0; x < nx; x++) { const c = fill(x, y, z); if (c) data[id(x, y, z)] = c; }
+  const get = (x, y, z) => (x < 0 || y < 0 || z < 0 || x >= nx || y >= ny || z >= nz ? 0 : data[id(x, y, z)]);
+  const pos = [], nor = [], col = [], idx = []; const ox = opt.center === false ? 0 : nx / 2, oz = opt.center === false ? 0 : nz / 2, c = new THREE.Color();
+  for (let z = 0; z < nz; z++) for (let y = 0; y < ny; y++) for (let x = 0; x < nx; x++) { const v = data[id(x, y, z)]; if (!v) continue;
+    const jit = 1 + (((x * 73856093) ^ (y * 19349663) ^ (z * 83492791)) % 100) / 100 * 0.1 - 0.05;
+    for (let f = 0; f < 6; f++) { const [dx, dy, dz] = DIRS[f]; if (get(x + dx, y + dy, z + dz)) continue;
+      // the four corners of this face, and the two in-plane axes
+      const ax = f < 2 ? [1, 2] : f < 4 ? [0, 2] : [0, 1], base = [x + (dx > 0 ? 1 : 0), y + (dy > 0 ? 1 : 0), z + (dz > 0 ? 1 : 0)];
+      const corners = [[0, 0], [1, 0], [1, 1], [0, 1]], b0 = pos.length / 3;
+      for (const [u, w] of corners) { const p = base.slice(); p[ax[0]] += u; p[ax[1]] += w;
+        // ambient occlusion: look at the three voxels touching this corner outside the face
+        const s1 = [x + dx, y + dy, z + dz], s2 = [x + dx, y + dy, z + dz], cc = [x + dx, y + dy, z + dz]; s1[ax[0]] += u ? 1 : -1; s2[ax[1]] += w ? 1 : -1; cc[ax[0]] += u ? 1 : -1; cc[ax[1]] += w ? 1 : -1;
+        const a1 = get(...s1) ? 1 : 0, a2 = get(...s2) ? 1 : 0, a3 = get(...cc) ? 1 : 0, ao = a1 && a2 ? 0 : 3 - (a1 + a2 + a3);
+        pos.push((p[0] - ox) * vs, p[1] * vs, (p[2] - oz) * vs); nor.push(dx, dy, dz); c.setHex(v); const k = FACE_SHADE[f] * [0.45, 0.66, 0.84, 1][ao] * jit; col.push(c.r * k, c.g * k, c.b * k); }
+      // flip the quad so it faces out
+      const flip = (f === 0 || f === 3 || f === 4); if (flip) idx.push(b0, b0 + 1, b0 + 2, b0, b0 + 2, b0 + 3); else idx.push(b0, b0 + 2, b0 + 1, b0, b0 + 3, b0 + 2); } }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setIndex(idx); g.computeBoundingSphere(); g.computeBoundingBox();
+  return g;
 }
-let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-const px = (g, x, y, c) => { g.fillStyle = c; g.fillRect(x, y, 1, 1); };
-const shade = (hex, k) => { const c = new THREE.Color(hex); c.multiplyScalar(k); return '#' + c.getHexString(); };
-function noise(g, w, h, base, amt) { for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) px(g, x, y, shade(base, 1 + (rnd() - 0.5) * amt)); }
-const T = {
-  floor: tex((g, w, h) => { noise(g, w, h, '#4a4741', 0.22); g.fillStyle = '#2f2c28'; g.fillRect(0, 0, w, 1); g.fillRect(0, 0, 1, h); for (let i = 0; i < 6; i++) px(g, (rnd() * w) | 0, (rnd() * h) | 0, '#3a2a1c'); for (let i = 0; i < 5; i++) px(g, 6 + i, 9 + (i % 2), '#2a2724'); }),
-  wall: tex((g, w, h) => { noise(g, w, h, '#3b4a4a', 0.18); g.fillStyle = '#263131'; g.fillRect(0, 7, w, 1); g.fillRect(7, 0, 1, 7); g.fillRect(15, 8, 1, 8); for (const [x, y] of [[2, 2], [12, 2], [2, 12], [12, 12]]) { px(g, x, y, '#7d8a86'); px(g, x + 1, y + 1, '#1a2222'); } for (let i = 0; i < 9; i++) px(g, (rnd() * w) | 0, 8 + ((rnd() * 8) | 0), i % 2 ? '#7a3c1c' : '#8f4a22'); for (let y = 10; y < 16; y++) px(g, 4, y, '#6a3418'); }, 16, 16, [1, 2]),
-  ceil: tex((g, w, h) => { noise(g, w, h, '#1d1c1b', 0.3); g.fillStyle = '#2b2926'; g.fillRect(0, 6, w, 3); g.fillStyle = '#3a3733'; g.fillRect(0, 6, w, 1); }),
-  crate: tex((g, w, h) => { noise(g, w, h, '#5b6670', 0.15); g.fillStyle = '#2f363c'; g.fillRect(0, 0, w, 2); g.fillRect(0, h - 2, w, 2); g.fillRect(0, 0, 2, h); g.fillRect(w - 2, 0, 2, h); for (let i = 2; i < 14; i++) { px(g, i, i, '#3d464d'); px(g, 15 - i, i, '#3d464d'); } g.fillStyle = '#ff4a3d'; g.fillRect(6, 6, 4, 1); g.fillRect(6, 6, 1, 4); g.fillRect(9, 6, 1, 4); g.fillStyle = '#c9c9c9'; g.fillRect(6, 9, 1, 1); g.fillRect(9, 9, 1, 1); }),
-  wood: tex((g, w, h) => { noise(g, w, h, '#7a5230', 0.2); g.fillStyle = '#4d3220'; for (const y of [0, 5, 10, 15]) g.fillRect(0, y, w, 1); g.fillRect(0, 0, 1, h); g.fillRect(w - 1, 0, 1, h); for (let i = 0; i < 6; i++) px(g, (rnd() * w) | 0, (rnd() * h) | 0, '#5e3e26'); }),
-  shelf: tex((g, w, h) => { noise(g, w, h, '#5a3a24', 0.25); g.fillStyle = '#2a1a10'; g.fillRect(0, 0, w, 2); g.fillRect(0, 7, w, 2); g.fillRect(0, 14, w, 2); g.fillStyle = '#7a4a2a'; g.fillRect(0, 0, 2, h); g.fillRect(w - 2, 0, 2, h); for (let i = 0; i < 4; i++) { g.fillStyle = ['#c4475a', '#3f8fd0', '#e2b043', '#46c96b'][i]; g.fillRect(3 + i * 3, 4 + (i % 2), 2, 3); } }),
-  hazard: tex((g, w, h) => { for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) px(g, x, y, ((x + y) >> 2) % 2 ? '#d9a21b' : '#151412'); g.fillStyle = '#151412'; g.fillRect(4, 3, 8, 10); g.fillStyle = '#ffd34d'; g.fillRect(8, 4, 2, 4); g.fillRect(6, 7, 4, 1); g.fillRect(6, 8, 2, 4); }),
-  magdoor: tex((g, w, h) => { noise(g, w, h, '#58626b', 0.14); g.fillStyle = '#2f363c'; g.fillRect(0, 0, w, 1); g.fillRect(0, h - 1, w, 1); g.fillRect(7, 0, 2, h); g.fillStyle = '#ff4a3d'; g.fillRect(4, 3, 8, 2); g.fillRect(4, 3, 2, 8); g.fillRect(10, 3, 2, 8); g.fillStyle = '#e8e1d2'; g.fillRect(4, 11, 2, 2); g.fillRect(10, 11, 2, 2); }),
-  fusebox: tex((g, w, h) => { noise(g, w, h, '#6d7378', 0.12); g.fillStyle = '#2a2e31'; g.fillRect(1, 1, 14, 14); g.fillStyle = '#181a1b'; g.fillRect(5, 4, 6, 9); g.fillStyle = '#d9a21b'; g.fillRect(2, 2, 3, 1); g.fillRect(11, 2, 3, 1); }),
-  fuseon: tex((g, w, h) => { noise(g, w, h, '#6d7378', 0.12); g.fillStyle = '#2a2e31'; g.fillRect(1, 1, 14, 14); g.fillStyle = '#ffd34d'; g.fillRect(6, 4, 4, 9); g.fillStyle = '#fff6c0'; g.fillRect(7, 5, 2, 7); g.fillStyle = '#46c96b'; g.fillRect(2, 2, 3, 1); g.fillRect(11, 2, 3, 1); }),
-  poster: tex((g, w, h) => { noise(g, w, h, '#c9b88f', 0.15); g.fillStyle = '#b5562b'; g.fillRect(1, 1, 14, 3); g.fillStyle = '#3a2a1c'; for (let x = 2; x < 14; x += 2) px(g, x, 2, '#f2e6c8'); g.fillStyle = '#d24a3a'; g.fillRect(5, 6, 6, 5); g.fillStyle = '#151412'; px(g, 6, 8, '#151412'); px(g, 9, 8, '#151412'); g.fillRect(6, 10, 4, 1); g.fillStyle = '#7a6a4a'; g.fillRect(2, 13, 12, 1); for (let i = 0; i < 10; i++) px(g, (rnd() * w) | 0, (rnd() * h) | 0, '#8a7a5a'); }),
+const vmesh = (g, mat = VMAT) => { const m = new THREE.Mesh(g, mat); m.castShadow = m.receiveShadow = true; return m; };
+const H = (s) => parseInt(s.slice(1), 16);
+const pick = (l, x, y, z) => l[Math.abs((x * 7 + y * 13 + z * 29) ^ (x * y)) % l.length];
+
+// ---------------------------------------------------------------- the props, designed voxel by voxel
+const MODELS = {};
+function model(name, make) { return MODELS[name] ||= make(); }
+const steel = [H('#5d666e'), H('#58616a'), H('#636c74')], rust = [H('#8a4a26'), H('#7a3f1f'), H('#965433')];
+const G = {
+  crate: () => model('crate', () => vox(10, 10, 10, 0.12, (x, y, z) => { const e = (a) => a === 0 || a === 9, edges = (e(x) + e(y) + e(z)) >= 2;
+    if (edges) return H('#2f363c'); const face = e(x) || e(y) || e(z); if (!face) return H('#2f363c');
+    const u = e(x) ? z : x, v = e(y) ? z : y; if (u === v || u === 9 - v) return H('#434c54');
+    if (!e(y) && u >= 3 && u <= 6 && v >= 3 && v <= 6) { if (v === 6 && u >= 3 && u <= 6) return H('#ff4a3d'); if ((u === 3 || u === 6) && v >= 4) return v === 3 ? H('#d9d9d9') : H('#ff4a3d'); if ((u === 3 || u === 6) && v === 3) return H('#d9d9d9'); }
+    return pick(steel, x, y, z); })),
+  woodbox: () => model('woodbox', () => vox(8, 8, 8, 0.13, (x, y, z) => { const e = (a) => a === 0 || a === 7; if (!(e(x) || e(y) || e(z))) return H('#4d3220'); const plank = (e(y) ? x : y) % 3 === 0; return (e(x) + e(y) + e(z)) >= 2 ? H('#4d3220') : plank ? H('#5e3e26') : pick([H('#7a5230'), H('#835a36'), H('#71492a')], x, y, z); })),
+  barrel: () => model('barrel', () => vox(9, 12, 9, 0.1, (x, y, z) => { const d = Math.hypot(x - 4, z - 4); if (d > 4.3) return 0; if (y === 2 || y === 9) return H('#2a2e31'); return y === 11 && d < 3.4 ? H('#3a3f45') : (x + z) % 5 === 0 && y > 3 && y < 8 ? H('#b5562b') : H('#c24e24'); })),
+  fuse: () => model('fuse', () => vox(4, 10, 4, 0.04, (x, y, z) => { if (y < 2 || y > 7) return (x === 0 || x === 3) && (z === 0 || z === 3) ? 0 : H('#a8adb2'); return (x === 0 || x === 3 || z === 0 || z === 3) ? (y === 4 ? H('#151412') : H('#ffd34d')) : H('#fff2a8'); })),
+  lampshade: () => model('lamp', () => vox(10, 5, 10, 0.1, (x, y, z) => { const d = Math.hypot(x - 4.5, z - 4.5); if (y === 4) return d < 1.2 ? H('#2a2e31') : 0; const r = 2 + (4 - y) * 0.8; if (d > r || d < r - 1.2) return y === 0 && d < r - 1.2 ? H('#fff1c0') : 0; return H('#2f5a46'); })),
+  convLeg: () => model('convleg', () => vox(14, 6, 2, 0.1, (x, y) => ((x < 2 || x > 11) ? H('#3a3f45') : y === 5 ? H('#7d858c') : 0))),
+  conveyor: () => model('conv', () => vox(14, 9, 20, 0.1, (x, y, z) => { if (y < 6 && (x === 1 || x === 12) && z % 6 < 2) return H('#3a3f45'); if (y === 6 && x > 0 && x < 13) return z % 2 ? H('#1e1f21') : H('#26272a'); if (y === 7 && (x === 0 || x === 13)) return (z >> 1) % 2 ? H('#d9a21b') : H('#151412'); if (y === 5 && x > 1 && x < 12) return z % 3 === 0 ? H('#7d858c') : 0; return 0; })),
+  pillar: () => model('pillar', () => vox(8, 80, 8, 0.2, (x, y, z) => { const e = x === 0 || x === 7 || z === 0 || z === 7; if (!e) return H('#3a3f45'); if (y < 6) return (y + x + z) % 4 < 2 ? H('#d9a21b') : H('#151412'); return y % 10 === 0 ? H('#434c54') : pick(steel, x, y, z); })),
+  toy: () => model('toy', () => vox(10, 10, 10, 0.07, (x, y, z) => { const head = Math.hypot(x - 4.5, y - 5.5, z - 4.5); if (head < 4.2) { if (z > 7 && (x === 3 || x === 6) && y === 6) return H('#151412'); if (z > 7 && y === 3 && x > 2 && x < 7) return H('#151412'); return H('#c4475a'); } if ((Math.hypot(x - 1.5, y - 8.5, z - 4.5) < 1.6) || (Math.hypot(x - 7.5, y - 8.5, z - 4.5) < 1.6)) return H('#a83a4c'); return 0; })),
+  toybox: () => model('toybox', () => vox(10, 7, 8, 0.11, (x, y, z) => { const e = (a, n) => a === 0 || a === n; if (!(e(x, 9) || e(y, 6) || e(z, 7))) return H('#7a5a20'); if (y === 6 && x > 0 && x < 9 && z > 0 && z < 7) return [H('#3f8fd0'), H('#e2b043'), H('#46c96b'), H('#c4475a')][(x + z) % 4]; return (x + y) % 4 < 2 ? H('#e2b043') : H('#d9d2c0'); })),
+  press: () => model('press', () => vox(24, 40, 20, 0.15, (x, y, z) => { // a huge stamping press
+    const legs = (x < 4 || x > 19) && (z < 4 || z > 15); if (legs && y < 36) return y < 3 ? H('#151412') : pick(steel, x, y, z);
+    if (y >= 32 && y < 40) { if (y === 39 && (x === 0 || x === 23)) return 0; return y % 4 === 0 ? H('#2f363c') : (x + z) % 9 === 0 ? H('#b5562b') : H('#4a545c'); }
+    if (y >= 18 && y < 32 && x > 8 && x < 15 && z > 6 && z < 13) return y % 3 === 0 ? H('#9aa0a6') : H('#7d858c'); // piston
+    if (y >= 14 && y < 18 && x > 3 && x < 20 && z > 3 && z < 16) return (x + z) % 2 ? H('#d9a21b') : H('#151412'); // the head with hazard stripes
+    if (y < 4 && x > 2 && x < 21 && z > 2 && z < 17) return y === 3 ? ((x + z) % 2 ? H('#3a3f45') : H('#2f363c')) : H('#2a2e31'); // base plate
+    return 0; })),
+  rackPost: () => model('rackpost', () => vox(2, 60, 2, 0.1, (x, y) => (y % 10 === 0 ? H('#2f363c') : H('#d0661f')))),
+  generator: () => model('gen', () => vox(30, 22, 14, 0.1, (x, y, z) => { const e = x === 0 || x === 29 || y === 21 || z === 0 || z === 13; if (y < 2) return H('#2a2e31'); if (!e) return H('#2a2e31');
+    if (z === 13 && y > 6 && y < 16) { if ((x > 4 && x < 10) || (x > 19 && x < 25)) return (y === 7 || y === 15 || x === 5 || x === 9 || x === 20 || x === 24) ? H('#151412') : H('#0d0e0f'); if (x > 12 && x < 17 && y > 9 && y < 13) return H('#ff4a3d'); }
+    if (y === 21 && (x % 4 === 0)) return H('#2f363c'); return y > 17 ? H('#d9a21b') : pick([H('#4a5a52'), H('#46564e'), H('#4f5f57')], x, y, z); })),
+  shutter: () => model('shutter', () => vox(30, 30, 2, 0.2, (x, y) => (y % 3 === 0 ? H('#2f363c') : y < 4 ? (((x + y) >> 1) % 2 ? H('#d9a21b') : H('#151412')) : pick([H('#6d7378'), H('#666c71'), H('#727879')], x, y, 0)))),
+  magdoorBlue: () => model('magdoorB', () => vox(20, 30, 2, 0.15, (x, y) => { const cx = x - 9.5, cy = y - 18; const ring = Math.hypot(cx, cy); if (y > 12 && y < 24 && ((Math.abs(cx) > 3 && Math.abs(cx) < 6) || (cy > 3 && cy < 6 && Math.abs(cx) < 6))) return y < 15 ? H('#e8e1d2') : H('#3da2ff'); void ring; if (x === 0 || x === 19 || y === 29) return H('#2f363c'); return pick(steel, x, y, 0); })),
+  catwalk: () => model('catwalk', () => vox(30, 11, 20, 0.1, (x, y, z) => { if (y === 0) return (x + z) % 2 === 0 || x === 0 || x === 29 ? H('#3a3f45') : 0; return 0; })),
+  rail: () => model('rail', () => vox(2, 11, 20, 0.1, (x, y, z) => (y === 10 || y === 5 ? H('#d9a21b') : z % 10 === 0 && x === 0 ? H('#d9a21b') : 0))),
 };
-const M = (t, o = {}) => new THREE.MeshLambertMaterial({ map: t, ...o });
 
-// ---------------------------------------------------------------- the map. one character = 2 m.
-// # wall  . floor  S start  X fuse box (on the wall to the north)  G power gate  H tall shelf with the fuse on top
-// C metal crate (magnetic)  w wooden crate  P ceiling lamp  M red magnet door  E the way on  o poster
-const MAP = [
-  '#######################',
-  '#P......o###########..#',
-  '#.......########.....H#',
-  '#..S.......P..........#',
-  '#..w....#######...C...#',
-  '#.......#     #.......#',
-  '#X......#     ###..####',
-  '###G#####       #..#   ',
-  '#...P...#       ####   ',
-  '#.......#              ',
-  '#.......#              ',
-  '###M#####              ',
-  '#..E..#                ',
-  '#######                ',
-];
-const H_ = MAP.length, W_ = MAP[0].length, at = (x, z) => (MAP[z] && MAP[z][x]) || ' ';
-const cellC = (x, z) => new THREE.Vector3(x * CELL + CELL / 2, 0, z * CELL + CELL / 2);
+// ---------------------------------------------------------------- textures for the big surfaces: 32 px, sharp
+function tex(draw, w = 32, h = 32) { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestMipmapLinearFilter; t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; }
+const px = (g, x, y, c) => { g.fillStyle = c; g.fillRect(x, y, 1, 1); };
+const sh = (hex, k) => { const c = new THREE.Color(hex); c.multiplyScalar(k); return '#' + c.getHexString(); };
+const noise = (g, w, h, base, amt) => { for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) px(g, x, y, sh(base, 1 + (rnd() - 0.5) * amt)); };
+const TX = {
+  concrete: tex((g, w, h) => { noise(g, w, h, '#57534c', 0.18); for (let i = 0; i < 40; i++) px(g, (rnd() * w) | 0, (rnd() * h) | 0, '#3f3b35'); g.fillStyle = '#46423c'; g.fillRect(0, 0, w, 1); g.fillRect(0, 0, 1, h); for (let i = 0; i < 3; i++) { const x = (rnd() * w) | 0, y = (rnd() * h) | 0; for (let k = 0; k < 6; k++) px(g, x + k, y + ((k * 7) % 3) - 1, '#3a3631'); } for (let i = 0; i < 2; i++) { const x = (rnd() * 24) | 0, y = (rnd() * 24) | 0; g.fillStyle = '#4a3a2a55'; g.fillRect(x, y, 6, 4); } }),
+  brick: tex((g, w, h) => { for (let r = 0; r < 8; r++) for (let b = 0; b < 4; b++) { const ox = (r % 2) * 4, base = pick(['#6b3a2c', '#74402f', '#633526', '#7b4636'], r, b, 0); for (let y = 0; y < 3; y++) for (let x = 0; x < 7; x++) px(g, (b * 8 + x + ox) % w, r * 4 + y, sh(base, 1 + (rnd() - 0.5) * 0.15)); } g.fillStyle = '#2a2420'; for (let r = 0; r < 8; r++) g.fillRect(0, r * 4 + 3, w, 1); for (let r = 0; r < 8; r++) for (let b = 0; b < 4; b++) g.fillRect((b * 8 + 7 + (r % 2) * 4) % w, r * 4, 1, 3); for (let i = 0; i < 30; i++) px(g, (rnd() * w) | 0, (rnd() * h) | 0, '#4a3a30'); }),
+  metal: tex((g, w, h) => { for (let x = 0; x < w; x++) for (let y = 0; y < h; y++) px(g, x, y, sh(x % 4 < 2 ? '#4f5a5c' : '#434d4f', 1 + (rnd() - 0.5) * 0.12)); for (let i = 0; i < 26; i++) { const x = (rnd() * w) | 0, y = (rnd() * h) | 0; for (let k = 0; k < 3 + rnd() * 6; k++) px(g, x, (y + k) % h, rnd() < 0.5 ? '#7a3c1c' : '#8f4a22'); } g.fillStyle = '#2b3234'; g.fillRect(0, 0, w, 1); }),
+  ceiling: tex((g, w, h) => { noise(g, w, h, '#1c1b1a', 0.25); g.fillStyle = '#2a2826'; g.fillRect(0, 12, w, 6); g.fillStyle = '#34312e'; g.fillRect(0, 12, w, 1); g.fillRect(12, 0, 6, h); }),
+  hazardFloor: tex((g, w, h) => { for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) px(g, x, y, ((x + y) >> 3) % 2 ? sh('#c9921b', 1 + (rnd() - 0.5) * 0.2) : sh('#1b1a18', 1 + (rnd() - 0.5) * 0.3)); }),
+  grate: tex((g, w, h) => { for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) px(g, x, y, (x % 4 === 0 || y % 4 === 0) ? sh('#4a5257', 1 + (rnd() - 0.5) * 0.2) : '#0c0d0e'); for (let i = 0; i < 12; i++) px(g, (rnd() * w) | 0, (rnd() * h) | 0, '#7a3c1c'); g.fillStyle = '#2a2e31'; g.fillRect(0, 0, w, 1); }),
+  belt: tex((g, w, h) => { for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) px(g, x, y, sh(y % 8 < 1 ? '#34363a' : '#1e1f21', 1 + (rnd() - 0.5) * 0.25)); }),
+  stripe: tex((g, w, h) => { noise(g, w, h, '#c9a227', 0.25); for (let i = 0; i < 25; i++) px(g, (rnd() * w) | 0, (rnd() * h) | 0, '#57534c'); }),
+  sign: tex((g, w, h) => { noise(g, w, h, '#c9b88f', 0.12); g.fillStyle = '#b5562b'; g.fillRect(1, 1, 30, 6); g.fillStyle = '#e8e1d2'; for (let x = 3; x < 29; x += 3) g.fillRect(x, 3, 2, 2); g.fillStyle = '#c4475a'; g.fillRect(9, 11, 14, 12); g.fillStyle = '#151412'; g.fillRect(12, 15, 2, 2); g.fillRect(18, 15, 2, 2); g.fillRect(12, 20, 8, 1); g.fillStyle = '#7a6a4a'; g.fillRect(4, 26, 24, 1); g.fillRect(4, 28, 16, 1); }, 32, 32),
+};
+const TM = (t, rep = 2) => new THREE.MeshLambertMaterial({ map: t });
+const POST = new THREE.MeshLambertMaterial({ color: 0xd0661f }), RAIL = new THREE.MeshLambertMaterial({ color: 0xd9a21b });
+const MAT = { grate: TM(TX.grate), belt: TM(TX.belt), concrete: TM(TX.concrete), brick: TM(TX.brick), metal: TM(TX.metal), ceiling: TM(TX.ceiling), hazard: TM(TX.hazardFloor), stripe: TM(TX.stripe) };
+// a box whose texture repeats by its real size (tile = metres per texture)
+function slab(w, h, d, mat, tile = 2) { const g = new THREE.BoxGeometry(w, h, d), uv = g.attributes.uv, dims = [[d, h], [d, h], [w, d], [w, d], [w, h], [w, h]];
+  for (let f = 0; f < 6; f++) for (let i = 0; i < 4; i++) { const k = f * 4 + i; uv.setXY(k, uv.getX(k) * dims[f][0] / tile, uv.getY(k) * dims[f][1] / tile); } const m = new THREE.Mesh(g, mat); m.receiveShadow = true; m.castShadow = true; return m; }
 
-// ---------------------------------------------------------------- world
-const R = new THREE.WebGLRenderer({ antialias: false }); R.setPixelRatio(Math.min(1.5, devicePixelRatio)); R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFShadowMap;
+// ---------------------------------------------------------------- renderer and scene
+const R = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' }); R.setPixelRatio(Math.min(1.5, devicePixelRatio)); R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFShadowMap;
 $('game').appendChild(R.domElement);
-const scene = new THREE.Scene(); scene.background = new THREE.Color(0x050506); scene.fog = new THREE.FogExp2(0x050506, 0.085);
-const cam = new THREE.PerspectiveCamera(72, 1, 0.05, 80); scene.add(cam);
-const amb = new THREE.AmbientLight(0x8890a0, 0.05); scene.add(amb);
-const resize = () => { const w = innerWidth, h = innerHeight; R.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); }; addEventListener('resize', resize); resize();
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x040405); scene.fog = new THREE.FogExp2(0x040405, 0.04);
+const cam = new THREE.PerspectiveCamera(72, 1, 0.03, 160); scene.add(cam);
+const amb = new THREE.HemisphereLight(0x8a90a0, 0x1a1410, 0.07); scene.add(amb);
+const resize = () => { R.setSize(innerWidth, innerHeight, false); cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); }; addEventListener('resize', resize); resize();
 
-const box = new THREE.BoxGeometry(1, 1, 1);
-const solid = new Set();            // wall cells
-const blockers = new Map();         // cell -> door object while it is closed
-const boxes = [];                   // things you can stand on or bump into: {o, w, d, h, metal}
-const usables = [];                 // {o, label, use(), ok()}
+// ---------------------------------------------------------------- collision world: axis-aligned boxes. You can stand on top of any of them.
+const solids = [];   // {min: V3, max: V3, o?}
+function solid(x0, y0, z0, x1, y1, z1, o) { const s = { min: new V3(Math.min(x0, x1), Math.min(y0, y1), Math.min(z0, z1)), max: new V3(Math.max(x0, x1), Math.max(y0, y1), Math.max(z0, z1)), o }; solids.push(s); return s; }
+function block(x, y, z, w, h, d, mat, tile) { const m = slab(w, h, d, mat, tile); m.position.set(x, y + h / 2, z); scene.add(m); solid(x - w / 2, y, z - d / 2, x + w / 2, y + h, z + d / 2, m); return m; }
+function place(g, x, y, z, ry = 0, coll = true) { const m = vmesh(g); m.position.set(x, y, z); m.rotation.y = ry; scene.add(m); if (coll) { m.updateMatrixWorld(); const b = new THREE.Box3().setFromObject(m); solid(b.min.x, b.min.y, b.min.z, b.max.x, b.max.y, b.max.z, m); } return m; }
+// a wall from (x0,z0) to (x1,z1) with optional openings [from, to, height] measured along it
+function wall(x0, z0, x1, z1, h, mat, gaps = [], th = 0.6) {
+  const len = Math.hypot(x1 - x0, z1 - z0), dx = (x1 - x0) / len, dz = (z1 - z0) / len, along = Math.abs(dx) > 0.5;
+  const pieces = []; let cur = 0; for (const [a, b, gh] of [...gaps].sort((p, q) => p[0] - q[0])) { if (a > cur) pieces.push([cur, a, 0, h]); pieces.push([a, b, gh, h]); cur = b; } if (cur < len) pieces.push([cur, len, 0, h]);
+  for (const [a, b, y0, y1] of pieces) { if (y1 - y0 < 0.01 || b - a < 0.01) continue; const mx = x0 + dx * (a + b) / 2, mz = z0 + dz * (a + b) / 2; block(mx, y0, mz, along ? b - a : th, y1 - y0, along ? th : b - a, mat, 3); }
+}
+
+// ---------------------------------------------------------------- the factory (metres). Lobby → main hall (huge) → warehouse; catwalks at 6 m; generator room up top
+const LOBBY = { x0: 0, x1: 16, z0: 0, z1: 14, h: 6 }, HALL = { x0: -16, x1: 32, z0: 14, z1: 74, h: 16 }, WARE = { x0: 32, x1: 56, z0: 20, z1: 50, h: 12 }, SIDE = { x0: 16, x1: 24, z0: 2, z1: 11, h: 5 };
+function floorCeil(r, ceilMat = MAT.ceiling) { const f = slab(r.x1 - r.x0, 0.2, r.z1 - r.z0, MAT.concrete, 2); f.position.set((r.x0 + r.x1) / 2, -0.1, (r.z0 + r.z1) / 2); f.castShadow = false; scene.add(f); const c = slab(r.x1 - r.x0, 0.3, r.z1 - r.z0, ceilMat, 4); c.position.set((r.x0 + r.x1) / 2, r.h + 0.15, (r.z0 + r.z1) / 2); c.castShadow = false; scene.add(c); }
+[LOBBY, HALL, WARE, SIDE].forEach((r) => floorCeil(r));
+solid(-40, -1, -20, 80, 0, 100); // the ground
+// lobby
+wall(0, 0, 16, 0, 6, MAT.brick); wall(0, 0, 0, 14, 6, MAT.brick); wall(16, 0, 16, 14, 6, MAT.brick, [[4, 7, 4]]);
+// the hall's front wall, with the doorway from the lobby (x 5..11, 5 m tall)
+wall(-16, 14, 32, 14, 16, MAT.brick, [[21, 27, 5]]);
+wall(-16, 14, -16, 74, 16, MAT.metal); wall(-16, 74, 32, 74, 16, MAT.metal, [[36, 42, 6]]); wall(32, 14, 32, 74, 16, MAT.metal, [[16, 22, 6]]);
+// warehouse
+wall(32, 20, 56, 20, 12, MAT.metal); wall(56, 20, 56, 50, 12, MAT.metal); wall(32, 50, 56, 50, 12, MAT.metal);
+// side room (behind the blue magnet door)
+wall(16, 2, 24, 2, 5, MAT.brick); wall(24, 2, 24, 11, 5, MAT.brick); wall(16, 11, 24, 11, 5, MAT.brick);
+// lane stripes painted on the hall floor
+for (const x of [-9.5, 0.5, 10.5, 20.5]) { const s = slab(0.25, 0.02, 56, MAT.stripe, 1); s.position.set(x, 0.01, 44); s.castShadow = false; scene.add(s); }
+{ const s = slab(8, 0.02, 3, MAT.hazard, 1); s.position.set(23, 0.012, 72); s.castShadow = false; scene.add(s); }
+
+// pillars every 12 m, with lamps hanging between them
+for (let x = -4; x <= 20; x += 12) for (let z = 26; z <= 66; z += 20) { block(x, 0, z, 1.4, 1.2, 1.4, MAT.hazard, 1); block(x, 1.2, z, 1.4, 14.8, 1.4, MAT.metal, 2); }
+// conveyor lines running the length of the hall
+for (const x of [-6, 5, 15]) { const belt = slab(1.2, 0.1, 40, MAT.belt, 1); belt.position.set(x, 0.65, 42); scene.add(belt); for (const dx of [-0.68, 0.68]) { const r = slab(0.16, 0.14, 40, MAT.hazard, 0.5); r.position.set(x + dx, 0.72, 42); scene.add(r); } solid(x - 0.76, 0, 22, x + 0.76, 0.79, 62); for (let z = 23; z < 62; z += 3) place(G.convLeg(), x, 0, z, 0, false); }
+// two huge presses on the lines
+place(G.press(), -6, 0, 40); place(G.press(), 15, 0, 52);
+// junk, toys and barrels everywhere
+const scatter = [[-12, 20], [-11, 30], [-13, 52], [25, 24], [27, 40], [24, 60], [-2, 70], [9, 18], [28, 66], [-10, 66]];
+scatter.forEach(([x, z], i) => { if (i % 3 === 0) place(G.barrel(), x, 0, z); else if (i % 3 === 1) place(G.toybox(), x, 0, z, rnd() * 3); else { place(G.barrel(), x, 0, z); place(G.barrel(), x + 1, 0, z + 0.3); } });
+for (let i = 0; i < 14; i++) { const t = place(G.toy(), -12 + rnd() * 40, 0, 20 + rnd() * 50, rnd() * 6, false); t.rotation.z = (rnd() - 0.5) * 1.2; t.position.y = 0.1; }
+place(G.toy(), 6.5, 1.0, 30, 2.5, false); place(G.toy(), 15.3, 1.0, 34, 0.5, false); place(G.toy(), -5.5, 1.0, 26, 1.0, false);
+// a sign on the lobby wall
+{ const p = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 2.2), new THREE.MeshLambertMaterial({ map: TX.sign })); p.position.set(8, 3, 0.31); scene.add(p); }
+
+// catwalk ring at 6 m along the back and the left wall, stairs on the left side, generator room at the back middle
+const CW = 6;
+function catwalk(x0, z0, x1, z1) { const m = slab(x1 - x0, 0.12, z1 - z0, MAT.grate, 1); m.position.set((x0 + x1) / 2, CW - 0.06, (z0 + z1) / 2); scene.add(m); solid(x0, CW - 0.12, z0, x1, CW, z1); }
+catwalk(-16, 14, -12, 74); catwalk(-12, 70, 32, 74);
+// railings along the open side
+function railRun(x0, z0, x1, z1) { const len = Math.hypot(x1 - x0, z1 - z0), alongX = Math.abs(x1 - x0) > 0.1; for (const y of [0.5, 1.05]) { const b = new THREE.Mesh(new THREE.BoxGeometry(alongX ? len : 0.06, 0.06, alongX ? 0.06 : len), RAIL); b.position.set((x0 + x1) / 2, CW + y, (z0 + z1) / 2); scene.add(b); } for (let t = 0; t <= len; t += 2) { const q = new THREE.Mesh(new THREE.BoxGeometry(0.07, 1.1, 0.07), RAIL); q.position.set(x0 + (x1 - x0) * t / len, CW + 0.55, z0 + (z1 - z0) * t / len); scene.add(q); } }
+railRun(-12, 14, -12, 48); railRun(-12, 52, -12, 70); solid(-12.1, CW, 14, -11.9, CW + 1.1, 48); solid(-12.1, CW, 52, -11.9, CW + 1.1, 70);
+railRun(-12, 70, 8, 70); railRun(16, 70, 32, 70); solid(-12, CW, 69.9, 8, CW + 1.1, 70.1); solid(16, CW, 69.9, 32, CW + 1.1, 70.1);
+// stairs up the left wall (z 30 → 48), 20 steps of 0.3 m
+for (let i = 0; i < 20; i++) { const y = (i + 1) * 0.3; block(-10, 0, 30 + i * 0.9 + 0.45, 3, y, 0.9, MAT.metal, 1); } block(-10, 0, 49.5, 3, CW, 2.2, MAT.metal, 1);
+solid(-11.6, CW - 0.12, 48, -8.4, CW, 51); // landing joins the catwalk
+{ const r = slab(3, 0.12, 4, MAT.metal); r.position.set(-10, CW - 0.06, 50); scene.add(r); } catwalk(-12, 48, -8, 52);
+// the generator room: a platform out from the back catwalk
+catwalk(6, 62, 18, 70); wall(6, 62, 18, 62, 4, MAT.metal, [], 0.4); solids[solids.length - 1].min.y += CW; solids[solids.length - 1].max.y += CW; scene.children[scene.children.length - 1].position.y += CW;
+// (the room walls sit on the platform)
+const genWalls = [[6, 62, 6, 70], [18, 62, 18, 70]]; for (const [a, b, c, d] of genWalls) { const n = solids.length; wall(a, b, c, d, 4, MAT.metal, [[2, 4, 3]], 0.4); for (let i = n; i < solids.length; i++) { solids[i].min.y += CW; solids[i].max.y += CW; solids[i].o.position.y += CW; } }
+solid(6, -1, 62, 18, CW - 0.12, 70).o = null; // the space under the platform is a solid office block
+block(12, 0, 66, 12, CW - 0.12, 8, MAT.brick, 3); solids.pop();
+const gen = place(G.generator(), 12, CW, 64.5, 0);
+// big shutter in the back wall (the way out), rolls up when the power comes back
+const shutter = place(G.shutter(), 23, 0, 74.2, 0); const shutterSolid = solids[solids.length - 1];
+// warehouse racks: rows of tall shelving with boxes; one low rack holds the first fuse on top
+const RACKS = [];
+function rack(x, z, len, levels, top) { for (let i = 0; i <= len; i += 3) for (const dz of [-1, 1]) { const p = new THREE.Mesh(new THREE.BoxGeometry(0.2, top, 0.2), POST); p.position.set(x + i, top / 2, z + dz); p.castShadow = true; scene.add(p); solid(x + i - 0.1, 0, z + dz - 0.1, x + i + 0.1, top, z + dz + 0.1); }
+  for (const y of levels) { const s = slab(len, 0.12, 2.2, MAT.metal, 2); s.position.set(x + len / 2, y, z); scene.add(s); solid(x, y - 0.06, z - 1.1, x + len, y + 0.06, z + 1.1); for (let i = 0.8; i < len; i += 1.6) if (rnd() < 0.65) { const m = vmesh(rnd() < 0.5 ? G.woodbox() : G.toybox()); m.position.set(x + i, y + 0.06, z + (rnd() - 0.5) * 0.6); m.rotation.y = rnd() * 0.4; scene.add(m); } }
+  RACKS.push({ x, z, len }); }
+rack(35, 26, 18, [2.6, 5.2, 7.8], 9); rack(35, 32, 18, [2.6, 5.2, 7.8], 9); rack(35, 38, 9, [2.0], 2.1); rack(47, 38, 6, [2.6, 5.2], 6); rack(35, 44, 18, [2.6, 5.2, 7.8], 9);
+
+// ---------------------------------------------------------------- lights
 const lamps = [];
+function hangLamp(x, z, y, color = 0xffc070, power = 2.4, dist = 26, shadow = false) { const shade = vmesh(G.lampshade()); shade.position.set(x, y, z); scene.add(shade); const cable = new THREE.Mesh(new THREE.BoxGeometry(0.04, 3, 0.04), new THREE.MeshBasicMaterial({ color: 0x111111 })); cable.position.set(x, y + 2, z); scene.add(cable);
+  const l = new THREE.PointLight(color, 0, dist, 1.4); l.position.set(x, y - 0.2, z); l.castShadow = shadow; if (shadow) { l.shadow.mapSize.set(512, 512); l.shadow.camera.far = dist; } scene.add(l); const L = { l, power, on: false, ph: rnd() * 9, flick: false, shade }; lamps.push(L); return L; }
+hangLamp(8, 7, 5.2, 0xffb060, 1.6, 14).on = true; lamps[0].flick = true;
+for (const [x, z] of [[2, 22], [16, 22], [2, 44], [16, 44], [2, 64], [24, 64], [-10, 36]]) hangLamp(x, z, 12.5, 0xffc070, 2.6, 30);
+for (const [x, z] of [[40, 29], [50, 41]]) hangLamp(x, z, 10, 0xffc070, 2.0, 22);
+const emergency = []; for (const [x, z] of [[-15, 40], [31, 30], [12, 73.5]]) { const l = new THREE.PointLight(0xff2a1a, 0.9, 12, 1.5); l.position.set(x, 4, z); scene.add(l); const b = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.25, 0.4), new THREE.MeshBasicMaterial({ color: 0xff3a2a })); b.position.copy(l.position); scene.add(b); emergency.push(l); }
 
-// walls, floor, ceiling
-{ const walls = []; for (let z = 0; z < H_; z++) for (let x = 0; x < W_; x++) if (at(x, z) === '#') { solid.add(x + ',' + z); walls.push([x, z]); }
-  const wm = new THREE.InstancedMesh(box, M(T.wall), walls.length), o = new THREE.Object3D();
-  walls.forEach(([x, z], i) => { o.position.set(x * CELL + 1, WALL / 2, z * CELL + 1); o.scale.set(CELL, WALL, CELL); o.updateMatrix(); wm.setMatrixAt(i, o.matrix); }); wm.receiveShadow = true; wm.castShadow = true; scene.add(wm);
-  const fl = new THREE.Mesh(new THREE.PlaneGeometry(W_ * CELL, H_ * CELL), M(T.floor.clone())); fl.material.map.repeat.set(W_, H_); fl.material.map.needsUpdate = true; fl.rotation.x = -Math.PI / 2; fl.position.set(W_, 0, H_); fl.receiveShadow = true; scene.add(fl);
-  const ce = new THREE.Mesh(new THREE.PlaneGeometry(W_ * CELL, H_ * CELL), M(T.ceil.clone())); ce.material.map.repeat.set(W_, H_); ce.material.map.needsUpdate = true; ce.rotation.x = Math.PI / 2; ce.position.set(W_, WALL, H_); scene.add(ce); }
+// ---------------------------------------------------------------- things you can pick up, push and use
+const items = [];   // carriable: {o, kind, name}
+const metalBoxes = []; // magnetic crates: {o, s: solid}
+function addItem(kind, x, y, z) { const o = vmesh(G[kind]()); o.position.set(x, y, z); scene.add(o); const it = { o, kind, name: kind === 'fuse' ? 'fuse' : kind }; items.push(it); return it; }
+function addCrate(x, z) { const o = place(G.crate(), x, 0, z); const s = solids[solids.length - 1]; const c = { o, s, size: 1.2 }; metalBoxes.push(c); return c; }
+addItem('fuse', 41, 2.0 + 0.06, 38);     // on top of the low rack, hard to reach
+addItem('fuse', 20, 1.04, 8);            // in the side room, on a crate
+place(G.woodbox(), 20, 0, 8);
+addCrate(44, 47.5); addCrate(28, 46); addCrate(-8, 58);
+// the blue magnet door to the side room
+const blueDoor = place(G.magdoorBlue(), 16.15, 0, 5.5, Math.PI / 2); const blueSolid = solids[solids.length - 1]; blueDoor.userData.color = 'blue';
+// generator sockets (two)
+const sockets = [{ p: new V3(11.2, CW + 1.1, 65.22), filled: false }, { p: new V3(12.7, CW + 1.1, 65.22), filled: false }];
+const socketMarks = sockets.map((s) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.72, 0.02), new THREE.MeshBasicMaterial({ color: 0x220a08 })); m.position.copy(s.p); scene.add(m); return m; });
 
-function addBox(x, z, w, d, h, mat, metal, y0 = 0) { const o = new THREE.Mesh(box, mat); o.scale.set(w, h, d); o.position.set(x, y0 + h / 2, z); o.castShadow = o.receiveShadow = true; scene.add(o); const b = { o, w, d, h, y0, metal }; boxes.push(b); return b; }
-function door(x, z, mat, label) { const c = cellC(x, z), o = new THREE.Mesh(box, mat); o.scale.set(CELL, WALL, CELL * 0.5); o.position.set(c.x, WALL / 2, c.z); o.castShadow = true; scene.add(o); const d = { o, x, z, open: false, t: 0, label }; blockers.set(x + ',' + z, d); return d; }
-function openDoor(d) { if (d.open) return; d.open = true; blockers.delete(d.x + ',' + d.z); sfx.gate(); }
+// ---------------------------------------------------------------- the player's hands, made of tiny cubes: left holds the flashlight, right wears the magnet gauntlet
+const hands = new THREE.Group(); cam.add(hands);
+const sleeve = H('#2a3a5a'), skin = H('#d9a77f'), skinD = H('#c08d68'), glove = H('#3a3f45');
+const armR = vmesh(vox(12, 12, 30, 0.012, (x, y, z) => { // sleeve, wrist, gauntlet with the two magnet prongs
+  const cx = x - 5.5, cy = y - 5.5, r = Math.hypot(cx, cy);
+  if (z >= 16) return r < 5.6 ? (z % 6 === 0 ? H('#22304a') : sleeve) : 0;
+  if (z >= 12) return r < 5 ? glove : 0;
+  if (z >= 4 && r < 5.2) { if (y >= 9) return (x === 3 || x === 8) ? H('#ffd34d') : H('#b5562b'); return z === 4 ? H('#2f363c') : glove; }
+  if (z < 4 && y >= 7 && y <= 10) { if (x >= 1 && x <= 3) return z < 2 ? H('#ff4a3d') : H('#9aa0a6'); if (x >= 8 && x <= 10) return z < 2 ? H('#3da2ff') : H('#9aa0a6'); }
+  if (z < 4 && y < 6 && x > 1 && x < 10 && (x % 2 === 0)) return z === 0 ? skinD : skin; return 0; }), VMAT);
+armR.position.set(0.26, -0.31, -0.44); armR.scale.setScalar(0.72); hands.add(armR);
+const armL = vmesh(vox(12, 14, 30, 0.012, (x, y, z) => { // sleeve, hand gripping the flashlight
+  const cx = x - 5.5, cy = y - 5.5, r = Math.hypot(cx, cy);
+  if (z >= 16) return r < 5.6 ? (z % 6 === 0 ? H('#22304a') : sleeve) : 0;
+  if (z >= 9) return r < 4.8 ? (y > 7 ? skin : skinD) : 0;
+  const fl = Math.hypot(x - 5.5, y - 9.5); if (fl < 2.6 && z < 12) return z < 2 ? H('#fff1c0') : z < 4 ? H('#1a1c1e') : H('#2a2e31');
+  if (z < 9 && z > 2 && r < 4.6 && y < 9 && (z % 2 === 0 || y < 4)) return y < 3 ? skinD : skin; return 0; }), VMAT);
+armL.position.set(-0.27, -0.32, -0.46); armL.scale.setScalar(0.72); hands.add(armL);
+const lens = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.01), new THREE.MeshBasicMaterial({ color: 0xfff1c0 })); lens.position.set(-0.27, -0.32 + 0.035, -0.465 - 0.16); hands.add(lens);
+const flash = new THREE.SpotLight(0xfff1d8, 2.6, 34, 0.46, 0.5, 1.1); flash.castShadow = true; flash.shadow.mapSize.set(1024, 1024); flash.shadow.camera.near = 0.3; flash.shadow.camera.far = 34; flash.position.set(-0.2, -0.15, -0.3); cam.add(flash); flash.target.position.set(0, 0, -6); cam.add(flash.target);
+const carryPivot = new THREE.Group(); carryPivot.position.set(0.02, -0.28, -0.62); cam.add(carryPivot);
+const beamMat = new THREE.LineBasicMaterial({ color: 0xff4a3d, transparent: true, opacity: 0.85 }); const beam = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new V3(), new V3()]), beamMat); beam.frustumCulled = false; scene.add(beam); beam.visible = false;
 
-let startPos = cellC(3, 3), fuseBox, gate, magDoor, fuse, endCell;
-for (let z = 0; z < H_; z++) for (let x = 0; x < W_; x++) { const ch = at(x, z), c = cellC(x, z);
-  if (ch === 'S') startPos = c;
-  if (ch === 'P') { const l = new THREE.PointLight(0xffb347, 1.4, 11, 1.6); l.position.set(c.x, WALL - 0.4, c.z); scene.add(l); const bulb = new THREE.Mesh(box, new THREE.MeshBasicMaterial({ color: 0xffd08a })); bulb.scale.set(0.5, 0.12, 0.5); bulb.position.copy(l.position).setY(WALL - 0.08); scene.add(bulb); lamps.push({ l, bulb, base: 1.4, ph: rnd() * 10, on: z < 7 && x < 13, flick: x > 6 }); }
-  if (ch === 'w') addBox(c.x, c.z, 1.1, 1.1, 1.1, M(T.wood), false);
-  if (ch === 'C') addBox(c.x, c.z, 1.1, 1.1, 1.1, M(T.crate), true);
-  if (ch === 'H') { const s = addBox(c.x - 0.2, c.z, 1.4, 1.6, 3.1, M(T.shelf), false); fuse = new THREE.Group(); const f1 = new THREE.Mesh(box, new THREE.MeshLambertMaterial({ color: 0xffd34d, emissive: 0x6a4a00 })); f1.scale.set(0.18, 0.42, 0.18); const f2 = new THREE.Mesh(box, new THREE.MeshLambertMaterial({ color: 0x9aa0a6 })); f2.scale.set(0.22, 0.08, 0.22); f2.position.y = 0.24; const f3 = f2.clone(); f3.position.y = -0.24; fuse.add(f1, f2, f3); fuse.position.set(c.x - 0.2, 3.1 + 0.3, c.z); scene.add(fuse);
-    usables.push({ o: fuse, label: 'Take the fuse', use() { has.fuse = true; scene.remove(fuse); sfx.pick(); objective(fuseBox.seen ? 'Put the fuse in the fuse box in the lobby.' : 'A fuse. Something in this factory must need it.'); toast('Got a fuse'); }, ok: () => !has.fuse && fuse.parent }); }
-  if (ch === 'X') { const o = new THREE.Mesh(box, [M(T.wall), M(T.wall), M(T.wall), M(T.wall), M(T.fusebox), M(T.wall)]); o.scale.set(0.9, 0.9, 0.25); o.position.set(c.x - 0.88, 1.6, c.z); o.rotation.y = Math.PI / 2; scene.add(o);
-    fuseBox = { o, seen: false, on: false }; usables.push({ o, label: 'Fuse box', use() { if (fuseBox.on) return; if (!has.fuse) { fuseBox.seen = true; sfx.deny(); toast('The fuse box is empty.'); objective('The power is out. Find a fuse for the fuse box.'); return; } has.fuse = false; fuseBox.on = true; o.material[4] = M(T.fuseon); powerOn(); }, ok: () => !fuseBox.on }); }
-  if (ch === 'G') gate = door(x, z, [M(T.hazard), M(T.hazard), M(T.hazard), M(T.hazard), M(T.hazard), M(T.hazard)], 'gate');
-  if (ch === 'M') { magDoor = door(x, z, [M(T.wall), M(T.wall), M(T.wall), M(T.wall), M(T.magdoor), M(T.magdoor)], 'magnet'); magDoor.color = 'red'; }
-  if (ch === 'E') endCell = { x, z };
-  if (ch === 'o') { const p = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 1.6), M(T.poster)); p.position.set(c.x, 2.1, z * CELL + 0.02); scene.add(p); }
-}
-// a few broken toys and junk lying around (tiny cube models)
-function junk(x, z, cols, s = 0.25) { const g = new THREE.Group(); cols.forEach((c, i) => { const m = new THREE.Mesh(box, new THREE.MeshLambertMaterial({ color: c })); m.scale.setScalar(s * (0.7 + rnd() * 0.6)); m.position.set((rnd() - 0.5) * 0.8, s / 2 + (i > 2 ? s : 0), (rnd() - 0.5) * 0.8); m.rotation.y = rnd() * 3; m.castShadow = true; g.add(m); }); g.position.set(x, 0, z); scene.add(g); }
-junk(5, 9, ['#c4475a', '#e2b043', '#3f8fd0', '#c4475a']); junk(17, 7, ['#46c96b', '#7a5230', '#e2b043']); junk(38, 9, ['#3f8fd0', '#c4475a', '#f2efe6', '#3f8fd0']); junk(4, 18, ['#e2b043', '#24262b']); junk(30, 10, ['#9aa0a6', '#9aa0a6', '#5a3a24']);
-
-// ---------------------------------------------------------------- the player
-const P = { pos: startPos.clone(), vy: 0, yaw: Math.PI, pitch: 0, ground: 0, onGround: true, eye: 1.6, r: 0.32 };
-const keys = {}, has = { fuse: false };
-let started = false, flashOn = true, battery = 1, magMode = null, magT = 0;
-const flash = new THREE.SpotLight(0xfff1d8, 2.2, 22, 0.42, 0.55, 1.2); flash.castShadow = true; flash.shadow.mapSize.set(512, 512); flash.shadow.camera.near = 0.2; cam.add(flash); flash.position.set(0.25, -0.2, 0); flash.target.position.set(0, 0, -5); cam.add(flash.target);
-
-// the magnet gauntlet you hold (right hand) and the flashlight (left), made of little cubes
-const hand = new THREE.Group(); cam.add(hand); hand.position.set(0.3, -0.26, -0.6); hand.scale.setScalar(0.55);
-{ const c = (x, y, z, w, h, d, col, em = 0) => { const m = new THREE.Mesh(box, new THREE.MeshLambertMaterial({ color: col, emissive: em })); m.scale.set(w, h, d); m.position.set(x, y, z); hand.add(m); return m; };
-  c(0, 0, 0.1, 0.16, 0.14, 0.34, '#3a3f45'); c(0, 0.06, 0.05, 0.18, 0.04, 0.2, '#b5562b');
-  hand.red = c(-0.05, 0, -0.12, 0.05, 0.1, 0.12, '#ff4a3d', 0x330000); hand.blue = c(0.05, 0, -0.12, 0.05, 0.1, 0.12, '#3da2ff', 0x001833); }
-const lamp = new THREE.Group(); cam.add(lamp); lamp.position.set(-0.32, -0.27, -0.62); lamp.scale.setScalar(0.55);
-{ const a = new THREE.Mesh(box, new THREE.MeshLambertMaterial({ color: '#2a2e31' })); a.scale.set(0.08, 0.08, 0.3); lamp.add(a); const b = new THREE.Mesh(box, new THREE.MeshBasicMaterial({ color: '#fff1d8' })); b.scale.set(0.1, 0.1, 0.02); b.position.z = -0.16; lamp.add(b); lamp.lens = b; }
-const beamMat = new THREE.LineBasicMaterial({ color: 0xff4a3d, transparent: true, opacity: 0.8 }); const beam = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]), beamMat); beam.frustumCulled = false; scene.add(beam); beam.visible = false;
-
-// ---------------------------------------------------------------- collisions: walls, closed doors and boxes (which you can also stand on)
-const wallAt = (x, z) => { const cx = Math.floor(x / CELL), cz = Math.floor(z / CELL); return solid.has(cx + ',' + cz) || blockers.has(cx + ',' + cz) || at(cx, cz) === ' '; };
-function collide(p, r, feet) {
-  for (let i = 0; i < 2; i++) { // walls: push out of any blocked cell nearby
-    const cx = Math.floor(p.x / CELL), cz = Math.floor(p.z / CELL);
-    for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) { const x = cx + dx, z = cz + dz; if (!(solid.has(x + ',' + z) || blockers.has(x + ',' + z) || at(x, z) === ' ')) continue;
-      const nx = Math.max(x * CELL, Math.min(p.x, x * CELL + CELL)), nz = Math.max(z * CELL, Math.min(p.z, z * CELL + CELL)), ddx = p.x - nx, ddz = p.z - nz, d = Math.hypot(ddx, ddz);
-      if (d < r) { if (d > 1e-5) { p.x += ddx / d * (r - d); p.z += ddz / d * (r - d); } else p.x += r; } } }
-  for (const b of boxes) { const top = b.y0 + b.h; if (feet >= top - 0.05 || feet + 1.7 <= b.y0) continue;
-    const hx = b.w / 2 + r, hz = b.d / 2 + r, dx = p.x - b.o.position.x, dz = p.z - b.o.position.z; if (Math.abs(dx) < hx && Math.abs(dz) < hz) { const ox = hx - Math.abs(dx), oz = hz - Math.abs(dz); if (ox < oz) p.x += Math.sign(dx || 1) * ox; else p.z += Math.sign(dz || 1) * oz; } }
-}
-function groundAt(x, z, feet) { let g = 0; for (const b of boxes) { const top = b.y0 + b.h; if (top <= feet + 0.35 && Math.abs(x - b.o.position.x) < b.w / 2 + 0.2 && Math.abs(z - b.o.position.z) < b.d / 2 + 0.2) g = Math.max(g, top); } return g; }
+// ---------------------------------------------------------------- player physics: a box 0.6 wide, 1.75 tall; steps up to 0.45 m without jumping
+const P = { pos: new V3(8, 0, 3), vy: 0, yaw: Math.PI, pitch: 0, onGround: true, carry: null, w: 0.3, h: 1.75 };
+const keys = {}; let started = false, ended = false, flashOn = true, battery = 1, magMode = null, magT = 0, power = false;
+const overlaps = (p, s, w, h) => p.x + w > s.min.x && p.x - w < s.max.x && p.z + w > s.min.z && p.z - w < s.max.z && p.y + h > s.min.y && p.y < s.max.y;
+function moveAxis(p, axis, d) { p[axis] += d; for (const s of solids) { if (!overlaps(p, s, P.w, P.h)) continue;
+    // a low edge: climb onto it
+    if (s.max.y - p.y <= 0.45 && P.onGround) { const old = p.y; p.y = s.max.y; if (!solids.some((o) => o !== s && overlaps(p, o, P.w, P.h))) continue; p.y = old; }
+    p[axis] = d > 0 ? s.min[axis] - P.w - 1e-4 : s.max[axis] + P.w + 1e-4; } }
+function moveY(p, d) { p.y += d; let landed = false; for (const s of solids) { if (!overlaps(p, s, P.w, P.h)) continue; if (d < 0) { p.y = s.max.y; landed = true; } else { p.y = s.min.y - P.h - 1e-4; P.vy = 0; } } return landed; }
 
 // ---------------------------------------------------------------- input
-addEventListener('keydown', (e) => { keys[e.code] = true; if (!started) return; if (e.code === 'Space') { e.preventDefault(); jump(); } if (e.code === 'KeyE') use(); if (e.code === 'KeyF') toggleFlash(); });
+addEventListener('keydown', (e) => { keys[e.code] = true; if (!started || ended) return; if (e.code === 'Space') { e.preventDefault(); jump(); } if (e.code === 'KeyE') use(); if (e.code === 'KeyF') toggleFlash(); });
 addEventListener('keyup', (e) => { keys[e.code] = false; });
 const cv = R.domElement; let locked = false;
 cv.addEventListener('contextmenu', (e) => e.preventDefault());
-cv.addEventListener('mousedown', (e) => { if (!started || touch) return; if (!locked) { cv.requestPointerLock?.()?.catch?.(() => {}); } magMode = e.button === 2 ? 'blue' : 'red'; });
-addEventListener('mouseup', () => { magMode = null; });
+cv.addEventListener('mousedown', (e) => { if (!started || touch) return; if (!locked) cv.requestPointerLock?.()?.catch?.(() => {}); magMode = e.button === 2 ? 'blue' : 'red'; });
+addEventListener('mouseup', () => { if (!touch) magMode = null; });
 document.addEventListener('pointerlockchange', () => { locked = document.pointerLockElement === cv; });
-let drag = null;
-addEventListener('mousemove', (e) => { if (!started || touch) return; if (locked) look(e.movementX, e.movementY); else if (e.buttons && drag) { look(e.clientX - drag.x, e.clientY - drag.y); drag = { x: e.clientX, y: e.clientY }; } });
-cv.addEventListener('mousedown', (e) => { drag = { x: e.clientX, y: e.clientY }; });
+addEventListener('mousemove', (e) => { if (started && !touch && locked) look(e.movementX, e.movementY); });
 function look(dx, dy) { P.yaw -= dx * 0.0024; P.pitch = Math.max(-1.45, Math.min(1.45, P.pitch - dy * 0.0024)); }
-// phone: left circle moves, drag anywhere else looks
 const joy = { x: 0, y: 0, id: null }, lookT = { id: null, x: 0, y: 0 };
 $('joy').addEventListener('pointerdown', (e) => { joy.id = e.pointerId; $('joy').setPointerCapture(e.pointerId); moveJoy(e); });
 $('joy').addEventListener('pointermove', (e) => { if (e.pointerId === joy.id) moveJoy(e); });
@@ -226,82 +330,100 @@ cv.addEventListener('pointermove', (e) => { if (e.pointerId !== lookT.id) return
 const endLook = (e) => { if (e.pointerId === lookT.id) lookT.id = null; }; cv.addEventListener('pointerup', endLook); cv.addEventListener('pointercancel', endLook);
 const hold = (id, on, off) => { const b = $(id); b.addEventListener('pointerdown', (e) => { e.preventDefault(); on(); }); if (off) { b.addEventListener('pointerup', off); b.addEventListener('pointercancel', off); b.addEventListener('pointerleave', off); } };
 hold('bJump', () => jump()); hold('bUse', () => use()); hold('bLight', () => toggleFlash()); hold('bRed', () => { magMode = 'red'; }, () => { magMode = null; }); hold('bBlue', () => { magMode = 'blue'; }, () => { magMode = null; });
-
-function jump() { if (P.onGround) { P.vy = 5.6; P.onGround = false; sfx.step(0.6); } }
+function jump() { if (P.onGround) { P.vy = 7; P.onGround = false; sfx.step(0.7); } }
 function toggleFlash() { flashOn = !flashOn; sfx.click(); }
 
-// ---------------------------------------------------------------- what you are looking at
-const ray = new THREE.Raycaster(); ray.far = 9;
-function aimed() { ray.setFromCamera({ x: 0, y: 0 }, cam); const objs = [...usables.filter((u) => u.ok()).map((u) => u.o), ...boxes.filter((b) => b.metal).map((b) => b.o), ...[gate, magDoor].filter((d) => d && !d.open).map((d) => d.o)];
-  const walls = scene.children.filter((o) => o.isInstancedMesh); const hit = ray.intersectObjects([...objs, ...walls], true)[0]; if (!hit) return null; let o = hit.object; while (o && !objs.includes(o)) o = o.parent; return o ? { o, d: hit.distance, p: hit.point } : null; }
-function use() { const a = aimed(); if (!a || a.d > 2.6) return; const u = usables.find((x) => x.o === a.o && x.ok()); if (u) u.use(); else if (gate && a.o === gate.o && !gate.open) { sfx.deny(); toast('It won’t move. No power.'); } }
+// ---------------------------------------------------------------- what you look at
+const ray = new THREE.Raycaster(); ray.far = 12;
+const hitList = () => [...items.filter((i) => i !== P.carry).map((i) => i.o), ...metalBoxes.map((c) => c.o), blueDoor, gen, shutter, ...scene.children.filter((o) => o.isMesh && o.geometry.type === 'BoxGeometry' && o.material !== VMAT && o.geometry.parameters.width > 2.5)];
+function aimed() { ray.setFromCamera({ x: 0, y: 0 }, cam); const h = ray.intersectObjects(hitList(), false)[0]; return h ? { o: h.object, d: h.distance, p: h.point } : null; }
+function use() {
+  const a = aimed();
+  if (P.carry) { // hands full: put it in the generator if you're looking at a socket, otherwise put it down in front of you
+    if (a && a.o === gen && a.d < 3 && P.carry.kind === 'fuse') { const s = sockets.filter((x) => !x.filled).sort((p, q) => p.p.distanceTo(a.p) - q.p.distanceTo(a.p))[0]; if (s) { s.filled = true; carryPivot.remove(P.carry.o); scene.add(P.carry.o); P.carry.o.position.copy(s.p).add(new V3(0, -0.2, 0.05)); P.carry.o.scale.setScalar(1); items.splice(items.indexOf(P.carry), 1); P.carry = null; sfx.pick(); socketMarks[sockets.indexOf(s)].material.color.set(0x3a2a00);
+      if (sockets.every((x) => x.filled)) powerOn(); else { toast('One fuse in. The generator needs another.'); objective('The generator needs one more fuse.'); } return; } }
+    drop(); return; }
+  if (!a || a.d > 3.2) return;
+  const it = items.find((i) => i.o === a.o); if (it) { P.carry = it; scene.remove(it.o); carryPivot.add(it.o); it.o.position.set(0, 0, 0); it.o.rotation.set(0.3, 0.6, 0); it.o.scale.setScalar(1.4); sfx.pick(); toast('Picked up a ' + it.name); if (it.kind === 'fuse') objective(power ? '' : 'Carry the fuse to the generator up on the catwalk.'); return; }
+  if (a.o === gen) { sfx.deny(); toast(sockets.some((s) => s.filled) ? 'One more fuse.' : 'Two empty fuse sockets.'); if (!power) objective('The generator needs two fuses. Find them in the factory.'); hintStep = Math.max(hintStep, 2); return; }
+  if (a.o === shutter && !power) { sfx.deny(); toast('A rolling shutter. It needs power.'); return; }
+  if (a.o === blueDoor) { toast('A magnet lock with a blue sign.'); }
+}
+function drop() { const it = P.carry; if (!it) return; carryPivot.remove(it.o); scene.add(it.o); const f = new V3(-Math.sin(P.yaw), 0, -Math.cos(P.yaw)); const p = P.pos.clone().addScaledVector(f, 0.9); let y = 0; for (const s of solids) if (p.x > s.min.x && p.x < s.max.x && p.z > s.min.z && p.z < s.max.z && s.max.y <= P.pos.y + 0.5) y = Math.max(y, s.max.y); it.o.position.set(p.x, y, p.z); it.o.rotation.set(0, P.yaw, 0); it.o.scale.setScalar(1); P.carry = null; sfx.step(1.4); }
 
-// ---------------------------------------------------------------- story beats
-function objective(t) { $('obj').innerHTML = `<small>OBJECTIVE</small>${t}`; }
-let toastT = 0; function toast(t) { const el = $('toast'); el.textContent = t; el.style.opacity = 1; clearTimeout(toastT); toastT = setTimeout(() => { el.style.opacity = 0; }, 2600); }
-function inv() { $('inv').innerHTML = has.fuse ? 'CARRYING <b>FUSE</b>' : ''; }
-function powerOn() { sfx.power(); toast('The power is back.'); for (const l of lamps) l.on = true; amb.intensity = 0.09; setTimeout(() => openDoor(gate), 1200); objective('The gate opened. Go down and find a way deeper into the factory.'); hintStep = 3; }
-let hintStep = 0, ended = false;
-const HINTS = ['The lobby has a fuse box. Look at it to see what it needs.', 'Somewhere dark there is a fuse up on a tall shelf. Your flashlight helps.', 'The shelf is too tall to jump onto. Metal crates can be pulled with the red magnet (hold), then climbed.', 'Doors with a magnet sign open to the magnet of the same colour. Aim and hold.'];
-$('bHint').onclick = () => toast(HINTS[Math.min(HINTS.length - 1, has.fuse ? 2 : hintStep)]);
-let seenShelf = false;
+// ---------------------------------------------------------------- story
+function objective(t) { $('obj').innerHTML = t ? `<small>OBJECTIVE</small>${t}` : ''; }
+let toastT = 0; function toast(t) { const el = $('toast'); el.textContent = t; el.style.opacity = 1; clearTimeout(toastT); toastT = setTimeout(() => { el.style.opacity = 0; }, 2800); }
+let hintStep = 0;
+const HINTS = ['The factory has no power. Find what makes it.', 'The generator is up on the catwalk at the back of the big hall. Take the stairs on the left wall.', 'It needs two fuses. One is in the warehouse, the other is behind a door with a blue sign.', 'A low rack in the warehouse holds a fuse. Pull a metal crate there with the red magnet and climb it.', 'The blue sign means the blue magnet: aim at the door and hold PUSH.'];
+$('bHint').onclick = () => { toast(HINTS[Math.min(HINTS.length - 1, hintStep)]); hintStep = Math.min(HINTS.length - 1, hintStep + 1); };
+function powerOn() { power = true; sfx.power(); toast('The generator coughs, then roars.'); objective('');
+  lamps.forEach((L, i) => setTimeout(() => { L.on = true; sfx.clunk(); }, 900 + i * 450)); emergency.forEach((l) => { l.intensity = 0; });
+  setTimeout(() => { amb.intensity = 0.16; objective('The big shutter at the back of the hall is opening.'); shutterOpen = true; sfx.gate(); }, 900 + lamps.length * 450 + 600); }
+let shutterOpen = false;
 
-// ---------------------------------------------------------------- sound, all made here (starts after the first click)
+// ---------------------------------------------------------------- sound, made here
 const sfx = (() => { let ac = null, master; const on = () => { if (ac) return; try { ac = new (window.AudioContext || window.webkitAudioContext)(); master = ac.createGain(); master.gain.value = 0.5; master.connect(ac.destination); hum(); } catch { ac = null; } };
   const env = (node, t, a, d, v) => { const g = ac.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + d); node.connect(g); g.connect(master); return g; };
   function tone(f, d, v = 0.2, type = 'square', f2) { if (!ac) return; const t = ac.currentTime, o = ac.createOscillator(); o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d); env(o, t, 0.005, d, v); o.start(t); o.stop(t + d + 0.05); }
-  function noiseHit(d, v, fq) { if (!ac) return; const t = ac.currentTime, b = ac.createBuffer(1, ac.sampleRate * d, ac.sampleRate), ch = b.getChannelData(0); for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1; const s = ac.createBufferSource(); s.buffer = b; const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = fq; f.Q.value = 1.2; s.connect(f); env(f, t, 0.002, d, v); s.start(t); }
-  function hum() { const o1 = ac.createOscillator(), o2 = ac.createOscillator(), f = ac.createBiquadFilter(), g = ac.createGain(); o1.type = o2.type = 'sawtooth'; o1.frequency.value = 49; o2.frequency.value = 49.6; f.type = 'lowpass'; f.frequency.value = 140; g.gain.value = 0.06; o1.connect(f); o2.connect(f); f.connect(g); g.connect(master); o1.start(); o2.start();
-    const creak = () => { if (!ac) return; if (Math.random() < 0.5) tone(70 + Math.random() * 60, 1.2, 0.05, 'sawtooth', 40); else noiseHit(0.4, 0.12, 300 + Math.random() * 900); setTimeout(creak, 5000 + Math.random() * 9000); }; setTimeout(creak, 4000); }
-  return { on, step: (k = 1) => noiseHit(0.07, 0.08 * k, 180 + Math.random() * 60), click: () => tone(1400, 0.04, 0.08), pick: () => { tone(660, 0.08, 0.12); setTimeout(() => tone(990, 0.12, 0.12), 80); }, deny: () => tone(140, 0.25, 0.15, 'square', 90),
-    gate: () => { noiseHit(1.6, 0.25, 120); tone(55, 1.4, 0.12, 'sawtooth', 35); }, power: () => { tone(60, 1.2, 0.2, 'sawtooth', 180); setTimeout(() => noiseHit(0.3, 0.3, 2000), 900); }, mag: (f) => tone(f, 0.12, 0.03, 'sine') }; })();
+  function noiseHit(d, v, fq, q = 1.2) { if (!ac) return; const t = ac.currentTime, b = ac.createBuffer(1, Math.max(1, ac.sampleRate * d) | 0, ac.sampleRate), ch = b.getChannelData(0); for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1; const s = ac.createBufferSource(); s.buffer = b; const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = fq; f.Q.value = q; s.connect(f); env(f, t, 0.002, d, v); s.start(t); }
+  function hum() { const o1 = ac.createOscillator(), o2 = ac.createOscillator(), f = ac.createBiquadFilter(), g = ac.createGain(); o1.type = o2.type = 'sawtooth'; o1.frequency.value = 41; o2.frequency.value = 41.7; f.type = 'lowpass'; f.frequency.value = 120; g.gain.value = 0.07; o1.connect(f); o2.connect(f); f.connect(g); g.connect(master); o1.start(); o2.start();
+    const creak = () => { if (!ac) return; const r = Math.random(); if (r < 0.4) tone(60 + Math.random() * 50, 1.6, 0.05, 'sawtooth', 35); else if (r < 0.8) noiseHit(0.5, 0.14, 200 + Math.random() * 800); else { for (let i = 0; i < 3; i++) setTimeout(() => noiseHit(0.08, 0.1, 900), i * 380); } setTimeout(creak, 5000 + Math.random() * 9000); }; setTimeout(creak, 3500); }
+  return { on, step: (k = 1) => noiseHit(0.07, 0.07 * k, 160 + Math.random() * 60), metalStep: () => noiseHit(0.09, 0.08, 1400, 3), click: () => tone(1400, 0.04, 0.08), pick: () => { tone(660, 0.08, 0.12); setTimeout(() => tone(990, 0.12, 0.12), 80); }, deny: () => tone(140, 0.25, 0.15, 'square', 90),
+    gate: () => { noiseHit(2.5, 0.25, 120); tone(55, 2.2, 0.12, 'sawtooth', 35); }, power: () => { tone(40, 2.5, 0.25, 'sawtooth', 120); }, clunk: () => { noiseHit(0.25, 0.25, 300, 0.8); tone(90, 0.3, 0.12, 'square', 60); }, mag: (f) => tone(f, 0.12, 0.03, 'sine') }; })();
 
 // ---------------------------------------------------------------- the loop
-let last = performance.now(), stepT = 0;
-function frame(now) { requestAnimationFrame(frame); const dt = Math.min(0.05, (now - last) / 1000); last = now; if (started && !ended) step(dt, now); render(now); }
+let last = performance.now(), stepT = 0, bobT = 0;
+function frame(now) { requestAnimationFrame(frame); const dt = Math.min(0.05, (now - last) / 1000); last = now; if (started && !ended) step(dt, now); render(dt); }
 function step(dt, now) {
-  // move, relative to where you look
   let mx = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0) + joy.x, mz = (keys.KeyS || keys.ArrowDown ? 1 : 0) - (keys.KeyW || keys.ArrowUp ? 1 : 0) + joy.y;
   const l = Math.hypot(mx, mz); if (l > 1) { mx /= l; mz /= l; }
-  const run = keys.ShiftLeft || keys.ShiftRight ? 1.7 : 1, sp = 3.2 * run, s = Math.sin(P.yaw), c = Math.cos(P.yaw);
-  P.pos.x += (mx * c + mz * s) * sp * dt; P.pos.z += (-mx * s + mz * c) * sp * dt;
-  const feet = P.pos.y; collide(P.pos, P.r, feet);
-  // gravity, jumping, standing on crates and shelves
-  P.vy -= 16 * dt; P.pos.y += P.vy * dt; const g = groundAt(P.pos.x, P.pos.z, feet); if (P.pos.y <= g) { if (!P.onGround && P.vy < -4) sfx.step(1.2); P.pos.y = g; P.vy = 0; P.onGround = true; } else P.onGround = false;
-  if (l > 0.1 && P.onGround) { stepT -= dt * run; if (stepT <= 0) { stepT = 0.42; sfx.step(); } }
-  // flashlight battery: it drains while on and refills while off
-  battery = Math.max(0, Math.min(1, battery + (flashOn ? -dt / 240 : dt / 60))); if (battery <= 0) flashOn = false;
-  flash.intensity = flashOn ? 2.2 * (battery < 0.15 ? 0.6 + Math.random() * 0.4 : 1) : 0; lamp.lens.material.color.set(flashOn ? '#fff1d8' : '#333'); document.documentElement.style.setProperty('--b', (battery * 100).toFixed(0) + '%');
-  // magnet: red pulls metal crates toward you, blue pushes them away; the magnet doors answer to their colour
-  beam.visible = false; hand.red.material.emissive.setHex(magMode === 'red' ? 0xff2a1a : 0x330000); hand.blue.material.emissive.setHex(magMode === 'blue' ? 0x1a6aff : 0x001833);
-  if (magMode) { const a = aimed(); const from = new THREE.Vector3(); hand.getWorldPosition(from); magT -= dt; if (magT <= 0) { magT = 0.12; sfx.mag(magMode === 'red' ? 220 : 330); }
-    if (a) { beam.visible = true; beamMat.color.set(magMode === 'red' ? 0xff4a3d : 0x3da2ff); beam.geometry.setFromPoints([from, a.p]);
-      const b = boxes.find((x) => x.o === a.o && x.metal); if (b && a.d < 9) { const to = new THREE.Vector3(P.pos.x - b.o.position.x, 0, P.pos.z - b.o.position.z), d = to.length(); if (magMode === 'red' && d > 1.5) to.normalize().multiplyScalar(-1).negate(); else if (magMode === 'blue') to.normalize().negate(); else to.set(0, 0, 0);
-        const np = b.o.position.clone().addScaledVector(to, 3 * dt), hw = b.w / 2 + 0.02; if (!wallAt(np.x - hw, np.z - hw) && !wallAt(np.x + hw, np.z - hw) && !wallAt(np.x - hw, np.z + hw) && !wallAt(np.x + hw, np.z + hw) && !boxes.some((o) => o !== b && Math.abs(o.o.position.x - np.x) < (o.w + b.w) / 2 && Math.abs(o.o.position.z - np.z) < (o.d + b.d) / 2)) b.o.position.copy(np); }
-      if (magDoor && a.o === magDoor.o && !magDoor.open && a.d < 7) { if (magMode === magDoor.color) { magDoor.charge = (magDoor.charge || 0) + dt; if (magDoor.charge > 1.2) { openDoor(magDoor); toast('The magnet lock let go.'); objective('Go through. Deeper into the factory.'); } } else { magDoor.charge = 0; } } } }
-  // doors slide up when open
-  for (const d of [gate, magDoor]) if (d && d.open && d.o.position.y < WALL * 1.45) d.o.position.y += dt * 2.2;
-  // lamps flicker
-  for (const L of lamps) { const f = L.on ? (L.flick ? (Math.sin(now / 90 + L.ph) > 0.85 || Math.random() < 0.02 ? 0.15 : 1) : 1) : 0; L.l.intensity = L.base * f; L.bulb.material.color.set(f > 0.5 ? '#ffd08a' : '#2a2520'); }
-  // prompt for what you look at
-  const a = aimed(); let pr = ''; if (a && a.d < 2.6) { const u = usables.find((x) => x.o === a.o && x.ok()); if (u) pr = (touch ? 'USE · ' : '[E] ') + u.label; else if (gate && a.o === gate.o && !gate.open) pr = 'Power gate'; }
-  if (a && a.o === magDoor?.o && !magDoor.open && a.d < 7) pr = touch ? 'Hold PULL (red magnet)' : 'Hold LEFT CLICK (red magnet)';
-  if (a && boxes.some((b) => b.o === a.o && b.metal) && a.d < 9 && !magMode) pr = touch ? 'Metal crate · PULL / PUSH' : 'Metal crate · hold LEFT to pull, RIGHT to push';
+  const run = keys.ShiftLeft || keys.ShiftRight ? 1.75 : 1, sp = 3.6 * run, s = Math.sin(P.yaw), c = Math.cos(P.yaw);
+  const vx = (mx * c + mz * s) * sp * dt, vz = (-mx * s + mz * c) * sp * dt;
+  moveAxis(P.pos, 'x', vx); moveAxis(P.pos, 'z', vz);
+  P.vy -= 18 * dt; const landed = moveY(P.pos, P.vy * dt); if (landed) { if (!P.onGround && P.vy < -5) sfx.step(1.4); P.vy = 0; P.onGround = true; } else P.onGround = false;
+  if (P.pos.y < -5) P.pos.set(8, 0, 3);
+  if (l > 0.1 && P.onGround) { bobT += dt * 9 * run; stepT -= dt * run; if (stepT <= 0) { stepT = 0.42; if (P.pos.y > 1) sfx.metalStep(); else sfx.step(); } }
+  // flashlight battery
+  battery = Math.max(0, Math.min(1, battery + (flashOn ? -dt / 300 : dt / 50))); if (battery <= 0) flashOn = false;
+  flash.intensity = flashOn ? 2.6 * (battery < 0.15 ? 0.6 + Math.random() * 0.4 : 1) : 0; lens.material.color.set(flashOn ? 0xfff1c0 : 0x333333); document.documentElement.style.setProperty('--b', (battery * 100).toFixed(0) + '%');
+  // magnet
+  beam.visible = false; const reach = magMode ? 1 : 0; armR.position.z += ((-0.44 - reach * 0.08) - armR.position.z) * Math.min(1, dt * 12);
+  if (magMode) { const a = aimed(); const from = new V3(magMode === 'red' ? 0.225 : 0.27, -0.24, -0.6).applyMatrix4(cam.matrixWorld); magT -= dt; if (magT <= 0) { magT = 0.1; sfx.mag(magMode === 'red' ? 220 : 330); }
+    if (a && a.d < 11) { beam.visible = true; beamMat.color.set(magMode === 'red' ? 0xff4a3d : 0x3da2ff); beam.geometry.setFromPoints([from, a.p]);
+      const cr = metalBoxes.find((x) => x.o === a.o); if (cr) { const to = new V3(P.pos.x - cr.o.position.x, 0, P.pos.z - cr.o.position.z), d = to.length(); to.normalize(); if (magMode === 'blue') to.negate(); else if (d < 1.7) to.set(0, 0, 0);
+        const mv = to.multiplyScalar(3.2 * dt), old = cr.o.position.clone(); cr.o.position.add(mv); const b = new THREE.Box3().setFromObject(cr.o); const test = { min: b.min.clone().add(new V3(0.02, 0.05, 0.02)), max: b.max.clone().sub(new V3(0.02, 0, 0.02)) };
+        if (solids.some((o) => o !== cr.s && o.max.y > 0.05 && test.min.x < o.max.x && test.max.x > o.min.x && test.min.z < o.max.z && test.max.z > o.min.z && test.min.y < o.max.y && test.max.y > o.min.y)) cr.o.position.copy(old); else { cr.s.min.copy(b.min); cr.s.max.copy(b.max); }
+        // anything resting on it rides along
+        for (const it of items) if (it !== P.carry && Math.abs(it.o.position.x - old.x) < 0.6 && Math.abs(it.o.position.z - old.z) < 0.6 && Math.abs(it.o.position.y - 1.2) < 0.1) it.o.position.add(cr.o.position.clone().sub(old)); }
+      if (a.o === blueDoor && blueSolid && a.d < 8) { if (magMode === 'blue') { blueDoor.userData.charge = (blueDoor.userData.charge || 0) + dt; if (blueDoor.userData.charge > 1.3 && !blueDoor.userData.open) { blueDoor.userData.open = true; solids.splice(solids.indexOf(blueSolid), 1); sfx.gate(); toast('The blue lock lets go.'); } } else blueDoor.userData.charge = 0; } } }
+  if (blueDoor.userData.open && blueDoor.position.y < 4.6) blueDoor.position.y += dt * 2;
+  if (shutterOpen && shutter.position.y < 6) { shutter.position.y += dt * 0.9; if (shutter.position.y > 2.2 && solids.includes(shutterSolid)) solids.splice(solids.indexOf(shutterSolid), 1); }
+  // lamps: off until the power is back; the lobby one flickers
+  for (const L of lamps) L.l.intensity = L.on ? L.power * (L.flick && (Math.sin(now / 90 + L.ph) > 0.86 || Math.random() < 0.02) ? 0.15 : 1) : 0;
+  for (const l of emergency) if (!power) l.intensity = 0.7 + Math.sin(now / 400) * 0.3;
+  // prompts
+  const a = aimed(); let pr = '';
+  if (P.carry) pr = a && a.o === gen && a.d < 3 && P.carry.kind === 'fuse' ? (touch ? 'USE · put the fuse in' : '[E] Put the fuse in') : (touch ? 'USE · put it down' : '[E] Put it down');
+  else if (a && a.d < 3.2 && items.some((i) => i.o === a.o)) pr = (touch ? 'USE · ' : '[E] ') + 'Pick up';
+  else if (a && a.o === gen && a.d < 3) pr = 'Generator';
+  else if (a && metalBoxes.some((c) => c.o === a.o) && a.d < 11 && !magMode) pr = touch ? 'Metal crate · hold PULL or PUSH' : 'Metal crate · hold LEFT to pull, RIGHT to push';
+  else if (a && a.o === blueDoor && !blueDoor.userData.open && a.d < 8 && !magMode) pr = touch ? 'Blue magnet lock · hold PUSH' : 'Blue magnet lock · hold RIGHT CLICK';
   $('prompt').hidden = !pr; $('prompt').textContent = pr;
-  if (!seenShelf && fuse?.parent && P.pos.distanceTo(fuse.position) < 6) { seenShelf = true; toast('Something is up on that shelf.'); if (hintStep < 2) hintStep = 2; }
-  if (fuseBox && !fuseBox.seen && P.pos.distanceTo(fuseBox.o.position) < 2.5) { fuseBox.seen = true; if (!has.fuse) objective('The power is out. Find a fuse for the fuse box.'); hintStep = Math.max(hintStep, 1); }
-  inv();
-  if (endCell && Math.floor(P.pos.x / CELL) === endCell.x && Math.floor(P.pos.z / CELL) === endCell.z) finish();
+  $('inv').innerHTML = P.carry ? 'CARRYING <b>' + P.carry.name.toUpperCase() + '</b>' : '';
+  if (!power && hintStep < 1 && P.pos.z > 16) hintStep = 1;
+  if (shutterOpen && P.pos.z > 75) finish();
 }
-function render(now) {
-  const bob = started && P.onGround ? Math.sin(now / 130) * 0.03 * Math.min(1, Math.hypot(joy.x, joy.y) + (keys.KeyW || keys.KeyA || keys.KeyS || keys.KeyD ? 1 : 0)) : 0;
-  cam.position.set(P.pos.x, P.pos.y + P.eye + bob, P.pos.z); cam.rotation.set(0, 0, 0); cam.rotateY(P.yaw); cam.rotateX(P.pitch);
-  hand.position.y = -0.26 + bob * 0.5; lamp.position.y = -0.27 - bob * 0.5; R.render(scene, cam);
+function render(dt) {
+  const moving = started && P.onGround && (Math.hypot(joy.x, joy.y) > 0.1 || keys.KeyW || keys.KeyA || keys.KeyS || keys.KeyD); const bob = moving ? Math.sin(bobT) * 0.035 : 0;
+  cam.position.set(P.pos.x, P.pos.y + 1.62 + bob, P.pos.z); cam.rotation.set(0, 0, 0); cam.rotateY(P.yaw); cam.rotateX(P.pitch);
+  hands.position.set(moving ? Math.cos(bobT / 2) * 0.012 : 0, moving ? Math.abs(Math.sin(bobT / 2)) * -0.01 : 0, 0);
+  armL.visible = !P.carry; lens.visible = !P.carry; R.render(scene, cam);
 }
-function finish() { ended = true; document.exitPointerLock?.(); $('card').hidden = false; $('card').querySelector('.in').innerHTML = '<div class="sign">PART 1 OF THE FACTORY</div><h1>DEEPER</h1><p>The assembly hall is ahead. The games are still switched on, and something in the dark heard the gate open.</p><p style="color:var(--sodium)">More of Gearhollow is coming.</p><div><button id="again">PLAY AGAIN</button></div>'; $('again').onclick = () => location.reload(); }
+function finish() { ended = true; document.exitPointerLock?.(); $('card').hidden = false; $('card').querySelector('.in').innerHTML = '<div class="sign">PART 1 OF THE FACTORY</div><h1>THE ASSEMBLY LINE</h1><p>The shutter grinds open onto the assembly line. The machines down there are still switched on, and something heard the generator start.</p><p style="color:var(--sodium)">The next part of Gearhollow is coming.</p><div><button id="again">PLAY AGAIN</button></div>'; $('again').onclick = () => location.reload(); }
 
-$('go').onclick = () => { $('card').hidden = true; started = true; sfx.on(); objective('Find a way to turn the power back on.'); $('bHint').hidden = false; if (!touch) cv.requestPointerLock?.()?.catch?.(() => {}); toast(touch ? 'Drag to look around' : 'Click to look around'); };
+$('go').onclick = () => { $('card').hidden = true; started = true; sfx.on(); objective('Find a way to bring the power back.'); $('bHint').hidden = false; if (!touch) cv.requestPointerLock?.()?.catch?.(() => {}); toast(touch ? 'Drag to look around' : 'Click to look around'); };
 requestAnimationFrame(frame);
-window.__G = { P, boxes, has, usables, gate: () => gate, magDoor: () => magDoor, fuseBox: () => fuseBox, use, aimed, keys, setMag: (m) => { magMode = m; } };
+window.__G = { step, jump, MODELS, R, scene, cam, flash, lamps, P, items, metalBoxes, sockets, use, aimed, keys, setMag: (m) => { magMode = m; }, blueDoor, gen, power: () => power, shutter, solids };
 })();
 </script>
