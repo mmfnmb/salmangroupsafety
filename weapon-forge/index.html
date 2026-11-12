@@ -125,7 +125,7 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
 .aidock .aiLog .me{background:#2c2622ee;align-self:flex-start}.aidock .aiLog .bot{background:#3a2417ee;border:1px solid var(--edge);align-self:flex-end}
 .aiRow{display:flex;gap:6px;align-items:center;background:#211c19ee;border:1px solid var(--edge);border-radius:12px;padding:5px}
 .aiRow input{flex:1;min-width:0;background:var(--coal);border:1px solid var(--edge);border-radius:9px;padding:7px 10px;color:var(--bone);font:600 14px var(--body)}
-.aiRow .btn{padding:7px 12px}.picBtn{position:relative;overflow:hidden;cursor:pointer;display:inline-flex;align-items:center}.picBtn input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;font-size:0}.aiPics{display:flex;flex-wrap:wrap;gap:6px;padding:6px;background:#211c19ee;border:1px solid var(--edge);border-radius:12px;margin-bottom:6px;max-height:190px;overflow:auto}.aiPics .pic{position:relative;width:52px;height:52px;border-radius:8px;overflow:hidden;border:2px solid transparent;cursor:pointer;background:#0d0b0a}.aiPics .pic.on{border-color:var(--ember)}.aiPics .pic img{width:100%;height:100%;object-fit:contain}.aiPics .pic button{position:absolute;top:0;inset-inline-end:0;border:0;background:#000a;color:#fff;font-size:11px;width:18px;height:18px;padding:0;cursor:pointer}.picActs{display:flex;flex-wrap:wrap;gap:6px;align-items:center;width:100%;font-size:12px;color:var(--ash,#bbb)}.picActs .tool{font-size:12px;padding:5px 9px}#aiThumb{width:34px;height:34px;object-fit:cover;border-radius:7px;border:2px solid var(--ember);cursor:pointer}
+.aiRow .btn{padding:7px 12px}.dz{display:flex;gap:6px;flex-wrap:wrap}.dz input{flex:1 1 220px;min-width:0;background:var(--coal);border:1px solid var(--edge);border-radius:9px;padding:8px 10px;color:var(--bone);font:600 14px var(--body)}.picBtn{position:relative;overflow:hidden;cursor:pointer;display:inline-flex;align-items:center}.picBtn input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;font-size:0}.aiPics{display:flex;flex-wrap:wrap;gap:6px;padding:6px;background:#211c19ee;border:1px solid var(--edge);border-radius:12px;margin-bottom:6px;max-height:190px;overflow:auto}.aiPics .pic{position:relative;width:52px;height:52px;border-radius:8px;overflow:hidden;border:2px solid transparent;cursor:pointer;background:#0d0b0a}.aiPics .pic.on{border-color:var(--ember)}.aiPics .pic img{width:100%;height:100%;object-fit:contain}.aiPics .pic button{position:absolute;top:0;inset-inline-end:0;border:0;background:#000a;color:#fff;font-size:11px;width:18px;height:18px;padding:0;cursor:pointer}.picActs{display:flex;flex-wrap:wrap;gap:6px;align-items:center;width:100%;font-size:12px;color:var(--ash,#bbb)}.picActs .tool{font-size:12px;padding:5px 9px}#aiThumb{width:34px;height:34px;object-fit:cover;border-radius:7px;border:2px solid var(--ember);cursor:pointer}
 .wcats{display:flex;gap:6px;margin-top:8px;overflow-x:auto}
 .wcats button{flex:none;background:var(--plate);border:1px solid var(--edge);border-radius:999px;padding:5px 12px;font-weight:800;font-size:13px}
 .wcats button[aria-pressed="true"]{border-color:var(--ember);color:var(--ember-2)}
@@ -241,8 +241,17 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
       <div class="desc">Shortcuts: Ctrl+C Copy · Ctrl+V Paste · Ctrl+D Duplicate · Delete Clear · Ctrl+Z Undo · 1 Move · 2 Scale · 3 Rotate · 4 Paint · Shift+Click to select several cubes</div>
       <div class="label">Cube color (or brush color when painting a face)</div>
       <div class="pal" id="bpal"></div>
+      <div class="label">Smart designer: describe a monster in your own words (English or Arabic)</div>
+      <div class="dz"><input id="dzText" maxlength="300" placeholder="a huge red spider with a TV head; its hand breaks off and turns into 3 rats"><button class="btn" id="dzGo">Design it</button><button class="btn alt" id="dzClaude">Ask Claude</button></div>
+      <div class="desc" id="dzSay" aria-live="polite">Works without Claude. Teach it new words with "when I say … it means …".</div>
       <div class="label">Start from a ready monster</div>
       <div class="temps" id="btemps"></div>
+      <div class="label">Ready models</div>
+      <div class="temps" id="bModels"></div>
+      <div class="label">Ready parts (they snap onto the monster)</div>
+      <div class="temps" id="bParts"></div>
+      <div class="label">Shapes (select pieces first to change their shape)</div>
+      <div class="temps" id="bShapes"></div>
     </div>
     <div class="panel">
       <div class="card" id="bcard">
@@ -268,7 +277,7 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
             <label>Ability name <input id="afName" maxlength="30"></label>
             <label>When it triggers <select id="afWhen"><option value="near">When the player is near (distance)</option><option value="every">Every few seconds</option><option value="hit">When it gets hit</option><option value="low">When its health drops below (%)</option><option value="death">When it dies</option></select></label>
             <label data-w="near every low">Value <input type="number" id="afWv" min="0" max="100" step="0.5"></label>
-            <label>What it does <select id="afAct"><option value="shoot">Shoots projectiles</option><option value="explode">Explodes (fuse)</option><option value="dash">Dashes at you</option><option value="slam">Jumps and slams the ground</option><option value="summon">Summons monsters</option><option value="heal">Heals itself</option><option value="shield">Makes a shield</option><option value="teleport">Teleports behind you</option></select></label>
+            <label>What it does <select id="afAct"><option value="shoot">Shoots projectiles</option><option value="explode">Explodes (fuse)</option><option value="dash">Dashes at you</option><option value="slam">Jumps and slams the ground</option><option value="summon">Summons monsters</option><option value="detach">A body part breaks off</option><option value="heal">Heals itself</option><option value="shield">Makes a shield</option><option value="teleport">Teleports behind you</option></select></label>
             <label data-a="shoot explode dash slam">Damage <input type="number" id="afDmg" min="1" max="200"></label>
             <label data-a="shoot explode slam">Blast radius <input type="number" id="afRad" min="0" max="12" step="0.5"></label>
             <label data-a="shoot">Number of shots <input type="number" id="afN" min="1" max="12"></label>
@@ -278,6 +287,9 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
             <label data-a="heal">Heal amount <input type="number" id="afAmt" min="1" max="500"></label>
             <label data-a="shield">Shield time <input type="number" id="afSec" min="0.5" max="10" step="0.5"></label>
             <label data-a="summon">Summons who <select id="afWho"></select></label>
+            <label data-a="detach">Which part <select id="afPart"><option value="armR">Right arm</option><option value="armL">Left arm</option><option value="head">Head</option><option value="tail">Tail</option><option value="legL">Leg</option><option value="wingL">Wing</option></select></label>
+            <label data-a="detach">Turns into <select id="afInto"><option value="crawler">A crawling monster</option><option value="mons">Monsters</option><option value="bomb">A bomb</option><option value="heal">Healing</option></select></label>
+            <label data-a="detach">Monster <select id="afWho2"></select></label>
             <label data-a="summon">How many <input type="number" id="afCnt" min="1" max="6"></label>
             <label>Wait between uses (sec) <input type="number" id="afCd" min="0" max="30" step="0.5"></label>
             <div class="acts"><button class="btn alt" id="afShape" data-a="shoot explode">Draw the projectile with cubes</button><button class="btn" id="afSave">Save ability</button><button class="btn alt" id="afCancel">Cancel</button></div>
@@ -689,7 +701,7 @@ function addBeast(e, hpMul = 1) {
   const k = (M_.size * 1.6) / h; b.scale.setScalar(k); b.position.y = -bx.min.y * k; g.add(b);
   const mats = []; g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.material = o.material.map((x) => x.clone()); mats.push(...o.material); } });
   const sp = freeSpot(AR.hero.position, 14, 24); g.position.set(sp.x, 0, sp.z); AR.scene.add(g);
-  b.userData.k0 = k; const ab = (e.def.abil || []).map((a) => ({ ...cleanAb(a), t: 0.8 + Math.random() })); const hpScale = (1 + (n - 1) * 0.18) * hpMul; AR.mons.push({ ab, M: M_, o: g, b, R_, mats, hp: M_.hp * hpScale, max: M_.hp * hpScale, hitT: 0, atk: 0, attT: 0, burn: 0, poison: 0, slow: 0, stun: 0, bob: Math.random() * 6, moving: 0 });
+  b.userData.k0 = k; const ab = (e.def.abil || []).map((a) => ({ ...cleanAb(a), t: 0.8 + Math.random() })); const hpScale = (1 + (n - 1) * 0.18) * hpMul; AR.mons.push({ def: e.def, ab, M: M_, o: g, b, R_, mats, hp: M_.hp * hpScale, max: M_.hp * hpScale, hitT: 0, atk: 0, attT: 0, burn: 0, poison: 0, slow: 0, stun: 0, bob: Math.random() * 6, moving: 0 });
 }
 function spawnWave() {
   G2.wave++; const n = G2.wave, boss = n % 5 === 0, all = arenaPool(), pool = all.filter((e) => !e.M.boss && (e.M.from || 1) <= Math.ceil(n / 1.5));
@@ -770,6 +782,7 @@ function useAbility(m, a) {
   else if (k === 'summon') { const e = arenaPool().find((x) => x.def === BEASTS[a.act.who]) || arenaPool()[0]; for (let i = 0; i < (a.act.n || 1); i++) { addBeast(e); const nm = AR.mons[AR.mons.length - 1]; nm.o.position.copy(m.o.position).add(new THREE.Vector3((Math.random() - 0.5) * 4, 0, (Math.random() - 0.5) * 4)); } pop2('Help arrived!', m.o.position.clone().add(new THREE.Vector3(0, 3, 0)), '#ffb347'); }
   else if (k === 'heal') { m.hp = Math.min(m.max, m.hp + a.act.amt); pop2('+' + Math.round(a.act.amt), m.o.position.clone().add(new THREE.Vector3(0, m.M.size * 1.6 + 0.5, 0)), '#46c96b'); }
   else if (k === 'shield') { m.shieldT = a.act.sec; }
+  else if (k === 'detach') detachPart(m, a.act);
   else if (k === 'teleport') { const f = G2.face.clone(); m.o.position.set(P.x - f.x * 2.2, m.o.position.y, P.z - f.z * 2.2); pop2('Behind you!', m.o.position.clone().add(new THREE.Vector3(0, 2.5, 0)), '#a77bff'); }
 }
 // every ability waits for its moment
@@ -933,7 +946,7 @@ function placeCam(P, dt) {
   AR.cam.lookAt(look); AR.hero.visible = m !== 'first';
 }
 function arenaStep(dt, now) {
-  debrisStep(dt); shotsStep(dt); picksStep(dt, now);
+  debrisStep(dt); shotsStep(dt); picksStep(dt, now); regrowStep(dt);
   if (!AR.on || !G2) return; const P = AR.hero.position, a = G2.a;
   // move
   if (AR.keys.KeyQ) AR.yaw += dt * 2.2; if (AR.keys.KeyE) AR.yaw -= dt * 2.2;
@@ -1071,7 +1084,7 @@ function faceMat(q, i) {
   }
   return new THREE.MeshLambertMaterial({ map: t });
 }
-function cubeMesh(q) { if (!q.seed) q.seed = 1 + ((Math.random() * 1e6) | 0); const m = new THREE.Mesh(box, [0, 1, 2, 3, 4, 5].map((i) => faceMat(q, i))); m.position.fromArray(q.p); m.scale.fromArray(q.s); m.rotation.set(...q.r); m.castShadow = true; m.userData.q = q; return m; }
+function cubeMesh(q) { if (!q.seed) q.seed = 1 + ((Math.random() * 1e6) | 0); const m = new THREE.Mesh(q.sh && q.sh !== 'box' ? geoOf(q.sh) : box, [0, 1, 2, 3, 4, 5].map((i) => faceMat(q, i))); m.position.fromArray(q.p); m.scale.fromArray(q.s); m.rotation.set(...q.r); m.castShadow = true; m.userData.q = q; return m; }
 function buildBeast(def) { const g = new THREE.Group(); for (const q of def.cubes) g.add(cubeMesh(q)); return g; }
 
 
@@ -1140,7 +1153,7 @@ function beastInit() {
   new ResizeObserver(() => { const w = st.clientWidth, h = st.clientHeight; R3.setSize(w, h, false); BE.cam.aspect = w / h; BE.cam.updateProjectionMatrix(); }).observe(st);
   BPAL.forEach((hex, i) => { const b = document.createElement('button'); b.className = 'sw'; b.setAttribute('aria-pressed', String(hex === BE.color)); b.setAttribute('aria-label', 'Color ' + (i + 1)); b.innerHTML = `<i style="background:${hex}"></i>`; b.onclick = () => { BE.color = hex; PNT.ink = i; PNT.erase = false; $('bpal').querySelectorAll('.sw').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); if (BE.sel && !$('paintBox').hidden) return; if (BE.sels.length) { pushUndo(); for (const m of BE.sels) m.userData.q.c = hex; rebuild(); } }; $('bpal').appendChild(b); });
   for (const k in BEASTS) { const b = document.createElement('button'); b.className = 'temp'; b.textContent = BEASTS[k].name; b.onclick = () => { pushUndo(); loadBeast(clone(BEASTS[k]), true); }; $('btemps').appendChild(b); }
-  loadBeast(clone(BEASTS.slime), true); renderMyBeasts();
+  loadBeast(clone(BEASTS.slime), true); renderMyBeasts(); libUI();
 }
 const clone = (o) => JSON.parse(JSON.stringify(o));
 function loadBeast(def, fresh) { if (pv) { BE.scene.remove(pv.R_.root); if (pv.parts) for (const d of pv.parts) BE.scene.remove(d.o); pv = null; BE.root && (BE.root.visible = true); } BE.def = def; BE.sels = []; if (fresh) { bNameTouched = false; $('bFly').checked = !!def.fly; } rebuild(); select(null); syncSliders(); }
@@ -1262,15 +1275,15 @@ $('bFuse').onclick = () => { const box_ = $('fuseBox'); box_.hidden = !box_.hidd
 
 // ---------------------------------------------------------------- monster abilities: what a monster does, written in your own words
 // { name, when: {k: near|every|hit|low|death, v}, act: {k: shoot|explode|dash|slam|summon|heal|shield|teleport, ...numbers}, cd, shape: cubes of a shot }
-const ACT = { shoot: 'Shoots projectiles', explode: 'Explodes', dash: 'Dashes at you', slam: 'Jumps and slams the ground', summon: 'Summons monsters', heal: 'Heals itself', shield: 'Makes a shield', teleport: 'Teleports behind you' };
+const ACT = { detach: 'A body part breaks off and turns into something', shoot: 'Shoots projectiles', explode: 'Explodes', dash: 'Dashes at you', slam: 'Jumps and slams the ground', summon: 'Summons monsters', heal: 'Heals itself', shield: 'Makes a shield', teleport: 'Teleports behind you' };
 const WHEN = { near: (v) => `when you get close ${v} m`, every: (v) => `every ${v} sec`, hit: () => 'When it gets hit', low: (v) => `when its health drops below ${v}%`, death: () => 'When it dies' };
-function abText(a) { const x = a.act; const bits = [WHEN[a.when.k]?.(a.when.v) || '', ACT[x.k] || '']; if (x.k === 'shoot') bits.push(`${x.n || 1} shots · damage ${x.dmg}`); if (x.k === 'explode') bits.push(`fuse ${x.fuse}s · damage ${x.dmg} · radius ${x.rad}`); if (x.k === 'heal') bits.push('+' + x.amt); if (x.k === 'summon') bits.push(`${x.n || 1} ${BEASTS[x.who]?.name || ''}`); return bits.filter(Boolean).join(' · '); }
+function abText(a) { const x = a.act; const bits = [WHEN[a.when.k]?.(a.when.v) || '', ACT[x.k] || '']; if (x.k === 'detach') bits.push(`${(ROLES.find((r) => r[0] === x.part) || [0, x.part])[1]} → ${x.into === 'mons' ? x.n + ' × ' + (BEASTS[x.who]?.name || x.who) : x.into}`); if (x.k === 'shoot') bits.push(`${x.n || 1} shots · damage ${x.dmg}`); if (x.k === 'explode') bits.push(`fuse ${x.fuse}s · damage ${x.dmg} · radius ${x.rad}`); if (x.k === 'heal') bits.push('+' + x.amt); if (x.k === 'summon') bits.push(`${x.n || 1} ${BEASTS[x.who]?.name || ''}`); return bits.filter(Boolean).join(' · '); }
 // a clean ability from anything (Claude's answer, the form, an old save): every number kept within the game's limits
 function cleanAb(a) {
   const n = (v, d, lo, hi) => { v = +v; return Number.isFinite(v) ? Math.max(lo, Math.min(hi, v)) : d; }, x = a?.act || {}, w = a?.when || {};
   const wk = WHEN[w.k] ? w.k : 'near', ak = ACT[x.k] ? x.k : 'shoot';
   return { name: String(a?.name || ACT[ak]).slice(0, 30), when: { k: wk, v: n(w.v, wk === 'near' ? 3 : wk === 'every' ? 3 : wk === 'low' ? 30 : 0, 0, 100) },
-    act: { k: ak, dmg: n(x.dmg, 10, 1, 200), rad: n(x.rad, ak === 'explode' ? 3.5 : ak === 'slam' ? 3 : 0, 0, 12), n: Math.round(n(x.n, 1, 1, 12)), spd: n(x.spd, 10, 2, 30), el: EL[x.el] ? x.el : 'none', fuse: n(x.fuse, 1.2, 0, 5), amt: n(x.amt, 30, 1, 500), sec: n(x.sec, 3, 0.5, 10), who: BEASTS[x.who] ? x.who : 'slime' },
+    act: { k: ak, dmg: n(x.dmg, 10, 1, 200), rad: n(x.rad, ak === 'explode' ? 3.5 : ak === 'slam' ? 3 : 0, 0, 12), n: Math.round(n(x.n, 1, 1, 12)), spd: n(x.spd, 10, 2, 30), el: EL[x.el] ? x.el : 'none', fuse: n(x.fuse, 1.2, 0, 5), amt: n(x.amt, 30, 1, 500), sec: n(x.sec, 3, 0.5, 10), who: BEASTS[x.who] ? x.who : 'slime', part: ['armR', 'armL', 'head', 'tail', 'legL', 'legR', 'wingL', 'wingR'].includes(x.part) ? x.part : 'armR', into: ['crawler', 'mons', 'bomb', 'heal'].includes(x.into) ? x.into : 'crawler' },
     cd: n(a?.cd, ak === 'explode' ? 0 : 3, 0, 30), shape: Array.isArray(a?.shape) && a.shape.length ? a.shape.slice(0, 40) : null };
 }
 // turning your words into an ability: Claude reads them; without Claude, a few key words do
@@ -1280,13 +1293,14 @@ async function wordsToAbility(text) {
     if (sm) {
       const r = await sm.json(`A player of a kids' block game describes, in English or any language, a special ability for a monster they built. Turn it into ONE ability as JSON, nothing else:
 {"name": short name in the player's language, "when": {"k": "near"|"every"|"hit"|"low"|"death", "v": number (near: distance in metres 1-12; every: seconds 0.5-30; low: health percent; else 0)},
- "act": {"k": "shoot"|"explode"|"dash"|"slam"|"summon"|"heal"|"shield"|"teleport", "dmg": 1-200, "rad": explosion radius 0-12, "n": shots 1-12, "spd": shot speed 2-30, "el": "fire"|"ice"|"bolt"|"poison"|"shadow"|"light"|"none", "fuse": seconds before exploding 0-5, "amt": heal amount, "sec": shield seconds, "who": "slime"|"bat"|"skel"|"imp"|"golem"|"tnt" (for summon)},
+ "act": {"k": "shoot"|"explode"|"dash"|"slam"|"summon"|"heal"|"shield"|"teleport"|"detach" (a body part breaks off: "part": "armR"|"armL"|"head"|"tail"|"legL"|"wingL", "into": "crawler" (the part crawls after the player)|"mons" (it turns into "n" monsters "who")|"bomb"|"heal"), "dmg": 1-200, "rad": explosion radius 0-12, "n": shots 1-12, "spd": shot speed 2-30, "el": "fire"|"ice"|"bolt"|"poison"|"shadow"|"light"|"none", "fuse": seconds before exploding 0-5, "amt": heal amount, "sec": shield seconds, "who": "slime"|"bat"|"skel"|"imp"|"golem"|"tnt" (for summon)},
  "cd": seconds between uses (0 for a one-time explosion)}
 "explode" means the monster blows itself up like TNT after the fuse. Pick sensible numbers when the player gives none.
 Player's words: ${JSON.stringify(text)}`, { modelTier: 'quick', cache: false });
       return cleanAb(r?.abilities?.[0] || r);
     }
   } catch (e) { if (e?.code === 'not_granted') toast('Claude isn’t available here, I’ll read it from the words'); }
+  { const d = design(text); const det = d.def?.abil?.find((a) => a.act.k === 'detach'); if (det) return det; }
   const t = text, has = (...w) => w.some((x) => t.includes(x)), num = (+(t.match(/\d+(\.\d+)?/) || [])[0]) || null;
   const el = has('نار', 'ولع', 'لهب', 'fire', 'flame', 'burn') ? 'fire' : has('تلج', 'ثلج', 'جليد', 'ice', 'frost', 'freeze') ? 'ice' : has('برق', 'كهربا', 'lightning', 'electric', 'thunder') ? 'bolt' : has('سم', 'poison', 'venom') ? 'poison' : has('ظل', 'ظلام', 'shadow', 'dark') ? 'shadow' : has('نور', 'light', 'holy') ? 'light' : 'none';
   const every = +(t.match(/every\s*(\d+(\.\d+)?)/) || [])[1];
@@ -1303,16 +1317,17 @@ function renderAbils() {
     d.append(e, x); L.appendChild(d); });
 }
 $('afEl').innerHTML = Object.keys(EL).map((k) => `<option value="${k}">${EL[k].name}</option>`).join('');
+$('afWho2').innerHTML = Object.keys(BEASTS).filter((k) => !BEASTS[k].boss).map((k) => `<option value="${k}">${BEASTS[k].name}</option>`).join('');
 $('afWho').innerHTML = Object.keys(BEASTS).filter((k) => !BEASTS[k].boss).map((k) => `<option value="${k}">${BEASTS[k].name}</option>`).join('');
 let abEdit = -1, abDraft = null;
 function openAbForm(i, draft) {
   abEdit = i; abDraft = cleanAb(draft || (i >= 0 ? BE.def.abil[i] : { act: { k: 'shoot' } })); const a = abDraft;
   $('afName').value = a.name; $('afWhen').value = a.when.k; $('afWv').value = a.when.v; $('afAct').value = a.act.k; for (const [id, k] of [['afDmg', 'dmg'], ['afRad', 'rad'], ['afN', 'n'], ['afSpd', 'spd'], ['afFuse', 'fuse'], ['afAmt', 'amt'], ['afSec', 'sec']]) $(id).value = a.act[k];
-  $('afEl').value = a.act.el; $('afWho').value = a.act.who; $('afCnt').value = a.act.n; $('afCd').value = a.cd; $('abForm').hidden = false; formVis();
+  $('afEl').value = a.act.el; $('afWho').value = a.act.who; $('afPart').value = a.act.part; $('afInto').value = a.act.into; $('afWho2').value = a.act.who; $('afCnt').value = a.act.n; $('afCd').value = a.cd; $('abForm').hidden = false; formVis();
 }
 function formVis() { const w = $('afWhen').value, a = $('afAct').value; $('abForm').querySelectorAll('[data-w]').forEach((x) => { x.hidden = !x.dataset.w.split(' ').includes(w); }); $('abForm').querySelectorAll('[data-a]').forEach((x) => { x.hidden = !x.dataset.a.split(' ').includes(a); }); }
 $('afWhen').onchange = formVis; $('afAct').onchange = formVis;
-function readForm() { const a = abDraft; return cleanAb({ ...a, name: $('afName').value.trim() || ACT[$('afAct').value], when: { k: $('afWhen').value, v: $('afWv').value }, act: { k: $('afAct').value, dmg: $('afDmg').value, rad: $('afRad').value, n: $('afAct').value === 'summon' ? $('afCnt').value : $('afN').value, spd: $('afSpd').value, el: $('afEl').value, fuse: $('afFuse').value, amt: $('afAmt').value, sec: $('afSec').value, who: $('afWho').value }, cd: $('afCd').value }); }
+function readForm() { const a = abDraft; return cleanAb({ ...a, name: $('afName').value.trim() || ACT[$('afAct').value], when: { k: $('afWhen').value, v: $('afWv').value }, act: { k: $('afAct').value, dmg: $('afDmg').value, rad: $('afRad').value, n: $('afAct').value === 'summon' || $('afAct').value === 'detach' ? $('afCnt').value : $('afN').value, part: $('afPart').value, into: $('afInto').value, spd: $('afSpd').value, el: $('afEl').value, fuse: $('afFuse').value, amt: $('afAmt').value, sec: $('afSec').value, who: $('afAct').value === 'detach' ? $('afWho2').value : $('afWho').value }, cd: $('afCd').value }); }
 $('afSave').onclick = () => { const a = readForm(); BE.def.abil ||= []; if (abEdit >= 0) BE.def.abil[abEdit] = a; else BE.def.abil.push(a); $('abForm').hidden = true; renderAbils(); bcard(); toast('Ability saved'); };
 $('afCancel').onclick = () => { $('abForm').hidden = true; };
 $('abNew').onclick = () => openAbForm(-1);
@@ -1358,6 +1373,198 @@ function fightBeast(def) { if (!analyse(grid)) { show('forge'); toast('Draw a we
 
 
 // ---------------------------------------------------------------- make your own game: worlds of pixel blocks and things that do things
+
+// ---------------------------------------------------------------- shapes besides cubes (still pixel-textured): ball, cylinder, hexagon, spike, ramp, ring
+const SHAPES = [['box', 'Cube'], ['ball', 'Ball'], ['cyl', 'Cylinder'], ['hex', 'Hexagon'], ['spike', 'Spike'], ['ramp', 'Ramp'], ['ring', 'Ring']];
+const shapeGeo = {};
+function oneGroup(g) { g.clearGroups(); g.addGroup(0, g.index ? g.index.count : g.attributes.position.count, 0); return g; }
+function geoOf(sh) {
+  if (shapeGeo[sh]) return shapeGeo[sh]; let g;
+  if (sh === 'ball') g = oneGroup(new THREE.SphereGeometry(0.5, 10, 8));
+  else if (sh === 'cyl') g = new THREE.CylinderGeometry(0.5, 0.5, 1, 12);
+  else if (sh === 'hex') g = new THREE.CylinderGeometry(0.5, 0.5, 1, 6);
+  else if (sh === 'spike') g = new THREE.CylinderGeometry(0, 0.5, 1, 8);
+  else if (sh === 'ring') { g = oneGroup(new THREE.TorusGeometry(0.36, 0.14, 6, 16)); }
+  else if (sh === 'ramp') { const v = [[-0.5, -0.5, 0.5], [0.5, -0.5, 0.5], [0.5, -0.5, -0.5], [-0.5, -0.5, -0.5], [-0.5, 0.5, -0.5], [0.5, 0.5, -0.5]], t = [[0, 2, 1], [0, 3, 2], [3, 4, 5], [3, 5, 2], [0, 1, 5], [0, 5, 4], [0, 4, 3], [1, 2, 5]], pos = [], uv = [];
+    for (const tri of t) for (const [k, i] of tri.entries()) { pos.push(...v[i]); uv.push([0, 1, 1][k], [0, 0, 1][k]); } g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.computeVertexNormals(); g.addGroup(0, pos.length / 3, 0); }
+  else g = box; return (shapeGeo[sh] = g);
+}
+
+// ---------------------------------------------------------------- ready-made parts: snap onto a monster, then move, recolor and resize them
+const S = (sh, x, y, z, w, h, d, c, r, role) => ({ p: [x, y, z], s: [w, h, d], r: Array.isArray(r) ? r : [0, 0, 0], c, f: plain(), sh, ...(role ? { role } : {}) });
+const B_ = (x, y, z, w, h, d, c, r, role) => S('box', x, y, z, w, h, d, c, r, role);
+const PARTS = {
+  mouth: ['Mouth with teeth', () => [B_(0, 0, 0, 1, 0.34, 0.08, '#24262b'), ...[-0.36, -0.12, 0.12, 0.36].map((x) => S('spike', x, 0.1, 0.03, 0.12, 0.18, 0.08, '#f2efe6', [Math.PI, 0, 0])), ...[-0.24, 0, 0.24].map((x) => S('spike', x, -0.1, 0.03, 0.12, 0.16, 0.08, '#f2efe6'))]],
+  tongue: ['Long tongue', () => [B_(0, 0, 0.2, 0.26, 0.06, 0.5, '#e5484d'), B_(0, -0.08, 0.5, 0.24, 0.06, 0.3, '#e5484d', [0.5, 0, 0]), B_(0, 0.02, 0.18, 0.04, 0.02, 0.4, '#b5303a')]],
+  eyes: ['Big eyes', () => [-0.26, 0.26].flatMap((x) => [B_(x, 0, 0, 0.32, 0.36, 0.06, '#f2efe6'), B_(x + 0.04, -0.03, 0.04, 0.14, 0.18, 0.04, '#24262b')])],
+  angry: ['Angry eyes', () => [-0.26, 0.26].flatMap((x) => [B_(x, 0, 0, 0.3, 0.16, 0.06, '#ffe14d'), B_(x, 0.14, 0.02, 0.36, 0.08, 0.06, '#24262b', [0, 0, x > 0 ? 0.35 : -0.35])])],
+  cyclops: ['One huge eye', () => [S('ball', 0, 0, 0, 0.62, 0.62, 0.3, '#f2efe6'), S('ball', 0, 0, 0.13, 0.28, 0.28, 0.1, '#c4475a'), S('ball', 0, 0, 0.17, 0.14, 0.14, 0.06, '#24262b')]],
+  horns: ['Horns', () => [-0.32, 0.32].map((x) => S('spike', x, 0.3, 0, 0.18, 0.55, 0.18, '#f2efe6', [0, 0, x > 0 ? -0.4 : 0.4]))],
+  wings: ['Bat wings', () => [-1, 1].flatMap((sd) => [B_(sd * 0.75, 0, 0, 1.2, 0.08, 0.7, '#5b3a8f', [0, 0, sd * 0.25], sd > 0 ? 'wingL' : 'wingR'), S('spike', sd * 1.35, -0.25, 0, 0.12, 0.35, 0.08, '#5b3a8f', [0, 0, 0], sd > 0 ? 'wingL' : 'wingR')])],
+  feathers: ['Feather wings', () => [-1, 1].flatMap((sd) => [0, 1, 2].map((k) => B_(sd * (0.45 + k * 0.32), 0.1 - k * 0.12, 0, 0.4, 0.06, 0.55 - k * 0.1, ['#f2efe6', '#dfe8ee', '#cfd8e2'][k], [0, 0, sd * 0.15], sd > 0 ? 'wingL' : 'wingR')))],
+  tail: ['Tail', () => [B_(0, 0, -0.35, 0.22, 0.22, 0.7, '#46c96b', [0.3, 0, 0], 'tail'), S('spike', 0, -0.2, -0.8, 0.2, 0.4, 0.2, '#2f8f4e', [-1.4, 0, 0], 'tail')]],
+  claws: ['Claws', () => [-0.12, 0, 0.12].map((x) => S('spike', x, -0.18, 0.05, 0.08, 0.26, 0.08, '#f2efe6', [Math.PI - 0.3, 0, 0]))],
+  spider: ['Spider legs', () => [-0.45, -0.15, 0.15, 0.45].flatMap((z, i) => [-1, 1].flatMap((sd, j) => { const role = (i + j) % 2 ? 'legL' : 'legR'; return [B_(sd * 0.55, 0.35, z, 0.9, 0.12, 0.12, '#3a2a2a', [0, 0, sd * 0.45], role), B_(sd * 1.05, -0.15, z * 1.4, 0.12, 1.1, 0.12, '#3a2a2a', [0, 0, sd * -0.2], role)]; }))],
+  tentacles: ['Tentacles', () => [0, 1, 2, 3].flatMap((k) => { const a = k / 4 * Math.PI * 2 + 0.4, x = Math.cos(a) * 0.3, z = Math.sin(a) * 0.3, role = k % 2 ? 'legL' : 'legR'; return [S('cyl', x, -0.3, z, 0.18, 0.6, 0.18, '#8b54f0', [Math.sin(a) * 0.3, 0, -Math.cos(a) * 0.3], role), S('spike', x * 1.5, -0.8, z * 1.5, 0.14, 0.5, 0.14, '#8b54f0', [Math.PI, 0, 0], role)]; })],
+  spikes: ['Back spikes', () => [-0.4, 0, 0.4].map((z) => S('spike', 0, 0.25, z, 0.22, 0.5, 0.22, '#e5484d'))],
+  antenna: ['Antennas', () => [-0.15, 0.15].flatMap((x) => [B_(x, 0.3, 0, 0.05, 0.6, 0.05, '#24262b', [0, 0, x * 1.4]), S('ball', x * 1.9, 0.62, 0, 0.14, 0.14, 0.14, '#ffe14d')])],
+  crown: ['Crown', () => [S('cyl', 0, 0, 0, 0.7, 0.18, 0.7, '#e2b043'), ...[0, 1, 2, 3, 4].map((k) => S('spike', Math.cos(k * 1.257) * 0.3, 0.2, Math.sin(k * 1.257) * 0.3, 0.12, 0.24, 0.12, '#e2b043'))]],
+  hat: ['Top hat', () => [S('cyl', 0, 0, 0, 0.9, 0.06, 0.9, '#24262b'), S('cyl', 0, 0.3, 0, 0.55, 0.6, 0.55, '#24262b'), S('cyl', 0, 0.1, 0, 0.57, 0.1, 0.57, '#c4475a')]],
+  sword: ['Sword hand', () => [B_(0, 0, 0, 0.14, 0.14, 0.4, '#7a5230', [0, 0, 0], 'armR'), B_(0, 0, 0.24, 0.4, 0.1, 0.08, '#e2b043', [0, 0, 0], 'armR'), B_(0, 0, 0.75, 0.12, 0.06, 0.9, '#cfd8e2', [0, 0, 0], 'armR')]],
+  saw: ['Saw hand', () => [S('cyl', 0, 0, 0.35, 0.7, 0.06, 0.7, '#9aa0a6', [Math.PI / 2, 0, 0], 'armR'), ...[0, 1, 2, 3, 4, 5, 6, 7].map((k) => S('spike', Math.cos(k * 0.785) * 0.38, Math.sin(k * 0.785) * 0.38, 0.35, 0.1, 0.12, 0.05, '#cfd8e2', [0, 0, k * 0.785 - Math.PI / 2], 'armR'))]],
+  tvhead: ['TV head', () => [B_(0, 0, 0, 1.1, 0.85, 0.75, '#5a4632', [0, 0, 0], 'head'), B_(0, 0.02, 0.38, 0.8, 0.6, 0.04, '#9ae6ff', [0, 0, 0], 'head'), B_(-0.15, 0.06, 0.41, 0.12, 0.12, 0.02, '#24262b', [0, 0, 0], 'head'), B_(0.15, 0.06, 0.41, 0.12, 0.12, 0.02, '#24262b', [0, 0, 0], 'head'), B_(-0.2, 0.55, 0, 0.04, 0.4, 0.04, '#24262b', [0, 0, 0.4], 'head'), B_(0.2, 0.55, 0, 0.04, 0.4, 0.04, '#24262b', [0, 0, -0.4], 'head')]],
+  shell: ['Shell', () => [S('ball', 0, 0, -0.1, 1.2, 0.7, 1.2, '#2f8f4e'), ...[-0.3, 0, 0.3].map((x) => S('hex', x, 0.3, -0.1, 0.28, 0.08, 0.28, '#46c96b'))]],
+  chestmouth: ['Chest mouth', () => [B_(0, 0, 0, 1.2, 0.6, 1, '#8a5a35'), B_(0, 0.45, -0.1, 1.2, 0.3, 1, '#8a5a35', [-0.5, 0, 0], 'jaw'), ...[-0.4, -0.13, 0.13, 0.4].map((x) => S('spike', x, 0.38, 0.42, 0.12, 0.2, 0.08, '#f2efe6', [Math.PI, 0, 0], 'jaw')), B_(0, 0.24, 0.4, 0.3, 0.06, 0.6, '#e5484d', [0.3, 0, 0])]],
+};
+// where a part goes on the model: on top of the head, on the face, on the back, at the sides, under the body…
+const PART_SPOT = { mouth: 'face-low', tongue: 'face-low', eyes: 'face', angry: 'face', cyclops: 'face', horns: 'top', crown: 'top', hat: 'top', antenna: 'top', tvhead: 'neck', wings: 'back', feathers: 'back', spikes: 'backtop', shell: 'back', tail: 'rear', claws: 'handR', sword: 'handR', saw: 'handR', spider: 'under', tentacles: 'under', chestmouth: 'center' };
+function spotFor(def, spot) {
+  const roles = rolesOf(def), pick_ = (r) => def.cubes.filter((q, i) => roles[i] === r), bb = (l) => (l.length ? bboxOf(l) : null), all = bb(def.cubes), head = bb(pick_('head')) || all, body = bb(pick_('body')) || all, arm = bb(pick_('armR')) || bb(pick_('armL'));
+  if (spot === 'top') return [head.cx, head.y1 + 0.02, head.cz]; if (spot === 'face') return [head.cx, head.y0 + (head.y1 - head.y0) * 0.62, head.z1 + 0.02]; if (spot === 'face-low') return [head.cx, head.y0 + (head.y1 - head.y0) * 0.28, head.z1 + 0.02];
+  if (spot === 'neck') return [body.cx, body.y1 + 0.42, body.cz]; if (spot === 'back') return [body.cx, body.y0 + (body.y1 - body.y0) * 0.7, body.z0 - 0.05]; if (spot === 'backtop') return [body.cx, body.y1, body.cz];
+  if (spot === 'rear') return [body.cx, body.y0 + (body.y1 - body.y0) * 0.3, body.z0]; if (spot === 'handR') return arm ? [arm.cx, arm.y0, arm.cz + 0.1] : [-(all.x1 - all.x0) / 2, all.y0 + 1, 0.3];
+  if (spot === 'under') return [body.cx, body.y0 + 0.2, body.cz]; return [all.cx, all.y0 + 0.4, all.cz];
+}
+function partCubes(key, def, scale = 1) { const at = spotFor(def, PART_SPOT[key] || 'center'); return PARTS[key][1]().map((q) => ({ ...q, p: [at[0] + q.p[0] * scale, at[1] + q.p[1] * scale, at[2] + q.p[2] * scale], s: q.s.map((v) => v * scale), seed: 0 })); }
+
+// ---------------------------------------------------------------- ready-made models: whole creatures and props, made of many little shapes
+const HUM = (o) => { // a humanoid in parts, coloured by o
+  const sk = o.skin || '#f1c7a5', sh = o.shirt || '#3d6fd8', pa = o.pants || '#3a3f4a', L = [];
+  L.push(B_(0.24, 0.45, 0, 0.36, 0.9, 0.4, pa, 0, 'legL'), B_(-0.24, 0.45, 0, 0.36, 0.9, 0.4, pa, 0, 'legR'), B_(0, 1.35, 0, 0.95, 0.9, 0.5, sh, 0, 'body'), B_(0, 2.05, 0, 0.75, 0.7, 0.7, sk, 0, 'head'),
+    B_(0.64, 1.35, 0, 0.3, 0.85, 0.32, o.sleeve || sh, 0, 'armL'), B_(-0.64, 1.35, 0, 0.3, 0.85, 0.32, o.sleeve || sh, 0, 'armR'), B_(0.64, 0.86, 0, 0.28, 0.18, 0.3, sk, 0, 'armL'), B_(-0.64, 0.86, 0, 0.28, 0.18, 0.3, sk, 0, 'armR'),
+    B_(0.17, 2.1, 0.36, 0.12, 0.14, 0.03, o.eye || '#24262b', 0, 'head'), B_(-0.17, 2.1, 0.36, 0.12, 0.14, 0.03, o.eye || '#24262b', 0, 'head'));
+  return L.map((q) => ({ ...q, r: [0, 0, 0] }));
+};
+const MODEL_LIB = {
+  zombie: () => ({ name: 'Zombie', cubes: [...HUM({ skin: '#7fb069', shirt: '#4a6b8a', pants: '#3a2f28', eye: '#e5484d' }), B_(0.2, 1.1, 0.26, 0.3, 0.25, 0.02, '#3a2f28', [0, 0, 0.3], 'body'), B_(0, 1.86, 0.36, 0.4, 0.08, 0.03, '#2a2420', [0, 0, 0], 'head'), B_(0.64, 1.3, 0.25, 0.3, 0.3, 0.6, '#7fb069', [0, 0, 0], 'armL'), B_(-0.64, 1.3, 0.25, 0.3, 0.3, 0.6, '#7fb069', [0, 0, 0], 'armR')], abil: [{ name: 'Lunge', when: { k: 'near', v: 2 }, act: { k: 'dash', dmg: 10 }, cd: 3 }] }),
+  robot: () => ({ name: 'Robot', cubes: [B_(0.25, 0.45, 0, 0.32, 0.9, 0.4, '#7d858c', 0, 'legL'), B_(-0.25, 0.45, 0, 0.32, 0.9, 0.4, '#7d858c', 0, 'legR'), B_(0, 1.4, 0, 1.1, 1, 0.65, '#9aa0a6', 0, 'body'), S('hex', 0, 1.45, 0.33, 0.4, 0.06, 0.4, '#ff8a3d', [Math.PI / 2, 0, 0], 'body'), B_(0, 2.2, 0, 0.8, 0.6, 0.65, '#cfd8e2', 0, 'head'), B_(0, 2.22, 0.33, 0.6, 0.14, 0.03, '#7cd4ff', 0, 'head'), B_(0, 2.65, 0, 0.05, 0.35, 0.05, '#24262b', 0, 'head'), S('ball', 0, 2.85, 0, 0.14, 0.14, 0.14, '#e5484d', 0, 'head'), S('cyl', 0.72, 1.35, 0, 0.26, 0.9, 0.26, '#7d858c', 0, 'armL'), S('cyl', -0.72, 1.35, 0, 0.26, 0.9, 0.26, '#7d858c', 0, 'armR'), S('ball', 0.72, 0.85, 0, 0.32, 0.32, 0.32, '#5d666e', 0, 'armL'), S('ball', -0.72, 0.85, 0, 0.32, 0.32, 0.32, '#5d666e', 0, 'armR')], abil: [{ name: 'Laser', when: { k: 'every', v: 3 }, act: { k: 'shoot', dmg: 9, n: 1, spd: 16, el: 'bolt' }, cd: 3 }] }),
+  mummy: () => ({ name: 'Mummy', cubes: [...HUM({ skin: '#e8dcc0', shirt: '#d9ccab', pants: '#cfc19e', sleeve: '#e0d4b4', eye: '#46c96b' }), ...[0.95, 1.25, 1.55, 1.85, 2.25].map((y, i) => B_(0, y, 0, i === 4 ? 0.78 : 0.98, 0.06, i === 4 ? 0.74 : 0.54, '#b8a982', [0, 0, (i % 2 ? 0.08 : -0.08)], i === 4 ? 'head' : 'body'))], abil: [{ name: 'Curse', when: { k: 'every', v: 4 }, act: { k: 'shoot', dmg: 8, n: 3, spd: 9, el: 'poison' }, cd: 4 }] }),
+  ghost: () => ({ name: 'Ghost', fly: true, cubes: [S('ball', 0, 1.6, 0, 1.2, 1.2, 1.1, '#f2efe6', 0, 'body'), S('cyl', 0, 0.95, 0, 1.15, 0.9, 1.05, '#f2efe6', 0, 'body'), ...[-0.4, 0, 0.4].map((x) => S('spike', x, 0.35, 0, 0.32, 0.4, 0.4, '#f2efe6', [Math.PI, 0, 0], 'body')), B_(0.22, 1.75, 0.55, 0.2, 0.3, 0.03, '#24262b', 0, 'head'), B_(-0.22, 1.75, 0.55, 0.2, 0.3, 0.03, '#24262b', 0, 'head'), S('ball', 0, 1.4, 0.54, 0.28, 0.3, 0.05, '#24262b', 0, 'head'), B_(0.65, 1.3, 0.1, 0.35, 0.2, 0.2, '#f2efe6', [0, 0, -0.5], 'armL'), B_(-0.65, 1.3, 0.1, 0.35, 0.2, 0.2, '#f2efe6', [0, 0, 0.5], 'armR')], abil: [{ name: 'Vanish', when: { k: 'hit', v: 0 }, act: { k: 'teleport' }, cd: 5 }] }),
+  bigspider: () => ({ name: 'Giant Spider', cubes: [S('ball', 0, 1.2, -0.5, 1.6, 1.3, 1.8, '#2a2020', 0, 'body'), S('ball', 0, 1.15, 0.65, 0.9, 0.8, 0.9, '#3a2a2a', 0, 'head'), ...[-0.18, 0.18, -0.08, 0.08].map((x, i) => S('ball', x, 1.3 + (i > 1 ? 0.12 : 0), 1.08, 0.12, 0.12, 0.06, '#e5484d', 0, 'head')), S('spike', 0.15, 0.85, 1.05, 0.1, 0.3, 0.1, '#f2efe6', [Math.PI - 0.3, 0, 0], 'head'), S('spike', -0.15, 0.85, 1.05, 0.1, 0.3, 0.1, '#f2efe6', [Math.PI - 0.3, 0, 0], 'head'), ...partCubes('spider', { cubes: [B_(0, 1.2, 0, 1.4, 1, 1.4, '#000', 0, 'body')] }, 1.35)], abil: [{ name: 'Web spit', when: { k: 'every', v: 3 }, act: { k: 'shoot', dmg: 6, n: 2, spd: 11, el: 'poison' }, cd: 3 }] }),
+  soldier: () => ({ name: 'Wind-up Soldier', cubes: [...HUM({ skin: '#f1c7a5', shirt: '#c4475a', pants: '#24262b', sleeve: '#c4475a' }), S('cyl', 0, 2.65, 0, 0.6, 0.55, 0.6, '#24262b', 0, 'head'), S('ball', 0, 2.95, 0, 0.18, 0.18, 0.18, '#e2b043', 0, 'head'), B_(0, 1.5, -0.45, 0.08, 0.08, 0.5, '#e2b043', 0, 'body'), S('ring', 0, 1.5, -0.75, 0.6, 0.6, 0.3, '#e2b043', [0, Math.PI / 2, 0], 'body'), B_(0, 1.2, 0.27, 0.95, 0.08, 0.02, '#e2b043', 0, 'body')], abil: [{ name: 'March', when: { k: 'near', v: 4 }, act: { k: 'dash', dmg: 12 }, cd: 2.5 }] }),
+  doll: () => ({ name: 'Old Doll', cubes: [B_(0.18, 0.35, 0, 0.22, 0.7, 0.26, '#f2efe6', 0, 'legL'), B_(-0.18, 0.35, 0, 0.22, 0.7, 0.26, '#f2efe6', 0, 'legR'), S('spike', 0, 1.05, 0, 0.95, 0.85, 0.95, '#c4475a', [Math.PI, 0, 0], 'body'), S('ball', 0, 1.85, 0, 0.8, 0.8, 0.75, '#f6e2d0', 0, 'head'), B_(0, 2.15, -0.05, 0.86, 0.3, 0.8, '#e2b043', 0, 'head'), B_(0.4, 1.8, -0.1, 0.2, 0.6, 0.3, '#e2b043', 0, 'head'), B_(-0.4, 1.8, -0.1, 0.2, 0.6, 0.3, '#e2b043', 0, 'head'), S('ball', 0.15, 1.9, 0.36, 0.14, 0.14, 0.06, '#24262b', 0, 'head'), S('ball', -0.15, 1.9, 0.36, 0.14, 0.14, 0.06, '#24262b', 0, 'head'), B_(0, 1.7, 0.37, 0.24, 0.04, 0.02, '#8a2018', 0, 'head'), B_(0.45, 1.35, 0, 0.16, 0.6, 0.16, '#f6e2d0', [0, 0, -0.2], 'armL'), B_(-0.45, 1.35, 0, 0.16, 0.6, 0.16, '#f6e2d0', [0, 0, 0.2], 'armR')], abil: [{ name: 'Giggle and vanish', when: { k: 'hit', v: 0 }, act: { k: 'teleport' }, cd: 4 }] }),
+  tvwalker: () => ({ name: 'Walking TV', cubes: [B_(0.3, 0.45, 0, 0.14, 0.9, 0.14, '#24262b', 0, 'legL'), B_(-0.3, 0.45, 0, 0.14, 0.9, 0.14, '#24262b', 0, 'legR'), ...partCubes('tvhead', { cubes: [B_(0, 0.5, 0, 1, 0.4, 0.5, '#000', 0, 'body')] }, 1.4).map((q) => ({ ...q, role: q.role === 'head' ? 'body' : q.role })), B_(0.8, 1.4, 0, 0.1, 0.8, 0.1, '#24262b', [0, 0, -0.3], 'armL'), B_(-0.8, 1.4, 0, 0.1, 0.8, 0.1, '#24262b', [0, 0, 0.3], 'armR')], abil: [{ name: 'Static blast', when: { k: 'every', v: 3 }, act: { k: 'shoot', dmg: 8, n: 2, spd: 12, el: 'bolt' }, cd: 3 }] }),
+  barrel: () => ({ name: 'Barrel', cubes: [S('cyl', 0, 0.6, 0, 0.9, 1.2, 0.9, '#c24e24', 0, 'body'), S('cyl', 0, 0.3, 0, 0.94, 0.08, 0.94, '#2a2e31', 0, 'body'), S('cyl', 0, 0.9, 0, 0.94, 0.08, 0.94, '#2a2e31', 0, 'body')] }),
+  chest: () => ({ name: 'Treasure Chest', cubes: [B_(0, 0.35, 0, 1.2, 0.7, 0.8, '#8a5a35', 0, 'body'), S('cyl', 0, 0.75, 0, 0.8, 1.2, 0.8, '#7a4a2a', [0, 0, Math.PI / 2], 'jaw'), B_(0, 0.5, 0.41, 0.2, 0.25, 0.04, '#e2b043', 0, 'body'), B_(0, 0.35, 0, 1.24, 0.08, 0.84, '#e2b043', 0, 'body')] }),
+  machine: () => ({ name: 'Machine', cubes: [B_(0, 0.9, 0, 1.6, 1.8, 1.2, '#4a545c', 0, 'body'), B_(0, 1.3, 0.61, 1.1, 0.5, 0.03, '#9ae6ff', 0, 'body'), S('cyl', -0.45, 0.6, 0.62, 0.22, 0.06, 0.22, '#e5484d', [Math.PI / 2, 0, 0], 'body'), S('cyl', 0, 0.6, 0.62, 0.22, 0.06, 0.22, '#ffe14d', [Math.PI / 2, 0, 0], 'body'), S('cyl', 0.45, 0.6, 0.62, 0.22, 0.06, 0.22, '#46c96b', [Math.PI / 2, 0, 0], 'body'), S('cyl', 0.5, 2.1, 0, 0.2, 0.6, 0.2, '#2f363c', 0, 'body')] }),
+  lamp: () => ({ name: 'Lamp', cubes: [S('cyl', 0, 0.05, 0, 0.5, 0.1, 0.5, '#2f363c', 0, 'body'), S('cyl', 0, 0.9, 0, 0.08, 1.7, 0.08, '#2f363c', 0, 'body'), S('spike', 0, 1.8, 0, 0.6, 0.4, 0.6, '#2f5a46', 0, 'body'), S('ball', 0, 1.62, 0, 0.22, 0.22, 0.22, '#fff1c0', 0, 'body')] }),
+  tree: () => ({ name: 'Tree', cubes: [S('cyl', 0, 0.8, 0, 0.35, 1.6, 0.35, '#7a5230', 0, 'body'), S('ball', 0, 2.1, 0, 1.6, 1.4, 1.6, '#2f8f4e', 0, 'body'), S('ball', 0.4, 2.6, 0.2, 0.9, 0.8, 0.9, '#46c96b', 0, 'body')] }),
+  portal: () => ({ name: 'Portal', cubes: [S('ring', 0, 1.3, 0, 2.2, 2.6, 1.2, '#8b54f0', 0, 'body'), B_(0, 1.3, 0, 1.3, 1.9, 0.04, '#a77bff', 0, 'body'), S('hex', 0, 0.05, 0, 1.8, 0.1, 1.2, '#24262b', 0, 'body')] }),
+};
+
+// ---------------------------------------------------------------- the smart designer: understands a description (English, Arabic, Egyptian) and builds the monster, no Claude needed
+const DZ = { words: store.get('dzWords', {}) };   // words the player taught it
+const normAr = (t) => t.toLowerCase().replace(/[ً-ْـ]/g, '').replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+const COLORS = { red: ['red', 'احمر', 'حمرا', 'احمراني'], blue: ['blue', 'ازرق', 'زرقا'], green: ['green', 'اخضر', 'خضرا'], yellow: ['yellow', 'اصفر', 'صفرا'], black: ['black', 'اسود', 'سودا'], white: ['white', 'ابيض', 'بيضا'], purple: ['purple', 'بنفسجي', 'موف'], orange: ['orange', 'برتقالي', 'برتقاني'], grey: ['grey', 'gray', 'رمادي', 'رصاصي'], brown: ['brown', 'بني'], pink: ['pink', 'وردي', 'بمبي'], gold: ['gold', 'golden', 'دهبي', 'ذهبي'], silver: ['silver', 'فضي'] };
+const HEX = { red: '#d23a2e', blue: '#2f86d6', green: '#46c96b', yellow: '#ffe14d', black: '#24262b', white: '#f2efe6', purple: '#8b54f0', orange: '#ff8a3d', grey: '#9aa0a6', brown: '#7a5230', pink: '#ff6fb5', gold: '#e2b043', silver: '#cfd8e2' };
+const BASES = { bigspider: ['spider', 'عنكبوت', 'عناكب'], zombie: ['zombie', 'زومبي'], robot: ['robot', 'روبوت', 'انسان الي'], mummy: ['mummy', 'مومياء', 'مومياء'], ghost: ['ghost', 'شبح', 'عفريت ابيض'], soldier: ['soldier', 'عسكري', 'جندي'], doll: ['doll', 'عروسه', 'دميه'], tvwalker: ['tv', 'television', 'تلفزيون', 'تليفزيون'],
+  dragon: ['dragon', 'تنين'], slime: ['slime', 'blob', 'سلايم', 'جيلي'], bat: ['bat', 'خفاش', 'وطواط'], skel: ['skeleton', 'هيكل', 'عضم'], golem: ['golem', 'giant', 'عملاق تلج'], imp: ['imp', 'devil', 'عفريت', 'شيطان'], tnt: ['tnt', 'قنبله', 'متفجر'], qirmiz: ['qirmiz', 'قرمز'] };
+const PART_WORDS = { horns: ['horn', 'قرن', 'قرون'], wings: ['wing', 'جناح', 'اجنحه', 'جناحات'], feathers: ['feather', 'ريش'], tail: ['tail', 'ديل', 'ذيل'], tongue: ['tongue', 'لسان'], mouth: ['teeth', 'fang', 'سنان', 'اسنان', 'انياب', 'بق'], claws: ['claw', 'مخلب', 'مخالب', 'ضوافر'], cyclops: ['one eye', 'cyclops', 'عين واحده'], eyes: ['big eyes', 'عيون كبيره', 'عيون'], angry: ['angry', 'غضبان', 'شرير'],
+  spider: ['spider legs', 'رجول عنكبوت', 'رجل عنكبوت'], tentacles: ['tentacle', 'اخطبوط', 'مجسات'], spikes: ['spike', 'شوك', 'اشواك'], antenna: ['antenna', 'هوائي', 'قرون استشعار'], crown: ['crown', 'تاج', 'ملك'], hat: ['hat', 'قبعه', 'برنيطه'], shell: ['shell', 'صدفه', 'قوقعه'], saw: ['saw', 'منشار'], sword: ['sword', 'سيف'], tvhead: ['\u0000'] };
+const POWERS = { fire: ['fire', 'flame', 'نار', 'لهب', 'يولع'], ice: ['ice', 'frost', 'تلج', 'ثلج', 'جليد'], bolt: ['lightning', 'electric', 'برق', 'كهربا'], poison: ['poison', 'سم', 'سام'], shadow: ['shadow', 'dark', 'ظلام', 'ظل'], light: ['light', 'holy', 'نور'] };
+const NUMS = { 'اتنين': 2, 'اثنين': 2, 'تلات': 3, 'تلاته': 3, 'ثلاث': 3, 'اربع': 4, 'اربعه': 4, 'خمس': 5, 'خمسه': 5, 'ست': 6, 'سته': 6, 'تمن': 8, 'تمانيه': 8, two: 2, three: 3, four: 4, five: 5, six: 6, eight: 8 };
+const PART_ROLES = { 'دراعه': 'armR', 'ايد': 'armR', 'ايده': 'armR', 'ايدي': 'armR', 'دراع': 'armR', 'hand': 'armR', 'arm': 'armR', 'راس': 'head', 'راسه': 'head', 'head': 'head', 'رجل': 'legL', 'رجله': 'legL', 'leg': 'legL', 'ديل': 'tail', 'ديله': 'tail', 'tail': 'tail', 'جناح': 'wingL', 'جناحه': 'wingL', 'wing': 'wingL' };
+const INTO = [[/فار|فيران|rat|mouse|mice/, 'mons', 'slime'], [/خفاش|خفافيش|bat/, 'mons', 'bat'], [/سلايم|slime/, 'mons', 'slime'], [/قنبله|تنفجر|تفرقع|bomb|explode/, 'bomb'], [/تزحف|crawl|لوحد|by itself|alone|وحش/, 'crawler'], [/تعالج|صحه|heal/, 'heal'], [/وحوش|monsters|عفاريت|imps/, 'mons', 'imp']];
+function has_(t, list) { return list.some((w) => t.includes(w)); }
+function design(raw) {
+  let t = ' ' + normAr(raw) + ' '; for (const [k, v] of Object.entries(DZ.words)) t = t.split(k).join(' ' + v + ' ');
+  // teaching: "when I say X it means Y" / "لما اقول X يعني Y"
+  const teach = /(?:لما اقول|when i say)\s+(.+?)\s+(?:يعني|it means|means)\s+(.+)/.exec(t);
+  if (teach) { DZ.words[teach[1].trim()] = teach[2].trim(); store.set('dzWords', DZ.words); return { say: `Got it. From now on "${teach[1].trim()}" means "${teach[2].trim()}".` }; }
+  const said = [];
+  let base = null; for (const [k, l] of Object.entries(BASES)) if (has_(t, l)) { base = k; break; }
+  const def = base && MODEL_LIB[base] ? MODEL_LIB[base]() : base && BEASTS[base] ? clone(BEASTS[base]) : { name: 'Monster', cubes: HUM({ skin: '#46c96b', shirt: '#2f8f4e', pants: '#24262b', eye: '#e5484d' }) };
+  said.push(base ? `a ${def.name.toLowerCase()}` : 'a monster');
+  // colours: the first is the main colour, a second one goes on the details
+  const cols = []; for (const [k, l] of Object.entries(COLORS)) { const at = Math.min(...l.map((w) => (t.indexOf(w) + 1 || 1e9) - 1)); if (at < 1e8) cols.push([at, k]); } cols.sort((a, b) => a[0] - b[0]);
+  if (cols.length) { const main = HEX[cols[0][1]], acc = cols[1] ? HEX[cols[1][1]] : null, counts = {}; def.cubes.forEach((q) => { counts[q.c] = (counts[q.c] || 0) + vol(q); }); const order = Object.entries(counts).sort((a, b) => b[1] - a[1]).map((x) => x[0]);
+    def.cubes.forEach((q) => { if (q.c === order[0]) q.c = main; else if (acc && q.c === order[1]) q.c = acc; }); said.push(cols.map((c) => c[1]).join(' and ')); }
+  // size
+  const big = has_(t, ['giant', 'huge', 'big', 'عملاق', 'ضخم', 'كبير', 'جامد']), small = has_(t, ['tiny', 'small', 'little', 'صغير', 'صغنن', 'قزم']);
+  if (big || small) { const k = big ? 1.6 : 0.6; def.cubes.forEach((q) => { q.p = q.p.map((v) => v * k); q.s = q.s.map((v) => v * k); }); said.push(big ? 'huge' : 'small'); def.sizeK = k; }
+  // parts (with counts like "4 horns" / "تلات عيون")
+  const added = []; for (const [k, l] of Object.entries(PART_WORDS)) { if (!has_(t, l)) continue; if (k === 'eyes' && has_(t, PART_WORDS.cyclops)) continue; if (k === 'mouth' && has_(t, PART_WORDS.tongue) && !has_(t, ['سنان', 'teeth', 'fang', 'انياب'])) continue;
+    if (k === 'tvhead' || (k !== 'tvhead' && /راسه\s*(تلفزيون|تليفزيون)/.test(t) && k === 'tvhead')) { /* handled below */ }
+    if (k === 'sword' || k === 'saw') { const roles = rolesOf(def); def.cubes = def.cubes.filter((q, i) => roles[i] !== 'armR' || q.s[1] > 0.5); }
+    def.cubes.push(...partCubes(k, def, def.sizeK || 1)); added.push(PARTS[k][0].toLowerCase()); }
+  if (/tv head|tv for a head|(راسه|head is|his head|its head)\s*(a\s*)?(تلفزيون|تليفزيون|tv)/.test(t)) { const roles = rolesOf(def); def.cubes = def.cubes.filter((q, i) => roles[i] !== 'head'); def.cubes.push(...partCubes('tvhead', def, def.sizeK || 1)); added.push('a TV for a head'); }
+  if (added.length) said.push('with ' + added.join(', '));
+  // flying, powers and moves
+  if (has_(t, ['fly', 'flies', 'يطير', 'بيطير', 'طاير'])) { def.fly = true; said.push('that flies'); }
+  const abil = def.abil ? [...def.abil] : []; let el = null; for (const [k, l] of Object.entries(POWERS)) if (has_(t, l)) { el = k; break; }
+  if (el) abil.unshift({ name: EL[el].name + ' shot', when: { k: 'every', v: 3 }, act: { k: 'shoot', dmg: 10, n: has_(t, ['كتير', 'many', 'تلات', 'three', '3']) ? 3 : 1, spd: 12, el }, cd: 3 });
+  if (has_(t, ['explode', 'blow up', 'ينفجر', 'يتفرقع', 'يفجر'])) abil.push({ name: 'Blow up', when: { k: 'near', v: 2.5 }, act: { k: 'explode', dmg: 30, rad: 3.5, fuse: 1.2 }, cd: 0 });
+  if (has_(t, ['jump', 'slam', 'ينط', 'يخبط'])) abil.push({ name: 'Ground slam', when: { k: 'near', v: 3.5 }, act: { k: 'slam', dmg: 15, rad: 3.5 }, cd: 5 });
+  if (has_(t, ['dash', 'charge', 'يجري عليك', 'يهجم', 'يندفع'])) abil.push({ name: 'Charge', when: { k: 'near', v: 5 }, act: { k: 'dash', dmg: 14 }, cd: 3 });
+  if (has_(t, ['heal', 'يعالج'])) abil.push({ name: 'Heal', when: { k: 'low', v: 40 }, act: { k: 'heal', amt: 40 }, cd: 8 });
+  if (has_(t, ['shield', 'درع'])) abil.push({ name: 'Shield', when: { k: 'hit', v: 0 }, act: { k: 'shield', sec: 2 }, cd: 6 });
+  if (has_(t, ['teleport', 'vanish', 'يختفي', 'ينتقل'])) abil.push({ name: 'Vanish', when: { k: 'hit', v: 0 }, act: { k: 'teleport' }, cd: 5 });
+  // a body part that breaks off and turns into something ("his hand gets cut off and turns into 3 rats")
+  const verb = /(تتقطع|يتقطع|تتشال|يتشال|تقع|يقع|falls? off|breaks? off|comes? off|cut off|gets cut)/.exec(t); let cut = null;
+  if (verb) { const parts = [...t.matchAll(/(ايدي|ايده|ايد|دراعه|دراع|راسه|راس|رجله|رجل|ديله|ديل|جناحه|جناح|hand|arm|head|leg|tail|wing)/g)]; const before = parts.filter((m) => m.index < verb.index && verb.index - m.index < 45).pop(), after = parts.find((m) => m.index > verb.index && m.index - verb.index < 25);
+    const pm = before || after; if (pm) cut = { 1: pm[1], 2: verb[1], index: Math.min(pm.index, verb.index) }; }
+  let ask = null;
+  if (cut) { const part = PART_ROLES[cut[1]] || 'armR'; const after = t.slice(cut.index); let into = null, who = 'slime';
+    for (const [re, k, w] of INTO) if (re.test(after)) { into = k; who = w || who; break; }
+    const nm = /(\d+)/.exec(after); const n = nm ? Math.min(8, +nm[1]) : (Object.entries(NUMS).find(([w]) => after.includes(w)) || [0, 2])[1];
+    if (!into) { if (has_(after, ['حاجات', 'things', 'something', 'حاجه'])) ask = 'Into what? Monsters, a bomb, a crawling part, or something that heals? (I made it a crawling part for now.)'; into = 'crawler'; }
+    const when = has_(t, ['lose health', 'صحته تقل', 'صحته بتقل', 'low']) ? { k: 'low', v: 50 } : /كل\s*(\d+)|every\s*(\d+)/.test(t) ? { k: 'every', v: +(/كل\s*(\d+)|every\s*(\d+)/.exec(t).slice(1).find(Boolean)) } : { k: 'hit', v: 0 };
+    abil.push({ name: 'Part breaks off', when, act: { k: 'detach', part, into, who, n }, cd: 6 }); said.push(`its ${ROLES.find((r) => r[0] === part)?.[1].toLowerCase() || part} breaks off and turns into ${into === 'mons' ? n + ' ' + (BEASTS[who]?.name || who).toLowerCase() + (n > 1 ? 's' : '') : into === 'bomb' ? 'a bomb' : into === 'heal' ? 'a healing burst' : 'a crawling monster'}`); }
+  def.abil = abil.slice(0, 4).map(cleanAb);
+  // the words it did not understand, so the player can teach it
+  const known = [...Object.values(COLORS), ...Object.values(BASES), ...Object.values(PART_WORDS), ...Object.values(POWERS)].flat(), skip = /^(a|an|the|and|with|that|it|its|his|is|of|to|on|in|when|make|me|وحش|اعمل|اعملي|عايز|و|ب|في|على|لما|من|ده|دي|اللي|بيطلع|يطلع|ليه|له|عنده|راسه|ايده|monster)$/;
+  const strip = (w) => { let x = w; for (let i = 0; i < 2; i++) { if (/^(و|ب|ف|ل)/.test(x) && x.length > 3) x = x.slice(1); if (/^ال/.test(x) && x.length > 4) x = x.slice(2); } return x; };
+  const unknown = t.split(/[^a-z؀-ۿ]+/).map(strip).filter((w) => w.length > 2 && !/^(explodes?|blows?|jumps?|slams?|dash|charges?|heals?|shields?|teleports?|vanish|shoots?|throws?|bites?|يطلع|بيطلع|بيرمي|يرمي|ينفجر|يتفرقع|ينط|يهجم|يجري|يعالج|يختفي|اربع|اربعه|راسه|ايده|عنده|بيعمل|يعمل|ورجول|رجول)$/.test(w) && !skip.test(w) && !known.some((k) => k.includes(w) || w.includes(k)) && !Object.keys(PART_ROLES).includes(w) && !Object.keys(NUMS).includes(w) && !/تتقطع|يتقطع|تقع|يقع|تتحول|يتحول|تبقى|يبقى|كبير|صغير|عملاق|ضخم|طاير|يطير|بيطير|حاجات|حاجه|كتير|كل|ثواني|ثانيه|فيران|فار|قنبله|تنفجر|وحوش|لوحد|تزحف|giant|huge|small|tiny|flies|fly|turns|into|breaks|falls|off|cut|rats|bomb|seconds|every/.test(w));
+  def.name = (cols.length ? cols[0][1][0].toUpperCase() + cols[0][1].slice(1) + ' ' : '') + (def.name || 'Monster');
+  let say = 'I made ' + said.join(', ') + '.'; if (ask) say += ' ' + ask; if (unknown.length) say += ` I didn't understand: ${[...new Set(unknown)].slice(0, 5).join(', ')}. Teach me with "when I say … it means …".`;
+  return { def, say };
+}
+
+// ---------------------------------------------------------------- the "part breaks off" ability at play time
+const regrow = [];
+function detachPart(m, act) {
+  const g = m.R_?.g; if (!g) return; m.gone ||= {}; let part = act.part; if (!g[part] || m.gone[part]) part = ['armR', 'armL', 'head', 'tail', 'legL', 'legR', 'wingL', 'wingR'].find((r) => g[r] && !m.gone[r]); if (!part) return;
+  const grp = g[part], parent = grp.parent, home = { pos: grp.position.clone(), rot: grp.rotation.clone(), scale: grp.scale.clone() }; m.gone[part] = true;
+  const at = grp.getWorldPosition(new THREE.Vector3()); AR.scene.attach(grp); pop2('Snap!', at.clone().add(new THREE.Vector3(0, 0.8, 0)), '#ffb347', true); clank(140);
+  // it falls, then turns into something
+  const v = new THREE.Vector3((Math.random() - 0.5) * 3, 3.5, (Math.random() - 0.5) * 3); let t = 0;
+  const fall = { step(dt) { t += dt; v.y -= 14 * dt; grp.position.addScaledVector(v, dt); grp.rotation.x += dt * 6; if (grp.position.y < 0.2) { grp.position.y = 0.2; v.set(0, 0, 0); } if (t > 0.9) { turn(); return true; } } }; regrow.push(fall);
+  function turn() { AR.scene.remove(grp); const p = grp.position.clone().setY(0);
+    if (act.into === 'bomb') { pop2('Hsssss…', p.clone().add(new THREE.Vector3(0, 1, 0)), '#ffe14d'); setTimeout(() => boom(p, 3, 18, m, 'fire'), 700); }
+    else if (act.into === 'heal') { m.hp = Math.min(m.max, m.hp + m.max * 0.25); pop2('+' + Math.round(m.max * 0.25), m.o.position.clone().add(new THREE.Vector3(0, 3, 0)), '#46c96b'); }
+    else if (act.into === 'mons') { for (let i = 0; i < (act.n || 2); i++) { addBeast(whoEntry(act.who || 'slime')); AR.mons[AR.mons.length - 1].o.position.set(p.x + (Math.random() - 0.5) * 1.6, 0, p.z + (Math.random() - 0.5) * 1.6); } }
+    else { // the part itself becomes a little monster that crawls after you
+      const roles = rolesOf(m.def), cubes = m.def.cubes.filter((q, i) => roles[i] === part).map(clone); if (cubes.length) { const b = bboxOf(cubes); cubes.forEach((q) => { q.p = [q.p[0] - b.cx, q.p[1] - b.y0, q.p[2] - b.cz]; q.role = 'body'; });
+        addBeast({ def: { name: 'Crawling ' + part, cubes, abil: [{ name: 'Bite', when: { k: 'near', v: 1.6 }, act: { k: 'dash', dmg: Math.max(3, m.M.dmg * 0.4) }, cd: 1.5 }] }, M: { name: 'Crawling part', hp: Math.max(10, m.max * 0.15), spd: m.M.spd * 1.4, dmg: Math.max(3, m.M.dmg * 0.4), size: Math.max(0.5, m.M.size * 0.4), weak: m.M.weak, resist: m.M.resist } }); AR.mons[AR.mons.length - 1].o.position.copy(p); } }
+    // it grows back after a while
+    let w = 0; regrow.push({ step(dt) { w += dt; if (w < 7 || m.dead) return w > 7; parent.add(grp); grp.position.copy(home.pos); grp.rotation.copy(home.rot); grp.scale.copy(home.scale).multiplyScalar(0.05); m.gone[part] = false; let s = 0; regrow.push({ step(dt2) { s += dt2 * 2; grp.scale.copy(home.scale).multiplyScalar(Math.min(1, 0.05 + s)); return s >= 1; } }); return true; } }); }
+}
+function regrowStep(dt) { for (let i = regrow.length - 1; i >= 0; i--) if (regrow[i].step(dt)) regrow.splice(i, 1); }
+
+// ---------------------------------------------------------------- the workshop UI for all of this
+function libUI() {
+  const shapes = $('bShapes'), parts = $('bParts'), models = $('bModels');
+  SHAPES.forEach(([k, n]) => { const b = document.createElement('button'); b.className = 'temp'; b.textContent = n; b.onclick = () => {
+      if (BE.sels.length) { pushUndo(); for (const m of BE.sels) m.userData.q.sh = k; rebuild(); toast('Shape changed'); return; }
+      const q = S(k, 0, 1.5, 0, 1, 1, 1, BE.color); if (BE.sel) { const o = BE.sel.userData.q; q.p = [o.p[0] + o.s[0] / 2 + 0.5, o.p[1], o.p[2]]; } addCubes([q]); };
+    shapes.appendChild(b); });
+  for (const [k, [n]] of Object.entries(PARTS)) { const b = document.createElement('button'); b.className = 'temp'; b.textContent = n; b.onclick = () => { const k2 = BE.def.sizeK || Math.max(0.6, Math.min(2.5, (bboxOf(BE.def.cubes).y1 - bboxOf(BE.def.cubes).y0) / 2.4)); addCubes(partCubes(k, BE.def, k2)); toast(n + ' added. Move, resize or recolor it'); }; parts.appendChild(b); }
+  for (const [k, f] of Object.entries(MODEL_LIB)) { const b = document.createElement('button'); b.className = 'temp'; b.textContent = f().name; b.onclick = () => { pushUndo(); loadBeast(f(), true); $('bName').value = f().name; renderAbils?.(); }; models.appendChild(b); }
+  $('dzGo').onclick = () => { const t = $('dzText').value.trim(); if (!t) return toast('Describe a monster first'); const r = design(t); $('dzSay').textContent = r.say; if (r.def) { pushUndo(); loadBeast(r.def, true); $('bName').value = r.def.name; bNameTouched = true; renderAbils(); } };
+  $('dzText').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); $('dzGo').click(); } });
+  // Claude, when available, can design anything from scratch with the same shapes
+  $('dzClaude').onclick = async () => { const t = $('dzText').value.trim(); if (!t) return toast('Describe a monster first'); const sm = window.claude?.use ? await window.claude.use('sample').catch(() => null) : null; if (!sm) { $('dzSay').textContent = 'Claude is not available here, so I used the built-in designer.'; $('dzGo').click(); return; }
+    $('dzClaude').disabled = true; $('dzSay').textContent = 'Claude is designing it…';
+    try { const r = await sm.json(`Design a creature or thing for a kids' 3D block game from this description (any language): ${JSON.stringify(t)}.
+Build it from 6-60 shapes: {"sh":"box"|"ball"|"cyl"|"hex"|"spike"|"ramp"|"ring","p":[x,y,z] centre,"s":[w,h,d] size,"c":"#rrggbb","r":[rx,ry,rz] radians,"role":"body"|"head"|"armL"|"armR"|"legL"|"legR"|"wingL"|"wingR"|"tail"|"jaw"}. y up, feet at y=0, about 2-3 units tall, front faces +z, the left side is +x. Give legs, arms, head, wings, tail and jaw their roles so they animate. Make it detailed and recognisable (eyes, mouth, textures made of small shapes).
+Abilities (0-4): {"name","when":{"k":"near"|"every"|"hit"|"low"|"death","v":number},"act":{"k":"shoot"|"explode"|"dash"|"slam"|"summon"|"heal"|"shield"|"teleport"|"detach","dmg","rad","n","spd","el":"fire"|"ice"|"bolt"|"poison"|"shadow"|"light"|"none","fuse","amt","sec","who":"slime"|"bat"|"skel"|"imp"|"golem","part":"armR"|"armL"|"head"|"tail"|"legL"|"wingL","into":"crawler"|"mons"|"bomb"|"heal"},"cd"}. "detach" = that body part breaks off and turns into something.
+Reply ONLY with JSON: {"name": short name in the player's language, "fly": true|false, "say": one short friendly sentence in the player's language, "cubes": [...], "abil": [...]}`, { modelTier: 'complex', cache: false });
+      const cubes = (Array.isArray(r?.cubes) ? r.cubes : []).slice(0, 80).map((q) => ({ ...cleanCubes([q])[0], sh: SHAPES.some((s) => s[0] === q?.sh) ? q.sh : 'box' }));
+      if (cubes.length) { pushUndo(); loadBeast({ name: String(r.name || 'Creature').slice(0, 28), fly: !!r.fly, cubes, abil: (r.abil || []).slice(0, 4).map(cleanAb) }, true); $('bName').value = String(r.name || 'Creature').slice(0, 28); bNameTouched = true; renderAbils(); $('dzSay').textContent = r.say || 'Done.'; } else $('dzSay').textContent = 'That didn’t come out right. Try again or use the built-in designer.';
+    } catch (e) { $('dzSay').textContent = (e?.code === 'rate_limited' ? 'Claude needs a short rest.' : 'Claude couldn’t do it right now.') + ' The built-in designer still works.'; }
+    $('dzClaude').disabled = false; };
+}
+
 const WS = 64; // a world is 128 x 128 cells, from -64 to 64
 const GROUNDS = { grass: ['Grass', '#3f5a2e'], sand: ['Sand', '#c9a86a'], snow: ['Ice', '#dfe8ee'], stone: ['Stone', '#5d5852'], dark: ['Magic ground', '#3a2f45'], lava: ['Fire ground', '#4a2a1e'] };
 const plain = () => ['', '', '', '', '', ''];
@@ -1454,7 +1661,7 @@ function worldInit() {
   R4.domElement.addEventListener('touchstart', (e) => { WE.touches = e.touches.length; if (e.touches.length > 1) stroke = null; }, { passive: true }); R4.domElement.addEventListener('touchend', (e) => { WE.touches = e.touches.length; }, { passive: true });
   new ResizeObserver(() => { const w = st.clientWidth, h = st.clientHeight; R4.setSize(w, h, false); WE.cam.aspect = w / h; WE.cam.updateProjectionMatrix(); }).observe(st);
   const btn = (k, host) => { const D = ITEMS[k], b = document.createElement('button'); b.className = 'it'; b.dataset.k = k; b.setAttribute('aria-pressed', String(k === WE.item)); b.innerHTML = `<i style="background:${D.c}"></i><span></span>`; b.querySelector('span').textContent = D.n; b.onclick = () => { WE.item = k; if (WE.tool !== 'rect') setWTool('place'); document.querySelectorAll('.it').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); }; host.appendChild(b); };
-  const showCat = (c) => { $('wItems').innerHTML = ''; for (const k in ITEMS) if (ITEMS[k].kind === c || (c === 'custom' && ITEMS[k].custom)) btn(k, $('wItems')); if (c === 'custom' && !$('wItems').children.length) $('wItems').innerHTML = '<span class="desc">No inventions yet. Ask the assistant for something that doesn’t exist, like "a cow that drops beef when I hit it".</span>'; $('wCats').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.c === c))); };
+  const showCat = (c) => { if (c === 'mon') registerMonItems(); $('wItems').innerHTML = ''; for (const k in ITEMS) if (ITEMS[k].kind === c || (c === 'custom' && ITEMS[k].custom)) btn(k, $('wItems')); if (c === 'custom' && !$('wItems').children.length) $('wItems').innerHTML = '<span class="desc">No inventions yet. Ask the assistant for something that doesn’t exist, like "a cow that drops beef when I hit it".</span>'; $('wCats').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.c === c))); };
   $('wCats').querySelectorAll('button').forEach((b) => { b.onclick = () => showCat(b.dataset.c); }); showCat('block');
   $('wGround').innerHTML = Object.entries(GROUNDS).map(([k, [n]]) => `<option value="${k}">${n}</option>`).join(''); $('wGround').onchange = () => { W_().ground = $('wGround').value; renderWorld(); };
   WE.g = store.get('gameDraft2', null) || newGame(); registerDefs(WE.g); $('gName').value = WE.g.name || ''; setWTool('place'); renderWorld(); renderTabs(); renderGames();
@@ -1481,7 +1688,9 @@ const wray = new THREE.Raycaster(), _pl = new THREE.Plane(), _hp = new THREE.Vec
 function rayFrom(e) { const r = WE.R.domElement.getBoundingClientRect(); wray.setFromCamera({ x: (e.clientX - r.left) / r.width * 2 - 1, y: -((e.clientY - r.top) / r.height) * 2 + 1 }, WE.cam); }
 function cellOnPlane(e, y) { rayFrom(e); _pl.set(new THREE.Vector3(0, 1, 0), -y); if (!wray.ray.intersectPlane(_pl, _hp)) return null; const x = Math.floor(_hp.x), z = Math.floor(_hp.z); return x < -WS || z < -WS || x >= WS || z >= WS ? null : { x, z }; }
 function itemAt(x, z, y) { return W_().items.find((it) => it.x === x && it.z === z && (it.y || 0) === y); }
+function registerMonItems() { for (const k in ITEMS) if (ITEMS[k].who) delete ITEMS[k]; for (const k in BEASTS) ITEMS['b_' + k] = { n: BEASTS[k].name, c: BEASTS[k].cubes?.[0]?.c || '#46c96b', kind: 'mon', who: k }; for (const d of BE.mine) ITEMS['m_' + d.id] = { n: d.name + ' (yours)', c: d.cubes?.[0]?.c || '#46c96b', kind: 'mon', who: 'm:' + d.id }; }
 function putItem(t, x, z, y) {
+  if (ITEMS[t]?.who) { const it = putItem('mon', x, z, y); if (it) { it.pr ||= {}; it.pr.who = ITEMS[t].who; } return it; }
   const D = ITEMS[t]; if (!D) return null; if (D.kind !== 'block' && y > 0) y = 0; if (x < -WS || z < -WS || x >= WS || z >= WS || y > 12) return null; const L = W_().items;
   for (let i = L.length - 1; i >= 0; i--) if (L[i].x === x && L[i].z === z && (L[i].y || 0) === y) L.splice(i, 1);
   if (t === 'start') for (let i = L.length - 1; i >= 0; i--) if (L[i].t === 'start') L.splice(i, 1);
