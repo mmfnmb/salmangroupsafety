@@ -87,7 +87,7 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
 .joy{position:absolute;inset-inline-end:auto;left:max(14px,env(safe-area-inset-left,0px));bottom:14px;width:120px;height:120px;border-radius:50%;background:#ffffff10;box-shadow:inset 0 0 0 2px #ffffff22;display:none}
 .joy i{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px 0 0 -24px;border-radius:50%;background:#ffffff33}
 .hit{position:absolute;right:max(14px,env(safe-area-inset-right,0px));bottom:22px;width:92px;height:92px;border-radius:50%;border:0;font:800 18px var(--body);background:radial-gradient(circle at 40% 35%,var(--ember-2),var(--ember));color:#2a1406;box-shadow:0 6px 0 #7a2e0a;display:none}
-.arena.touch .joy,.arena.touch .hit{display:block}
+.arena.touch .joy,.arena.touch .hit{display:block}.arena .hit.act{bottom:126px;width:64px;height:64px;font-size:24px;background:radial-gradient(circle at 40% 35%,#9fe0ff,#3a8fd8)}.arena.touch .hit.act[hidden]{display:none}
 .bstage{position:relative;width:100%;aspect-ratio:1;max-height:70vh;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 40%,#2c2420,#100c0a 75%);box-shadow:inset 0 0 0 1px var(--edge);touch-action:none}
 .bstage canvas{display:block;width:100%;height:100%}
 .btools{position:absolute;inset:8px 8px auto;display:flex;flex-wrap:wrap;gap:6px;z-index:2}
@@ -339,7 +339,7 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
       <button class="tool camBtn" id="aCam">الكاميرا</button>
       <div class="ov" id="aOv"><h2 id="aOvT">ساحة الوحوش</h2><p id="aOvP">انزل بالسلاح اللي في الورشة واصمد قدام موجات الوحوش. كل وحش ليه عنصر بيضعف قدامه.</p><div class="acts" style="justify-content:center"><button class="btn" id="aGo">ابدأ</button><button class="btn alt" id="aEdit" hidden>ارجع عدّل العالم</button></div></div>
       <div class="joy" id="joy"><i id="joyK"></i></div>
-      <button class="hit" id="aHit" aria-label="اضرب">اضرب</button>
+      <button class="hit" id="aHit" aria-label="اضرب">اضرب</button><button class="hit act" id="aAct" aria-label="حركة خاصة" hidden>✦</button>
     </div>
     <p class="desc" id="aHelp">الحركة: WASD أو الأسهم · لف الكاميرا: اسحب على الشاشة أو Q و E · الضرب: مسافة أو كليك · C تغيّر الكاميرا. على الموبايل: اتحرك بالدايرة الشمال، واسحب بصباع تاني على الشاشة عشان تلف، واضرب بالزرار.</p>
     <div class="list" id="bestiary" style="margin-top:12px"></div>
@@ -628,7 +628,7 @@ function arenaInit() {
   new ResizeObserver(() => { const w = AR.el.clientWidth, h = AR.el.clientHeight; R2.setSize(w, h, false); AR.cam.aspect = w / h; AR.cam.updateProjectionMatrix(); }).observe(AR.el);
   if (matchMedia('(pointer:coarse)').matches) AR.el.classList.add('touch');
   // controls
-  addEventListener('keydown', (e) => { if (!AR.on || $('vArena').hidden) return; AR.keys[e.code] = true; if (e.code === 'Space' || e.code === 'KeyJ') { e.preventDefault(); swing(); } if (e.code === 'KeyC') $('aCam').click(); if (e.code.startsWith('Arrow')) e.preventDefault(); });
+  addEventListener('keydown', (e) => { if (!AR.on || $('vArena').hidden) return; AR.keys[e.code] = true; if (!e.repeat && modsRun.list.length && AR.mode === 'world') modsEv('key', e.code); if (e.code === 'Space' || e.code === 'KeyJ') { e.preventDefault(); swing(); } if (e.code === 'KeyC') $('aCam').click(); if (e.code.startsWith('Arrow')) e.preventDefault(); });
   addEventListener('keyup', (e) => { AR.keys[e.code] = false; });
   // drag on the view to turn the camera; a click (no drag) swings
   let drag = null; R2.domElement.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, y: e.clientY, moved: false, id: e.pointerId }; R2.domElement.setPointerCapture(e.pointerId); });
@@ -641,6 +641,7 @@ function arenaInit() {
   const end = () => { AR.joy = null; knob.style.transform = ''; }; joy.addEventListener('pointerup', end); joy.addEventListener('pointercancel', end);
   function moveJoy(e) { const r = joy.getBoundingClientRect(); let x = (e.clientX - r.left - r.width / 2) / (r.width / 2), y = (e.clientY - r.top - r.height / 2) / (r.height / 2); const l = Math.hypot(x, y); if (l > 1) { x /= l; y /= l; } AR.joy = { x, y }; knob.style.transform = `translate(${x * 36}px,${y * 36}px)`; }
   $('aHit').addEventListener('pointerdown', (e) => { e.preventDefault(); swing(); });
+  $('aAct').addEventListener('pointerdown', (e) => { e.preventDefault(); AR.keys.Action = true; modsEv('key', 'Action'); }); $('aAct').addEventListener('pointerup', () => { AR.keys.Action = false; }); $('aAct').addEventListener('pointercancel', () => { AR.keys.Action = false; });
 }
 function heldWeapon() {
   while (AR.hand.children.length) AR.hand.remove(AR.hand.children[0]);
@@ -690,6 +691,7 @@ function spawnWave() {
 function hud() { if (AR.mode === 'world' && G2?.world) { $('aWave').textContent = G2.world.label; $('aScore').textContent = `الوحوش ${AR.mons.length} · النقط ${G2.score}`; $('aHp').style.width = Math.max(0, G2.hp / G2.max * 100) + '%'; return; } $('aWave').textContent = `الموجة ${G2?.wave || 0}`; $('aScore').textContent = `النقط ${G2?.score || 0} · أحسن موجة ${AR.best}`; $('aHp').style.width = Math.max(0, G2 ? G2.hp / G2.max * 100 : 100) + '%'; }
 function pop2(text, pos, col, big) { const v = pos.clone().project(AR.cam), el = document.createElement('div'); el.className = 'pop' + (big ? ' crit' : ''); el.textContent = text; el.style.left = ((v.x + 1) / 2 * 100) + '%'; el.style.top = ((1 - v.y) / 2 * 100) + '%'; if (col) el.style.color = col; $('apops').appendChild(el); setTimeout(() => el.remove(), 1000); }
 function swing() {
+  if (modsRun.list.length && AR.on) modsEv('swing');
   if (!AR.on || !G2 || G2.cd > 0) return; const a = G2.a; G2.cd = 0.25 + (100 - a.spd) / 100 * 0.85; G2.swingT = 0.3;
   // aim at the nearest monster in reach, else straight ahead
   const P = AR.hero.position, reach = 1.6 + a.reach / 100 * 2.6; let tgt = null, best = 99;
@@ -701,6 +703,7 @@ function swing() {
   clank(hits ? 240 : 160);
 }
 function hit(m, mult) {
+  if (modsRun.list.length && modsEv('hit', m, Math.round(G2.a.dmg * mult * 0.6 * (G2.powerMul || 1))) === false) return;
   if (m.cdef?.onHit && !(m.hitEvT > 0)) { m.hitEvT = 0.6; runEvent(m.cdef.onHit, m.o.position, m); }
   if (m.shieldT > 0) { pop2('درع!', m.o.position.clone().add(new THREE.Vector3(0, m.M.size * 1.6 + 0.5, 0)), '#7cd4ff'); return; }
   if (m.ab?.length) onMonsterEvent(m, 'hit');
@@ -713,11 +716,11 @@ function hit(m, mult) {
   if (el === 'shadow') G2.hp = Math.min(G2.max, G2.hp + d * 0.15 * (0.5 + ep));
   if (m.hp <= 0) kill(m);
 }
-function kill(m) { if (m.dead) return; m.dead = true; if (m.cdef?.onDeath) runEvent(m.cdef.onDeath, m.o.position, m); if (m.ab?.length) onMonsterEvent(m, 'death'); shatter(m); AR.scene.remove(m.o); AR.mons.splice(AR.mons.indexOf(m), 1); G2.score += Math.round(m.max / 4) * (m.M.boss ? 5 : 1); hud(); }
+function kill(m) { if (m.dead) return; m.dead = true; if (modsRun.list.length) modsEv('kill', m); if (m.cdef?.onDeath) runEvent(m.cdef.onDeath, m.o.position, m); if (m.ab?.length) onMonsterEvent(m, 'death'); shatter(m); AR.scene.remove(m.o); AR.mons.splice(AR.mons.indexOf(m), 1); G2.score += Math.round(m.max / 4) * (m.M.boss ? 5 : 1); hud(); }
 
 // ---------------------------------------------------------------- abilities in the arena: shots, fuses, explosions, dashes, slams...
 AR.shots = []; AR.shake = 0;
-function hurtPlayer(d, col) { if (!G2 || !AR.on) return; d = Math.round(d); G2.hp -= d; pop2('-' + d, AR.hero.position.clone().add(new THREE.Vector3(0, 2, 0)), col || '#ff5a5a'); hud(); }
+function hurtPlayer(d, col) { if (!G2 || !AR.on) return; d = Math.round(d); if (modsRun.list.length) modsEv('hurt', d); G2.hp -= d; pop2('-' + d, AR.hero.position.clone().add(new THREE.Vector3(0, 2, 0)), col || '#ff5a5a'); hud(); }
 function boom(pos, rad, dmg, from, el) {
   // a burst of little pixel cubes, a flash of light and the screen shakes
   const cols = el === 'ice' ? ['#9ae6ff', '#f2efe6', '#3d6fd8'] : el === 'poison' ? ['#46c96b', '#2f8f4e', '#b9e27c'] : el === 'shadow' ? ['#8b54f0', '#24262b', '#5b3a8f'] : el === 'bolt' ? ['#ffe14d', '#f2efe6', '#ffb347'] : ['#ffe14d', '#ff8a3d', '#e5484d', '#6f6a64'];
@@ -812,6 +815,69 @@ function runEvent(ev, at, src) {
   if (ev.power) { G2.powerMul = 1 + ev.power; G2.powerT = ev.sec; pop2('أقوى!', AR.hero.position.clone().add(new THREE.Vector3(0, 2.4, 0)), '#ff8a5c'); }
   if (ev.score) G2.score += ev.score; hud();
 }
+
+// ---------------------------------------------------------------- code mods: the assistant writes real code for things the game can't do yet
+// a game keeps them in g.mods: { key: { name, code } }. code is a function body that gets `api` and returns hooks
+const MOD_API = `The code is the BODY of function(api) and must "return { ...hooks }". Plain JavaScript, no imports, no DOM, no timers (use tick).
+Hooks (all optional): start() once when the world starts · tick(dt, t) every frame (dt seconds, runs after normal movement, so you can override the player's y for jumping, flying...) · key(code) a key was pressed (KeyboardEvent.code like "Space","KeyF"; on phones the player has an extra button that sends "Action") · swing() the player swung the weapon · hit(m, dmg) a monster is about to take dmg (return false to cancel the damage) · kill(m) a monster died · hurt(n) the player lost n hp · touch(m) the player is touching monster m (every frame).
+api: THREE (three.js r128) · api.state {} (your own memory) · api.hero (Object3D: position, rotation; y is height, 0 = ground) · api.heroParts {body, head, armL, armR, legL, legR} (Object3D parts of the hero, can be rotated/scaled) · api.player {hp, max, score, speedMul, powerMul} (change freely) · api.monsters (array of m: m.o Object3D, m.hp, m.M {name, size, spd, dmg}, m.friendly, m.parts {body, head, armL, armR, legL, legR, wingL, wingR, tail} may be missing, m.data {} for you) · api.keys (object: code -> true while held) · api.ground(x, z) height of blocks there in metres (0 = open floor) · api.cubes(list, x, y, z) makes a 3D model from boxes [{p:[x,y,z], s:[w,h,d], c:"#rrggbb", r:[rx,ry,rz]}] at that place and returns the Object3D (already in the scene) · api.remove(obj) · api.spawn(key, x, z, y) creates a monster (a built-in monster id or an invention key) and returns it · api.detach(m, part) takes a part off a monster (e.g. "armL") and returns its world position (or null) · api.damage(m, n) · api.kill(m) · api.hurt(n) · api.heal(n) · api.say(text, pos, color) floating text · api.boom(pos, rad, dmg) explosion that also breaks blocks · api.shake() · api.sound(freq) · api.camera(mode) "behind"|"front"|"first"|"top" · api.dist(a, b) flat distance of two Vector3 · api.rand(a, b).`;
+const modsRun = { list: [], fixing: {} };
+function modApi(key) {
+  const V = THREE.Vector3;
+  return { THREE, state: {}, get hero() { return AR.hero; }, get heroParts() { return AR.heroRig?.g || {}; }, get player() { return G2; }, get monsters() { return AR.mons; }, keys: AR.keys,
+    ground: (x, z) => (AR.solid?.get(Math.floor(x) + ',' + Math.floor(z)) || 0) * 1.2,
+    cubes: (l, x = 0, y = 0, z = 0) => { const o = buildRig({ cubes: cleanCubes(l) }).root; o.position.set(x, y, z); AR.scene.add(o); (modsRun.objs ||= []).push(o); return o; },
+    remove: (o) => { o?.parent?.remove(o); },
+    spawn: (k, x, z, y = 0) => { if (defOf(k)) return spawnCustom(k, x, z, y); const w = BEASTS[k] || BE.mine.some((d) => 'm:' + d.id === k) ? k : null; if (!w) return null; addBeast(whoEntry(w)); const m = AR.mons[AR.mons.length - 1]; m.o.position.set(x, y, z); return m; },
+    detach: (m, part) => { const p = m?.R_?.g?.[part]; if (!p || !p.parent) return null; const w = p.getWorldPosition(new V()); p.parent.remove(p); delete m.R_.g[part]; return w; },
+    damage: (m, n) => { if (!m || m.dead) return; m.hp -= n; pop2(String(Math.round(n)), m.o.position.clone().add(new V(0, m.M.size + 0.6, 0)), '#fff'); if (m.hp <= 0) kill(m); },
+    kill: (m) => m && kill(m), hurt: (n) => hurtPlayer(n), heal: (n) => { G2.hp = Math.min(G2.max, G2.hp + n); hud(); },
+    say: (t, pos, c) => pop2(String(t).slice(0, 60), (pos || AR.hero.position).clone().add(new V(0, 2.2, 0)), c || '#ffe14d'),
+    boom: (pos, rad = 2.5, dmg = 20) => boom(pos.clone ? pos.clone() : new V(pos.x, pos.y || 0, pos.z), rad, dmg, null, 'fire'),
+    shake: () => { AR.shake = 0.3; }, sound: (f) => clank(f || 300), camera: (m) => CAMS[m] && setCam(m),
+    dist: (a, b) => Math.hypot(a.x - b.x, a.z - b.z), rand: (a, b) => a + Math.random() * (b - a) };
+}
+function modCompile(code) { return new Function('api', '"use strict";\n' + code); }
+function modsStart() {
+  for (const o of modsRun.objs || []) o.parent?.remove(o); modsRun.objs = []; modsRun.list = [];
+  for (const [k, md] of Object.entries(WE.g?.mods || {})) {
+    try { const api = modApi(k), hooks = modCompile(md.code)(api); if (!hooks || typeof hooks !== 'object') throw new Error('the code must return an object of hooks'); const it = { k, md, api, hooks }; modsRun.list.push(it); if (hooks.start) hooks.start(); }
+    catch (e) { modFail(k, e); }
+  }
+  for (const m of AR.mons) if (m.R_ && !m.parts) { m.parts = m.R_.g; m.data ||= {}; }
+}
+function modsEv(ev, ...a) {
+  let res; for (const it of modsRun.list) { if (it.dead || !it.hooks[ev]) continue; try { const r = it.hooks[ev](...a); if (r === false) res = false; } catch (e) { it.dead = true; modFail(it.k, e); } }
+  return res;
+}
+function modsTick(dt, now) {
+  if (!modsRun.list.length) return; for (const m of AR.mons) if (!m.parts) { m.parts = m.R_?.g || {}; m.data ||= {}; }
+  modsEv('tick', dt, now / 1000);
+  if (modsRun.list.some((it) => it.hooks.touch && !it.dead)) { const P = AR.hero.position; for (const m of [...AR.mons]) if (Math.hypot(m.o.position.x - P.x, m.o.position.z - P.z) < m.M.size * 0.5 + 0.8) modsEv('touch', m); }
+}
+// when a piece of code breaks, the assistant reads the error and repairs it by itself
+function modFail(k, e) {
+  const md = WE.g?.mods?.[k]; if (!md) return; md.err = String(e?.message || e).slice(0, 300);
+  modsRun.list = modsRun.list.filter((it) => it.k !== k || !it.dead); modsRun.list = modsRun.list.filter((it) => it.k !== k);
+  fixMod(k);
+}
+async function fixMod(k) {
+  const md = WE.g?.mods?.[k]; if (!md || modsRun.fixing[k] || (md.fixes || 0) >= 3) { if (md && (md.fixes || 0) >= 3) toast(`«${md.name}» فيها مشكلة، اطلب من المساعد يعملها تاني`); return; }
+  const sm = window.claude?.use ? await window.claude.use('sample').catch(() => null) : null; if (!sm) return;
+  modsRun.fixing[k] = true; md.fixes = (md.fixes || 0) + 1; toast(`المساعد بيصلّح «${md.name}»…`);
+  try {
+    const r = await sm.json(`You wrote this code for a feature called "${md.name}" in a kids' 3D block game, and it failed with this error: ${md.err}
+${MOD_API}
+The code:
+${md.code}
+Fix it so it works and still does what it was meant to do. Reply ONLY with JSON: {"code": the fixed function body}.`, { modelTier: 'complex', cache: false });
+    if (typeof r?.code === 'string' && r.code.length > 10) { modCompile(r.code); md.code = r.code.slice(0, 20000); delete md.err; saveMods(); toast(`صلّحت «${md.name}»`);
+      if (AR.on && AR.mode === 'world') { try { const api = modApi(k), hooks = modCompile(md.code)(api); modsRun.list.push({ k, md, api, hooks }); hooks?.start?.(); } catch (e) { md.err = String(e?.message || e); } } }
+  } catch (e) { md.err = String(e?.message || e); }
+  modsRun.fixing[k] = false;
+}
+function saveMods() { try { store.set('gameDraft2', WE.g); const i = WE.games.findIndex((x) => x.id === WE.g.id); if (i >= 0) { WE.games[i].mods = clone(WE.g.mods); store.set('games', WE.games); } } catch { /* storage full or blocked */ } }
+
 function picksStep(dt, now) {
   if (!G2) return; const P = AR.hero.position; if (G2.speedT > 0 && (G2.speedT -= dt) <= 0) G2.speedMul = 1; if (G2.powerT > 0 && (G2.powerT -= dt) <= 0) G2.powerMul = 1;
   for (let i = AR.picks.length - 1; i >= 0; i--) { const k = AR.picks[i]; k.spin.rotation.y += dt * 2.5; k.spin.position.y += Math.sin(now / 300 + k.bob) * 0.004;
@@ -884,14 +950,14 @@ function arenaStep(dt, now) {
   for (const m of AR.mons) if (!m.M.fly) { pushOut(m.o.position, m.M.size * 0.45); pushBoxes(m.o.position, m.M.size * 0.4); }
   // monsters keep a little apart
   for (let i = 0; i < AR.mons.length; i++) for (let j = i + 1; j < AR.mons.length; j++) { const A_ = AR.mons[i].o.position, B_ = AR.mons[j].o.position, d = A_.distanceTo(B_), min = (AR.mons[i].M.size + AR.mons[j].M.size) * 0.45; if (d < min && d > 0.001) { const push = B_.clone().sub(A_).setY(0).normalize().multiplyScalar((min - d) / 2); A_.sub(push); B_.add(push); } }
-  worldTick(dt, now); if (!AR.on) return;
+  worldTick(dt, now); if (!AR.on) return; if (AR.mode === 'world') modsTick(dt, now); if (!AR.on) return;
   if (G2.hp <= 0 && AR.mode === 'world') { AR.on = false; worldOver(false); return; }
   if (G2.hp <= 0) { AR.on = false; if (G2.wave > AR.best) { AR.best = G2.wave; store.set('best', AR.best); } $('aOvT').textContent = 'وقعت!'; $('aOvP').textContent = `وصلت للموجة ${G2.wave} وجمعت ${G2.score} نقطة. ارجع الورشة وقوّي سلاحك، أو ادخل تاني.`; $('aGo').textContent = 'العب تاني'; $('aOv').hidden = false; hud(); return; }
   if (AR.mode === 'waves' && !AR.mons.length) { G2.between -= dt; if (G2.between <= 0) { if (G2.wave) { G2.hp = Math.min(G2.max, G2.hp + 25); pop2('+25', P.clone().add(new THREE.Vector3(0, 2, 0)), '#46c96b'); } spawnWave(); G2.between = 2; } }
   placeCam(P, dt); if (AR.shake > 0) { AR.shake = Math.max(0, AR.shake - dt * 2); AR.cam.position.x += (Math.random() - 0.5) * AR.shake; AR.cam.position.y += (Math.random() - 0.5) * AR.shake; }
 }
 $('aGo').onclick = () => { clank(260); startArena(); };
-$('tArena').addEventListener('click', () => { AR.focus = null; if (AR.mode === 'world') { AR.on = false; AR.mode = 'waves'; $('aOvT').textContent = 'ساحة الوحوش'; $('aGo').textContent = 'ابدأ'; $('aEdit').hidden = true; $('aOv').hidden = false; } });
+$('tArena').addEventListener('click', () => { AR.focus = null; modsRun.list = []; $('aAct').hidden = true; if (AR.mode === 'world') { AR.on = false; AR.mode = 'waves'; $('aOvT').textContent = 'ساحة الوحوش'; $('aGo').textContent = 'ابدأ'; $('aEdit').hidden = true; $('aOv').hidden = false; } });
 
 
 // ---------------------------------------------------------------- the monster workshop: monsters made of cubes, like a block modeller
@@ -1424,6 +1490,8 @@ function applyOps(ops) {
   for (const o of ops || []) {
     if (!o || typeof o !== 'object') continue; const h = Math.max(1, Math.min(8, Math.round(+o.h || 1))), y0 = Math.max(0, Math.round(+o.y || 0));
     if (o.op === 'ground' && GROUNDS[o.g]) { W_().ground = o.g; continue; }
+    if (o.op === 'code' && typeof o.key === 'string' && /^[a-z][a-z0-9_]{1,24}$/.test(o.key) && typeof o.code === 'string') { WE.g.mods ||= {}; WE.g.mods[o.key] = { name: String(o.name || o.key).slice(0, 40), code: o.code.slice(0, 20000) }; try { modCompile(o.code); } catch (e) { WE.g.mods[o.key].err = String(e.message); fixMod(o.key); } n++; continue; }
+    if (o.op === 'uncode' && WE.g.mods?.[o.key]) { delete WE.g.mods[o.key]; n++; continue; }
     if (o.op === 'define' && typeof o.key === 'string' && /^[a-z][a-z0-9_]{1,24}$/.test(o.key) && (!ITEMS[o.key] || ITEMS[o.key].custom || ITEMS[o.key].kind === 'custom')) { WE.g.defs ||= {}; WE.g.defs[o.key] = cleanDef(o.def); registerDefs(WE.g); n++; continue; }
     if (o.op === 'setting') { W_().settings ||= {}; if (CAMS[o.camera]) W_().settings.camera = o.camera; if (/^#[0-9a-f]{6}$/i.test(o.sky)) W_().settings.sky = o.sky; n++; continue; }
     if (o.op === 'clear') { W_().items = []; continue; }
@@ -1453,6 +1521,7 @@ mon (a monster {pr: who}); who is one of: ${mons}
 Grounds: grass, sand, snow, stone, dark, lava.
 Current world: ${worldSummary(W_())}. This game has ${WE.g.worlds.length} worlds; this is world ${WE.wi}.
 Inventions already in this game: ${Object.entries(WE.g.defs || {}).map(([k, d]) => k + ' (' + d.name + ', ' + d.kind + ')').join(', ') || 'none'}.
+Code features already in this game: ${Object.entries(WE.g.mods || {}).map(([k, m]) => `\n--- ${k} (${m.name})${m.err ? ' [BROKEN: ' + m.err + ']' : ''}:\n` + m.code.slice(0, 3000)).join('') || 'none'}.
 IMPORTANT: the player may ask for ANYTHING, including things this game has never had (animals, food, magic items, new blocks, characters...). Never refuse and never swap it for something else: INVENT it with a "define" step, then place it with "put" (or rect/line/circle for blocks).
 An invention: {"op":"define","key": short lowercase english id like "cow","def":{"kind":"entity"|"pickup"|"block","name": Arabic name,
  "cubes": its 3D model built from 3-40 boxes [{"p":[x,y,z] centre,"s":[w,h,d] size,"c":"#rrggbb","r":[rx,ry,rz] radians,"role": optional "body"|"head"|"legL"|"legR"|"armL"|"armR"|"wingL"|"wingR"|"tail"}] (y up, feet at y=0, about 1-3 units tall, front faces +z; give legs, arms, wings and the head roles so they animate; make it recognisable and cute, with eyes, spots, horns...),
@@ -1460,6 +1529,8 @@ An invention: {"op":"define","key": short lowercase english id like "cow","def":
  "onHit": event, "onDeath": event, "onTouch": event}}
 An event: {"say": short Arabic text, "drop": key of an invention to drop (define pickups BEFORE what drops them), "n": count, "spawn": key or monster to create, "explode": {"rad","dmg"}, "heal", "dmg", "speed": extra speed 0-3, "power": extra hit power 0-3, "sec": seconds, "score"}.
 Pickups ("kind":"pickup") are picked up when the player walks into them and run their "onTouch" event (beef: {"heal":30}). Blocks ("kind":"block") are new solid block types with a "color".
+NEW RULES AND MECHANICS (jumping, flying, double jump, gravity, dashing, a boss that splits, a monster whose hand falls off and becomes enemies, day and night, a timer, collecting coins to win, a pet that follows you and fights...): anything "define" can't do, PROGRAM it: {"op":"code","key": short lowercase english id,"name": Arabic name,"code": JavaScript}. To change a code feature write it again with the same key; to remove one: {"op":"uncode","key"}. Write complete, careful, working code; tell the player in "say" which key/button to use (phones have a ✦ button that sends "Action").
+${MOD_API}
 Settings: {"op":"setting","camera":"behind"|"front"|"first"|"top","sky":"#rrggbb"}.
 Reply ONLY with JSON: {"say": one short friendly sentence in Egyptian Arabic about what you built, "ops": [steps]}. Steps:
 {"op":"ground","g":...} · {"op":"clear"} (only if asked to start over) · {"op":"put","t":...,"x","z","y","pr"} · {"op":"rect","t","x0","z0","x1","z1","y","h","hollow":true|false,"pr"} · {"op":"line","t","x0","z0","x1","z1","y","h"} · {"op":"circle","t","cx","cz","r","y","h","hollow"} · {"op":"erase","x0","z0","x1","z1"}
@@ -1513,7 +1584,7 @@ function loadWorld(wi, back) {
   G2 = { a, hp: keepHp, max: 100, wave: 0, score: G2?.world ? G2.score : 0, cd: 0, swingT: 0, face: new THREE.Vector3(0, 0, -1), pos: new THREE.Vector3(), world: { wi, stack, label: wi ? `عالم ${wi + 1}` : (WE.g.name || 'لعبتي'), hadMon: false, won: false } };
   AR.mode = 'world'; const W = WE.g.worlds[wi]; let start = playScene(W);
   if (back === null && G2.world.stack.length && G2.world.returnTo) start = G2.world.returnTo;
-  AR.hero.position.set(start.x, 0, start.z); AR.cam.position.set(start.x, 11, start.z + 10); AR.on = true; hud();
+  AR.hero.position.set(start.x, 0, start.z); AR.cam.position.set(start.x, 11, start.z + 10); AR.on = true; hud(); modsStart(); $('aAct').hidden = !modsRun.list.length;
   pop2(G2.world.label, new THREE.Vector3(start.x, 2, start.z), '#ffb347', true);
 }
 function worldSwing(P, reach) { let n = 0; for (const o of AR.objs) { if (o.gone) continue; const d = Math.hypot(o.x - P.x, o.z - P.z); if (d > reach + 0.5) continue;
