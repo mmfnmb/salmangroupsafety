@@ -125,7 +125,7 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
 .aidock .aiLog .me{background:#2c2622ee;align-self:flex-start}.aidock .aiLog .bot{background:#3a2417ee;border:1px solid var(--edge);align-self:flex-end}
 .aiRow{display:flex;gap:6px;align-items:center;background:#211c19ee;border:1px solid var(--edge);border-radius:12px;padding:5px}
 .aiRow input{flex:1;min-width:0;background:var(--coal);border:1px solid var(--edge);border-radius:9px;padding:7px 10px;color:var(--bone);font:600 14px var(--body)}
-.aiRow .btn{padding:7px 12px}
+.aiRow .btn{padding:7px 12px}#aiThumb{width:34px;height:34px;object-fit:cover;border-radius:7px;border:2px solid var(--ember);cursor:pointer}
 .wcats{display:flex;gap:6px;margin-top:8px;overflow-x:auto}
 .wcats button{flex:none;background:var(--plate);border:1px solid var(--edge);border-radius:999px;padding:5px 12px;font-weight:800;font-size:13px}
 .wcats button[aria-pressed="true"]{border-color:var(--ember);color:var(--ember-2)}
@@ -325,7 +325,7 @@ nav button[aria-pressed="true"]{background:var(--plate);color:var(--bone);box-sh
       <div class="wpanel" id="myGamesBox" hidden><b>ألعابي</b><div class="list" id="myGames"></div></div>
       <div class="aidock" id="aiBox">
         <div class="aiLog" id="aiLog"><div class="bot">أنا مساعدك. قولّي تبني إيه، مثلاً: "قلعة طوب في النص وحواليها حمم وجواها تنين".</div></div>
-        <div class="aiRow"><button class="tool" id="aiToggle" aria-label="خبّي المساعد">✦</button><input id="aiText" maxlength="500" placeholder="قول للمساعد يبني إيه…"><button class="btn" id="aiGo">ابنيه</button><button class="btn alt" id="aiUndo" disabled>رجّع</button></div>
+        <div class="aiRow"><button class="tool" id="aiToggle" aria-label="خبّي المساعد">✦</button><button class="tool" id="aiPic" aria-label="ابعت صورة" title="ابعت صورة للمساعد">📷</button><input type="file" id="aiFile" accept="image/*" hidden><img id="aiThumb" alt="" hidden><input id="aiText" maxlength="500" placeholder="قول للمساعد يبني إيه…"><button class="btn" id="aiGo">ابنيه</button><button class="btn alt" id="aiUndo" disabled>رجّع</button></div>
       </div>
     </div>
     <div class="wcats" id="wCats"><button data-c="block" aria-pressed="true">مكعبات</button><button data-c="tile" aria-pressed="false">أرضيات</button><button data-c="smart" aria-pressed="false">حاجات بتعمل حاجات</button><button data-c="mon" aria-pressed="false">وحوش</button><button data-c="custom" aria-pressed="false">اختراعات</button></div>
@@ -1033,7 +1033,11 @@ function hash3(a, b, c) { let h = Math.imul(a + 0x9e37, 374761393) ^ Math.imul(b
 function parsePaint(f) { if (!f) return null; const m = /^(\d+),(\d+):(.*)$/.exec(f); return m ? { w: +m[1], h: +m[2], d: m[3] } : { w: 8, h: 8, d: f }; }
 function resample(pt, w, h) { const out = []; for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) out.push(pt ? pt.d[Math.floor(y * pt.h / h) * pt.w + Math.floor(x * pt.w / w)] || '.' : '.'); return out; }
 const _hsl = {};
+// a box face can carry real pixels from a picture the player gave (q.im[i] is a small png)
+const picCache = new Map();
+function picMat(url) { let t = picCache.get(url); if (!t) { const im = new Image(); t = new THREE.Texture(im); t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; im.onload = () => { t.needsUpdate = true; }; im.src = url; picCache.set(url, t); if (picCache.size > 3000) picCache.clear(); } return new THREE.MeshLambertMaterial({ map: t }); }
 function faceMat(q, i) {
+  if (q.im?.[i]) return picMat(q.im[i]);
   const [w, h] = faceDims(q, i), seed = q.seed || 1, key = [q.c, w, h, seed, i, q.f[i]].join('|'); let t = texCache.get(key);
   if (!t) {
     const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'), img = g.createImageData(w, h), col = new THREE.Color(), pt = parsePaint(q.f[i]), cells = pt ? resample(pt, w, h) : null;
@@ -1497,6 +1501,20 @@ function aiSay(cls, text) { const d = document.createElement('div'); d.className
 let aiUndo = null;
 function worldSummary(W) { const c = {}; let x0 = 99, x1 = -99, z0 = 99, z1 = -99; for (const it of W.items) { c[it.t] = (c[it.t] || 0) + 1; x0 = Math.min(x0, it.x); x1 = Math.max(x1, it.x); z0 = Math.min(z0, it.z); z1 = Math.max(z1, it.z); } return W.items.length ? `${W.items.length} things between x ${x0}..${x1}, z ${z0}..${z1}: ${Object.entries(c).map(([k, v]) => k + ' ' + v).join(', ')}` : 'empty'; }
 // building steps Claude can use; each is checked and kept inside the world
+// the picture the player sends to the assistant
+let aiPic = null;
+async function loadPic(file) { const bmp = await createImageBitmap(file), k = Math.min(1, 1024 / Math.max(bmp.width, bmp.height)), cv = document.createElement('canvas'); cv.width = Math.round(bmp.width * k); cv.height = Math.round(bmp.height * k); cv.getContext('2d').drawImage(bmp, 0, 0, cv.width, cv.height); const blob = await new Promise((r) => cv.toBlob(r, 'image/png')); return { blob, cv, url: cv.toDataURL('image/jpeg', 0.6) }; }
+function cropPic(box, maxW, maxH, bg) {
+  const cv = aiPic.cv; let [x0, y0, x1, y1] = box.map((v) => Math.max(0, Math.min(1, +v || 0))); if (x1 < x0) [x0, x1] = [x1, x0]; if (y1 < y0) [y0, y1] = [y1, y0];
+  const sx = x0 * cv.width, sy = y0 * cv.height, sw = Math.max(1, (x1 - x0) * cv.width), sh = Math.max(1, (y1 - y0) * cv.height), k = Math.min(1, maxW / sw, maxH / sh), o = document.createElement('canvas');
+  o.width = Math.max(1, Math.round(sw * k)); o.height = Math.max(1, Math.round(sh * k)); const g = o.getContext('2d'); g.fillStyle = bg || '#888888'; g.fillRect(0, 0, o.width, o.height); g.imageSmoothingEnabled = k < 1; g.imageSmoothingQuality = 'high'; g.drawImage(cv, sx, sy, sw, sh, 0, 0, o.width, o.height); return o.toDataURL('image/png');
+}
+// the assistant marks which part of the picture each box shows; the game pastes those exact pixels on the box (sides take the edges)
+function picFaces(q, src) {
+  if (!aiPic || !Array.isArray(src?.uv) || src.uv.length !== 4) return; const [x0, y0, x1, y1] = src.uv.map(Number), ex = Math.abs(x1 - x0) * 0.1, ey = Math.abs(y1 - y0) * 0.1, bg = q.c;
+  q.im = [cropPic([x1 - ex, y0, x1, y1], 6, 64, bg), cropPic([x0, y0, x0 + ex, y1], 6, 64, bg), cropPic([x0, y0, x1, y0 + ey], 64, 6, bg), cropPic([x0, y1 - ey, x1, y1], 64, 6, bg), cropPic(src.uv, 96, 96, bg),
+    Array.isArray(src.uvBack) && src.uvBack.length === 4 ? cropPic(src.uvBack, 96, 96, bg) : cropPic([x0, y0, x1, y0 + ey], 64, 6, bg)];
+}
 function applyOps(ops) {
   let n = 0; const cl = (v) => Math.max(-WS, Math.min(WS - 1, Math.round(+v || 0))), ok = (t) => !!ITEMS[t], monOk = (w) => !!BEASTS[w] || BE.mine.some((d) => 'm:' + d.id === w);
   let ix = null; const K3 = (x, z, y) => x + ',' + z + ',' + y;
@@ -1510,9 +1528,9 @@ function applyOps(ops) {
     if (!o || typeof o !== 'object') continue; const h = Math.max(1, Math.min(8, Math.round(+o.h || 1))), y0 = Math.max(0, Math.round(+o.y || 0));
     if (o.op === 'ground' && GROUNDS[o.g]) { W_().ground = o.g; continue; }
     if (o.op === 'code' && typeof o.key === 'string' && /^[a-z][a-z0-9_]{1,24}$/.test(o.key) && typeof o.code === 'string') { WE.g.mods ||= {}; WE.g.mods[o.key] = { name: String(o.name || o.key).slice(0, 40), code: o.code.slice(0, 20000) }; try { modCompile(o.code); } catch (e) { WE.g.mods[o.key].err = String(e.message); fixMod(o.key); } n++; continue; }
-    if (o.op === 'hero') { if (o.reset) delete WE.g.hero; else if (Array.isArray(o.cubes) && o.cubes.length >= 3) WE.g.hero = { name: String(o.name || 'البطل').slice(0, 30), cubes: cleanCubes(o.cubes) }; n++; continue; }
+    if (o.op === 'hero') { if (o.reset) delete WE.g.hero; else if (Array.isArray(o.cubes) && o.cubes.length >= 3) { WE.g.hero = { name: String(o.name || 'البطل').slice(0, 30), cubes: cleanCubes(o.cubes) }; WE.g.hero.cubes.forEach((q, i) => picFaces(q, o.cubes[i])); } n++; continue; }
     if (o.op === 'uncode' && WE.g.mods?.[o.key]) { delete WE.g.mods[o.key]; n++; continue; }
-    if (o.op === 'define' && typeof o.key === 'string' && /^[a-z][a-z0-9_]{1,24}$/.test(o.key) && (!ITEMS[o.key] || ITEMS[o.key].custom || ITEMS[o.key].kind === 'custom')) { WE.g.defs ||= {}; WE.g.defs[o.key] = cleanDef(o.def); registerDefs(WE.g); n++; continue; }
+    if (o.op === 'define' && typeof o.key === 'string' && /^[a-z][a-z0-9_]{1,24}$/.test(o.key) && (!ITEMS[o.key] || ITEMS[o.key].custom || ITEMS[o.key].kind === 'custom')) { WE.g.defs ||= {}; WE.g.defs[o.key] = cleanDef(o.def); WE.g.defs[o.key].cubes.forEach((q, i) => picFaces(q, o.def?.cubes?.[i])); registerDefs(WE.g); n++; continue; }
     if (o.op === 'setting') { W_().settings ||= {}; if (CAMS[o.camera]) W_().settings.camera = o.camera; if (/^#[0-9a-f]{6}$/i.test(o.sky)) W_().settings.sky = o.sky; n++; continue; }
     if (o.op === 'clear' || o.op === 'erase') flush();
     if (o.op === 'clear') { W_().items = []; continue; }
@@ -1527,11 +1545,14 @@ function applyOps(ops) {
   }
   flush(); return n;
 }
+$('aiPic').onclick = () => $('aiFile').click();
+$('aiFile').onchange = async () => { const f = $('aiFile').files[0]; $('aiFile').value = ''; if (!f) return; try { aiPic = await loadPic(f); $('aiThumb').src = aiPic.url; $('aiThumb').hidden = false; toast('الصورة جاهزة، اكتب عايز إيه منها'); } catch { toast('مقدرتش أفتح الصورة دي'); } };
+$('aiThumb').onclick = () => { aiPic = null; $('aiThumb').hidden = true; toast('شلت الصورة'); };
 $('aiText').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); $('aiGo').click(); } });
 $('aiGo').onclick = async () => {
   const text = $('aiText').value.trim(); if (!text) return toast('اكتب طلبك الأول');
   const sm = window.claude?.use ? await window.claude.use('sample').catch(() => null) : null; if (!sm) { toast('المساعد شغّال بس جوه Claude. ابني بإيدك هنا'); return; }
-  aiSay('me', text); $('aiText').value = ''; $('aiGo').disabled = true; $('aiGo').textContent = 'بيبني…'; const before = JSON.stringify(W_());
+  aiSay('me', text + (aiPic ? ' 📷' : '')); $('aiText').value = ''; let imgs = null; if (aiPic) { const lim = await sm.limits?.().catch(() => null); if (lim?.images) imgs = [aiPic.blob]; else toast('الصور مش متاحة هنا، هبني من الكلام بس'); } $('aiGo').disabled = true; $('aiGo').textContent = 'بيبني…'; const before = JSON.stringify(W_());
   const mons = [...Object.keys(BEASTS).map((k) => `${k} (${BEASTS[k].name})`), ...BE.mine.map((d) => `m:${d.id} (${d.name})`)].join(', ');
   try {
     const r = await sm.json(`You build worlds in a kids' block game from what the player asks (Egyptian Arabic or any language). The world is a grid: x and z from -64 to 63 (cells of 1 m), y = stack height 0..12 (only blocks stack). The player's view starts around (0,0).
@@ -1560,8 +1581,9 @@ Reply ONLY with JSON: {"say": one short friendly sentence in Egyptian Arabic abo
 {"op":"ground","g":...} · {"op":"clear"} (only if asked to start over) · {"op":"put","t":...,"x","z","y","pr"} · {"op":"rect","t","x0","z0","x1","z1","y","h","hollow":true|false,"pr"} · {"op":"line","t","x0","z0","x1","z1","y","h"} · {"op":"circle","t","cx","cz","r","y","h","hollow"} · {"op":"erase","x0","z0","x1","z1"} · {"op":"fill","t","y","h"} (covers the WHOLE world, every cell from -64 to 63)
 SIZE: do exactly the size the player says. "All the floor", "the whole ground", "everywhere", "كل الأرض", "الأرضية كلها", "في كل حتة" means the WHOLE world (use fill, or rect from -64 to 63), never a small patch. "Big" means really big (40+ cells), "huge" means most of the world. Never quietly make less than asked.
 Build generously and with care for how it looks (walls with towers, paths, decorations, varied blocks), keep it playable (paths the player can walk, a start spot if there is none), and use at most 150 steps (inventions first, then placing them).
-Player asks: ${JSON.stringify(text)}`, { modelTier: 'complex', cache: false });
-    aiUndo = before; const n = applyOps(r?.ops); renderWorld(true); renderTabs(); $('aiUndo').disabled = false;
+${imgs ? `THE PLAYER ATTACHED A PICTURE. Copy it as exactly as you can, with the same quality and every detail. A character or creature: make it the hero (if they want to play as it or say "me"/"my character") or define it (an entity or pickup). Study the picture closely first: proportions, every colour, clothes, hair, face, accessories. Build 15-45 boxes that match its shape. For EVERY box add "uv":[x0,y0,x1,y1] = the tight rectangle of the picture (fractions 0..1 of its width and height, from the top-left) that shows that box's front; the game pastes those exact pixels on the box's front (and its edge pixels on the sides), so the front looks exactly like the picture, pixel for pixel. Rectangles must hug the part (no background). Add "uvBack" only if the picture also shows the back. Set "c" to that part's main colour. A place or building in the picture: build it with blocks in its colours instead.
+` : ''}Player asks: ${JSON.stringify(text)}`, { modelTier: 'complex', cache: false, ...(imgs ? { images: imgs } : {}) });
+    aiUndo = before; const n = applyOps(r?.ops); if (imgs) { aiPic = null; $('aiThumb').hidden = true; } renderWorld(true); renderTabs(); $('aiUndo').disabled = false;
     aiSay('bot', (r?.say || 'خلصت') + (n ? ` (${n} حاجة)` : ' (مفيش حاجة اتحطت، جرّب توضّح أكتر)'));
   } catch (e) { aiSay('bot', e?.code === 'rate_limited' ? 'المساعد محتاج يرتاح شوية، جرّب كمان دقيقة.' : 'معرفتش أبني ده، جرّب تقوله بطريقة تانية.'); }
   $('aiGo').disabled = false; $('aiGo').textContent = 'ابنيه';
