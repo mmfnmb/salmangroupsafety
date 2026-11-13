@@ -2332,7 +2332,7 @@ function spawnEnt(kind, k, pos, o = {}) {
   const def = o.def || monDef(k), R_ = buildRig(def), root = R_.root, bx = new THREE.Box3().setFromObject(root), h = Math.max(0.3, bx.max.y - bx.min.y), size = o.size || (kind === 'npc' ? 1.85 : kind === 'animal' ? (k === 'peck' ? 0.7 : 1.3) : Math.max(0.8, Math.min(3, h * 0.6))), sc = size / h;
   root.scale.setScalar(sc); root.position.y = -bx.min.y * sc; const g = new THREE.Group(); g.add(root); g.position.copy(pos); scene.add(g); g.traverse((m) => { if (m.isMesh) m.castShadow = true; });
   const st = MSTAT[k] || [20 + (def.cubes?.length || 6), 3, 2.4], e = { kind, k, def, R_, o: g, pos: g.position, vel: new V3(), hp: o.hp || (kind === 'mob' ? st[0] : kind === 'npc' ? 40 : 10), dmg: st[1], spd: kind === 'animal' ? 1.4 : st[2], w: Math.min(0.45, size * 0.3), h: size, fly: !!def.fly, boss: !!o.boss, role: o.role, phase: 0, t: Math.random() * 9, atk: 0, hitT: 0, wander: 0, wdir: new V3(), tame: false, name: o.name || def.name };
-  e.max = e.hp; if (o.boss) { e.hp = e.max = o.hp; e.dmg = o.dmg || 8; } if (AI[k] && kind !== 'fx') e.ai = AI[k]; ents.push(e); return e;
+  e.max = e.hp; if (o.boss) { e.hp = e.max = o.hp; e.dmg = o.dmg || 8; e.w = Math.min(1.2, size * 0.26); } if (AI[k] && kind !== 'fx') e.ai = AI[k]; ents.push(e); return e;
 }
 function removeEnt(e) { scene.remove(e.o); const i = ents.indexOf(e); if (i >= 0) ents.splice(i, 1); }
 function entSolidAt(x, y, z) { return isSolid(getB(Math.floor(x), Math.floor(y), Math.floor(z))); }
@@ -2460,7 +2460,7 @@ function useHeld() {
   if (!h) return;
   if (it?.block && hit?.b) { if (placeAt(hit, it.block)) { take(h.k, 1); } return; }
   if (it?.kind === 'place' && hit?.b) { // portal stones open a doorway of portal blocks
-    const x = hit.x + hit.n[0], y = hit.y + 1, z = hit.z + hit.n[2]; for (let dy = 0; dy < 3; dy++) for (let dx = 0; dx < 2; dx++) if (!getB(x + dx, y + dy, z)) setB(x + dx, y + dy, z, it.places); take(h.k, 1); sfx('magic'); toast('A portal opened. Walk into it.'); return; }
+    const plant = BL[hit.b]?.cross, x = plant ? hit.x : hit.x + hit.n[0], y = plant ? hit.y : hit.y + 1, z = plant ? hit.z : hit.z + hit.n[2]; for (let dy = 0; dy < 3; dy++) for (let dx = 0; dx < 2; dx++) { const c = getB(x + dx, y + dy, z); if (!c || BL[c]?.cross) setB(x + dx, y + dy, z, it.places); } take(h.k, 1); sfx('magic'); toast('A portal opened. Walk into it.'); return; }
   if (it?.kind === 'food') { if (P.food >= 20 && it.fx !== 'regen') { toast('You’re not hungry'); return; } P.food = Math.min(20, P.food + it.food); if (it.fx === 'regen') { P.fx.regen = 20; P.hp = Math.min(P.max, P.hp + 6); } take(h.k, 1); sfx('eat'); return; }
   if (it?.kind === 'potion') { drink(it.fx); take(h.k, 1); return; }
   if (it?.kind === 'ranged') { shootHeld(it); return; } if (it?.kind === 'throw') { throwIt(it.proj); take(h.k, 1); return; }
@@ -2517,7 +2517,7 @@ function bossPhase(e) { const f = e.hp / e.max, ph = f < 0.34 ? 2 : f < 0.67 ? 1
 function hurtPlayer(d, from, el) { if (P.dead || P.fx.inv > 0) return; if (el === 'fire' && P.fx.fireRes) return; let def = 0; for (const s of Object.values(P.armor)) if (s) def += itemOf(s.k)?.mine ? gearPart(itemOf(s.k).slot) : itemOf(s.k)?.def || 0; if (!W.known) def += armorDef() * 0.6; if (keys.KeyB && P.off) def += itemOf(P.off.k).def + shieldDef(SHIELD.g) * 0.5; d = Math.max(0.5, d * (1 - Math.min(0.8, def)));
   d *= diffMul() * (nightmare() ? 1.5 : 1) * (1 - Math.min(0.3, (W.x?.perk?.guard || 0) * 0.05)); P.hp -= d; P.fx.inv = 0.4; shake = Math.min(0.5, shake + 0.25); sfx('hurt'); $('advHurt').style.opacity = 0.6; setTimeout(() => { $('advHurt').style.opacity = 0; }, 160); if (from) { const k = P.pos.clone().sub(from).setY(0).normalize().multiplyScalar(6); P.vel.x += k.x; P.vel.z += k.z; P.vel.y = Math.max(P.vel.y, 4); } if (P.hp <= 0) die(); hud(); }
 function die() { for (const f of HOOK.die) if (f()) return; P.dead = true; $('advDead').hidden = false; sfx('hurt'); }
-function respawn() { const s = P.spawn || W.home; P.pos.set(s.x, s.y, s.z); P.vel.set(0, 0, 0); P.hp = P.max; P.food = Math.max(P.food, 14); P.dead = false; $('advDead').hidden = true; hud(); }
+function respawn() { if (W.dim !== 'over') travelTo('over'); const s = P.spawn || W.home; P.pos.set(s.x, s.y, s.z); P.vel.set(0, 0, 0); P.hp = P.max; P.food = Math.max(P.food, 14); P.dead = false; $('advDead').hidden = true; hud(); }
 function addXp(n) { P.xp += n; while (P.xp >= P.lv * 12) { P.xp -= P.lv * 12; P.lv++; P.max = Math.min(40, P.max + 2); P.hp = P.max; toast('Level ' + P.lv + '! More health'); sfx('level'); } hud(); }
 function drink(fx) { sfx('drink'); if (fx === 'heal') { P.hp = Math.min(P.max, P.hp + 10); } else P.fx[fx === 'fireRes' ? 'fireRes' : fx] = 60; toast('You feel ' + ({ heal: 'better', speed: 'fast', str: 'strong', jump: 'bouncy', invis: 'invisible', fireRes: 'fireproof', water: 'like a fish', night: 'like a cat in the dark' }[fx] || 'strange')); hud(); }
 // things that fly: arrows, magic, snowballs, cannon balls, fireworks, the boomerang
@@ -2746,6 +2746,7 @@ function loop(now) {
 function interactStep(dt) {
   const hit = aimRay(itemOf(held()?.k)?.reach || 5); ADV.outline.visible = !!hit?.b; if (hit?.b) ADV.outline.position.set(hit.x + 0.5, hit.y + 0.5, hit.z + 0.5);
   if (mouseL || (touch && lookT.id !== null && !lookT.moved && performance.now() - lookT.start > 280)) {
+    if (!hit?.ent) { const f = new V3(-Math.sin(P.yaw), 0, -Math.cos(P.yaw)), close = ents.find((e) => e.kind === 'mob' && !e.dead && e.pos.distanceTo(P.pos) < e.w + 1.8 && (e.pos.distanceTo(P.pos) < e.w + 0.6 || e.pos.clone().sub(P.pos).setY(0).normalize().dot(f) > 0.2)); if (close && !(hit?.b && hit.t < close.pos.distanceTo(P.pos) - close.w)) { attack(close); mining = null; crackMesh.material.opacity = 0; return; } }
     if (hit?.ent) { attack(hit.ent); mining = null; crackMesh.material.opacity = 0; return; }
     if (hit?.b) { const key = hit.x + ',' + hit.y + ',' + hit.z; if (!mining || mining.key !== key) mining = { key, hit, t: 0, need: breakTime(hit.b, itemOf(held()?.k)) }; mining.t += dt; swingT = swingT > 0 ? swingT : 0.25; crackMesh.position.set(hit.x + 0.5, hit.y + 0.5, hit.z + 0.5); crackSet(mining.t / mining.need);
       if (Math.random() < dt * 10) burst(hit.x + 0.5 + hit.n[0] * 0.5, hit.y + 0.5 + hit.n[1] * 0.5, hit.z + 0.5 + hit.n[2] * 0.5, hit.b, 2); if (mining.t >= mining.need) { doBreak(hit); mining = null; crackMesh.material.opacity = 0; } return; } }
@@ -3079,7 +3080,7 @@ nb('frame', 'Ancient frame', { tex: ['frame'], hard: 6, tool: 'pick' }, (t) => {
 nb('lostPortal', 'Lost portal', { tex: ['lostPortal'], solid: false, clear: true, hard: 999, light: 1 }, paintPortal('#1a1030ee', '#6a3ad8cc'));
 nb('lostGrass', 'Lost grass', { tex: ['lostTop', 'lostSide', 'lostStone'], hard: 0.8, tool: 'shovel' }, (t) => t.name === 'lostStone' ? t.N('#3a3e4a', 0.2) : paintTop('#5ad8c8', '#3a3e4a')(t));
 nb('lostStone', 'Lost stone', { tex: ['lostStone'], hard: 2, tool: 'pick' });
-nb('jewel', 'Power jewel', { tex: ['jewel'], hard: 3, tool: 'pick', light: 1, drop: 0 }, paintGlow('#3d8bff', '#e8fbff'));
+nb('jewel', 'Power jewel', { tex: ['jewel'], hard: 0.9, light: 1, drop: 0 }, paintGlow('#3d8bff', '#e8fbff'));
 nb('totem', 'Challenge totem', { tex: ['totem'], hard: 999, light: 0.6 }, paintGlow('#2a1a3a', '#ff4a6a'));
 NBS.portalSet = new Set([NBS.kingGate, NBS.lostPortal]);
 
@@ -3132,19 +3133,21 @@ function bossUp(k, pos, hp, dmg, size, name, spot, minion, def) { const e = spaw
 
 // ================================================================ THE FIRE WORLD: a huge cave of lava seas, mushroom forests and fortresses
 const FORT = 144, fortAt = (x, z) => [Math.round(x / FORT) * FORT, Math.round(z / FORT) * FORT];
+const flAt = (F, x, z) => Math.round(17 + F.n1(x / 45, z / 45) * 9 + F.n2(x / 15, z / 15) * 3), fortY = (F, fx, fz) => Math.max(16, Math.min(30, flAt(F, fx, fz) + 1));
 GEN.fire = (W, cx, cz, d, idx) => { const F = W.gen;
   for (let lx = 0; lx < CS; lx++) for (let lz = 0; lz < CS; lz++) { const x = cx * CS + lx, z = cz * CS + lz, fl = Math.round(17 + F.n1(x / 45, z / 45) * 9 + F.n2(x / 15, z / 15) * 3), ce = Math.round(50 + F.n3(x / 40, z / 40) * 6 - Math.max(0, F.n2(x / 9, z / 9)) * 7), shroom = F.n4(x / 60, z / 60);
     for (let y = 0; y < CH; y++) { let id = 0; if (y === 0 || y >= CH - 2) id = 46; else if (y <= fl) { const r = rnd01(x, y, z); id = y === fl ? (shroom > 0.2 ? 47 : NBS.ash) : r < 0.018 ? 16 : r < 0.03 ? 15 : r < 0.034 ? 95 : 45; } else if (y >= ce) id = rnd01(x, y, z) < 0.012 && y === ce ? 27 : 45; else if (y <= 13) id = 12; d[idx(lx, y, lz)] = id; }
     // giant mushrooms
     if (shroom > 0.2 && fl > 13 && lx > 2 && lx < 13 && lz > 2 && lz < 13 && rnd01(x, 3, z) < 0.012) { const h = 4 + ((rnd01(x, 4, z) * 4) | 0), cap = F.n5(x / 50, z / 50) > 0 ? NBS.capRed : NBS.capBlue; for (let k = 1; k <= h; k++) d[idx(lx, fl + k, lz)] = NBS.stem; for (let dx = -2; dx <= 2; dx++) for (let dz = -2; dz <= 2; dz++) { if (Math.abs(dx) === 2 && Math.abs(dz) === 2) continue; d[idx(lx + dx, fl + h + 1, lz + dz)] = cap; if (Math.abs(dx) === 2 || Math.abs(dz) === 2) d[idx(lx + dx, fl + h, lz + dz)] = cap; } }
-    // the fortress
-    const [fx, fz] = fortAt(x, z), u = x - fx, v = z - fz;
-    if (Math.abs(u) <= 16 && Math.abs(v) <= 40) { const inFort = Math.abs(v) <= 16; if (!inFort && Math.abs(u) > 1) continue; // a bridge out of the front gate
-      for (let y = 13; y < CH - 2; y++) { const i = idx(lx, y, lz); if (!inFort) { if (y === 24) d[i] = NBS.fireBrick; else if (y === 25 && Math.abs(u) === 1) d[i] = NBS.fireBrick; else if (y >= 25 && y <= 30) d[i] = 0; continue; }
-        const wall = Math.abs(u) === 16 || Math.abs(v) === 16, keep = Math.abs(u) <= 7 && Math.abs(v) <= 7, keepWall = keep && (Math.abs(u) === 7 || Math.abs(v) === 7);
-        if (y <= 24) d[i] = NBS.fireBrick; else if (y <= 33 && wall) d[i] = v === 16 && Math.abs(u) <= 1 && y <= 27 ? 0 : NBS.fireBrick; else if (y === 34 && wall) d[i] = (u + v) % 2 ? NBS.fireBrick : 0; else if (keepWall && y <= 32) d[i] = v === 7 && Math.abs(u) <= 1 && y <= 27 ? 0 : NBS.fireBrick; else if (keep && y === 33) d[i] = NBS.fireBrick; else if (y < 42) d[i] = 0; }
-      if (Math.abs(v) <= 16) { const wall = Math.abs(u) === 16 || Math.abs(v) === 16, keep = Math.abs(u) <= 7 && Math.abs(v) <= 7; if (u === 0 && v === -5) d[idx(lx, 25, lz)] = 65; if ((u === 5 || u === -5) && v === 5) d[idx(lx, 25, lz)] = 24; if ((u === 12 || u === -12) && (v === 12 || v === -12)) d[idx(lx, 25, lz)] = 24; if ((Math.abs(u) === 6 || Math.abs(v) === 6) && keep && (u + v) % 4 === 0) d[idx(lx, 28, lz)] = 26; if (wall && (u + v) % 6 === 0) d[idx(lx, 30, lz)] = 26; }
-      if (u === 0 && v === 0) (W.spots ||= []).push({ t: 'fireboss', x: fx, y: 25, z: fz - 4 }); }
+    // the fortress: a solid base down to the ground, wide stairs up to big gates in front and behind, a keep with the Fire Lord's hall
+    const [fx, fz] = fortAt(x, z), u = x - fx, v = z - fz, au = Math.abs(u), av = Math.abs(v);
+    if (au <= 16 && av <= 40) { const fy = fortY(F, fx, fz);
+      if (av > 16) { if (au > 3) continue; const sy = fy - (av - 17); if (sy < fl - 1) continue; for (let y = Math.max(1, Math.min(fl, 12)); y <= sy; y++) d[idx(lx, y, lz)] = NBS.fireBrick; for (let y = sy + 1; y <= sy + 5; y++) d[idx(lx, y, lz)] = au === 3 && y === sy + 1 ? NBS.fireBrick : 0; if (au === 3 && (av % 4 === 0)) d[idx(lx, sy + 2, lz)] = 25; continue; }
+      const wall = au === 16 || av === 16, keep = au <= 7 && av <= 7, keepWall = keep && (au === 7 || av === 7), gate = av === 16 && au <= 2;
+      for (let y = Math.max(1, Math.min(fl, 12)); y < Math.min(CH - 2, fy + 19); y++) { const i = idx(lx, y, lz), k = y - fy;
+        if (k <= 0) d[i] = NBS.fireBrick; else if (wall && k <= 9) d[i] = gate && k <= 5 ? 0 : NBS.fireBrick; else if (wall && k === 10) d[i] = (u + v) % 2 ? NBS.fireBrick : 0; else if (keepWall && k <= 8) d[i] = v === 7 && au <= 1 && k <= 4 ? 0 : NBS.fireBrick; else if (keep && k === 9) d[i] = NBS.fireBrick; else d[i] = 0; }
+      const at = (k, id) => d[idx(lx, fy + k, lz)] = id; if (u === 0 && v === -5) at(1, 65); if ((au === 5) && v === 5) at(1, 24); if (au === 12 && av === 12) at(1, 24); if (keepWall && (u + v) % 4 === 0) at(4, 26); if (wall && (u + v) % 6 === 0) at(6, 26); if (gate && au === 2) at(6, 26); if (!keep && !wall && (au % 6 === 0) && (av % 6 === 0)) at(1, 26);
+      if (u === 0 && v === 0) (W.spots ||= []).push({ t: 'fireboss', x: fx, y: fy + 1, z: fz - 4 }); }
   } };
 SPAWNAT.fire = (x, z) => { for (let r = 0; r < 60; r += 4) for (let a = 0; a < 6.28; a += 0.7) { const X = Math.floor(x + Math.cos(a) * r), Z = Math.floor(z + Math.sin(a) * r), [qx, qz] = fortAt(X, Z); if (Math.abs(X - qx) < 26 && Math.abs(Z - qz) < 46) continue; const y = findFloor(X, Z, 14, 46); if (y && !BL[getB(X, y - 1, Z)]?.liquid) { returnGate(X + 2, y, Z, 66); const [fx, fz] = fortAt(X, Z); setTimeout(() => toast(`The Fire Fortress is ${Math.round(Math.hypot(fx - X, fz - Z))} blocks away, to the ${dirName(fx - X, fz - Z)}. The Fire Lord waits there.`), 1500); return [X + 0.5, y, Z + 0.5]; } }
   for (let dx = -2; dx <= 2; dx++) for (let dz = -2; dz <= 2; dz++) setB(x + dx, 29, z + dz, 45, true); returnGate(x + 2, 30, z, 66); return [x + 0.5, 30, z + 0.5]; };
@@ -3154,12 +3157,14 @@ PORTAL[66] = (d) => (d === 'fire' ? 'over' : d === 'over' ? 'fire' : null); PORT
 PORTAL[NBS.kingGate] = (d) => (d === 'king' ? 'over' : d === 'over' ? 'king' : null); PORTAL[NBS.lostPortal] = (d) => (d === 'lost' ? 'over' : d === 'over' ? 'lost' : null);
 
 // ================================================================ THE DREAM WORLD: floating islands over nothing; fall and you wake up scared
-const DREAM_ARENAS = [[0, 32, 0, 11, null], [150, 30, 20, 15, 'sleepwalker'], [-140, 34, 90, 15, 'mothQueen'], [30, 28, -160, 15, 'clockKeeper']];
+const DREAM_ARENAS = [[0, 32, 0, 14, null], [150, 30, 20, 15, 'sleepwalker'], [-140, 34, 90, 15, 'mothQueen'], [30, 28, -160, 15, 'clockKeeper']];
 GEN.dream = (W, cx, cz, d, idx) => { const F = W.gen;
   for (let lx = 0; lx < CS; lx++) for (let lz = 0; lz < CS; lz++) { const x = cx * CS + lx, z = cz * CS + lz;
     for (let y = 16; y < 54; y++) { const v = F.n1(x / 42, y / 20, z / 42) + F.n2(x / 14, y / 10, z / 14) * 0.3 - Math.abs(y - 34) / 20; if (v > 0.16) d[idx(lx, y, lz)] = rnd01(x, y, z) < 0.022 ? NBS.dreamOre : NBS.dreamStone; }
-    for (const [ax, ay, az, r] of DREAM_ARENAS) { const dd = Math.hypot(x - ax, z - az); if (dd < r) { const th = Math.round((r - dd) * 0.6) + 2; for (let y = ay - th; y <= ay; y++) d[idx(lx, y, lz)] = NBS.dreamStone; for (let y = ay + 1; y < ay + 8; y++) d[idx(lx, y, lz)] = 0; } // stepping stones from home to each boss island
-      if (ax || az) { const len = Math.hypot(ax, az), t = Math.max(0, Math.min(1, (x * ax + z * az) / (len * len))), px = ax * t, pz = az * t; if (Math.hypot(x - px, z - pz) < 1.2 && (t * len) % 5 < 2 && t * len > 10 && t * len < len - r) { const y = Math.round(32 + (ay - 32) * t); d[idx(lx, y, lz)] = NBS.dreamGrass; } } }
+    for (const [ax, ay, az, r] of DREAM_ARENAS) { const dd = Math.hypot(x - ax, z - az); if (dd < r) { const th = Math.round((r - dd) * 0.6) + 2; for (let y = ay - th; y <= ay; y++) d[idx(lx, y, lz)] = y === ay ? NBS.dreamGrass : y > ay - 3 ? NBS.dreamSoil : NBS.dreamStone; for (let y = ay + 1; y < ay + 8; y++) d[idx(lx, y, lz)] = 0; } // stepping stones from home to each boss island
+      if (dd < r && dd > r - 1.2 && (Math.atan2(z - az, x - ax) * 6 | 0) % 2 === 0) d[idx(lx, ay + 1, lz)] = NBS.dreamLeaves;
+      if (ax || az) { const len = Math.hypot(ax, az), t = Math.max(0, Math.min(1, (x * ax + z * az) / (len * len))), px = ax * t, pz = az * t, along = t * len; if (Math.hypot(x - px, z - pz) < 1.9 && along > 8 && along < len - r + 2) { const y = Math.round(32 + (ay - 32) * t); for (let k = 1; k < 6; k++) d[idx(lx, y + k, lz)] = 0; d[idx(lx, y, lz)] = 68; if (Math.hypot(x - px, z - pz) > 1.2 && along % 9 > 3 && along % 9 < 4) d[idx(lx, y + 1, lz)] = 26; } }
+      if (Math.abs(x - ax - 11) < 1 && Math.abs(z - az) < 1 && (ax || az)) for (let y = ay + 1; y < ay + 26; y++) d[idx(lx, y, lz)] = 27; }
     for (let y = 54; y > 15; y--) { const i = idx(lx, y, lz); if (d[i] && !d[idx(lx, y + 1, lz)]) { if (d[i] === NBS.dreamStone) d[i] = NBS.dreamGrass; for (let k = 1; k < 3; k++) if (d[idx(lx, y - k, lz)] === NBS.dreamStone) d[idx(lx, y - k, lz)] = NBS.dreamSoil;
         const r = rnd01(x, 5, z); if (lx > 2 && lx < 13 && lz > 2 && lz < 13 && r < 0.014 && y < 46) { for (let k = 1; k <= 4; k++) d[idx(lx, y + k, lz)] = NBS.dreamWood; for (let dx = -2; dx <= 2; dx++) for (let dz = -2; dz <= 2; dz++) for (let dy = 3; dy <= 6; dy++) if (dx * dx + dz * dz + (dy - 4.5) ** 2 < 5.5 && !d[idx(lx + dx, y + dy, lz + dz)]) d[idx(lx + dx, y + dy, lz + dz)] = NBS.dreamLeaves; }
         else if (r > 0.9985) d[idx(lx, y + 1, lz)] = 24; else if (r > 0.96) d[idx(lx, y + 1, lz)] = 71; break; } } }
@@ -3187,6 +3192,7 @@ function kingAt(x, y, z) { const G = 24; // returns a block, or -1 for "plain la
   if (ax <= 24 && az <= 24) { // the palace
     const tower = ax >= 19 && az >= 19, tw = tower && (ax === 19 || ax === 24 || az === 19 || az === 24), wall = (ax === 24 || az === 24) && !tower;
     if (y <= G - 1 && y >= 17 && ax <= 8 && z >= -18 && z <= -6) return y === 17 ? 3 : (ax === 8 || z === -18 || z === -6) ? 4 : (y <= 20 && z === -12 && ax !== 0 && ax % 3 === 0) ? 62 : (x === 7 && z === -7) ? 30 : 0; // the prison under the keep
+    if (y < G) return -1; // solid ground under everything else
     if (y === G) return x === 7 && z === -7 ? 30 : ax <= 1 && z > -20 && z < 24 ? 34 : 21;
     if (tower) { if (y <= 40 && tw) return (y - G) % 5 === 3 && (ax === 21 || az === 21 || ax === 22 || az === 22) ? 0 : 85; if (y === 40) return 21; if (y === 41 && tw) return (x + z) % 2 ? 85 : 0; if (y > G && y < 40 && ax === 20 && az === 20) return 30; return y < 43 ? 0 : -1; }
     if (wall) { if (z === 24 && ax <= 2 && y <= G + 4) return 0; if (y <= G + 9) return 85; if (y === G + 10) return (x + z) % 2 ? 85 : 0; return -1; }
@@ -3194,8 +3200,8 @@ function kingAt(x, y, z) { const G = 24; // returns a block, or -1 for "plain la
     if (y > G && y < G + 12) return (ax === 15 && az === 15) && y < G + 4 ? (y === G + 3 ? 26 : 62) : 0; return -1; }
   // the village to the south
   for (const hx of KING_HOUSES) { const dx = x - hx, dz = z - 56; if (Math.abs(dx) <= 3 && Math.abs(dz) <= 3) { const w = Math.abs(dx) === 3 || Math.abs(dz) === 3; if (y === G) return 21; if (y <= G + 4) { if (dx === 0 && dz === -3 && y <= G + 2) return y === G + 1 ? NBS.royalDoor : NBS.royalDoor; return w ? (y === G + 2 && (dx === 0 || dz === 0) ? 87 : 10) : (y === G + 1 && dx === 2 && dz === 2 ? 24 : 0); } if (y === G + 5) return 20; if (y === G + 6 && Math.abs(dx) <= 2 && Math.abs(dz) <= 2) return 20; return -1; } }
-  for (const hx of [-24, 0, 24]) { const dx = x - hx, dz = z - 82; if (Math.abs(dx) <= 3 && Math.abs(dz) <= 3) { const w = Math.abs(dx) === 3 || Math.abs(dz) === 3; if (y === G) return 21; if (y <= G + 3) return w ? (dx === 0 && dz === -3 && y <= G + 2 ? (y === G + 1 ? 28 : 0) : 10) : 0; if (y === G + 4) return 20; return -1; } }
-  if (y === G && (ax <= 1 && z > 24 && z < 96 || Math.abs(z - 48) <= 1 && ax < 44 || Math.abs(z - 72) <= 1 && ax < 30)) return 21; return -1; }
+  for (const hx of [-30, -14, 14, 30]) { const dx = x - hx, dz = z - 82; if (Math.abs(dx) <= 3 && Math.abs(dz) <= 3) { const w = Math.abs(dx) === 3 || Math.abs(dz) === 3; if (y === G) return 21; if (y <= G + 3) return w ? (dx === 0 && dz === -3 && y <= G + 2 ? (y === G + 1 ? 28 : 0) : 10) : 0; if (y === G + 4) return 20; return -1; } }
+  if (y === G && (ax <= 1 && z > 24 && z < 96 || Math.abs(z - 48) <= 1 && ax < 44 || Math.abs(z - 72) <= 1 && ax < 36)) return 21; return -1; }
 GEN.king = (W, cx, cz, d, idx) => { for (let lx = 0; lx < CS; lx++) for (let lz = 0; lz < CS; lz++) { const x = cx * CS + lx, z = cz * CS + lz; for (let y = 0; y < CH; y++) { const k = kingAt(x, y, z); d[idx(lx, y, lz)] = k >= 0 ? k : y === 0 ? 46 : y < 20 ? 3 : y < 24 ? 2 : y === 24 ? 1 : 0; }
     const r = rnd01(x, 9, z); if (kingAt(x, 25, z) < 0 && Math.hypot(x, z) > 40 && r < 0.004 && lx > 2 && lx < 13 && lz > 2 && lz < 13) { for (let k = 1; k <= 5; k++) d[idx(lx, 24 + k, lz)] = 8; for (let dx = -2; dx <= 2; dx++) for (let dz = -2; dz <= 2; dz++) for (let dy = 4; dy <= 6; dy++) if (dx * dx + dz * dz + (dy - 5) ** 2 < 5 && !d[idx(lx + dx, 24 + dy, lz + dz)]) d[idx(lx + dx, 24 + dy, lz + dz)] = 9; } else if (kingAt(x, 25, z) < 0 && r > 0.96 && !d[idx(lx, 25, lz)]) d[idx(lx, 25, lz)] = r > 0.985 ? 71 : 72; } };
 SPAWNAT.king = () => { returnGate(4, 25, 92, NBS.kingGate); return [0.5, 25, 92.5]; };
@@ -3207,7 +3213,7 @@ const PILLARS = [30, 150, 270].map((a) => [Math.round(Math.cos(a * Math.PI / 180
 const lostTop = (x, z, F) => 30 + Math.round(F.n2(x / 20, z / 20) * 1.5);
 GEN.lost = (W, cx, cz, d, idx) => { const F = W.gen; for (let lx = 0; lx < CS; lx++) for (let lz = 0; lz < CS; lz++) { const x = cx * CS + lx, z = cz * CS + lz, r = Math.hypot(x, z);
   if (r < 44) { const top = lostTop(x, z, F), bot = top - Math.round(3 + (44 - r) * 0.45 + F.n1(x / 9, z / 9) * 2); for (let y = Math.max(1, bot); y <= top; y++) d[idx(lx, y, lz)] = y === top ? NBS.lostGrass : rnd01(x, y, z) < 0.02 ? 95 : NBS.lostStone;
-    PILLARS.forEach(([px, pz], i) => { if (Math.abs(x - px) <= 1 && Math.abs(z - pz) <= 1) { for (let y = top + 1; y <= top + 9; y++) d[idx(lx, y, lz)] = NBS.lostStone; if (!(W.x?.jewels && !W.x.jewels[i])) for (let y = top + 10; y <= top + 11; y++) d[idx(lx, y, lz)] = NBS.jewel; } });
+    PILLARS.forEach(([px, pz], i) => { if (Math.abs(x - px) <= 1 && Math.abs(z - pz) <= 1) { for (let y = top + 1; y <= top + 9; y++) d[idx(lx, y, lz)] = NBS.lostStone; if (!(W.x?.jewels && !W.x.jewels[i])) for (let y = top + 10; y <= top + 11; y++) d[idx(lx, y, lz)] = NBS.jewel; } const [sdx, sdz] = Math.abs(px) >= Math.abs(pz) ? [Math.sign(px), 0] : [0, Math.sign(pz)], along = (x - px) * sdx + (z - pz) * sdz, side = sdx ? z - pz : x - px; if (along >= 2 && along <= 11 && side >= -1 && side <= 1) { const hgt = top + 12 - along; for (let y = top + 1; y <= hgt; y++) d[idx(lx, y, lz)] = NBS.lostStone; } });
     if (x === 0 && z === 0 && W.x?.won) d[idx(lx, top + 1, lz)] = NBS.totem; }
   else if (r > 70) { for (let y = 18; y < 46; y++) { const v = F.n1(x / 34, y / 16, z / 34) + F.n3(x / 12, y / 9, z / 12) * 0.3 - Math.abs(y - 32) / 16; if (v > 0.2) d[idx(lx, y, lz)] = NBS.lostStone; } for (let y = 46; y > 17; y--) if (d[idx(lx, y, lz)] && !d[idx(lx, y + 1, lz)]) { d[idx(lx, y, lz)] = NBS.lostGrass; if (rnd01(x, 2, z) > 0.997) d[idx(lx, y + 1, lz)] = 24; break; } } } };
 SPAWNAT.lost = () => { const y = findFloor(0, 36, 10, 60) || 31; returnGate(3, y, 36, NBS.lostPortal); return [0.5, y, 36.5]; };
@@ -3263,9 +3269,12 @@ HOOK.tick.push((dt, now) => { gateStep(dt); achStep(dt); musicStep(dt); hallucSt
   const heart = count('zaazooHeart') > 0; P.smul = (heart ? 1.6 : 1) * (P.fx.slowed > 0 ? 0.45 : 1) * (P.smulS || 1) * (P.sV || 1) * (P.sO || 1) * (P.sR || 1); P.gmul = (P.gmulS || 1) * (P.gV || 1) * (P.gF || 1) * (P.gMoon || 1) * (P.gR || 1); P.noFall = heart || P.noFallM || P.noFallF || P.noFallR;
   if (heart && !P.onGround) { if (keys.Space) P.vel.y = Math.min(6.5, P.vel.y + 34 * dt); else if (P.vel.y < -4) P.vel.y = -4; }
   if (P.slam && P.onGround && P.vel.y <= 0.1) { hurtPlayer(P.slam, null); pop('Ouch!', P.pos.clone().add(new V3(0, 2, 0)), '#ffffff'); P.slam = 0; }
+  for (const e of ents) if (e.boss && !e.dead && !e.fly) { const v = P.pos.clone().sub(e.pos).setY(0), dd = v.length(); if (dd < e.w + 0.5 && dd > 0.01) P.pos.addScaledVector(v.normalize(), Math.min(e.w + 0.5 - dd, dt * 6)); }
+  if (P.pos.y < -6 && !P.dead && !['lost', 'dream', 'sky'].includes(W.dim) && !modOn('oneblock')) { const x = Math.floor(P.pos.x), z = Math.floor(P.pos.z), y = findFloor(x, z, 1, CH - 3); if (y) { P.pos.set(x + 0.5, y, z + 0.5); P.vel.set(0, 0, 0); toast('You fell out of the world. Back on the ground!'); } }
   if (P.frozen > 0) { P.frozen -= dt; P.vel.set(0, Math.min(0, P.vel.y), 0); }
   for (const e of ents) { if (e.dead) continue; const d = e.pos.distanceTo(P.pos); e.sp = (e.sp ?? 4) - dt;
-    if (e.k === 'fireLord' && e.phase >= 1 && e.sp <= 0) { e.sp = 9; for (let i = 0; i < 30; i++) { const x = Math.floor(e.pos.x + (Math.random() - 0.5) * 36), z = Math.floor(e.pos.z + (Math.random() - 0.5) * 36); let y = 30; while (y > 10 && getB(x, y, z) !== 12) y--; if (getB(x, y, z) === 12 && !getB(x, y + 1, z)) { burst(e.pos.x, e.pos.y + 1, e.pos.z, 12, 20); e.pos.set(x + 0.5, y + 1, z + 0.5); explode(e.pos.clone(), 1.6, 4); pop('Lava dive!', e.pos.clone().add(new V3(0, e.h + 0.5, 0)), '#ff8a3d'); break; } } }
+    if (e.k === 'fireLord' && e.phase >= 1 && e.sp <= 0 && !e.diving) { e.sp = 10; e.diving = 2.5; e.home ||= e.pos.clone(); burst(e.pos.x, e.pos.y + 1, e.pos.z, 12, 24); e.o.visible = false; pop('He dives into the lava!', e.pos.clone().add(new V3(0, 2, 0)), '#ff8a3d'); }
+    if (e.diving > 0) { e.diving -= dt; e.hitT = 0; if (e.diving <= 0) { e.diving = 0; const h = e.home, a = Math.random() * 6.28; e.pos.set(h.x + Math.cos(a) * 5, h.y, h.z + Math.sin(a) * 5); e.o.visible = true; explode(e.pos.clone(), 1.4, 4); pop('…and bursts out of the floor!', e.pos.clone().add(new V3(0, e.h + 0.5, 0)), '#ff8a3d'); } }
     if (e.k === 'sleepwalker' && e.sp <= 0) { e.sp = 7; if (d < 14) { P.fx.slowed = 3; pop('Yaaawn… you feel sleepy', P.pos.clone().add(new V3(0, 2.2, 0)), '#9ae6ff'); } }
     if (e.k === 'mothQueen' && e.sp <= 0) { e.sp = 6; for (let i = 0; i < 2; i++) spawnEnt('mob', 'eyeball', e.pos.clone().add(new V3((Math.random() - 0.5) * 4, 0, (Math.random() - 0.5) * 4))); const o = e.pos.clone().add(new V3(0, 1.5, 0)); for (let i = -2; i <= 2; i++) { const dir = P.pos.clone().add(new V3(0, 1, 0)).sub(o).normalize().applyAxisAngle(new V3(0, 1, 0), i * 0.18); proj('magic', o.clone(), dir.multiplyScalar(18), 4, 'mob'); } }
     if (e.k === 'clockKeeper' && e.sp <= 0) { e.sp = 8; const f = new V3(-Math.sin(P.yaw), 0, -Math.cos(P.yaw)); e.pos.copy(P.pos).addScaledVector(f, -2.5); e.pos.y = groundAt(e.pos.x, e.pos.z, P.pos.y); pop('Tick… tock…', e.pos.clone().add(new V3(0, e.h, 0)), '#e2b043'); if (Math.random() < 0.3) { P.frozen = 1.2; pop('Time stops!', P.pos.clone().add(new V3(0, 2.2, 0)), '#e2b043'); } }
@@ -3276,7 +3285,7 @@ HOOK.tick.push((dt, now) => { gateStep(dt); achStep(dt); musicStep(dt); hallucSt
 HOOK.spawn.push(() => { const dim = W.dim, mobs = ents.filter((e) => e.kind === 'mob').length;
   if (dim === 'fire') { if (mobs < 6 && Math.random() < 0.35) spawnNear(rpick(HOSTILE.fire)); if (countK('lavaTurtle') < 2 && Math.random() < 0.15) spawnNear('lavaTurtle', 'animal');
     for (const s of W.spots) { if (s.t !== 'fireboss') continue; const key = 'fb:' + s.x + ',' + s.z, d = near2(s, P.pos); if (!W.spotsDone[key] && d < 22 && !ents.some((e) => e.spot === key)) bossUp('fireLord', new V3(s.x + 0.5, s.y, s.z + 0.5), Math.round(500 * diffMul()), 9, 3.8, 'The Fire Lord', key, 'imp');
-      const tk = 'ft:' + s.x + ',' + s.z; if (d < 40 && !ents.some((e) => e.spot === tk)) { const t = spawnEnt('npc', 'villager', new V3(s.x + 3.5, 25, s.z + 22.5), { def: makeChar({ ...CHAR_PRESETS.find((c) => c.name === 'Merchant'), shirt: '#c0302a', name: 'Fire trader' }), role: 'firetrade', name: 'Fire trader' }); t.spot = tk; t.home = t.pos.clone(); } } return true; }
+      const tk = 'ft:' + s.x + ',' + s.z; if (d < 40 && !ents.some((e) => e.spot === tk)) { const t = spawnEnt('npc', 'villager', new V3(s.x + 3.5, s.y, s.z + 17.5), { def: makeChar({ ...CHAR_PRESETS.find((c) => c.name === 'Merchant'), shirt: '#c0302a', name: 'Fire trader' }), role: 'firetrade', name: 'Fire trader' }); t.spot = tk; t.home = t.pos.clone(); } } return true; }
   if (dim === 'dream') { for (const s of W.spots) { if (s.t !== 'dboss') continue; const key = 'db:' + s.boss, d = near2(s, P.pos); if (!W.spotsDone[key] && d < 24 && !ents.some((e) => e.spot === key)) bossUp(s.boss, new V3(s.x + 0.5, s.y + 0.5, s.z + 0.5), Math.round(MSTAT[s.boss][0] * diffMul() * (nightmare() ? 1.3 : 1)), MSTAT[s.boss][1], 3.4, BEASTS[s.boss].name, key, s.boss === 'mothQueen' ? 'eyeball' : 'dreamling'); }
     if (mobs < (nightmare() ? 8 : 5) && Math.random() < 0.35) spawnNear(rpick(HOSTILE.dream)); return true; }
   if (dim === 'king') { const x = X_();
@@ -3287,7 +3296,7 @@ HOOK.spawn.push(() => { const dim = W.dim, mobs = ents.filter((e) => e.kind === 
     if (Math.abs(P.pos.z - 60) < 40 && ents.filter((e) => e.role === 'chat').length < 4) { const v = spawnEnt('npc', 'villager', new V3(-30 + Math.random() * 60, 25, 48 + Math.random() * 30), { def: makeChar(Math.random() < 0.5 ? rpick(CHAR_PRESETS) : randomSpec()), role: 'chat', name: 'Villager' }); v.home = v.pos.clone(); }
     return true; }
   if (dim === 'lost') { const x = X_(); x.jewels ||= [1, 1, 1]; const fight = !x.won || x.chActive;
-    if (fight && !ents.some((e) => e.k === 'zaazoo') && Math.hypot(P.pos.x, P.pos.z) < 36) { const e = bossUp('zaazoo', new V3(0.5, 46, 0.5), Math.round(900 * diffMul() * (1 + 0.5 * (x.ch || 0))), 10 + (x.ch || 0) * 2, 6.5, 'Zaazoo', null, 'zabadi'); e.ai = AI.zaazoo; e.fly = true; banner('ZAAZOO'); }
+    if (fight && !ents.some((e) => e.k === 'zaazoo') && Math.hypot(P.pos.x, P.pos.z) < 36) { const e = bossUp('zaazoo', new V3(0.5, 46, 0.5), Math.round(600 * diffMul() * (1 + 0.5 * (x.ch || 0))), 10 + (x.ch || 0) * 2, 6.5, 'Zaazoo', null, 'zabadi'); e.ai = AI.zaazoo; e.fly = true; banner('ZAAZOO'); }
     PILLARS.forEach(([px, pz], i) => { if (fight && x.jewels[i] && Math.hypot(P.pos.x - px, P.pos.z - pz) < 30 && !ents.some((e) => e.pillar === i)) { const e = spawnEnt('mob', 'zaazooMini', new V3(px + 0.5, lostTop(px, pz, W.gen) + 13, pz + 0.5), { size: 2.6 }); e.pillar = i; e.hp = e.max = Math.round(120 * diffMul()); e.name = 'Jewel guard'; } });
     if (mobs < (fight ? 6 : 3) && Math.random() < 0.4) spawnNear('zabadi'); return true; }
   return false; });
@@ -3295,7 +3304,7 @@ HOOK.talk.push((e) => { if (e.role === 'prisoner') { X_().freed ||= []; X_().fre
   if (e.role === 'firetrade') { openUI('firetrade'); return true; } return false; });
 HOOK.ui.push((U, sec, row, bag) => { if (uiOpen === 'journal') { journalUI(U, sec, row); return true; }
   if (uiOpen === 'firetrade') { sec('Trade gold bars (you have ' + count('gold') + ')'); const r = row('advTrades'); for (const [k, n, c] of [['emberStone', 1, 4], ['fireCrystal', 2, 2], ['potFire', 1, 3], ['b' + NBS.capBlue, 4, 1], ['firePortalStone', 1, 6], ['arrow', 12, 1]]) r.appendChild(trade(`${n} ${NAMES(k)}`, `${c} gold`, () => { if (count('gold') < c) return toast('Not enough gold bars'); take('gold', c); give(k, n); sfx('coin'); renderUI(); }, k)); bag(); return true; } return false; });
-HOOK.hurt.push((e, d) => { if (e.k === 'zaazoo') { if (e.shield) { if (!(e.shT > 0)) { pop('The power jewels protect him! Break them first.', e.pos.clone().add(new V3(0, e.h, 0)), '#5ad8ff'); e.shT = 2; } return d * 0.08; } if (e.st?.land > 0) return d * 1.6; }
+HOOK.hurt.push((e, d) => { if (e.diving > 0) return 0; if (e.k === 'zaazoo') { if (e.shield) { if (!(e.shT > 0)) { pop('The power jewels protect him! Break them first.', e.pos.clone().add(new V3(0, e.h, 0)), '#5ad8ff'); e.shT = 2; } return d * 0.08; } if (e.st?.land > 0) return d * 1.6; }
   if (e.k === 'soldier' && W.dim === 'king' && !X_().alarm) { X_().alarm = true; toast('The guards are angry now!'); } if (e.fake) return 999; return d; });
 HOOK.kill.push((e) => { const at = e.pos.clone().add(new V3(0, 1, 0)); X_().bosses ||= {};
   if (e.k === 'fireLord') { dropItem('fireRod', 1, at); dropItem('emberStone', 2, at); X_().bosses.fireLord = 1; banner('The Fire Rod is yours!'); toast('The Fire Rod lights the Lost Gate. Ember stones make it stronger.'); }
@@ -3313,7 +3322,7 @@ HOOK.brk.push((hit, b) => { if (b !== NBS.jewel || W.dim !== 'lost') return; con
 HOOK.sky.push(() => { const d = W.dim; let c = null, far = 0;
   if (d === 'dream') { c = nightmare() ? '#3a0a1a' : '#f2c8f4'; far = 80; hemi.intensity = Math.max(hemi.intensity, nightmare() ? 0.45 : 0.9); }
   if (d === 'lost') { const r = Math.hypot(P.pos.x, P.pos.z); c = r < 60 ? '#05040a' : '#7ec0ee'; far = 100; hemi.intensity = Math.max(hemi.intensity, 0.7); if (r < 60) { stars.visible = true; stars.material.opacity = 1; } }
-  if (d === 'fire') { hemi.intensity = Math.max(hemi.intensity, 0.6); far = 60; }
+  if (d === 'fire') { hemi.intensity = Math.max(hemi.intensity, 1.0); c = '#6a2414'; far = 70; }
   if (c) { const col = new THREE.Color(c); scene.background = col; scene.fog.color.copy(col); } if (far) { scene.fog.far = far; scene.fog.near = far * 0.35; } });
 HOOK.start.push(() => { platInit(); musicFor(W.dim); });
 HOOK.cam.push((dt) => filmCam(dt));
@@ -3771,7 +3780,7 @@ $('advTutSkip').onclick = () => { tutorial = null; tutShow(); };
 $('advModsB').onclick = () => modsPage(); $('advPickNova').onclick = () => pickComp('nova'); $('advPickBlink').onclick = () => pickComp('blink'); $('advModsClose').onclick = () => { $('advModsPage').hidden = true; };
 $('advFilmGo').onclick = () => { FILM.on = false; $('advFilm').hidden = true; banner('Keep playing!'); };
 $('advExit').onclick = () => { save(); $('advStage').classList.remove('fs'); document.body.classList.remove('advFsOn'); if (document.fullscreenElement) document.exitFullscreen?.(); };
-return { open, close, design: () => 0, _: { _mesh: (c) => meshChunk(c), CHAR_PRESETS, FILM, villagesNear, VREG, X_, NBS, travelTo, lightGate, PILLARS, lostTop, FILM, HOOK, MODS, findFloor, kingAt, nextStep, flowStep, flowCell, lvlOf, FLOWQ, flowDir, keys, cam, myCharDef, makeChar, peerShow, MK, P, get W() { return W; }, getB, setB, give, count, craft, RECIPES, gridMatch, openUI, closeUI, useHeld, aimRay, spawnEnt, ents, offlineHelp, explode, ignite, skyStep, save, startWorld, entsStep, playerStep, attack, hurtEnt, quest, newQuest, travel, BL, IT, itemIcon, stationsNear, furnaceTick, SMELT } };
+return { open, close, design: () => 0, _: { _mesh: (c) => meshChunk(c), useHeld, CHAR_PRESETS, FILM, villagesNear, VREG, X_, NBS, travelTo, lightGate, PILLARS, lostTop, FILM, HOOK, MODS, findFloor, kingAt, nextStep, flowStep, flowCell, lvlOf, FLOWQ, flowDir, keys, cam, myCharDef, makeChar, peerShow, MK, P, get W() { return W; }, getB, setB, give, count, craft, RECIPES, gridMatch, openUI, closeUI, useHeld, aimRay, spawnEnt, ents, offlineHelp, explode, ignite, skyStep, save, startWorld, entsStep, playerStep, attack, hurtEnt, quest, newQuest, travel, BL, IT, itemIcon, stationsNear, furnaceTick, SMELT } };
 
 })();
 
