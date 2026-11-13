@@ -2339,7 +2339,7 @@ function entSolidAt(x, y, z) { return isSolid(getB(Math.floor(x), Math.floor(y),
 function moveBody(pos, vel, w, h, dt, fly) { // simple box physics for creatures
   const wet = !fly && BL[getB(Math.floor(pos.x), Math.floor(pos.y + Math.min(0.5, h * 0.4)), Math.floor(pos.z))]?.liquid; if (wet) { vel.y = Math.min(2, vel.y + 32 * dt); const fd = flowDir(Math.floor(pos.x), Math.floor(pos.y + 0.3), Math.floor(pos.z)); if (fd) { pos.x += fd.x * 1.6 * dt; pos.z += fd.z * 1.6 * dt; } }
   const step = (axis, d) => { pos[axis] += d; const x0 = Math.floor(pos.x - w), x1 = Math.floor(pos.x + w), y0 = Math.floor(pos.y), y1 = Math.floor(pos.y + h - 0.01), z0 = Math.floor(pos.z - w), z1 = Math.floor(pos.z + w);
-    for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) for (let z = z0; z <= z1; z++) if (isSolid(getB(x, y, z))) { if (axis === 'y') { if (d < 0) { pos.y = y + 1; vel.y = 0; return 'ground'; } pos.y = y - h - 0.001; vel.y = 0; return 'head'; } pos[axis] -= d; return 'wall'; } return null; };
+    for (let x = x0; x <= x1; x++) for (let y = axis === 'y' && d > 0 ? y1 : y0; y <= (axis === 'y' && d < 0 ? y0 : y1); y++) for (let z = z0; z <= z1; z++) if (isSolid(getB(x, y, z))) { if (axis === 'y') { if (d < 0) { pos.y = y + 1; vel.y = 0; return 'ground'; } pos.y = y - h - 0.001; vel.y = 0; return 'head'; } pos[axis] -= d; return 'wall'; } return null; };
   const sl = wet ? 0.55 : 1, hx = step('x', vel.x * dt * sl), hz = step('z', vel.z * dt * sl); if (!fly) vel.y -= 26 * dt; const hy = step('y', vel.y * dt); return { ground: hy === 'ground', wall: hx === 'wall' || hz === 'wall' };
 }
 
