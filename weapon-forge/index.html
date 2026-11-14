@@ -2220,13 +2220,13 @@ const ck = (cx, cz) => cx + ',' + cz;
 
 // ---------------------------------------------------------------- world data
 function newWorld(name, seed, shared) { return { name, seed, dim: 'over', gen: genFns(seed, 'over'), chunks: new Map(), edits: { over: {}, fire: {}, sky: {} }, bd: {}, time: 0.27, weather: 'clear', wT: 240, spots: [], spotsDone: {}, shared: shared || null }; }
-function setDim(dim) { W.dim = dim; W.edits[dim] ||= {}; W.gen = genFns(W.seed + (DIM_SEED[dim] || 0), dim); W.spots = []; for (const [, c] of W.chunks) dropMesh(c); W.chunks.clear(); for (const e of [...ents]) removeEnt(e); }
+function setDim(dim) { W.dim = dim; W.voidBelow = ['lost', 'sky', 'dream'].includes(dim) || (dim === 'over' && !!W.x?.mods?.includes('oneblock')); W.edits[dim] ||= {}; W.gen = genFns(W.seed + (DIM_SEED[dim] || 0), dim); W.spots = []; for (const [, c] of W.chunks) dropMesh(c); W.chunks.clear(); for (const e of [...ents]) removeEnt(e); }
 function chunkData(cx, cz) {
   let c = W.chunks.get(ck(cx, cz)); if (c) return c;
   const d = genChunk(W, cx, cz), ed = W.edits[W.dim][ck(cx, cz)]; if (ed) for (const i in ed) d[+i] = ed[i];
   c = { cx, cz, d, mesh: null, dirty: true, lights: [] }; W.chunks.set(ck(cx, cz), c); return c;
 }
-function getB(x, y, z) { if (y < 0) return 46; if (y >= CH) return 0; const cx = Math.floor(x / CS), cz = Math.floor(z / CS); return chunkData(cx, cz).d[(x - cx * CS) + CS * ((z - cz * CS) + CS * y)]; }
+function getB(x, y, z) { if (y < 0) return W?.voidBelow ? 0 : 46; if (y >= CH) return 0; const cx = Math.floor(x / CS), cz = Math.floor(z / CS); return chunkData(cx, cz).d[(x - cx * CS) + CS * ((z - cz * CS) + CS * y)]; }
 function setB(x, y, z, id, net) {
   if (y < 0 || y >= CH) return; const cx = Math.floor(x / CS), cz = Math.floor(z / CS), c = chunkData(cx, cz), lx = x - cx * CS, lz = z - cz * CS, i = lx + CS * (lz + CS * y);
   if (c.d[i] === id) return; c.d[i] = id; c.dirty = true; ((W.edits[W.dim][ck(cx, cz)] ||= {}))[i] = id; setLvl(x, y, z, 0); flowWake(x, y, z);
@@ -2875,6 +2875,7 @@ function startWorld(name, seed, shared) {
   P.inv = Array(36).fill(null); P.armor = {}; P.off = null; Object.assign(P, { hp: 20, max: 20, food: 20, xp: 0, lv: 1, fx: {}, dead: false, spawn: null, forgedLv: 0, stars: 0, quests: [], vel: new V3(), seenBiome: '' });
   if (sv?.p) { const p = sv.p; P.pos.fromArray(p.pos); P.yaw = p.yaw; P.pitch = p.pitch; P.inv = p.inv; P.armor = p.armor || {}; P.off = p.off; Object.assign(P, { hp: p.hp, max: p.max, food: p.food, xp: p.xp, lv: p.lv, spawn: p.spawn, forgedLv: p.forgedLv || 0, stars: p.stars || 0, quests: p.quests || [] }); }
   else { let x = 0, z = 0; for (let k = 0; k < 60; k++) { const sy = surfaceY(x, z); if (sy >= SEA && !BL[getB(x, sy, z)]?.liquid) break; x += 7; z += 3; } const y = surfaceY(x, z) + 1; P.pos.set(x + 0.5, y, z + 0.5); W.home = { x: x + 0.5, y, z: z + 0.5 }; W.known = {}; tutorial = { i: 0 }; }
+  W.voidBelow = ['lost', 'sky', 'dream'].includes(W.dim) || (W.dim === 'over' && !!W.x?.mods?.includes('oneblock'));
   for (const f of HOOK.start) f(!sv?.p);
   W.home ||= { x: P.pos.x, y: P.pos.y, z: P.pos.z }; $('advStart').hidden = true; if (touch) { $('advStage').classList.add('fs'); document.body.classList.add('advFsOn'); } ADV.on = true; buildBody(); hudInv(); hud(); tutShow(); banner(W.shared ? 'Shared world ' + W.shared : name);
   // load the chunks around you before the first step
