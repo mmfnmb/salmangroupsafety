@@ -2719,7 +2719,7 @@ function skyStep(dt) {
   rainPts.visible = wet && bio !== 'desert'; if (rainPts.visible) { const snow = bio === 'snow'; rainPts.material.color.set(snow ? 0xffffff : 0x9ab8e8); rainPts.material.size = snow ? 0.16 : 0.1; const a = rainPts.geometry.attributes.position; for (let i = 0; i < a.count; i++) { let y = a.getY(i) - dt * (snow ? 3 : 18); if (y < -12) y = 14; a.setY(i, y); } a.needsUpdate = true; rainPts.position.set(P.pos.x, P.pos.y + 4, P.pos.z); }
   if (flashT > 0) flashT -= dt; if (W.weather === 'storm' && Math.random() < dt / 8) { flashT = 0.15; setTimeout(() => sfx('thunder'), 300 + Math.random() * 900); const sx = P.pos.x + (Math.random() - 0.5) * 30, sz = P.pos.z + (Math.random() - 0.5) * 30, sy = surfaceY(Math.floor(sx), Math.floor(sz)) + 1; for (let i = 0; i < 20; i++) spark(new V3(sx, sy + i * 0.6, sz), '#ffffff', 1); if (Math.hypot(sx - P.pos.x, sz - P.pos.z) < 3) hurtPlayer(6, new V3(sx, sy, sz)); }
   // furnaces keep cooking even when you're not looking
-  for (const key in W.bd) { const f = W.bd[key]; if (f.type !== 'furnace') continue; furnaceTick(f, dt); }
+  for (const key in W.bd) { const f = W.bd[key]; if (f?.type !== 'furnace') continue; furnaceTick(f, dt); }
   // crops and saplings grow
   growT -= dt; if (growT <= 0) { growT = 3; for (const [, c] of W.chunks) { if (!c.mesh) continue; for (let n = 0; n < 6; n++) { const i = (Math.random() * c.d.length) | 0, b = c.d[i]; if (b === 51 || b === 52 || b === 77) { const lx = i % CS, lz = ((i / CS) | 0) % CS, y = (i / (CS * CS)) | 0, x = c.cx * CS + lx, z = c.cz * CS + lz; if (b === 77) growTree(x, y, z); else setB(x, y, z, b + 1); } } } }
 }
@@ -3374,7 +3374,7 @@ GEN.oneblock = (W, cx, cz, d, idx) => { if (cx === 0 && cz === 0) d[idx(0, 40, 0
 function obPhase(n) { let p = OB_PH[0]; for (const q of OB_PH) if (n >= q[0]) p = q; return p; }
 HOOK.brk.push((hit, b) => { if (!modOn('oneblock') || W.dim !== 'over' || hit.x !== 0 || hit.y !== 40 || hit.z !== 0) return; const x = X_(); x.ob = (x.ob || 0) + 1; const ph = obPhase(x.ob), prev = obPhase(x.ob - 1);
   if (ph !== prev) { banner('Phase: ' + ph[1]); sfx('level'); if (ph[1] === 'The Boss') bossUp('dragon', new V3(0.5, 46, 0.5), Math.round(400 * diffMul()), 9, 3.6, 'The Block Dragon', null, 'imp'); }
-  const r = Math.random(); setTimeout(() => { if (getB(0, 40, 0)) return; if (r < 0.06) { setB(0, 40, 0, 24); W.bd['0,40,0'] = null; } else setB(0, 40, 0, rpick(ph[2])); if (r > 0.9) spawnEnt(['peck', 'moo', 'fluff', 'snort'].includes(ph[3][0]) && r > 0.95 ? 'animal' : 'mob', rpick(ph[3]), new V3(0.5, 41, 0.5)); }, 120); });
+  const r = Math.random(); if (r < 0.06) { setB(0, 40, 0, 24); delete W.bd['0,40,0']; } else setB(0, 40, 0, rpick(ph[2])); meshChunk(chunkData(0, 0)); burst(0.5, 40.5, 0.5, getB(0, 40, 0), 6); if (r > 0.9) spawnEnt(['peck', 'moo', 'fluff', 'snort'].includes(ph[3][0]) && r > 0.95 ? 'animal' : 'mob', rpick(ph[3]), new V3(0.5, 41.2, 0.5)); });
 HOOK.start.push((fresh) => { if (!modOn('oneblock')) return; if (!getB(0, 40, 0)) setB(0, 40, 0, 1, true); if (fresh) { P.pos.set(0.5, 41, 0.5); W.home = { x: 0.5, y: 41, z: 0.5 }; } });
 HOOK.tick.push(() => { const el = $('advOB'); if (!modOn('oneblock') || W.dim !== 'over') { el.hidden = true; return; } el.hidden = false; const n = X_().ob || 0, ph = obPhase(n), nx = OB_PH[OB_PH.indexOf(ph) + 1]; el.textContent = `One Block · ${ph[1]} · ${n}${nx ? ' / ' + nx[0] : ''}`; });
 
@@ -3780,7 +3780,7 @@ $('advTutSkip').onclick = () => { tutorial = null; tutShow(); };
 $('advModsB').onclick = () => modsPage(); $('advPickNova').onclick = () => pickComp('nova'); $('advPickBlink').onclick = () => pickComp('blink'); $('advModsClose').onclick = () => { $('advModsPage').hidden = true; };
 $('advFilmGo').onclick = () => { FILM.on = false; $('advFilm').hidden = true; banner('Keep playing!'); };
 $('advExit').onclick = () => { save(); $('advStage').classList.remove('fs'); document.body.classList.remove('advFsOn'); if (document.fullscreenElement) document.exitFullscreen?.(); };
-return { open, close, design: () => 0, _: { _mesh: (c) => meshChunk(c), useHeld, CHAR_PRESETS, FILM, villagesNear, VREG, X_, NBS, travelTo, lightGate, PILLARS, lostTop, FILM, HOOK, MODS, findFloor, kingAt, nextStep, flowStep, flowCell, lvlOf, FLOWQ, flowDir, keys, cam, myCharDef, makeChar, peerShow, MK, P, get W() { return W; }, getB, setB, give, count, craft, RECIPES, gridMatch, openUI, closeUI, useHeld, aimRay, spawnEnt, ents, offlineHelp, explode, ignite, skyStep, save, startWorld, entsStep, playerStep, attack, hurtEnt, quest, newQuest, travel, BL, IT, itemIcon, stationsNear, furnaceTick, SMELT } };
+return { open, close, design: () => 0, _: { _mesh: (c) => meshChunk(c), useHeld, doBreak, CHAR_PRESETS, FILM, villagesNear, VREG, X_, NBS, travelTo, lightGate, PILLARS, lostTop, FILM, HOOK, MODS, findFloor, kingAt, nextStep, flowStep, flowCell, lvlOf, FLOWQ, flowDir, keys, cam, myCharDef, makeChar, peerShow, MK, P, get W() { return W; }, getB, setB, give, count, craft, RECIPES, gridMatch, openUI, closeUI, useHeld, aimRay, spawnEnt, ents, offlineHelp, explode, ignite, skyStep, save, startWorld, entsStep, playerStep, attack, hurtEnt, quest, newQuest, travel, BL, IT, itemIcon, stationsNear, furnaceTick, SMELT } };
 
 })();
 
