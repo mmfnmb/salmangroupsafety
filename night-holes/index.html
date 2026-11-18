@@ -1,0 +1,153 @@
+<title>ثقوب الليل</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lalezar&family=Cairo:wght@500;700;900&display=swap">
+<style>
+/* layout: full-screen WebGL view with HUD and menu layers on top. Single dark look on purpose (it is a horror game). */
+:root { --bg: #040507; --panel: #0d1116ee; --ink: #e9eef2; --dim: #8b97a3; --tube: #3cff9a; --alarm: #ff3b3b; --metal: #2a323b; --line: #26303a;
+  --display: 'Lalezar', 'Cairo', system-ui, sans-serif; --body: 'Cairo', system-ui, sans-serif; color-scheme: dark; }
+[hidden] { display: none !important; }
+html, body { height: 100%; margin: 0; background: var(--bg); color: var(--ink); font-family: var(--body); overflow: hidden; touch-action: none; -webkit-user-select: none; user-select: none; }
+#view { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+.layer { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-bottom, 0px)); box-sizing: border-box; }
+button { font-family: var(--body); font-weight: 700; color: var(--ink); background: var(--metal); border: 1px solid #3a4652; border-radius: 10px; padding: 12px 18px; font-size: 16px; cursor: pointer; }
+button:focus-visible { outline: 2px solid var(--tube); outline-offset: 2px; }
+button:active { transform: translateY(1px); }
+/* menu */
+#menu { background: radial-gradient(ellipse at 50% 35%, #0f2a1d 0%, #040507 62%); flex-direction: column; gap: 22px; text-align: center; }
+.logo { font-family: var(--display); font-size: clamp(64px, 16vw, 132px); line-height: .9; color: var(--ink); text-shadow: 0 0 24px #3cff9a55, 0 0 2px #fff; letter-spacing: .01em; position: relative; }
+.logo small { display: block; font-family: var(--body); font-size: 15px; letter-spacing: .32em; color: var(--tube); text-transform: uppercase; margin-top: 10px; text-shadow: none; }
+.tag { color: var(--dim); max-width: 34ch; margin: 0 auto; }
+.menuBtns { display: grid; gap: 10px; width: min(340px, 100%); }
+.menuBtns .main { background: var(--tube); color: #04130b; border-color: transparent; font-size: 19px; }
+.joinRow { display: flex; gap: 8px; }
+.joinRow input { flex: 1; min-width: 0; font: 700 17px var(--body); text-transform: uppercase; text-align: center; background: #0b0f13; color: var(--ink); border: 1px solid #3a4652; border-radius: 10px; letter-spacing: .3em; }
+.topbar { position: fixed; top: max(12px, env(safe-area-inset-top, 0px)); inset-inline: max(16px, env(safe-area-inset-left, 0px)); display: flex; justify-content: space-between; gap: 8px; }
+.chip { background: #0b0f13cc; border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-weight: 700; }
+.tube { width: 74px; height: 150px; margin: 0 auto -8px; border-radius: 14px 14px 10px 10px; border: 3px solid #4b5560; background: linear-gradient(90deg, #0c3a22, #1aff7a55 45%, #0c3a22); box-shadow: 0 0 40px #3cff9a44 inset, 0 0 30px #3cff9a33; position: relative; overflow: hidden; }
+.tube::before { content: ""; position: absolute; left: 50%; top: 28px; width: 18px; height: 70px; margin-left: -9px; background: #061b10; border-radius: 9px 9px 4px 4px; box-shadow: -12px 30px 0 -4px #061b10, 12px 30px 0 -4px #061b10; animation: float 3s ease-in-out infinite; }
+.tube::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 30% 80%, #fff6 2px, transparent 3px), radial-gradient(circle at 60% 60%, #fff5 2px, transparent 3px), radial-gradient(circle at 45% 90%, #fff4 3px, transparent 4px); animation: bub 2.4s linear infinite; }
+@keyframes float { 50% { transform: translateY(-6px); } } @keyframes bub { from { transform: translateY(20px); } to { transform: translateY(-140px); } }
+/* panels */
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 20px; width: min(560px, 100%); max-height: 100%; overflow: auto; box-sizing: border-box; }
+.card h2 { font-family: var(--display); font-weight: 400; font-size: 36px; margin: 0 0 8px; }
+#lobbyCode { font-family: var(--display); font-size: 44px; letter-spacing: .25em; color: var(--tube); }
+#lobbyList { list-style: none; padding: 0; margin: 12px 0; display: grid; gap: 6px; } #lobbyList li { background: #0b0f13; border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; }
+.zrow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 12px 0; color: var(--dim); }
+.row { display: flex; gap: 10px; flex-wrap: wrap; }
+#shopList { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 12px; }
+.skin { background: #0b0f13; border: 1px solid var(--line); border-radius: 12px; padding: 10px; display: grid; gap: 6px; text-align: center; min-width: 0; }
+.skin img { width: 100%; aspect-ratio: 3/4; object-fit: cover; border-radius: 8px; background: #111; max-width: 100%; }
+.skin.on { border-color: var(--tube); } .skin.zombie { border-color: #6b1f1f; } .skin small { color: var(--dim); }
+.skin button { padding: 8px; font-size: 14px; }
+/* loading */
+#loading { background: #000; flex-direction: column; gap: 14px; } .bar { width: min(320px, 80vw); height: 6px; background: #1a1f24; border-radius: 3px; overflow: hidden; } #loadBar { height: 100%; width: 0; background: var(--tube); transition: width .3s; }
+/* HUD */
+#hud { pointer-events: none; }
+#vig { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 45%, #000 100%); opacity: .4; }
+#flash { position: fixed; inset: 0; background: #b00; opacity: 0; pointer-events: none; transition: opacity .25s; } #flash.on { opacity: .75; transition: none; }
+#fade { position: fixed; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity .6s; } #fade.on { opacity: 1; }
+#lockerView { position: fixed; inset: 0; pointer-events: none; background: linear-gradient(#000 0 41%, transparent 41% 44%, #000 44% 47%, transparent 47% 50%, #000 50% 53%, transparent 53% 56%, #000 56%); opacity: .93; }
+#prompt { position: fixed; left: 50%; bottom: calc(34% + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: #000a; border: 1px solid #fff3; border-radius: 999px; padding: 6px 16px; font-weight: 700; white-space: nowrap; }
+.meters { position: fixed; top: max(14px, env(safe-area-inset-top, 0px)); inset-inline-start: max(16px, env(safe-area-inset-left, 0px)); display: grid; gap: 6px; width: 150px; }
+.meter { height: 6px; background: #ffffff1a; border-radius: 3px; overflow: hidden; } .meter i { display: block; height: 100%; width: 100%; } #stam { background: #e8eef2; } #batt { background: #ffd34d; }
+.meters small { color: var(--dim); font-weight: 700; font-size: 12px; }
+#inv { position: fixed; top: max(14px, env(safe-area-inset-top, 0px)); inset-inline-end: max(16px, env(safe-area-inset-right, 0px)); display: flex; gap: 6px; align-items: center; }
+.ic { width: 22px; height: 22px; border-radius: 5px; display: inline-block; border: 1px solid #fff4; } .ic-green { background: #22dd55; } .ic-red { background: #ff2233; } .ic-key { background: #c9a24a; border-radius: 50%; } .ic-screwdriver { background: linear-gradient(90deg, #d8b000 50%, #aaa 50%); } .ic-fuse_r { background: #ff3b30; } .ic-fuse_y { background: #ffcc00; } .ic-fuse_b { background: #2f7dff; }
+.bottleCount { background: #0b0f13cc; border-radius: 999px; padding: 2px 10px; font-weight: 700; border: 1px solid #3cff9a66; color: var(--tube); }
+#banner { position: fixed; top: 18%; left: 0; right: 0; text-align: center; font-family: var(--display); font-size: clamp(28px, 6vw, 48px); opacity: 0; text-shadow: 0 2px 16px #000; } #banner.show { animation: ban 3.2s ease forwards; }
+@keyframes ban { 15%, 70% { opacity: 1; } 100% { opacity: 0; } }
+#controlsHelp { position: fixed; bottom: max(10px, env(safe-area-inset-bottom, 0px)); left: 0; right: 0; text-align: center; color: #fff6; font-size: 13px; }
+#touch { position: fixed; inset: 0; pointer-events: auto; }
+#stick { position: fixed; width: 120px; height: 120px; border-radius: 50%; border: 2px solid #fff3; background: #ffffff0d; pointer-events: none; } #knob { position: absolute; left: 35px; top: 35px; width: 50px; height: 50px; border-radius: 50%; background: #fff4; }
+#mobileBtns { position: fixed; inset-inline-end: max(16px, env(safe-area-inset-right, 0px)); bottom: max(18px, env(safe-area-inset-bottom, 0px)); display: grid; grid-template-columns: repeat(3, 64px); gap: 10px; pointer-events: auto; direction: ltr; }
+#mobileBtns button { width: 64px; height: 64px; border-radius: 50%; padding: 0; font-size: 12px; background: #0b0f13b0; border: 1px solid #ffffff33; }
+#mobileBtns #bUse { grid-column: span 3; width: auto; height: 54px; border-radius: 14px; background: #3cff9a26; border-color: #3cff9a88; font-size: 15px; }
+#mobileBtns button.on { background: #3cff9a44; }
+#journal { position: fixed; top: 70px; inset-inline-start: max(16px, env(safe-area-inset-left, 0px)); background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; max-width: 280px; pointer-events: auto; }
+.mono { font-family: ui-monospace, monospace; font-size: 18px; letter-spacing: .15em; color: var(--tube); direction: ltr; display: inline-block; }
+#toast { position: fixed; top: 64px; left: 50%; transform: translateX(-50%); background: #000c; border: 1px solid #fff2; border-radius: 12px; padding: 8px 16px; font-weight: 700; max-width: 86vw; text-align: center; z-index: 30; }
+/* puzzles */
+#panel { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #000a; z-index: 20; padding: 16px; box-sizing: border-box; }
+.pbox { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 16px; width: min(520px, 100%); max-height: 100%; overflow: auto; box-sizing: border-box; }
+.phead { display: flex; justify-content: space-between; align-items: center; gap: 10px; } .phead b { font-family: var(--display); font-weight: 400; font-size: 26px; }
+.pclose { padding: 6px 12px; font-size: 14px; } .phint { color: var(--dim); } .big { color: var(--tube); font-size: 22px; direction: ltr; display: inline-block; }
+.pmsg.ok { color: var(--tube); } .pmsg.bad { color: var(--alarm); } .pbtn { width: 100%; margin-top: 10px; font-size: 18px; }
+.kdisp { font: 700 40px ui-monospace, monospace; letter-spacing: .4em; text-align: center; background: #050807; color: var(--tube); border-radius: 10px; padding: 8px; direction: ltr; }
+.kpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; direction: ltr; } .kpad button { font-size: 22px; padding: 14px 0; }
+.mons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } .mons canvas { width: 100%; border-radius: 6px; border: 2px solid #222; image-rendering: pixelated; }
+.bottles { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; direction: ltr; } .bottle { width: 72px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 4px; } .bottle.on { border-color: var(--tube); background: #10261a; }
+.liq { width: 28px; border-radius: 4px 4px 10px 10px; display: block; } .sum { text-align: center; font: 700 26px var(--body); margin-top: 8px; }
+.valves, .slots, .fuses, .chart { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; direction: ltr; margin: 8px 0; }
+.valve { width: 70px; height: 70px; border-radius: 50%; font-size: 34px; padding: 0; background: radial-gradient(#7a2a2a, #3a1010); } .valve span { display: inline-block; transition: transform .2s; }
+.chart div { background: #e9e2c8; color: #222; border-radius: 6px; padding: 6px 12px; text-align: center; font-size: 28px; } .chart small { display: block; font-size: 12px; }
+.slot { width: 64px; height: 90px; border-radius: 8px; background: #111; border: 3px dashed; } .sr { border-color: #ff3b30; } .sy { border-color: #ffcc00; } .sb { border-color: #2f7dff; } .slot.full { border-style: solid; background: #2a2a2a; }
+.fuse { width: 40px; height: 76px; border-radius: 8px; padding: 0; } .fr { background: #ff3b30; } .fy { background: #ffcc00; } .fb { background: #2f7dff; } .fuse.on { outline: 3px solid #fff; }
+.tape { display: flex; gap: 30px; justify-content: center; padding: 18px; background: #1a1a1a; border-radius: 12px; } .reel { width: 60px; height: 60px; border-radius: 50%; border: 8px dotted #888; } .tape.spin .reel { animation: spin 1s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } }
+.wires { display: grid; grid-template-columns: 60px 1fr 60px; align-items: stretch; gap: 6px; direction: ltr; } .wires > div { display: grid; gap: 10px; } .wn { height: 40px; border-radius: 8px; padding: 0; border: 2px solid #000; } .wires svg { width: 100%; height: 200px; }
+.elev { display: grid; gap: 10px; margin-top: 10px; }
+/* end screens */
+#dead, #results { background: #000d; } #dead h2 { color: var(--alarm); } .secret { color: var(--tube); }
+#endText { position: fixed; bottom: 18%; left: 0; right: 0; text-align: center; font-family: var(--display); font-size: clamp(22px, 5vw, 38px); text-shadow: 0 2px 12px #000; padding: 0 16px; }
+@media (max-height: 520px) { #menu { gap: 10px; justify-content: flex-start; overflow-y: auto; } #menu .tube { display: none; } .logo { font-size: 58px; } .logo small { margin-top: 4px; } .tag { display: none; } .menuBtns { width: min(520px, 100%); grid-template-columns: 1fr 1fr; } .menuBtns .joinRow, .menuBtns #btnShop { grid-column: span 2; } button { padding: 9px 14px; } }
+.credits { color: var(--dim); font-size: 12px; line-height: 1.6; margin-top: 14px; }
+.credits a { color: var(--dim); }
+@media (prefers-reduced-motion: reduce) { .tube::before, .tube::after { animation: none; } #banner.show { animation-duration: .01s; opacity: 1; } }
+</style>
+
+<canvas id="view"></canvas>
+
+<div id="menu" class="layer">
+  <div class="topbar"><span class="chip" id="coins"></span><button id="btnLang" class="chip" data-t="lang"></button></div>
+  <div class="tube" aria-hidden="true"></div>
+  <div class="logo"><span data-t="title"></span><small>Lab 8 · Sublevel</small></div>
+  <p class="tag" data-t="tagline"></p>
+  <div class="menuBtns">
+    <button class="main" id="btnSolo" data-t="solo"></button>
+    <button id="btnCreate" data-t="create"></button>
+    <div class="joinRow"><input id="joinCode" maxlength="5" placeholder="ABCD" aria-label="room code"><button id="btnJoin" data-t="join"></button></div>
+    <button id="btnShop" data-t="skins"></button>
+  </div>
+</div>
+
+<div id="lobby" class="layer" hidden>
+  <div class="card">
+    <h2 data-t="code"></h2><div id="lobbyCode"></div>
+    <h3 data-t="players"></h3><ul id="lobbyList"></ul>
+    <div class="zrow"><label><input type="checkbox" id="zUse"> <span data-t="zombie_use"></span></label><span id="zTickets"></span></div>
+    <p id="lobbyWait" data-t="waiting"></p>
+    <div class="row"><button id="btnStart" data-t="start"></button><button id="lobbyBack" data-t="back"></button></div>
+  </div>
+</div>
+
+<div id="shop" class="layer" hidden>
+  <div class="card"><div class="row" style="justify-content:space-between;align-items:center"><h2 data-t="skins"></h2><span class="chip" id="shopCoins"></span></div>
+    <div id="shopList"></div><button id="shopBack" data-t="back" style="margin-top:12px"></button>
+    <details class="credits"><summary data-t="credits"></summary>
+    <p>Characters: Microsoft Rocketbox avatars & animations (MIT, © Microsoft Corporation). Lab, props: Quaternius Modular Sci-Fi, Survival and House Interior packs (CC0).</p>
+    <p>Monsters: "Gaunt Horror Creature" by PurplePoint (CC BY 4.0); "Wendigo – Antlered Famine Horror Creature" and "Bandaged Asylum Matron Needle Horror" by Pigcraft (CC BY 4.0); "Ditch Dog – Rigged and Animated" by Greeble3d (CC BY 4.0); "The Human Deer" by ceeleste (CC BY 4.0); "3D Horror Game Monster" by HorrorGameMaker.com (CC0). All from Sketchfab / OpenGameArt; textures resized and compressed. Licences: creativecommons.org/licenses/by/4.0</p>
+    <p>Font: Cairo, Lalezar (SIL OFL). Sound: synthesized in the game.</p></details></div>
+</div>
+
+<div id="loading" class="layer" hidden><div class="tube" aria-hidden="true"></div><b data-t="loading"></b><div class="bar"><div id="loadBar"></div></div></div>
+
+<div id="hud" hidden>
+  <div id="vig"></div><div id="lockerView" hidden></div>
+  <div id="touch"></div><div id="stick" hidden><div id="knob"></div></div>
+  <div class="meters"><small>⚡</small><div class="meter"><i id="stam"></i></div><small>🔦</small><div class="meter"><i id="batt"></i></div></div>
+  <div id="inv"><span id="invIcons"></span><span class="bottleCount">🧪 <span id="bottles">0</span></span></div>
+  <div id="prompt" hidden></div><div id="banner"></div><div id="controlsHelp"></div>
+  <div id="journal" hidden></div>
+  <div id="mobileBtns" hidden>
+    <button id="bUse" data-t="use"></button>
+    <button id="bRun" data-t="run"></button><button id="bCrouch" data-t="crouch"></button><button id="bLight" data-t="light"></button>
+    <button id="bThrow" data-t="throw"></button><button id="bNotes" data-t="journal"></button>
+  </div>
+</div>
+<div id="panel" hidden></div>
+<div id="flash"></div><div id="fade"></div><div id="toast" hidden></div><div id="endText" hidden></div>
+
+<div id="dead" class="layer" hidden><div class="card"><h2 id="deadTitle"></h2><p id="deadBody"></p><div class="row"><button id="btnRetry" data-t="retry"></button><button id="btnMenu" data-t="menu"></button></div></div></div>
+<div id="results" class="layer" hidden><div class="card"><h2 id="resTitle"></h2><div id="resBody"></div><button id="btnMenu2" data-t="menu"></button></div></div>
+
+<script src="game.js"></script>

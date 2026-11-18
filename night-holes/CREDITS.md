@@ -1,0 +1,11 @@
+# Night Holes – asset credits
+- Human skins + animations: Microsoft Rocketbox (MIT License, © Microsoft Corporation) – github.com/microsoft/Microsoft-Rocketbox. Converted FBX→GLB, textures resized.
+- Lab walls, floors, doors, pods, computers, props: Quaternius Modular Sci-Fi, Survival Pack, House Interior Pack (CC0) via github.com/trebeljahr/quaternius-showcase.
+- Monsters (CC BY 4.0 unless noted; resized/compressed):
+  - "Gaunt Horror Creature – Free Creepy 3D Model" by PurplePoint – sketchfab.com/3d-models/gaunt-horror-creature-free-creepy-3d-model-22a418d047764a23b73b539686b988c6 (rig/animations from github.com/loronajay/javascript-game-factory)
+  - "Wendigo – Antlered Famine Horror Creature" by Pigcraft – sketchfab.com/3d-models/wendigo-antlered-famine-horror-creature-3511c530080240dfa1b5882ff38ee8ea
+  - "Bandaged Asylum Matron Needle Horror" by Pigcraft (Sketchfab)
+  - "Ditch Dog – Rigged and Animated" by Greeble3d – sketchfab.com/3d-models/ditch-dog-rigged-and-animated-d3507ae804604930b1b8534d2ac1c0da
+  - "The Human Deer" by ceeleste – sketchfab.com/3d-models/the-human-deer-7644694337404bb18eb68e6b637740a1
+  - "3D Horror Game Monster" by HorrorGameMaker.com (CC0) – opengameart.org/content/3d-horror-game-monster
+- Fonts: Cairo, Lalezar (SIL OFL). Sound: synthesized with WebAudio.
