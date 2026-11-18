@@ -9,3 +9,5 @@
   - "The Human Deer" by ceeleste – sketchfab.com/3d-models/the-human-deer-7644694337404bb18eb68e6b637740a1
   - "3D Horror Game Monster" by HorrorGameMaker.com (CC0) – opengameart.org/content/3d-horror-game-monster
 - Fonts: Cairo, Lalezar (SIL OFL). Sound: synthesized with WebAudio.
+- Intro car: "Mercedes E Class W212" by Peter_D (better_peter) – sketchfab.com/3d-models/mercedes-e-class-w212-119c5e10733142b197aa53b86f6aeb04 – CC BY 4.0 (via github.com/HDB-productions/Schule). Textures compressed; brand badges to be removed in game.
+- Planned: EZ-Tree by Daniel Greenheck (MIT, npm @dgreenheck/ez-tree) for realistic forest; ambientCG asphalt (CC0).
