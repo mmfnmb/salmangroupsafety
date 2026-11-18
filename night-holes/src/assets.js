@@ -5,9 +5,16 @@ import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 
 const loader = new GLTFLoader(); loader.setMeshoptDecoder(MeshoptDecoder);
-const cache = new Map();
+const cache = new Map(), bundles = {};
+// models ship as base64 inside assets/<folder>.json (the page host does not serve .glb files)
+async function buffer(path) {
+  const [dir, file] = path.split('/');
+  if (!bundles[dir]) bundles[dir] = fetch('assets/' + dir + '.json').then((r) => r.json());
+  const b64 = (await bundles[dir])[file]; if (!b64) throw new Error('missing ' + path);
+  const bin = atob(b64), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u.buffer;
+}
 export function load(path) {
-  if (!cache.has(path)) cache.set(path, loader.loadAsync('assets/' + path).catch((e) => { console.warn('model failed', path, e); return null; }));
+  if (!cache.has(path)) cache.set(path, buffer(path).then((buf) => loader.parseAsync(buf, '')).catch((e) => { console.warn('model failed', path, e); return null; }));
   return cache.get(path);
 }
 export async function loadAll(paths, onProgress) {
