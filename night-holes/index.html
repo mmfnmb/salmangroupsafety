@@ -1,11 +1,11 @@
-<title>ثقوب الليل</title>
+<title>Night Holes</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lalezar&family=Cairo:wght@500;700;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lalezar&family=Cairo:wght@500;700;900&family=Special+Elite&family=Oswald:wght@500;700&display=swap">
 <style>
 /* layout: full-screen WebGL view with HUD and menu layers on top. Single dark look on purpose (it is a horror game). */
 :root { --bg: #040507; --panel: #0d1116ee; --ink: #e9eef2; --dim: #8b97a3; --tube: #3cff9a; --alarm: #ff3b3b; --metal: #2a323b; --line: #26303a;
-  --display: 'Lalezar', 'Cairo', system-ui, sans-serif; --body: 'Cairo', system-ui, sans-serif; color-scheme: dark; }
+  --display: 'Special Elite', 'Lalezar', serif; --body: 'Oswald', 'Cairo', system-ui, sans-serif; --mono: 'Special Elite', monospace; color-scheme: dark; }
 [hidden] { display: none !important; }
 html, body { height: 100%; margin: 0; background: var(--bg); color: var(--ink); font-family: var(--body); overflow: hidden; touch-action: none; -webkit-user-select: none; user-select: none; }
 #view { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
@@ -60,9 +60,9 @@ button:active { transform: translateY(1px); }
 #controlsHelp { position: fixed; bottom: max(10px, env(safe-area-inset-bottom, 0px)); left: 0; right: 0; text-align: center; color: #fff6; font-size: 13px; }
 #touch { position: fixed; inset: 0; pointer-events: auto; }
 #stick { position: fixed; width: 120px; height: 120px; border-radius: 50%; border: 2px solid #fff3; background: #ffffff0d; pointer-events: none; } #knob { position: absolute; left: 35px; top: 35px; width: 50px; height: 50px; border-radius: 50%; background: #fff4; }
-#mobileBtns { position: fixed; inset-inline-end: max(16px, env(safe-area-inset-right, 0px)); bottom: max(18px, env(safe-area-inset-bottom, 0px)); display: grid; grid-template-columns: repeat(3, 64px); gap: 10px; pointer-events: auto; direction: ltr; }
-#mobileBtns button { width: 64px; height: 64px; border-radius: 50%; padding: 0; font-size: 12px; background: #0b0f13b0; border: 1px solid #ffffff33; }
-#mobileBtns #bUse { grid-column: span 3; width: auto; height: 54px; border-radius: 14px; background: #3cff9a26; border-color: #3cff9a88; font-size: 15px; }
+#mobileBtns { position: fixed; inset-inline-end: max(16px, env(safe-area-inset-right, 0px)); bottom: max(18px, env(safe-area-inset-bottom, 0px)); display: grid; grid-template-columns: repeat(4, 56px); gap: 8px; pointer-events: auto; direction: ltr; }
+#mobileBtns button { width: 56px; height: 56px; border-radius: 50%; padding: 0; font-size: 12px; background: #0b0f13b0; border: 1px solid #ffffff33; }
+#mobileBtns #bUse { grid-column: span 4; width: auto; height: 54px; border-radius: 14px; background: #3cff9a26; border-color: #3cff9a88; font-size: 15px; }
 #mobileBtns button.on { background: #3cff9a44; }
 #journal { position: fixed; top: 70px; inset-inline-start: max(16px, env(safe-area-inset-left, 0px)); background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; max-width: 280px; pointer-events: auto; }
 .mono { font-family: ui-monospace, monospace; font-size: 18px; letter-spacing: .15em; color: var(--tube); direction: ltr; display: inline-block; }
@@ -93,22 +93,85 @@ button:active { transform: translateY(1px); }
 .credits { color: var(--dim); font-size: 12px; line-height: 1.6; margin-top: 14px; }
 .credits a { color: var(--dim); }
 @media (prefers-reduced-motion: reduce) { .tube::before, .tube::after { animation: none; } #banner.show { animation-duration: .01s; opacity: 1; } }
+
+/* v2: one framed menu card with classic rectangular buttons */
+#menu { background: #000 url(assets/story/story4.jpg) center/cover no-repeat; }
+#menu::before { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 40%, #0008 0%, #000d 70%); }
+.mcard { position: relative; width: min(420px, 100%); border: 2px solid #c9c2ae55; outline: 1px solid #c9c2ae22; outline-offset: 5px; background: #07090bdd; padding: 26px 24px 18px; box-sizing: border-box; display: grid; gap: 10px; text-align: center; max-height: 100%; overflow: auto; }
+.mcard .logo { font-family: var(--display); font-size: clamp(42px, 10vw, 64px); letter-spacing: .06em; line-height: 1; text-transform: uppercase; color: #e9e4d4; text-shadow: 0 0 18px #3cff9a33; }
+html[lang=ar] .mcard .logo { font-family: 'Lalezar', serif; letter-spacing: 0; }
+.mcard .logo small { display: block; font: 500 12px var(--body); letter-spacing: .35em; color: #3cff9a; margin-top: 8px; }
+.mcard .tag { color: #a8a294; font-size: 14px; margin: 0 0 6px; }
+.cbtn { display: block; width: 100%; border-radius: 0; background: #12161a; border: 1px solid #c9c2ae66; color: #e9e4d4; text-transform: uppercase; letter-spacing: .14em; font: 500 16px var(--body); padding: 12px 14px; transition: background .15s, border-color .15s; }
+html[lang=ar] .cbtn { letter-spacing: 0; text-transform: none; font-family: 'Cairo', sans-serif; }
+.cbtn:hover, .cbtn:focus-visible { background: #1d242a; border-color: #e9e4d4; }
+.cbtn.main { background: #e9e4d4; color: #07090b; border-color: #e9e4d4; font-weight: 700; }
+.cbtn.main:hover { background: #fff; }
+.crow { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.mcard .joinRow input { border-radius: 0; }
+.mcard hr { border: 0; border-top: 1px solid #c9c2ae33; margin: 6px 0; width: 100%; }
+.mfoot { display: flex; justify-content: space-between; align-items: center; color: #8b8676; font-size: 13px; gap: 8px; flex-wrap: wrap; }
+.mfoot button { border-radius: 0; padding: 6px 10px; font-size: 13px; background: transparent; border: 1px solid #c9c2ae44; }
+.credits { text-align: start; color: #8b8676; font-size: 12px; } .credits summary { cursor: pointer; }
+/* story slides */
+#story { background: #000; flex-direction: column; justify-content: flex-end; cursor: pointer; padding-bottom: max(40px, env(safe-area-inset-bottom, 0px)); }
+#storyImg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; }
+#storyImg.in { animation: kb 6.2s ease-out forwards; }
+@keyframes kb { 0% { opacity: 0; transform: scale(1.08); } 12% { opacity: 1; } 88% { opacity: 1; } 100% { opacity: 0; transform: scale(1); } }
+.storyText { position: relative; max-width: 760px; text-align: center; background: linear-gradient(transparent, #000c 30%); padding: 26px 18px 6px; }
+#storyDate { font: 15px var(--mono); color: #3cff9a; letter-spacing: .15em; text-transform: uppercase; }
+#storyCap { font-family: var(--display); font-size: clamp(20px, 3.6vw, 32px); margin: 8px 0 0; color: #f2eee2; }
+html[lang=ar] #storyCap { font-family: 'Cairo', sans-serif; font-weight: 700; }
+#storySkip { position: fixed; top: max(14px, env(safe-area-inset-top, 0px)); inset-inline-end: max(16px, env(safe-area-inset-right, 0px)); width: auto; }
+/* garage */
+#garage { pointer-events: none; align-items: flex-end; }
+.gcard { pointer-events: auto; width: min(560px, 100%); background: #07090bdd; border: 2px solid #c9c2ae55; padding: 14px 16px; display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; box-sizing: border-box; }
+.gcard .cbtn { width: auto; padding: 12px 16px; }
+.ginfo { text-align: center; min-width: 0; } .ginfo b { display: block; font: 700 22px var(--body); letter-spacing: .05em; } .ginfo small { color: #a8a294; display: block; } #gNum { color: #3cff9a; font: 12px var(--mono); }
+#gPick { grid-column: 1 / -1; } #gTitle { position: fixed; top: max(16px, env(safe-area-inset-top, 0px)); left: 0; right: 0; text-align: center; font-family: var(--display); font-size: clamp(26px, 5vw, 40px); pointer-events: none; text-shadow: 0 2px 12px #000; }
+#gLoad { position: fixed; top: 45%; left: 0; right: 0; text-align: center; color: #a8a294; }
+/* subtitles, objective, scare */
+#sub { position: fixed; left: 50%; bottom: calc(18% + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); max-width: min(90vw, 760px); text-align: center; background: #000b; padding: 6px 14px; font: 500 clamp(15px, 2.4vw, 20px) var(--body); z-index: 20; pointer-events: none; }
+#objective { position: fixed; top: max(14px, env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); font: 500 14px var(--body); letter-spacing: .12em; text-transform: uppercase; color: #e9e4d4; background: #000a; border: 1px solid #c9c2ae44; padding: 4px 12px; white-space: nowrap; }
+#objective:empty { display: none; }
+#flash2 { position: fixed; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 25; } #flash2.on { opacity: 1; }
+#scare { position: fixed; inset: 0; pointer-events: none; z-index: 22; opacity: 0; background: repeating-linear-gradient(0deg, #0000 0 3px, #0004 3px 4px); }
+#scare.on { opacity: 1; animation: jit .08s steps(2) infinite; } @keyframes jit { 50% { transform: translate(6px, -4px); filter: hue-rotate(90deg) saturate(3); } }
+#bombTimer { position: fixed; top: 22%; left: 0; right: 0; text-align: center; font: 700 clamp(48px, 10vw, 96px) var(--mono); color: #ff3b30; text-shadow: 0 0 24px #f00; pointer-events: none; }
+#eyes { position: fixed; inset: 0; pointer-events: none; z-index: 21; background: #000; opacity: 0; }
+#eyes.blink { animation: blink 5s ease forwards; } @keyframes blink { 0% { opacity: 1; } 20% { opacity: .7; } 28% { opacity: 1; } 45% { opacity: .4; } 52% { opacity: .85; } 100% { opacity: 0; } }
+.news .newsBody { text-align: start; } .news h3 { font-family: Georgia, serif; font-size: 22px; margin: 4px 0; } .newsDate { color: var(--dim); font-size: 13px; }
+.chat { background: #1d2a1d; border-inline-start: 3px solid #3cff9a; padding: 8px 10px; margin-top: 10px; display: grid; } .chat b { color: #3cff9a; }
+.mailList { display: grid; gap: 6px; text-align: start; } .mailList details { background: #0b0f13; border: 1px solid var(--line); padding: 8px 10px; } .mailList summary { cursor: pointer; font-weight: 700; } .mailList p { margin: 6px 0 0; color: #c9d2da; font-family: var(--mono); font-size: 14px; }
+.tabs { display: flex; gap: 6px; margin-bottom: 10px; } .tabs button { border-radius: 0; padding: 6px 12px; } .tabs button.on { background: #e9e4d4; color: #07090b; }
+.camGrid { display: grid; grid-template-columns: 1fr; gap: 8px; } .camGrid canvas { width: 100%; height: auto; background: #000; image-rendering: pixelated; }
+.bigmap canvas { width: 100%; height: auto; }
 </style>
 
 <canvas id="view"></canvas>
 
 <div id="menu" class="layer">
-  <div class="topbar"><span class="chip" id="coins"></span><button id="btnLang" class="chip" data-t="lang"></button></div>
-  <div class="tube" aria-hidden="true"></div>
-  <div class="logo"><span data-t="title"></span><small>Lab 8 · Sublevel</small></div>
-  <p class="tag" data-t="tagline"></p>
-  <div class="menuBtns">
-    <button class="main" id="btnSolo" data-t="solo"></button>
-    <button id="btnCreate" data-t="create"></button>
-    <div class="joinRow"><input id="joinCode" maxlength="5" placeholder="ABCD" aria-label="room code"><button id="btnJoin" data-t="join"></button></div>
-    <button id="btnShop" data-t="skins"></button>
+  <div class="mcard">
+    <div class="logo"><span data-t="title"></span><small>Blackwood Facility · Lab 8</small></div>
+    <p class="tag" data-t="tagline"></p>
+    <button class="cbtn main" id="btnNew" data-t="new_game"></button>
+    <button class="cbtn" id="btnSolo" data-t="quick"></button>
+    <hr>
+    <div class="crow"><button class="cbtn" id="btnCreate" data-t="create"></button><button class="cbtn" id="btnShop" data-t="zombie"></button></div>
+    <div class="joinRow"><input id="joinCode" maxlength="5" placeholder="ABCD" aria-label="room code"><button class="cbtn" id="btnJoin" data-t="join" style="width:auto"></button></div>
+    <hr>
+    <div class="mfoot"><span id="coins"></span><span><button id="btnQuality"></button> <button id="btnLang" data-t="lang"></button></span></div>
+    <details class="credits"><summary data-t="credits"></summary>
+    <p>People: Microsoft Rocketbox avatars & animations (MIT, © Microsoft Corporation). Furniture, props and surface scans: Poly Haven (CC0). Trees: EZ-Tree by Daniel Greenheck (MIT).</p>
+    <p>Cars (CC BY 4.0, from Sketchfab; badges removed, textures compressed): see CREDITS.md in the project for each author.</p>
+    <p>Monsters: "Gaunt Horror Creature" by PurplePoint; "Wendigo – Antlered Famine Horror Creature" and "Bandaged Asylum Matron Needle Horror" by Pigcraft; "Ditch Dog – Rigged and Animated" by Greeble3d; "The Human Deer" by ceeleste (all CC BY 4.0); "3D Horror Game Monster" by HorrorGameMaker.com (CC0). creativecommons.org/licenses/by/4.0</p>
+    <p>Fonts: Special Elite, Oswald (Apache 2.0); Cairo, Lalezar (SIL OFL). Sound: synthesized in the game.</p></details>
   </div>
 </div>
+
+<div id="story" class="layer" hidden><img id="storyImg" alt=""><button class="cbtn" id="storySkip" data-t="skip"></button><div class="storyText"><div id="storyDate"></div><p id="storyCap"></p></div></div>
+<div id="garage" class="layer" hidden><div id="gTitle" data-t="choose_title"></div><div id="gLoad" data-t="loading_car" hidden></div>
+  <div class="gcard"><button class="cbtn" id="gPrev" aria-label="previous">◀</button><div class="ginfo"><b id="gName"></b><small id="gJob"></small><small id="gCar"></small><span id="gNum"></span></div><button class="cbtn" id="gNext" aria-label="next">▶</button><button class="cbtn main" id="gPick" data-t="pick"></button></div></div>
 
 <div id="lobby" class="layer" hidden>
   <div class="card">
@@ -116,38 +179,33 @@ button:active { transform: translateY(1px); }
     <h3 data-t="players"></h3><ul id="lobbyList"></ul>
     <div class="zrow"><label><input type="checkbox" id="zUse"> <span data-t="zombie_use"></span></label><span id="zTickets"></span></div>
     <p id="lobbyWait" data-t="waiting"></p>
-    <div class="row"><button id="btnStart" data-t="start"></button><button id="lobbyBack" data-t="back"></button></div>
+    <div class="row"><button class="cbtn" id="btnStart" data-t="start" style="width:auto"></button><button class="cbtn" id="lobbyBack" data-t="back" style="width:auto"></button></div>
   </div>
 </div>
+<div id="shop" class="layer" hidden><div class="card"><h2 data-t="zombie"></h2><p data-t="zombie_desc"></p><p><span id="shopCoins"></span> · <span id="shopTickets"></span></p><div class="row"><button class="cbtn main" id="shopBuy" style="width:auto"></button><button class="cbtn" id="shopBack" data-t="back" style="width:auto"></button></div></div></div>
 
-<div id="shop" class="layer" hidden>
-  <div class="card"><div class="row" style="justify-content:space-between;align-items:center"><h2 data-t="skins"></h2><span class="chip" id="shopCoins"></span></div>
-    <div id="shopList"></div><button id="shopBack" data-t="back" style="margin-top:12px"></button>
-    <details class="credits"><summary data-t="credits"></summary>
-    <p>Characters: Microsoft Rocketbox avatars & animations (MIT, © Microsoft Corporation). Lab, props: Quaternius Modular Sci-Fi, Survival and House Interior packs (CC0).</p>
-    <p>Monsters: "Gaunt Horror Creature" by PurplePoint (CC BY 4.0); "Wendigo – Antlered Famine Horror Creature" and "Bandaged Asylum Matron Needle Horror" by Pigcraft (CC BY 4.0); "Ditch Dog – Rigged and Animated" by Greeble3d (CC BY 4.0); "The Human Deer" by ceeleste (CC BY 4.0); "3D Horror Game Monster" by HorrorGameMaker.com (CC0). All from Sketchfab / OpenGameArt; textures resized and compressed. Licences: creativecommons.org/licenses/by/4.0</p>
-    <p>Font: Cairo, Lalezar (SIL OFL). Sound: synthesized in the game.</p></details></div>
-</div>
-
-<div id="loading" class="layer" hidden><div class="tube" aria-hidden="true"></div><b data-t="loading"></b><div class="bar"><div id="loadBar"></div></div></div>
+<div id="loading" class="layer" hidden><b data-t="loading"></b><div class="bar"><div id="loadBar"></div></div></div>
 
 <div id="hud" hidden>
   <div id="vig"></div><div id="lockerView" hidden></div>
   <div id="touch"></div><div id="stick" hidden><div id="knob"></div></div>
-  <div class="meters"><small>⚡</small><div class="meter"><i id="stam"></i></div><small>🔦</small><div class="meter"><i id="batt"></i></div></div>
+  <div class="meters" id="meters"><small>⚡</small><div class="meter"><i id="stam"></i></div><small>🔦</small><div class="meter"><i id="batt"></i></div></div>
   <div id="inv"><span id="invIcons"></span><span class="bottleCount">🧪 <span id="bottles">0</span></span></div>
-  <div id="prompt" hidden></div><div id="banner"></div><div id="controlsHelp"></div>
+  <div id="objective"></div>
+  <div id="prompt" hidden></div><div id="banner"></div><div id="controlsHelp"></div><div id="bombTimer" hidden></div>
   <div id="journal" hidden></div>
   <div id="mobileBtns" hidden>
     <button id="bUse" data-t="use"></button>
     <button id="bRun" data-t="run"></button><button id="bCrouch" data-t="crouch"></button><button id="bLight" data-t="light"></button>
-    <button id="bThrow" data-t="throw"></button><button id="bNotes" data-t="journal"></button>
+    <button id="bThrow" data-t="throw"></button><button id="bAdr" data-t="use_adr"></button><button id="bTrap" data-t="use_trap"></button>
+    <button id="bLighter" data-t="lighter"></button><button id="bNotes" data-t="journal"></button>
   </div>
 </div>
 <div id="panel" hidden></div>
-<div id="flash"></div><div id="fade"></div><div id="toast" hidden></div><div id="endText" hidden></div>
+<div id="sub" hidden></div><div id="eyes"></div><div id="scare"></div>
+<div id="flash"></div><div id="flash2"></div><div id="fade"></div><div id="toast" hidden></div><div id="endText" hidden></div>
 
-<div id="dead" class="layer" hidden><div class="card"><h2 id="deadTitle"></h2><p id="deadBody"></p><div class="row"><button id="btnRetry" data-t="retry"></button><button id="btnMenu" data-t="menu"></button></div></div></div>
-<div id="results" class="layer" hidden><div class="card"><h2 id="resTitle"></h2><div id="resBody"></div><button id="btnMenu2" data-t="menu"></button></div></div>
+<div id="dead" class="layer" hidden><div class="card"><h2 id="deadTitle"></h2><p id="deadBody"></p><div class="row"><button class="cbtn" id="btnRetry" data-t="retry" style="width:auto"></button><button class="cbtn" id="btnMenu" data-t="menu" style="width:auto"></button></div></div></div>
+<div id="results" class="layer" hidden><div class="card"><h2 id="resTitle"></h2><div id="resBody"></div><button class="cbtn" id="btnMenu2" data-t="menu"></button></div></div>
 
 <script src="game.js"></script>

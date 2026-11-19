@@ -1,6 +1,8 @@
 # Night Holes – asset credits
 - Human skins + animations: Microsoft Rocketbox (MIT License, © Microsoft Corporation) – github.com/microsoft/Microsoft-Rocketbox. Converted FBX→GLB, textures resized.
-- Lab walls, floors, doors, pods, computers, props: Quaternius Modular Sci-Fi, Survival Pack, House Interior Pack (CC0) via github.com/trebeljahr/quaternius-showcase.
+- Furniture, props and surface scans (walls, floors, asphalt, snow, wood): Poly Haven (CC0) – polyhaven.com. Some GLB copies came via github.com/VishalMandala/CasaAltinho, github.com/gbouslov/one-shot-games and github.com/jarx64/gltf-models. Resized and compressed.
+- Trees: EZ-Tree by Daniel Greenheck (MIT) – github.com/dgreenheck/ez-tree (licence in vendor/EZ-TREE-LICENSE).
+- Lab tube, lockers, computers, doors, server racks, cards and small items: built in code.
 - Monsters (CC BY 4.0 unless noted; resized/compressed):
   - "Gaunt Horror Creature – Free Creepy 3D Model" by PurplePoint – sketchfab.com/3d-models/gaunt-horror-creature-free-creepy-3d-model-22a418d047764a23b73b539686b988c6 (rig/animations from github.com/loronajay/javascript-game-factory)
   - "Wendigo – Antlered Famine Horror Creature" by Pigcraft – sketchfab.com/3d-models/wendigo-antlered-famine-horror-creature-3511c530080240dfa1b5882ff38ee8ea
@@ -9,5 +11,20 @@
   - "The Human Deer" by ceeleste – sketchfab.com/3d-models/the-human-deer-7644694337404bb18eb68e6b637740a1
   - "3D Horror Game Monster" by HorrorGameMaker.com (CC0) – opengameart.org/content/3d-horror-game-monster
 - Fonts: Cairo, Lalezar (SIL OFL). Sound: synthesized with WebAudio.
-- Intro car: "Mercedes E Class W212" by Peter_D (better_peter) – sketchfab.com/3d-models/mercedes-e-class-w212-119c5e10733142b197aa53b86f6aeb04 – CC BY 4.0 (via github.com/HDB-productions/Schule). Textures compressed; brand badges to be removed in game.
-- Planned: EZ-Tree by Daniel Greenheck (MIT, npm @dgreenheck/ez-tree) for realistic forest; ambientCG asphalt (CC0).
+- Cars (all CC BY 4.0, from Sketchfab via github.com/nutricionistaalmeidavh-spec/assetscarros3d; brand badges hidden in game, textures compressed):
+  - "Audi A6 55 TFSI Quattro (C8)" by Mona x Supercars – https://sketchfab.com/3d-models/04925f2cea0c4090a58d13d88e3f16d9 – CC BY 4.0 (`audi-a6.glb`)
+  - "2004 Audi A8 4.2 Quattro (D3)" by DisneyCars – https://sketchfab.com/3d-models/dcd10d441a574bf79d3a30f94d9750a9 – CC BY 4.0 (`audi-a8.glb`)
+  - "2023 Audi RS Q8" by DisneyCars – https://sketchfab.com/3d-models/c30b4a6ec479473a814d030da10e97a8 – CC BY 4.0 (`audi-q8.glb`)
+  - "BMW 7-series (F01)" by Black Snow – https://sketchfab.com/3d-models/none-0806c39847ae42e5996917f50527dda0 – CC BY 4.0 (`bmw-7-series-f01.glb`)
+  - "2020 BMW X5 M Competition" by David_Holiday – https://sketchfab.com/3d-models/9b211d525797457e988c903f67d0b753 – CC BY 4.0 (`bmw-x5.glb`)
+  - "2022 BMW X7 M60i LCI" by Nazh Design ✔ – https://sketchfab.com/3d-models/05fe5fcdec714aa7b23b226c0aec51ad – CC BY 4.0 (`bmw-x7.glb`)
+  - "2006 Land Rover Range Rover Supercharged" by Randomness – https://sketchfab.com/3d-models/277cf51a9f95473c85580612651990fd – CC BY 4.0 (`land-rover-range-rover.glb`)
+  - "Lexus RX 350 MK2 2003-2008" by Merc_TV – https://sketchfab.com/3d-models/3c232be56b1b44e2aa6000a0f626680c – CC BY 4.0 (`lexus-rx.glb`)
+  - "Mercedes-Benz CLS [w219]" by Black Snow – https://sketchfab.com/3d-models/none-3b11611c6d06415b82b96495f5f249ce – CC BY 4.0 (`mercedes-benz-cls.glb`)
+  - "Mersedes-Benz G63 AMG" by Black Snow – https://sketchfab.com/3d-models/none-e5e2a1d2238048a1a494b3df983c16bb – CC BY 4.0 (`mercedes-benz-mersedes-g63.glb`)
+  - "Mersedes- Benz GLS" by Black Snow – https://sketchfab.com/3d-models/none-6f8ad7f1624e42c58b4e9525cc45c8be – CC BY 4.0 (`mercedes-benz-mersedes-gls.glb`)
+  - "Mersedes- Benz Maybach GLS 600" by Black Snow – https://sketchfab.com/3d-models/none-34c4687ba8204efaa7551afea9f5689f – CC BY 4.0 (`mercedes-benz-mersedes-maybach.glb`)
+  - "Mersedes-Benz S-class W221" by Black Snow – https://sketchfab.com/3d-models/none-6b1c0ad55406406a8cf8177dc0a4f2b9 – CC BY 4.0 (`mercedes-benz-mersedes-s-class.glb`)
+  - "2022 Porsche Cayenne Turbo GT" by Ddiaz Design – https://sketchfab.com/3d-models/74fbea5a4dfc4197839fdd2bf654369a – CC BY 4.0 (`porsche-cayenne.glb`)
+  - Intro car: "Mercedes E Class W212" by Peter_D (better_peter) – sketchfab.com/3d-models/mercedes-e-class-w212-119c5e10733142b197aa53b86f6aeb04 – CC BY 4.0 (via github.com/HDB-productions/Schule). Textures compressed; brand badges to be removed in game.
+- Fonts: Special Elite, Oswald (Apache 2.0).

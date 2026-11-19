@@ -51,6 +51,18 @@ export const sfx = {
     const g = out(0, pan); g.gain.setValueAtTime(0.001, now()); g.gain.linearRampToValueAtTime(0.18, now() + 0.06); g.gain.linearRampToValueAtTime(0.0001, now() + 0.55); o.connect(f1); f1.connect(g); o.start(); o.stop(now() + 0.6); },
   elevator() { tone(60, 2.5, 0.12, 'sawtooth', 55); noise(2.5, 0.06, 400, 300, 'lowpass'); tone(880, 0.4, 0.1, 'sine', null, 0, 2.3); },
   alarm() { for (let i = 0; i < 4; i++) { tone(700, 0.35, 0.1, 'square', 500, 0, i * 0.7); } },
+  skid() { noise(0.35, 0.18, 2600, 1800, 'bandpass', 0, 8); },
+  crash() { noise(1.6, 0.9, 1200, 80, 'lowpass'); noise(1.2, 0.6, 7000, 2000, 'highpass', 0, 0.5); tone(45, 1.2, 0.6, 'sine', 25); for (let i = 0; i < 10; i++) tone(2500 + Math.random() * 3000, 0.4, 0.06, 'sine', null, Math.random() - 0.5, Math.random() * 0.5); },
+  knock(pan = 0, vol = 1) { for (let i = 0; i < 3; i++) { tone(110, 0.12, 0.3 * vol, 'sine', 70, pan, i * 0.32); noise(0.08, 0.2 * vol, 600, 200, 'lowpass', pan); } },
+  bang(pan = 0, vol = 1) { noise(0.9, 0.5 * vol, 500, 60, 'lowpass', pan); tone(60, 0.6, 0.3 * vol, 'sine', 35, pan); },
+  above() { for (let i = 0; i < 6; i++) setTimeout(() => noise(0.12, 0.09, 300, 120, 'lowpass', (Math.random() - 0.5) * 0.6), i * 520); },
+  slam(pan = 0) { noise(0.5, 0.55, 2000, 150, 'lowpass', pan); tone(80, 0.4, 0.25, 'square', 50, pan); },
+  radio(pan = 0) { noise(2.2, 0.12, 2500, 2400, 'bandpass', pan, 0.7); setTimeout(() => sfx.voice(pan), 700); },
+  crack() { noise(0.25, 0.35, 5000, 3000, 'highpass'); tone(3200, 0.15, 0.05, 'sine'); },
+  lighter() { noise(0.08, 0.25, 4000, 2000, 'highpass'); noise(0.5, 0.06, 900, 600, 'bandpass', 0, 2); },
+  tick() { tone(2000, 0.04, 0.12, 'square'); },
+  explosion() { noise(3.5, 1.0, 900, 40, 'lowpass'); tone(38, 3, 0.9, 'sine', 22); noise(2.0, 0.5, 6000, 500, 'bandpass', 0, 0.4); },
+  intercom(pan = 0) { tone(1046, 0.18, 0.1, 'sine', null, pan); tone(784, 0.25, 0.1, 'sine', null, pan, 0.2); noise(1.2, 0.08, 2000, 1800, 'bandpass', pan, 3); },
   ding() { tone(1320, 0.6, 0.1, 'sine'); tone(990, 0.8, 0.08, 'sine', null, 0, 0.25); },
 };
 export function setHeartbeat(level) { // 0..1, faster and louder as a monster gets closer
@@ -61,3 +73,17 @@ export function setHeartbeat(level) { // 0..1, faster and louder as a monster ge
 }
 export function setAmbient(v) { if (amb) amb.gain.setTargetAtTime(v, now(), 0.5); }
 export function volume(v) { if (master) master.gain.value = v; }
+
+// ringing ears after the crash: a high tone that fades, everything else muffled
+export function ringing(sec) { if (!ac) return; tone(3600, sec, 0.07, 'sine'); tone(3620, sec, 0.04, 'sine'); master.gain.cancelScheduledValues(now()); master.gain.setValueAtTime(0.25, now()); master.gain.linearRampToValueAtTime(0.8, now() + sec); }
+// car engine: a low rumble whose pitch follows the speed
+let eng = null;
+export function engine(on, level = 0.4) { if (!ac) return; if (on && !eng) { const o = ac.createOscillator(); o.type = 'sawtooth'; const o2 = ac.createOscillator(); o2.type = 'triangle'; const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 300; const g = ac.createGain(); g.gain.value = 0.05; o.connect(f); o2.connect(f); f.connect(g); g.connect(master); o.start(); o2.start(); eng = { o, o2, g };
+    const n = ac.createBufferSource(); n.buffer = noiseBuf(2); n.loop = true; const nf = ac.createBiquadFilter(); nf.type = 'lowpass'; nf.frequency.value = 400; const ng = ac.createGain(); ng.gain.value = 0.05; n.connect(nf); nf.connect(ng); ng.connect(master); n.start(); eng.n = n; eng.ng = ng; }
+  if (!eng) return; if (!on) { eng.g.gain.setTargetAtTime(0, now(), 0.05); eng.ng.gain.setTargetAtTime(0, now(), 0.05); const e = eng; eng = null; setTimeout(() => { try { e.o.stop(); e.o2.stop(); e.n.stop(); } catch (er) {} }, 400); return; }
+  eng.o.frequency.setTargetAtTime(38 + level * 60, now(), 0.2); eng.o2.frequency.setTargetAtTime(76 + level * 120, now(), 0.2); eng.ng.gain.setTargetAtTime(0.03 + level * 0.08, now(), 0.3); }
+// adaptive music: tension 0..1 brings in a dissonant pad over the drone
+let pad = null;
+export function setTension(v) { if (!ac) return; if (!pad) { pad = ac.createGain(); pad.gain.value = 0; const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 700; f.Q.value = 2; f.connect(pad); pad.connect(master);
+    for (const fr of [233, 247, 349, 370]) { const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.value = fr; const l = ac.createOscillator(); l.frequency.value = 0.2 + Math.random() * 0.3; const lg = ac.createGain(); lg.gain.value = 3; l.connect(lg); lg.connect(o.frequency); o.connect(f); o.start(); l.start(); } }
+  pad.gain.setTargetAtTime(Math.max(0, Math.min(1, v)) * 0.05, now(), 0.8); }

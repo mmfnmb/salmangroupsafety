@@ -6,10 +6,11 @@ const srv = http.createServer((q, s) => { let u = decodeURIComponent(q.url.split
   const mobile = process.argv[3] === 'mobile';
   const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   const ctx = await b.newContext(mobile ? { viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true, deviceScaleFactor: 1 } : { viewport: { width: 960, height: 540 } });
+  if (process.env.Q !== 'high') await ctx.addInitScript(() => { try { localStorage.setItem('nh_q', 'low'); } catch (e) {} });
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', (e) => { errs.push(e.message); console.log('PAGEERR', e.message); }); p.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') console.log('C', m.type(), m.text().slice(0, 160)); });
   await p.route('https://fonts.googleapis.com/**', (r) => r.fulfill({ body: '', contentType: 'text/css' }));
   await p.goto('http://localhost:' + srv.address().port + '/');
   const ev = (code) => p.evaluate(code);
-  let n = 0; const shot = async (name) => p.screenshot({ path: path.join(__dirname, (++n) + '_' + name + '.png') });
+  let n = 0; const shot = async (name) => p.screenshot({ path: path.join(__dirname, (++n) + '_' + name + '.png'), timeout: 150000 });
   try { await steps({ p, ev, shot, wait: (ms) => p.waitForTimeout(ms) }); } catch (e) { console.log('STEP FAIL', e.message); await shot('fail'); }
   console.log('errors:', errs.length); await b.close(); srv.close(); });
