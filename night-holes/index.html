@@ -146,6 +146,18 @@ html[lang=ar] #storyCap { font-family: 'Cairo', sans-serif; font-weight: 700; }
 .tabs { display: flex; gap: 6px; margin-bottom: 10px; } .tabs button { border-radius: 0; padding: 6px 12px; } .tabs button.on { background: #e9e4d4; color: #07090b; }
 .camGrid { display: grid; grid-template-columns: 1fr; gap: 8px; } .camGrid canvas { width: 100%; height: auto; background: #000; image-rendering: pixelated; }
 .bigmap canvas { width: 100%; height: auto; }
+
+/* classic HUD: framed rectangles, line drawings, words instead of emoji */
+.meters small { font: 500 11px var(--body); letter-spacing: .14em; text-transform: uppercase; color: #c9c2ae; }
+.meter { border-radius: 0; height: 7px; border: 1px solid #c9c2ae55; background: #000a; }
+#inv { gap: 5px; flex-wrap: wrap; justify-content: flex-end; max-width: 60vw; }
+.slot { position: relative; width: 38px; height: 38px; border: 1px solid #c9c2ae88; outline: 1px solid #0008; background: #07090bcc; display: inline-grid; place-items: center; color: #e9e4d4; }
+.slot svg { width: 26px; height: 26px; } .slot b { position: absolute; right: 2px; bottom: 0; font: 700 11px var(--body); color: #fff; text-shadow: 0 0 3px #000; }
+#mobileBtns button { border-radius: 0 !important; border: 1px solid #c9c2ae77 !important; background: #07090bcc !important; font: 500 11px var(--body); letter-spacing: .06em; text-transform: uppercase; }
+#langSel { background: transparent; color: #e9e4d4; border: 1px solid #c9c2ae44; font: 13px var(--body); padding: 5px 6px; border-radius: 0; }
+#langSel option { background: #07090b; }
+.mcard > *, .crow > *, .joinRow > * { min-width: 0; } .cbtn { letter-spacing: .07em; overflow-wrap: anywhere; } .joinRow .cbtn { max-width: 55%; }
+.kpad button, .pbtn, .pclose, .bottle, .valve, .slot, .fuse, .wn { border-radius: 0 !important; }
 </style>
 
 <canvas id="view"></canvas>
@@ -160,7 +172,7 @@ html[lang=ar] #storyCap { font-family: 'Cairo', sans-serif; font-weight: 700; }
     <div class="crow"><button class="cbtn" id="btnCreate" data-t="create"></button><button class="cbtn" id="btnShop" data-t="zombie"></button></div>
     <div class="joinRow"><input id="joinCode" maxlength="5" placeholder="ABCD" aria-label="room code"><button class="cbtn" id="btnJoin" data-t="join" style="width:auto"></button></div>
     <hr>
-    <div class="mfoot"><span id="coins"></span><span><button id="btnQuality"></button> <button id="btnLang" data-t="lang"></button></span></div>
+    <div class="mfoot"><span id="coins"></span><span><button id="btnQuality"></button> <select id="langSel" aria-label="language"></select></span></div>
     <details class="credits"><summary data-t="credits"></summary>
     <p>People: Microsoft Rocketbox avatars & animations (MIT, © Microsoft Corporation). Furniture, props and surface scans: Poly Haven (CC0). Trees: EZ-Tree by Daniel Greenheck (MIT).</p>
     <p>Cars (CC BY 4.0, from Sketchfab; badges removed, textures compressed): see CREDITS.md in the project for each author.</p>
@@ -171,7 +183,7 @@ html[lang=ar] #storyCap { font-family: 'Cairo', sans-serif; font-weight: 700; }
 
 <div id="story" class="layer" hidden><img id="storyImg" alt=""><button class="cbtn" id="storySkip" data-t="skip"></button><div class="storyText"><div id="storyDate"></div><p id="storyCap"></p></div></div>
 <div id="garage" class="layer" hidden><div id="gTitle" data-t="choose_title"></div><div id="gLoad" data-t="loading_car" hidden></div>
-  <div class="gcard"><button class="cbtn" id="gPrev" aria-label="previous">◀</button><div class="ginfo"><b id="gName"></b><small id="gJob"></small><small id="gCar"></small><span id="gNum"></span></div><button class="cbtn" id="gNext" aria-label="next">▶</button><button class="cbtn main" id="gPick" data-t="pick"></button></div></div>
+  <div class="gcard"><button class="cbtn" id="gPrev" aria-label="previous"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M11 2 L4 8 L11 14" fill="none" stroke="currentColor" stroke-width="2"/></svg></button><div class="ginfo"><b id="gName"></b><small id="gJob"></small><small id="gCar"></small><span id="gNum"></span></div><button class="cbtn" id="gNext" aria-label="next"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M5 2 L12 8 L5 14" fill="none" stroke="currentColor" stroke-width="2"/></svg></button><button class="cbtn main" id="gPick" data-t="pick"></button></div></div>
 
 <div id="lobby" class="layer" hidden>
   <div class="card">
@@ -189,8 +201,8 @@ html[lang=ar] #storyCap { font-family: 'Cairo', sans-serif; font-weight: 700; }
 <div id="hud" hidden>
   <div id="vig"></div><div id="lockerView" hidden></div>
   <div id="touch"></div><div id="stick" hidden><div id="knob"></div></div>
-  <div class="meters" id="meters"><small>⚡</small><div class="meter"><i id="stam"></i></div><small>🔦</small><div class="meter"><i id="batt"></i></div></div>
-  <div id="inv"><span id="invIcons"></span><span class="bottleCount">🧪 <span id="bottles">0</span></span></div>
+  <div class="meters" id="meters"><small data-t="stamina"></small><div class="meter"><i id="stam"></i></div><small data-t="flash"></small><div class="meter"><i id="batt"></i></div></div>
+  <div id="inv"><span id="invIcons"></span></div>
   <div id="objective"></div>
   <div id="prompt" hidden></div><div id="banner"></div><div id="controlsHelp"></div><div id="bombTimer" hidden></div>
   <div id="journal" hidden></div>

@@ -1,3 +1,4 @@
+import { LANGS, LANG_NAMES } from './langs.js';
 // Arabic / English strings. t('key') returns the current language's text.
 const S = {
   title: ['ثقوب الليل', 'Night Holes'],
@@ -69,7 +70,10 @@ const S = {
   battery_dead: ['البطارية خلصت. استخدم الولاعة (L).', 'The battery is dead. Use the lighter (L).'], close_door: ['اقفل', 'Close'],
   end_out: ['بره المعمل. الهوا ساقع... والنار ورا ضهرك.', 'Outside. The air is freezing... and the fire behind you.'], part1: ['نهاية الجزء الأول', 'End of Part 1'],
   controls2: ['WASD حركة • ماوس تبص • Shift جري • C وطّي • E استخدم • F كشاف • L ولاعة • G ارمي • Q أدرينالين • T فخ • J ملاحظات', 'WASD move • mouse look • Shift run • C crouch • E use • F flashlight • L lighter • G throw • Q adrenaline • T trap • J notes'],
+  lang_pick: ['اللغة', 'Language'], stamina: ['الطاقة', 'Stamina'], flash: ['الكشاف', 'Flashlight'], load_house: ['بيحمّل بيتك...', 'Loading your house...'],
+  load_fail: ['التحميل وقف. اتأكد من النت.', 'Loading failed. Check your connection.'], b2_pod: ['الإزاز متكسر لبره... حاجة طلعت من هنا.', 'The glass is broken outwards... something got out of this one.'], pick_char: ['اختار شخصيتك', 'Choose your character'],
 };
 export let LANG = (() => { try { return localStorage.getItem('nh_lang') || 'en'; } catch (e) { return 'en'; } })();
 export function setLang(l) { LANG = l; try { localStorage.setItem('nh_lang', l); } catch (e) {} document.documentElement.lang = l; document.documentElement.dir = l === 'ar' ? 'rtl' : 'ltr'; }
-export function t(k) { const v = S[k]; return v ? v[LANG === 'ar' ? 0 : 1] : k; }
+export function t(k) { if (LANG !== 'ar' && LANG !== 'en' && LANGS[LANG] && LANGS[LANG][k] != null) return LANGS[LANG][k]; const v = S[k]; return v ? v[LANG === 'ar' ? 0 : 1] : k; }
+export { LANG_NAMES };

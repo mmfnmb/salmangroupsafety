@@ -1,17 +1,17 @@
 // Monsters. The host (or solo player) runs the brains; everyone else only shows the positions it broadcasts.
 import * as THREE from 'three';
 import { rigged } from './assets.js';
-import { FLOOR_Y, toCell, cellCenter, cellAt, C } from './world.js';
+import { FLOOR_Y, toCell, cellCenter, cellAt, C, MAPS } from './world.js';
 import { sfx } from './audio.js';
 
 // kind: model, height (m), speeds, home floor/rooms, special behaviour
 export const KINDS = {
-  gaunt: { file: 'mon/gaunt-horror-rigged.glb', h: 2.5, walk: 1.7, chase: 3.9, sight: 15, hear: 1, anims: { idle: /idle/i, walk: /stalk/i, run: /chase/i } },
+  gaunt: { file: 'mon/gaunt-horror-rigged.glb', h: 2.5, walk: 1.9, chase: 4.1, sight: 22, hear: 1.8, anims: { idle: /idle/i, walk: /stalk/i, run: /chase/i } },
   matron: { file: 'mon/asylum_matron.glb', h: 2.05, walk: 0, chase: 5.2, sight: 30, hear: 0, statue: true },
-  dog: { file: 'mon/ditch_dog.glb', h: 0.95, walk: 2.2, chase: 4.0, sight: 6, hear: 0.6, smell: true, anims: { idle: /idle/i, walk: /walk/i, run: /walk/i, attack: /attack/i } },
+  dog: { file: 'mon/ditch_dog.glb', h: 0.95, walk: 2.2, chase: 4.0, sight: 10, hear: 1.2, smell: true, anims: { idle: /idle/i, walk: /walk/i, run: /walk/i, attack: /attack/i } },
   wretch: { file: 'mon/tide_hunter_monster.glb', h: 2.2, walk: 0, chase: 4.6, sight: 8, hear: 0, ambush: true, anims: { idle: /idle/i, walk: /walk/i, run: /run/i } },
-  deer: { file: 'mon/human_deer.glb', h: 2.6, walk: 1.1, chase: 4.4, sight: 18, hear: 0, runOnly: true, anims: { idle: /IDLE/, walk: /WALK/, run: /CHASE/, attack: /ATTACK/ } },
-  wendigo: { file: 'mon/wendigo.glb', h: 2.9, walk: 1.6, chase: 4.0, sight: 14, hear: 1.6, mimic: true, glide: true },
+  deer: { file: 'mon/human_deer.glb', h: 2.6, walk: 1.1, chase: 4.4, sight: 22, hear: 0.8, runOnly: true, anims: { idle: /IDLE/, walk: /WALK/, run: /CHASE/, attack: /ATTACK/ } },
+  wendigo: { file: 'mon/wendigo.glb', h: 2.9, walk: 1.6, chase: 4.1, sight: 20, hear: 2, mimic: true, glide: true },
 };
 
 export class Monster {
@@ -52,7 +52,7 @@ export class Monster {
     const step = Math.min(l, speed * dt); let nx = this.x + dx / l * step, nz = this.z + dz / l * step; [nx, nz] = W.collide(this.f, nx, nz, 0.34);
     this.x = nx; this.z = nz; const want = Math.atan2(dx, dz); let d = want - this.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); this.yaw += d * Math.min(1, dt * 8); this.speed = speed; return true;
   }
-  randomPoint(W, rooms) { for (let i = 0; i < 40; i++) { const z = (Math.random() * 12) | 0, x = (Math.random() * 16) | 0; const c = cellAt(this.f, x, z); if (c !== '#' && (!rooms || rooms.includes(c))) return cellCenter(x, z); } return [this.x, this.z]; }
+  randomPoint(W, rooms) { for (let i = 0; i < 40; i++) { const z = (Math.random() * MAPS[this.f].length) | 0, x = (Math.random() * 20) | 0; const c = cellAt(this.f, x, z); if (c !== '#' && (!rooms || rooms.includes(c))) return cellCenter(x, z); } return [this.x, this.z]; }
 }
 
 // brain: runs on host for every monster each frame. players: [{f,x,z,hidden,noise,alive,id,crouch,running,lookDir}]
@@ -65,8 +65,8 @@ export function think(m, W, players, dt, ctx) {
   const alive = players.filter((p) => p.alive && !p.ghost && p.f === m.f);
   let best = null, bd = 1e9;
   for (const p of alive) { const d = Math.hypot(p.x - m.x, p.z - m.z);
-    const facing = Math.cos(Math.atan2(p.x - m.x, p.z - m.z) - m.yaw) > -0.2 || d < 4;
-    const seen = !p.hidden && d < m.k.sight * (p.crouch ? 0.65 : 1) * (p.dark ? 0.55 : 1) && facing && W.los(m.f, m.x, m.z, p.x, p.z);
+    const facing = Math.cos(Math.atan2(p.x - m.x, p.z - m.z) - m.yaw) > -0.45 || d < 5 || (p.lit && d < 9);
+    const seen = !p.hidden && d < m.k.sight * (p.crouch ? 0.65 : 1) * (p.dark ? 0.6 : 1) * (p.lit ? 1.35 : 1) && facing && W.los(m.f, m.x, m.z, p.x, p.z);
     const heard = m.k.hear && p.noise * m.k.hear > d;
     if ((seen || heard) && d < bd) { best = p; bd = d; } }
   if (m.calmT > 0) { m.calmT -= dt; best = null; }
@@ -75,7 +75,7 @@ export function think(m, W, players, dt, ctx) {
   if (m.k.statue) {
     const watched = alive.some((p) => { const d = Math.hypot(p.x - m.x, p.z - m.z); if (d > 22) return false; const a = Math.atan2(m.x - p.x, m.z - p.z); let df = a - (p.yaw + Math.PI); df = Math.atan2(Math.sin(df), Math.cos(df)); return Math.abs(df) < 0.75 && W.los(m.f, p.x, p.z, m.x, m.z); });
     const tgt = alive.filter((p) => !p.hidden).sort((a, b) => Math.hypot(a.x - m.x, a.z - m.z) - Math.hypot(b.x - m.x, b.z - m.z))[0];
-    m.state = tgt && Math.hypot(tgt.x - m.x, tgt.z - m.z) < 16 ? 'chase' : 'idle';
+    m.state = tgt && Math.hypot(tgt.x - m.x, tgt.z - m.z) < 12 && W.los(m.f, m.x, m.z, tgt.x, tgt.z) ? 'chase' : 'idle';
     if (!watched && tgt && m.state === 'chase') { m.moveToward(W, tgt.x, tgt.z, m.k.chase, dt); if (Math.hypot(tgt.x - m.x, tgt.z - m.z) < catchR) grab(m, tgt, ctx); }
     return;
   }
@@ -95,9 +95,9 @@ export function think(m, W, players, dt, ctx) {
       if (scent.d < catchR) { if (!scent.p.hidden) grab(m, scent.p, ctx); else { m.sniff = (m.sniff || 0) + dt; if (m.sniff > 3) grab(m, scent.p, ctx); } } else m.sniff = 0; return; } }
   // common hunter
   const runOnly = m.k.runOnly;
-  if (best && (!runOnly || best.running || bd < 3)) { m.state = 'chase'; m.target = [best.x, best.z]; m.mem = 5; m.prey = best.id; if (m.lastGrowl === undefined || m.t - m.lastGrowl > 4) { m.lastGrowl = m.t; ctx.sound(m, m.kind === 'deer' ? 'shriek' : 'growl'); } }
+  if (best && (!runOnly || best.running || bd < 3)) { m.state = 'chase'; m.target = [best.x, best.z]; m.mem = 8; m.prey = best.id; if (m.lastGrowl === undefined || m.t - m.lastGrowl > 4) { m.lastGrowl = m.t; ctx.sound(m, m.kind === 'deer' ? 'shriek' : 'growl'); } }
   else if (ctx.distraction && ctx.distraction.f === m.f && ctx.distraction.t > 0 && Math.hypot(ctx.distraction.x - m.x, ctx.distraction.z - m.z) < 18 && m.state !== 'chase') { m.state = 'search'; m.target = [ctx.distraction.x, ctx.distraction.z]; m.mem = 4; }
-  else if (m.state === 'chase') { m.mem -= dt; if (m.mem <= 0) { m.state = 'search'; m.mem = 6; } }
+  else if (m.state === 'chase') { m.mem -= dt; const p = alive.find((q) => q.id === m.prey); if (p && !p.hidden) m.target = [p.x, p.z]; if (m.mem <= 0) { m.state = 'search'; m.mem = 10; } }
   else if (m.state === 'search') { m.mem -= dt; if (m.mem <= 0) m.state = 'patrol'; }
   if (m.state === 'chase' || m.state === 'search') {
     const sp = m.state === 'chase' ? m.k.chase + (ctx.rage || 0) : m.k.walk * 1.3; m.play(m.state === 'chase' ? 'run' : 'walk');
@@ -106,7 +106,8 @@ export function think(m, W, players, dt, ctx) {
     // saw the player climb into a locker: it pulls them out
     for (const p of alive) if (p.hidden && p.id === m.prey && m.mem > 3.5 && Math.hypot(p.x - m.x, p.z - m.z) < 1.6) grab(m, p, ctx);
   } else {
-    if (!m.patrol || m.timer <= 0 || Math.hypot(m.patrol[0] - m.x, m.patrol[1] - m.z) < 0.5) { m.patrol = m.randomPoint(W, m.home); m.timer = 14; }
+    if (!m.patrol || m.timer <= 0 || Math.hypot(m.patrol[0] - m.x, m.patrol[1] - m.z) < 0.5) { const near = alive.filter((p) => !p.hidden).sort((a, b) => Math.hypot(a.x - m.x, a.z - m.z) - Math.hypot(b.x - m.x, b.z - m.z))[0];
+      m.patrol = near && Math.random() < 0.45 && !m.calmT ? [near.x + (Math.random() - 0.5) * 8, near.z + (Math.random() - 0.5) * 8] : m.randomPoint(W, m.home); if (cellAt(m.f, toCell(m.patrol[0]), toCell(m.patrol[1])) === '#') m.patrol = m.randomPoint(W, m.home); m.timer = 12; }
     if (m.k.walk > 0) { m.play('walk'); m.moveToward(W, m.patrol[0], m.patrol[1], m.k.walk, dt); } else m.play('idle');
     if (m.k.mimic && Math.random() < dt * 0.05) ctx.sound(m, 'voice');
   }

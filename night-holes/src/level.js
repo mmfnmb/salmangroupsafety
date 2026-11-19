@@ -2,7 +2,7 @@
 // computers, wall buttons, maps, covered bodies, puzzle stations and the randomized items.
 import * as THREE from 'three';
 import { inst, rigged } from './assets.js';
-import { cellCenter, C, WH, MAPS, cellAt, material, boxGeo } from './world.js';
+import { cellCenter, C, WH, MAPS, cellAt, material, boxGeo, SECTIONS, sectionAt } from './world.js';
 
 const STD = (color, rough = 0.6, metal = 0, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: metal, ...extra });
 const glowTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.3, 'rgba(255,255,255,.35)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
@@ -75,7 +75,7 @@ export async function populate(W, rand, state) {
   const custom = async (make, f, room, opts = {}) => { const s = S(f, room); if (!s) return null; const o = await make(); put(o, f, s.x + Math.sin(s.ry) * (opts.out || 0), s.z + Math.cos(s.ry) * (opts.out || 0), s.ry, opts.y || 0); if (opts.solid !== false) solid(o, f); return { o, s }; };
   const center = (f, room) => { const cells = []; MAPS[f].forEach((r, z) => [...r].forEach((c, x) => { if (c === room) cells.push(cellCenter(x, z)); })); const x = cells.reduce((a, c) => a + c[0], 0) / cells.length, z = cells.reduce((a, c) => a + c[1], 0) / cells.length; return [x, z, cells]; };
   const computer = async (f, room, lines, kind = 'computer', extra = {}) => { const r = await custom(async () => { const g = await steelTable(1.2, 0.7); const tex = screenTex(lines); const c = crt(tex); c.position.y = 0.925; c.rotation.y = 0; g.add(c); g.userData.tex = tex; return g; }, f, room, { out: 0.15 });
-    if (r) { W.screens = W.screens || []; W.screens.push({ f, tex: r.o.userData.tex }); station(f, r.s.x + Math.sin(r.s.ry) * 0.6, r.s.z + Math.cos(r.s.ry) * 0.6, kind, extra); const ch = await W.prop('house/dining_chair_02.glb', f, r.s.x + Math.sin(r.s.ry) * 0.9, r.s.z + Math.cos(r.s.ry) * 0.9, r.s.ry + Math.PI, { solid: false }); } return r; };
+    if (r) { W.screens = W.screens || []; W.screens.push({ f, tex: r.o.userData.tex }); station(f, r.s.x + Math.sin(r.s.ry) * 0.6, r.s.z + Math.cos(r.s.ry) * 0.6, kind, extra); const ch = await W.prop('house/dining_chair_02.glb', f, r.s.x + Math.sin(r.s.ry) * 0.9, r.s.z + Math.cos(r.s.ry) * 0.9, r.s.ry + Math.PI, { shrink: 0.15 }); } return r; };
   const wallThing = (f, room, kind, make, extra = {}) => { const s = S(f, room); if (!s) return null; const o = make(); const px = s.x - Math.sin(s.ry) * 0.62, pz = s.z - Math.cos(s.ry) * 0.62; put(o, f, px, pz, s.ry, 0); station(f, s.x, s.z, kind, { r: 1.6, obj: o, ...extra }); return { o, s }; };
   const button = (col, label) => () => { const g = new THREE.Group(); g.add(mesh(new THREE.BoxGeometry(0.26, 0.34, 0.05), STD(0x2b2f33, 0.5, 0.5), 0, 1.35, 0)); const b = mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.05, 20), STD(col, 0.35, 0, { emissive: col, emissiveIntensity: 0.6 }), 0, 1.38, 0.04); b.rotation.x = Math.PI / 2; g.add(b);
     const tx = canvasTex(128, 32, (c) => { c.fillStyle = '#ddd'; c.fillRect(0, 0, 128, 32); c.fillStyle = '#111'; c.font = 'bold 18px sans-serif'; c.fillText(label, 6, 23); }); g.add(mesh(new THREE.PlaneGeometry(0.24, 0.06), STD(0xffffff, 0.8, 0, { map: tx }), 0, 1.24, 0.026)); g.userData.btn = b; return g; };
@@ -103,7 +103,7 @@ export async function populate(W, rand, state) {
   await onSlot('house/steel_frame_shelves_03.glb', 0, 'S');
   // director office: the safe with the green card, drawers, his computer
   { const r = await custom(async () => { const m = await material('metal_plate', 1, { color: 0x3a4148 }); const g = new THREE.Group(); g.add(mesh(new THREE.BoxGeometry(0.7, 0.9, 0.6), m, 0, 0.45)); g.add(mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.04, 20), STD(0xb0b0b0, 0.3, 1), 0.1, 0.55, 0.31)); g.children[1].rotation.x = Math.PI / 2; g.add(mesh(new THREE.BoxGeometry(0.16, 0.2, 0.02), STD(0x111111, 0.4), -0.15, 0.55, 0.31)); return g; }, 0, 'I', { out: 0.15 }); if (r) station(0, r.s.x + Math.sin(r.s.ry) * 0.5, r.s.z + Math.cos(r.s.ry) * 0.5, 'safe'); }
-  { const [cx, cz] = center(0, 'I'); await W.prop('house/desk_wood.glb', 0, cx, cz - 0.4, 0); await W.prop('house/armchair_wood.glb', 0, cx, cz - 1.3, 0, { solid: false }); }
+  { const [cx, cz] = center(0, 'I'); await W.prop('house/desk_wood.glb', 0, cx, cz - 0.4, 0); await W.prop('house/armchair_wood.glb', 0, cx, cz - 1.3, 0, { shrink: 0.15 }); }
   await computer(0, 'I', ['FROM: DIR. HALVORSEN', 'RE: SPECIMEN 8', 'Do NOT wake it.', 'The safe code is on', 'the security cameras.'], 'computer', { mail: 'director' });
   { const r = await onSlot('house/drawer_cabinet.glb', 0, 'I'); if (r) station(0, r.s.x + Math.sin(r.s.ry) * 0.5, r.s.z + Math.cos(r.s.ry) * 0.5, 'drawer'); }
   await onSlot('house/wooden_display_shelves_01.glb', 0, 'I'); await onSlot('house/artwork_canvas.glb', 0, 'I', { y: 1.2, solid: false }); await onSlot('house/plant_small.glb', 0, 'I');
@@ -113,8 +113,8 @@ export async function populate(W, rand, state) {
   await onSlot('house/steel_frame_shelves_03.glb', 0, 'X'); await onSlot('street/korean_fire_extinguisher_01.glb', 0, 'X'); await onSlot('street/propane_tank.glb', 0, 'X');
   { const r = await onSlot('house/drawer_cabinet.glb', 0, 'X'); if (r) station(0, r.s.x + Math.sin(r.s.ry) * 0.5, r.s.z + Math.cos(r.s.ry) * 0.5, 'drawer'); }
   // cafeteria
-  { const [cx, cz] = center(0, 'Y'); for (const dz of [-2.6, 0, 2.6]) { await W.prop('house/dining_table.glb', 0, cx, cz + dz, Math.PI / 2); for (const s of [-1, 1]) await W.prop('house/dining_chair_fabric.glb', 0, cx + s * 0.75, cz + dz, s > 0 ? -Math.PI / 2 : Math.PI / 2, { solid: false }); } }
-  await onSlot('house/bar_stool.glb', 0, 'Y', { solid: false }); await onSlot('street/metal_trash_can.glb', 0, 'Y'); await custom(async () => { const g = new THREE.Group(); g.add(mesh(new THREE.BoxGeometry(0.9, 1.85, 0.75), STD(0x8a1d1d, 0.45, 0.3), 0, 0.925)); g.add(mesh(new THREE.PlaneGeometry(0.6, 1.1), STD(0x111111, 0.1, 0, { emissive: 0x334455, emissiveIntensity: 0.4 }), -0.08, 1.15, 0.38)); return g; }, 0, 'Y', { out: 0.05 });
+  { const [cx, cz] = center(0, 'Y'); for (const dz of [-2.6, 0, 2.6]) { await W.prop('house/dining_table.glb', 0, cx, cz + dz, Math.PI / 2); for (const s of [-1, 1]) await W.prop('house/dining_chair_fabric.glb', 0, cx + s * 0.75, cz + dz, s > 0 ? -Math.PI / 2 : Math.PI / 2, { shrink: 0.15 }); } }
+  await onSlot('house/bar_stool.glb', 0, 'Y', { shrink: 0.15 }); await onSlot('street/metal_trash_can.glb', 0, 'Y'); await custom(async () => { const g = new THREE.Group(); g.add(mesh(new THREE.BoxGeometry(0.9, 1.85, 0.75), STD(0x8a1d1d, 0.45, 0.3), 0, 0.925)); g.add(mesh(new THREE.PlaneGeometry(0.6, 1.1), STD(0x111111, 0.1, 0, { emissive: 0x334455, emissiveIntensity: 0.4 }), -0.08, 1.15, 0.38)); return g; }, 0, 'Y', { out: 0.05 });
   // clinic
   for (let i = 0; i < 3; i++) await onSlot('house/bed_single.glb', 0, 'C', { out: 0.4 });
   await onSlot('house/basin.glb', 0, 'C'); await onSlot('street/medical_box.glb', 0, 'C', { y: 0 });
@@ -170,10 +170,10 @@ export async function populate(W, rand, state) {
   // records
   for (let i = 0; i < 3; i++) await onSlot('house/steel_frame_shelves_03.glb', 2, 'R'); for (let i = 0; i < 2; i++) { const r = await onSlot('house/drawer_cabinet.glb', 2, 'R'); if (r) station(2, r.s.x + Math.sin(r.s.ry) * 0.5, r.s.z + Math.cos(r.s.ry) * 0.5, 'drawer'); }
   // tunnel: the bomb console and the way out
-  { const [x0, z0] = cellCenter(8, 9); const g = new THREE.Group(); g.add(mesh(new THREE.BoxGeometry(0.6, 1.1, 0.5), STD(0x3a3f45, 0.5, 0.6), 0, 0.55)); const scr = mesh(new THREE.PlaneGeometry(0.4, 0.22), new THREE.MeshBasicMaterial({ map: screenTex(['DEMOLITION', 'CHARGE', 'ARMED: NO'], '#ff5a3a') }), 0, 0.95, 0.26); g.add(scr); g.add(mesh(new THREE.CylinderGeometry(0.3, 0.3, 1.0, 16), STD(0x6b1f1f, 0.6, 0.3), 0.6, 0.5, -0.3));
+  { const [x0, z0] = cellCenter(12, 9); const g = new THREE.Group(); g.add(mesh(new THREE.BoxGeometry(0.6, 1.1, 0.5), STD(0x3a3f45, 0.5, 0.6), 0, 0.55)); const scr = mesh(new THREE.PlaneGeometry(0.4, 0.22), new THREE.MeshBasicMaterial({ map: screenTex(['DEMOLITION', 'CHARGE', 'ARMED: NO'], '#ff5a3a') }), 0, 0.95, 0.26); g.add(scr); g.add(mesh(new THREE.CylinderGeometry(0.3, 0.3, 1.0, 16), STD(0x6b1f1f, 0.6, 0.3), 0.6, 0.5, -0.3));
     put(g, 2, x0, z0 + 1.4, Math.PI); W.addBox(2, x0, z0 + 1.4, 1.4, 0.8); state.bombAt = { x: x0, z: z0 + 1.4, screen: scr }; station(2, x0, z0 + 0.5, 'bomb'); }
-  for (const x of [10, 12, 14]) { const [bx, bz] = cellCenter(x, 9); await W.prop('street/Barrel_01.glb', 2, bx, bz + 1.5, 0); }
-  { const [ex, ez] = cellCenter(15, 9); const door = mesh(new THREE.BoxGeometry(0.2, 3, 3.4), await material('rusty_metal_02', 1), ex + 1.85, 1.5, ez); W.groups[2].add(door); state.outDoor = door; const sl = new THREE.PointLight(0xffffff, 0, 8); sl.position.set(ex + 1.2, 2.5, ez); W.groups[2].add(sl); state.outLight = sl; }
+  for (const x of [14, 16, 18]) { const [bx, bz] = cellCenter(x, 9); await W.prop('street/Barrel_01.glb', 2, bx, bz + 1.5, 0); }
+  { const [ex, ez] = cellCenter(19, 9); state.tunnelEnd = [ex, ez]; const door = mesh(new THREE.BoxGeometry(0.2, 3, 3.4), await material('rusty_metal_02', 1), ex + 1.85, 1.5, ez); W.groups[2].add(door); state.outDoor = door; const sl = new THREE.PointLight(0xffffff, 0, 8); sl.position.set(ex + 1.2, 2.5, ez); W.groups[2].add(sl); state.outLight = sl; }
 
   // ---------------- elevators: a lift cab with a button panel on each floor
   for (let f = 0; f < 3; f++) { const [cx, cz] = center(f, 'E'); state.elev[f] = [cx, cz];
@@ -188,6 +188,13 @@ export async function populate(W, rand, state) {
     for (let i = 0; i < 2; i++) { const s = S(f, 'H'); if (!s) continue; const px = s.x - Math.sin(s.ry) * 0.63, pz = s.z - Math.cos(s.ry) * 0.63; const tex = new THREE.CanvasTexture(mapCanvas(f, [px, pz])); tex.colorSpace = THREE.SRGBColorSpace;
       const m = mesh(new THREE.PlaneGeometry(0.9, 0.73), STD(0xffffff, 0.7, 0, { map: tex }), 0, 0, 0); put(m, f, px, pz, s.ry); m.position.y = 1.55; station(f, s.x, s.z, 'map', { here: [px, pz] }); } }
   wallThing(0, 'H', 'switch', button(0xdddddd, 'LIGHTS'), { room: 'H' }); wallThing(1, 'H', 'switch', button(0xdddddd, 'LIGHTS'), { room: 'H' });
+  // wings: a painted stripe on every hall floor in the wing's colour, and hanging signs at the borders
+  for (let f = 0; f < 3; f++) { const M = MAPS[f];
+    M.forEach((r, z) => [...r].forEach((c, x) => { if (c !== 'H') return; const sec = sectionAt(f, x); const [cx, cz] = cellCenter(x, z);
+      const st = new THREE.Mesh(new THREE.PlaneGeometry(0.22, C), new THREE.MeshStandardMaterial({ color: sec.col, roughness: 0.8 })); st.rotation.x = -Math.PI / 2; const horiz = (r[x - 1] === 'H' || r[x + 1] === 'H') && !((M[z - 1] || '')[x] === 'H' || (M[z + 1] || '')[x] === 'H'); st.rotation.z = horiz ? Math.PI / 2 : 0; st.position.set(cx, 0.012, cz); W.groups[f].add(st);
+      if (r[x + 1] === 'H' && sectionAt(f, x + 1).id !== sec.id) for (const [sx, s2] of [[cx + C / 2 - 0.05, sectionAt(f, x + 1)], [cx + C / 2 + 0.05, sec]]) { const tx = canvasTex(512, 128, (g) => { g.fillStyle = '#d9d4c4'; g.fillRect(0, 0, 512, 128); g.fillStyle = '#' + s2.col.toString(16).padStart(6, '0'); g.fillRect(0, 0, 110, 128); g.fillStyle = '#fff'; g.font = 'bold 84px sans-serif'; g.fillText(s2.id, 26, 96); g.fillStyle = '#111'; g.font = 'bold 40px sans-serif'; g.fillText(s2.name, 130, 60); g.font = '26px sans-serif'; g.fillText('SECTION ' + s2.id + ' · LEVEL ' + ['G', 'B1', 'B2'][f], 130, 100); });
+        const sign = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 0.4), new THREE.MeshStandardMaterial({ map: tx, roughness: 0.7 })); sign.position.set(sx, WH - 0.55, cz); sign.rotation.y = sx > cx + C / 2 ? Math.PI / 2 : -Math.PI / 2; W.groups[f].add(sign);
+        const bar = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.35, 0.04), STD(0x333333, 0.5, 0.8)); bar.position.set(cx + C / 2, WH - 0.18, cz); W.groups[f].add(bar); } })); }
   // filler props so halls never feel empty
   for (const [f, n] of [[0, 4], [1, 4], [2, 5]]) for (let i = 0; i < n; i++) await onSlot(['street/Barrel_01.glb', 'street/cardboard_box_01.glb', 'street/korean_fire_extinguisher_01.glb', 'street/metal_trash_can.glb', 'street/wooden_crate_02.glb', 'street/old_tyre.glb', 'street/pallet_b01.glb'][(rand() * 7) | 0], f, 'H');
 }
@@ -195,10 +202,10 @@ export async function populate(W, rand, state) {
 // workers who never left: covered with sheets, or lying face down. No injuries are shown.
 export async function placeBodies(W, rand, friendId) {
   const out = {}; const [kx, kz] = cellCenter(1, 2);
-  const friend = await lyingBody(friendId); friend.position.set(kx + 0.3, 0, kz - 0.2); friend.rotation.y = 0.4; W.groups[0].add(friend); out.friend = friend;
-  const w1 = await lyingBody('Medical_Male_01', true); const [hx, hz] = cellCenter(1, 6); w1.position.set(hx, 0, hz); w1.rotation.y = 2.1; W.groups[0].add(w1);
-  const w2 = await lyingBody('Construction_Male_01'); const [bx, bz] = cellCenter(9, 9); w2.position.set(bx, -0.0, bz); w2.rotation.y = -0.6; W.groups[1].add(w2);
-  for (const [f, x, z] of [[1, 3, 9], [2, 5, 7], [0, 12, 8]]) { const s = sheet(); const [sx, sz] = cellCenter(x, z); s.position.set(sx, 0.0, sz); s.rotation.z = rand() * 3; W.groups[f].add(s); }
+  const friend = await lyingBody(friendId); friend.position.set(kx + 0.3, 0, kz - 0.2); friend.rotation.y = 0.4; W.groups[0].add(friend); out.friend = friend; W.addBox(0, friend.position.x, friend.position.z, 1.1, 1.1, 0.4);
+  const w1 = await lyingBody('Medical_Male_01', true); const [hx, hz] = cellCenter(1, 6); w1.position.set(hx, 0, hz); w1.rotation.y = 2.1; W.groups[0].add(w1); W.addBox(0, hx, hz, 1.1, 1.1, 0.4);
+  const w2 = await lyingBody('Construction_Male_01'); const [bx, bz] = cellCenter(9, 9); w2.position.set(bx, -0.0, bz); w2.rotation.y = -0.6; W.groups[1].add(w2); W.addBox(1, bx, bz, 1.1, 1.1, 0.4);
+  for (const [f, x, z] of [[1, 3, 9], [2, 5, 7], [0, 12, 8]]) { const s = sheet(); const [sx, sz] = cellCenter(x, z); s.position.set(sx, 0.0, sz); s.rotation.z = rand() * 3; W.groups[f].add(s); W.addBox(f, sx, sz, 1.2, 1.2, 0.4); }
   return out;
 }
 

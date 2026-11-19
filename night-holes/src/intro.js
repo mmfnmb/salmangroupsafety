@@ -88,8 +88,8 @@ export async function houseLevel(ctx) {
   const prop = async (n, x, z, ry = 0, s = 1, solid = true, y = 0) => { const o = await inst('house/' + n + '.glb'); o.scale.setScalar(s); o.position.set(x, y, z); o.rotation.y = ry; o.traverse((m) => { if (m.isMesh) { m.castShadow = !LOW; m.receiveShadow = true; } }); sc.add(o); if (solid) { o.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(o); box((bb.min.x + bb.max.x) / 2, (bb.min.z + bb.max.z) / 2, bb.max.x - bb.min.x - 0.1, bb.max.z - bb.min.z - 0.1); } return o; };
   await prop('sofa_3seat', -3.2, -4.3, 0); await prop('coffee_table_marble', -3.2, -1.9, 0); await prop('armchair_swivel', -5.1, -0.8, Math.PI / 2); await prop('modern_wooden_cabinet', -5.6, 2.8, Math.PI / 2);
   await prop('mid_century_lounge_chair', -1.2, -0.6, -2.4); await prop('plant_small', -5.4, -4.4); await prop('artwork_canvas', -3.2, -4.86, 0, 1, false, 1.5); await prop('side_table_01', 0.2, 4.4, 0); await prop('table_lamp', 0.2, 4.4, 0, 1, false, 0.55);
-  await prop('desk_wood', -1.4, 2.6, Math.PI); await prop('dining_chair_02', -1.4, 1.95, 0, 1, false);
-  await prop('dining_table_oval', 3.6, -2.6, 0); for (const [x, z, r] of [[2.7, -2.6, Math.PI / 2], [4.5, -2.6, -Math.PI / 2]]) await prop('dining_chair_fabric', x, z, r, 1, false);
+  await prop('desk_wood', -1.4, 2.6, Math.PI); await prop('dining_chair_02', -1.4, 1.95, 0, 1, true);
+  await prop('dining_table_oval', 3.6, -2.6, 0); for (const [x, z, r] of [[2.7, -2.6, Math.PI / 2], [4.5, -2.6, -Math.PI / 2]]) await prop('dining_chair_fabric', x, z, r, 1, true);
   await prop('steel_frame_shelves_03', 5.6, -4.3, -Math.PI / 2); await prop('bed_double', 4.4, 2.6, -Math.PI / 2); await prop('side_table_01', 5.5, 1.1); await prop('ceramic_vase_02', 3.2, -2.6, 0, 1, false, 0.75);
   await prop('modern_ceiling_lamp_01', -3.2, -2, 0, 1, false, H - 0.95);
   // kitchen counter
@@ -120,7 +120,7 @@ export async function houseLevel(ctx) {
   // player
   sc.add(camera); P.place(0, -2.8, 1.2, 0.5); P.lightOn = false; P.locked = false; P.hidden = null; P.dead = false; P.ghost = false;
   const W = { collide(f, x, z, r) { for (const b of boxes) { const px = Math.max(b.x0, Math.min(x, b.x1)), pz = Math.max(b.z0, Math.min(z, b.z1)); const dx = x - px, dz = z - pz, d2 = dx * dx + dz * dz; if (d2 < r * r && d2 > 1e-8) { const d = Math.sqrt(d2); x += dx / d * (r - d); z += dz / d * (r - d); } } return [x, z]; } };
-  $('hud').hidden = false; $('meters').hidden = true; $('inv').hidden = true;
+  $('loading').hidden = true; $('dead').hidden = true; $('hud').hidden = false; $('meters').hidden = true; $('inv').hidden = true;
   const goals = ['goal_laptop', 'goal_keys', 'goal_out', 'goal_car']; let step = 0; const goal = () => ($('objective').textContent = t(goals[step]));
   goal(); subtitle(t('house_hint'), 5000); setAmbient(0.12);
   let alive = true, last = performance.now(), doorOpen = 0, panel = false;
@@ -170,6 +170,21 @@ export async function driveCutscene(ctx, house) {
   // headlights
   const heads = []; for (const s of [-1, 1]) { const h = new THREE.SpotLight(0xfff4dc, 70, 70, 0.42, 0.45, 1.3); h.position.set(s * 0.65, 0.75, -2.75); h.target.position.set(s * 0.4, 0, -30); h.castShadow = false; rig.add(h, h.target); heads.push(h); }
   const cam = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.05, 260); const camX = side * cw * 0.19; cam.position.set(camX, eye, 0.12); rig.add(cam);
+  // your own body in the driver's seat, hands on the wheel (two-bone reach solved every frame)
+  const wc = new THREE.Vector3(); let nW = 0; car.traverse((m) => { if (!m.isMesh || !m.geometry.attributes.position) return; const pa = m.geometry.attributes.position; for (let i = 0; i < pa.count; i += 2) { v.fromBufferAttribute(pa, i).applyMatrix4(m.matrixWorld);
+    if (Math.abs(v.x - camX) < 0.28 && v.y > eye - 0.75 && v.y < eye - 0.15 && v.z > -0.95 && v.z < -0.25) { wc.add(v); nW++; } } });
+  if (nW) wc.divideScalar(nW); else wc.set(camX, eye - 0.38, -0.5); wc.x = camX;
+  const wheelAxis = new THREE.Vector3(0, 0.35, 1).normalize(); const pivot = new THREE.Group(); pivot.position.copy(wc); pivot.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), wheelAxis); rig.add(pivot); rig.updateMatrixWorld(true);
+  const turners = []; car.traverse((m) => { if (!m.isMesh) return; const b = new THREE.Box3().setFromObject(m), c = b.getCenter(new THREE.Vector3()), sz = b.getSize(new THREE.Vector3()); if (c.distanceTo(wc) < 0.2 && Math.max(sz.x, sz.y, sz.z) < 0.5) turners.push(m); });
+  const spin = new THREE.Group(); pivot.add(spin); for (const m of turners) spin.attach(m);
+  const me = await person((ctx.char || CHARS[0]).id, 'sit', 1.75); me.obj.position.set(camX, eye - 1.12, 0.17); me.obj.rotation.y = Math.PI; rig.add(me.obj);
+  const bone = (re) => { let b = null; me.obj.traverse((o) => { if (!b && o.isBone && re.test(o.name)) b = o; }); return b; };
+  const head = bone(/head$/i); if (head) head.scale.setScalar(0.001);
+  const arms = ['L', 'R'].map((sd) => ({ sd, up: bone(new RegExp(sd + '.?UpperArm', 'i')), fo: bone(new RegExp(sd + '.?Fore.?arm', 'i')), ha: bone(new RegExp(sd + '.?Hand$', 'i')) })).filter((a) => a.up && a.fo && a.ha);
+  const qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), qp = new THREE.Quaternion(), va = new THREE.Vector3(), vb = new THREE.Vector3(), bp = new THREE.Vector3(), ep = new THREE.Vector3();
+  const reach = (a, target) => { for (let it = 0; it < 6; it++) for (const b of [a.fo, a.up]) { b.updateMatrixWorld(true); b.getWorldPosition(bp); a.ha.getWorldPosition(ep);
+      va.subVectors(ep, bp).normalize(); vb.subVectors(target, bp).normalize(); qa.setFromUnitVectors(va, vb); b.getWorldQuaternion(qb); b.parent.getWorldQuaternion(qp); b.quaternion.copy(qp.invert().multiply(qa.multiply(qb))); b.updateMatrixWorld(true); } };
+  let steer = 0; const grip = (sd) => { const a = (sd === 'L' ? -1.05 : 1.05) + steer; return pivot.localToWorld(new THREE.Vector3(Math.sin(a) * 0.155, Math.cos(a) * 0.15 - 0.01, 0.02)); };
   $('hud').hidden = true; $('fade').classList.remove('on');
   engine(true);
   return new Promise((done) => {
@@ -186,6 +201,8 @@ export async function driveCutscene(ctx, house) {
       } else { shake = Math.max(0, shake - dt * 2); }
       cam.position.x = camX + (Math.random() - 0.5) * shake * 0.12; cam.position.y = eye + (Math.random() - 0.5) * shake * 0.12 + Math.sin(tt * 13) * 0.003 * Math.min(1, v / 20);
       cullT -= dt; if (cullT <= 0) { cullT = 0.25; const rz = rig.position.z; for (const tr of forest) tr.visible = tr.position.z < rz + 25 && tr.position.z > rz - (LOW ? 70 : 110); }
+      steer = crashed ? steer : tt > 26 ? Math.sin((tt - 26) * 5) * 1.3 : tt > 19 ? Math.sin(tt * 3) * 0.12 : Math.sin(tt * 0.7) * 0.04; spin.rotation.z = -steer;
+      me.mix.update(dt); rig.updateMatrixWorld(true); for (const a of arms) reach(a, grip(a.sd));
       lina.mix.update(dt); post.render(sc, cam, dt); };
     loop();
   });

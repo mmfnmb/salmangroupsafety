@@ -13,9 +13,9 @@ export const isOpen = () => !el().hidden;
 const msg = (s, ok) => { const m = document.getElementById('pmsg'); if (m) { m.textContent = s; m.className = 'pmsg ' + (ok ? 'ok' : 'bad'); } };
 
 function keypad(box, len, check) {
-  let v = ''; box.innerHTML = `<div class="kdisp" id="kd">${'_'.repeat(len)}</div><div class="kpad">${[1, 2, 3, 4, 5, 6, 7, 8, 9, '⌫', 0, '✓'].map((k) => `<button data-k="${k}">${k}</button>`).join('')}</div>`;
+  let v = ''; box.innerHTML = `<div class="kdisp" id="kd">${'_'.repeat(len)}</div><div class="kpad">${[1, 2, 3, 4, 5, 6, 7, 8, 9, 'DEL', 0, 'OK'].map((k) => `<button data-k="${k}">${k}</button>`).join('')}</div>`;
   const d = box.querySelector('#kd'); box.querySelectorAll('[data-k]').forEach((b) => (b.onclick = () => { sfx.click(); const k = b.dataset.k;
-    if (k === '⌫') v = v.slice(0, -1); else if (k === '✓') { if (check(v)) return; v = ''; } else if (v.length < len) v += k; d.textContent = (v + '_'.repeat(len)).slice(0, len); }));
+    if (k === 'DEL') v = v.slice(0, -1); else if (k === 'OK') { if (check(v)) return; v = ''; } else if (v.length < len) v += k; d.textContent = (v + '_'.repeat(len)).slice(0, len); }));
 }
 
 export const PUZZLES = {
@@ -30,11 +30,11 @@ export const PUZZLES = {
     loop(); done && done('seen'); }); },
   safe(S, done) { open(t('p_safe'), t('p_safe_h'), (box) => keypad(box, 3, (v) => { if (v === S.safeCode) { sfx.solved(); msg(t('solved'), 1); setTimeout(() => { close(); done(); }, 500); return true; } sfx.wrong(); msg(t('wrong')); return false; })); },
   scale(S, done) { open(t('p_scale'), `${t('p_scale_h')} <b class="big">${S.scaleTarget}g</b>`, (box) => {
-    const sel = new Set(); box.innerHTML = `<div class="bottles">${S.scaleW.map((w, i) => `<button class="bottle" data-i="${i}"><span class="liq" style="height:${20 + w / 4}px;background:${['#3cff9a', '#ff5a7a', '#6ab0ff', '#ffd23f', '#c87bff'][i]}"></span><b>${w}g</b></button>`).join('')}</div><div class="sum" id="sum">0g</div><button class="pbtn" id="weigh">⚖</button>`;
+    const sel = new Set(); box.innerHTML = `<div class="bottles">${S.scaleW.map((w, i) => `<button class="bottle" data-i="${i}"><span class="liq" style="height:${20 + w / 4}px;background:${['#3cff9a', '#ff5a7a', '#6ab0ff', '#ffd23f', '#c87bff'][i]}"></span><b>${w}g</b></button>`).join('')}</div><div class="sum" id="sum">0g</div><button class="pbtn" id="weigh">${t('p_scale')}</button>`;
     box.querySelectorAll('.bottle').forEach((b) => (b.onclick = () => { sfx.click(); const i = +b.dataset.i; sel.has(i) ? sel.delete(i) : sel.add(i); b.classList.toggle('on'); box.querySelector('#sum').textContent = [...sel].reduce((a, j) => a + S.scaleW[j], 0) + 'g'; }));
     box.querySelector('#weigh').onclick = () => { const s = [...sel].reduce((a, j) => a + S.scaleW[j], 0); if (s === S.scaleTarget) { sfx.solved(); msg(t('solved'), 1); setTimeout(() => { close(); done(); }, 500); } else { sfx.wrong(); msg(t('wrong')); } }; }); },
   valves(S, done) { open(t('p_valves'), t('p_valves_h') + (S.knowChart ? ` <b class="big">${S.chart.map((a) => '↑→↓←'[a]).join(' ')}</b>` : ''), (box) => {
-    const v = [0, 0, 0, 0]; box.innerHTML = `<div class="valves">${v.map((_, i) => `<button class="valve" data-i="${i}"><span>↑</span></button>`).join('')}</div><button class="pbtn" id="vok">✓</button>`;
+    const v = [0, 0, 0, 0]; box.innerHTML = `<div class="valves">${v.map((_, i) => `<button class="valve" data-i="${i}"><span>↑</span></button>`).join('')}</div><button class="pbtn" id="vok">OK</button>`;
     box.querySelectorAll('.valve').forEach((b) => (b.onclick = () => { sfx.click(); const i = +b.dataset.i; v[i] = (v[i] + 1) % 4; b.firstChild.style.transform = `rotate(${v[i] * 90}deg)`; }));
     box.querySelector('#vok').onclick = () => { if (v.every((a, i) => a === S.chart[i])) { sfx.solved(); msg(t('solved'), 1); setTimeout(() => { close(); done(); }, 500); } else { sfx.wrong(); msg(t('wrong')); } }; }); },
   poster(S, done) { open(t('poster'), t('clue_chart'), (box) => { box.innerHTML = `<div class="chart">${S.chart.map((a, i) => `<div><small>V${i + 1}</small><b>${'↑→↓←'[a]}</b></div>`).join('')}</div>`; done(); }); },
@@ -46,7 +46,7 @@ export const PUZZLES = {
     box.querySelectorAll('.slot').forEach((b) => (b.onclick = () => { if (!pick) return; if (pick !== b.dataset.c) { sfx.wrong(); msg(t('wrong')); return; } sfx.click(); placed[pick] = 1; b.classList.add('full'); box.querySelector('.fuse.f' + pick).remove(); pick = null;
       if (Object.keys(placed).length === 3) { sfx.solved(); msg(t('solved'), 1); setTimeout(() => { close(); done(); }, 700); } }));
     if (have.length < 3) msg(`${have.length}/3`); }); },
-  tape(S, done) { open(t('p_tape'), t('p_tape_h'), (box) => { box.innerHTML = `<div class="tape"><div class="reel"></div><div class="reel"></div></div><button class="pbtn" id="tplay">▶ ${t('play')}</button>`;
+  tape(S, done) { open(t('p_tape'), t('p_tape_h'), (box) => { box.innerHTML = `<div class="tape"><div class="reel"></div><div class="reel"></div></div><button class="pbtn" id="tplay">${t('play')}</button>`;
     box.querySelector('#tplay').onclick = () => { box.querySelector('.tape').classList.add('spin'); sfx.whisper(0); const n = +S.exitCode[3]; for (let i = 0; i < (n || 10); i++) sfx.beep(1.2 + i * 0.45); setTimeout(() => box.querySelector('.tape') && box.querySelector('.tape').classList.remove('spin'), 1400 + (n || 10) * 450); done(); }; }); },
   wires(S, done) { open(t('p_wires'), t('p_wires_h'), (box) => {
     const cols = ['#ff3b30', '#ffcc00', '#2f7dff', '#2fdc6a'], L = [0, 1, 2, 3], R = S.wireR; let pick = null; const made = {};

@@ -5,50 +5,32 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { load } from './assets.js';
 
 export const C = 4, WH = 3.4, FLOOR_Y = [0, -14, -28], SC = 1;
+// a maze of corridors with dead ends; rooms open onto the halls through doors placed automatically below
 export const MAPS = [
-  ['################',
-   '#KKK#SSS#III#EE#',
-   '#KKK#SSS#III#EE#',
-   '#HHHHHHHHHHHHHH#',
-   '#H#TTTTT#XXX#YY#',
-   '#H#TTTTT#XXX#YY#',
-   '#H#TTTTT#XXX#YY#',
-   '#H#TTTTT#####YY#',
-   '#HHHHHHHHHHHHHH#',
-   '#CCC#MMM#OOO#BB#',
-   '#CCC#MMM#OOO#BB#',
-   '################'],
-  ['################',
-   '#EE#WWWWWWW#VVV#',
-   '#EE#WWWWWWW#VVV#',
-   '#HHHHHHHHHHHHHH#',
-   '#KKK#H#PPPP#HLL#',
-   '#KKK#H#PPPP#HLL#',
-   '#KKK#H#PPPP#HLL#',
-   '#####H######H###',
-   '#AAA#H#GGGG#HDD#',
-   '#AAA#H#GGGG#HDD#',
-   '#AAA#HHGGGG#HDD#',
-   '################'],
-  ['################',
-   '#EE#ZZZZZZZ#UUU#',
-   '#EE#ZZZZZZZ#UUU#',
-   '#HHHHHHHHHHHHHH#',
-   '#QQQ######HRRRR#',
-   '#QQQ######HRRRR#',
-   '#QQQ######HRRRR#',
-   '#HHHHHHHHHHHHHH#',
-   '#H##############',
-   '#HHHHHHHFFFFFFFF',
-   '################'],
+  ['####################', '#KKK#SSSS#H#III#EEE#', '#KKK#SSSS#H#III#EEE#', '#HHHHHHHHHHHHHHHHHH#', '#H#CCC#TTTTTT#H#OOO#', '#H#CCC#TTTTTT#H#OOO#', '#H#CCC#TTTTTT#HHHHH#',
+   '#HHHHH#TTTTTT#H#YYY#', '#H###H#TTTTTT#H#YYY#', '#H#MMMHHHH#XXX#HHHH#', '#H#MMMH##H#XXX#H#BB#', '#H#MMMH##HHHHHHH#BB#', '#HHHHHHHHHHHHHHHHHH#', '####################'],
+  ['####################', '#EEE#WWWWWWW#VVVVV##', '#EEE#WWWWWWW#VVVVV##', '#HHHHHHHHHHHHHHHHHH#', '#H#KKK#H#PPPPP#H#LL#', '#H#KKK#H#PPPPP#H#LL#', '#H#KKK#H#PPPPP#HHHH#',
+   '#H###HHH#####HHH#DD#', '#H#AAAA#GGGGGG#H#DD#', '#H#AAAA#GGGGGG#HHHH#', '#HHHHHHH######HHHHH#', '####################'],
+  ['####################', '#EEE#ZZZZZZZ#UUUUU##', '#EEE#ZZZZZZZ#UUUUU##', '#HHHHHHHHHHHHHHHHHH#', '#H#QQQ#H######H#RRR#', '#H#QQQ#HHHHHHHH#RRR#', '#H#QQQ#H######H#RRR#',
+   '#HHHHHHH#HHHHHHHHHH#', '#H######H###########', '#HHHHHHHHHHHFFFFFFFF', '####################'],
 ];
-// [floor, x1, z1, x2, z2, lock]
-const DOORS = [
-  [0, 2, 2, 2, 3], [0, 6, 2, 6, 3], [0, 10, 2, 10, 3], [0, 13, 2, 13, 3, 'green'], [0, 4, 3, 4, 4], [0, 5, 7, 5, 8], [0, 9, 3, 9, 4], [0, 13, 3, 13, 4],
-  [0, 2, 8, 2, 9], [0, 6, 8, 6, 9], [0, 10, 8, 10, 9], [0, 13, 8, 13, 9],
-  [1, 1, 2, 1, 3], [1, 6, 2, 6, 3], [1, 13, 2, 13, 3], [1, 2, 3, 2, 4], [1, 8, 3, 8, 4], [1, 12, 4, 13, 4], [1, 4, 9, 5, 9], [1, 6, 10, 7, 10, 'valves'], [1, 12, 9, 13, 9],
-  [2, 1, 2, 1, 3], [2, 6, 2, 6, 3], [2, 13, 2, 13, 3], [2, 2, 3, 2, 4], [2, 10, 5, 11, 5], [2, 7, 9, 8, 9, 'exit'],
+// sections: each floor is split into wings with their own floor stripe colour and hanging signs
+export const SECTIONS = [
+  [{ x0: 0, x1: 6, id: 'A', name: 'WEST WING', col: 0xc8a032 }, { x0: 7, x1: 13, id: 'B', name: 'SPECIMEN WING', col: 0x2fa58a }, { x0: 14, x1: 19, id: 'C', name: 'ADMIN WING', col: 0xb03030 }],
+  [{ x0: 0, x1: 7, id: 'D', name: 'STORES', col: 0xc8a032 }, { x0: 8, x1: 13, id: 'E', name: 'POWER', col: 0x3a70c0 }, { x0: 14, x1: 19, id: 'F', name: 'MEDICAL', col: 0x2fa58a }],
+  [{ x0: 0, x1: 6, id: 'G', name: 'CONTROL', col: 0x3a70c0 }, { x0: 7, x1: 11, id: 'H', name: 'CONTAINMENT', col: 0xb03030 }, { x0: 12, x1: 19, id: 'X', name: 'EXIT TUNNEL', col: 0xc8a032 }],
 ];
+export const sectionAt = (f, x) => SECTIONS[f].find((s) => x >= s.x0 && x <= s.x1) || SECTIONS[f][0];
+const LOCKS = { '0E': 'green', '1G': 'valves', '2F': 'exit' };
+// one door per room (two for big rooms), on contacts with the halls; locked rooms get exactly one
+function autoDoors() { const out = [];
+  MAPS.forEach((M, f) => { const rooms = [...new Set(M.join('').replace(/[#H]/g, ''))];
+    for (const c of rooms) { const con = []; M.forEach((r, z) => [...r].forEach((ch, x) => { if (ch !== c) return; for (const [dx, dz] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) if ((M[z + dz] || '')[x + dx] === 'H') con.push([x, z, x + dx, z + dz]); }));
+      if (!con.length) continue; const lock = LOCKS[f + c]; const cells = M.join('').split(c).length - 1;
+      const picks = lock || cells < 8 || con.length < 3 ? [con[(con.length / 2) | 0]] : [con[0], con[con.length - 1]];
+      for (const d of picks) out.push([f, ...d, lock]); } });
+  return out; }
+const DOORS = autoDoors();
 export const cellAt = (f, x, z) => { const r = MAPS[f][z]; return r && r[x] ? r[x] : '#'; };
 export const toCell = (v) => Math.floor(v / C);
 export const cellCenter = (x, z) => [x * C + C / 2, z * C + C / 2];
@@ -129,10 +111,10 @@ export class World {
     for (let f = 0; f < 3; f++) {
       const rooms = {}; MAPS[f].forEach((r, z) => [...r].forEach((c, x) => { if (c !== '#') (rooms[c] = rooms[c] || []).push([x, z]); }));
       for (const [c, cells] of Object.entries(rooms)) {
-        const pts = c === 'H' || c === 'F' ? cells.filter((_, i) => i % 2 === 0) : [cells[(cells.length / 2) | 0]];
+        const pts = c === 'H' || c === 'F' ? cells.filter((_, i) => i % 3 === 0) : [cells[(cells.length / 2) | 0]];
         for (const [x, z] of pts) { const [cx, cz] = cellCenter(x, z);
           const fix = new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.06, 0.22), new THREE.MeshStandardMaterial({ color: 0x222222, emissive: 0xf4f7ff, emissiveIntensity: 1 })); fix.position.set(cx, WH - 0.04, cz); this.groups[f].add(fix);
-          this.anchors[f].push({ f, room: c, x: cx, z: cz, lamp: fix, on: rand() > (f === 1 ? 0.35 : 0.2), flick: rand() < 0.35, col: new THREE.Color(f === 2 ? 0xbcd2ff : 0xeef3ff), red: false, base: true });
+          this.anchors[f].push({ f, room: c, x: cx, z: cz, lamp: fix, on: rand() > (f === 1 ? 0.62 : 0.45), flick: rand() < 0.5, col: new THREE.Color(f === 2 ? 0xbcd2ff : 0xeef3ff), red: false, base: true });
         }
       }
     }
@@ -148,7 +130,7 @@ export class World {
   }
   collide(f, x, z, r = 0.32, ignoreDoors = false) {
     for (let it = 0; it < 2; it++) {
-      for (const b of this.boxes[f]) { if (b.h < 0.45) continue; const px = Math.max(b.x0, Math.min(x, b.x1)), pz = Math.max(b.z0, Math.min(z, b.z1)); const dx = x - px, dz = z - pz, d2 = dx * dx + dz * dz;
+      for (const b of this.boxes[f]) { if (b.h < 0.12) continue; const px = Math.max(b.x0, Math.min(x, b.x1)), pz = Math.max(b.z0, Math.min(z, b.z1)); const dx = x - px, dz = z - pz, d2 = dx * dx + dz * dz;
         if (d2 < r * r) { if (d2 < 1e-8) { x += r; continue; } const d = Math.sqrt(d2), k = (r - d) / d; x += dx * k; z += dz * k; } }
       if (!ignoreDoors) for (const d of this.doors) { if (d.f !== f || !d.obj || d.open > 0.6) continue; const [cx, cz] = d.center, hw = d.w / 2, ax = Math.abs(d.dir[1]) ? hw : 0.2, az = Math.abs(d.dir[0]) ? hw : 0.2;
         const px = Math.max(cx - ax, Math.min(x, cx + ax)), pz = Math.max(cz - az, Math.min(z, cz + az)); const dx = x - px, dz = z - pz, d2 = dx * dx + dz * dz;

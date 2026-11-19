@@ -13,8 +13,17 @@ async function buffer(path) {
   const b64 = (await bundles[key])[file]; if (!b64) throw new Error('missing ' + path);
   const bin = atob(b64), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u.buffer;
 }
+// phones: shrink every texture before it reaches the GPU (1024px textures for a whole lab do not fit in phone memory)
+let maxTex = 0; const shrunk = new WeakMap();
+export function setTextureLimit(px) { maxTex = px; }
+function shrink(g) { if (!maxTex || !g) return g;
+  g.scene.traverse((m) => { if (!m.isMesh) return; for (const mat of Array.isArray(m.material) ? m.material : [m.material]) for (const k of ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap', 'emissiveMap']) { const tx = mat && mat[k]; const im = tx && tx.image; if (!im || !im.width) continue;
+    const lim = k === 'map' ? maxTex : maxTex / 2; if (im.width <= lim && im.height <= lim) continue; let c = shrunk.get(im);
+    if (!c) { const sc = lim / Math.max(im.width, im.height); c = document.createElement('canvas'); c.width = Math.max(4, Math.round(im.width * sc)); c.height = Math.max(4, Math.round(im.height * sc)); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); shrunk.set(im, c); if (im.close) try { im.close(); } catch (e) {} }
+    tx.image = c; tx.needsUpdate = true; } });
+  return g; }
 export function load(path) {
-  if (!cache.has(path)) cache.set(path, buffer(path).then((buf) => loader.parseAsync(buf, '')).catch((e) => { console.warn('model failed', path, e); return null; }));
+  if (!cache.has(path)) cache.set(path, buffer(path).then((buf) => loader.parseAsync(buf, '')).then(shrink).catch((e) => { console.warn('model failed', path, e); return null; }));
   return cache.get(path);
 }
 export async function loadAll(paths, onProgress) {

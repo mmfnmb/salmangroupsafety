@@ -8,9 +8,9 @@ export class Player {
     this.cam = camera; this.f = 0; this.x = 0; this.z = 0; this.yaw = 0; this.pitch = 0; this.vy = 0;
     this.stamina = 1; this.crouch = false; this.running = false; this.hidden = null; this.dead = false; this.ghost = false; this.locked = false;
     this.battery = 1; this.lightOn = true; this.bob = 0; this.stepT = 0; this.noise = 0; this.keys = {}; this.move = [0, 0]; this.runBtn = false;
-    this.flash = new THREE.SpotLight(0xfff1d6, 8, 20, 0.5, 0.9, 1.6); this.flash.castShadow = !low; if (!low) { this.flash.shadow.mapSize.set(512, 512); this.flash.shadow.camera.near = 0.2; }
+    this.flash = new THREE.SpotLight(0xfff1d6, 9, 18, 0.42, 0.6, 1.6); this.flash.castShadow = !low; if (!low) { this.flash.shadow.mapSize.set(512, 512); this.flash.shadow.camera.near = 0.2; }
     this.flash.position.set(0.2, -0.15, 0); camera.add(this.flash); camera.add(this.flash.target); this.flash.target.position.set(0, -0.2, -3);
-    this.fill = new THREE.PointLight(0x8090b0, 0.6, 4, 2); camera.add(this.fill); scene.add(camera);
+    this.fill = new THREE.PointLight(0x8090b0, 0.12, 3, 2); camera.add(this.fill); scene.add(camera);
     this.lighter = new THREE.PointLight(0xff9a40, 0, 6, 1.8); this.lighter.position.set(0.25, -0.2, -0.4); camera.add(this.lighter); this.lighterOn = false; this.adrT = 0; this.glitchT = 0; this.scentT = 0;
     this.bindDesktop();
   }
