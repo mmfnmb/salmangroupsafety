@@ -34,10 +34,10 @@ dispatchEvent(new Event('resize'));
 const movers = [], walkers = []; let pr = Math.min(devicePixelRatio, phone ? 1.5 : 2), prMax = pr, lookT = 0;
 let sun, sunBase = 3.0, statics = [], player, mixer, acts = {}, cur;
 async function start() {
-  bar(0.05, 'Loading street…');
+  bar(0.05, 'بيحمّل الشارع…');
   const names = ['street', 'hum', 'car-1', 'car-2', 'car-3', 'hum2', 'hum3']; let done = 0;
-  const [st, hum, c1, c2, c3, hum2, hum3] = await Promise.all(names.map((n) => bundle(n).then((j) => (bar(0.05 + 0.6 * ++done / names.length, 'Loading… ' + done + '/' + names.length), j))));
-  bar(0.7, 'Building…');
+  const [st, hum, c1, c2, c3, hum2, hum3] = await Promise.all(names.map((n) => bundle(n).then((j) => (bar(0.05 + 0.6 * ++done / names.length, 'بيحمّل… ' + done + '/' + names.length), j))));
+  bar(0.7, 'بيجهّز…');
   const meta = st['street.json'] ? JSON.parse(atob(st['street.json'])) : { sun: [0.5, 0.5, 0.5] };
   // sky: background and reflections
   const sky = hdr(b64(st['sky.hdr'])); sky.mapping = THREE.EquirectangularReflectionMapping;
@@ -63,7 +63,7 @@ async function start() {
   const walk = catcher.clone(); walk.geometry = new THREE.PlaneGeometry(100, 4.3); for (const s of [-1, 1]) { const w = walk.clone(); w.position.set(0, 0.155, s * 7.25); scene.add(w); }
   // parked cars along both curbs
   const carG = []; for (const cb of [c1, c2, c3]) { const k = Object.keys(cb)[0]; carG.push((await gltf.parseAsync(b64(cb[k]), '')).scene); }
-  [[-20, 3.9, 0], [6, -3.9, Math.PI], [28, 3.9, 0]].forEach((sp, i) => scene.add(fitCar(carG[i], sp)));
+  [[-20, 3.9, 0], [6, -3.9, Math.PI], [28, 3.9, 0]].forEach((sp, i) => { const c = fitCar(carG[i], sp); scene.add(c); parked.push(c); });
   // two cars driving up and down the street
   for (const [i, z, dir, x] of [[2, -2.3, 1, -40], [0, 2.3, -1, 30]]) { const c = fitCar(carG[i].clone(true), [x, z, dir > 0 ? 0 : Math.PI]); c.userData = { dir, v: 7 + i }; scene.add(c); movers.push(c); }
   // people walking on the sidewalks
@@ -135,7 +135,7 @@ function play(n) { const a = acts[n] || Object.values(acts).find((q) => q.getCli
 const input = { x: 0, y: 0, run: false }; let yaw = Math.PI / 2, pitch = 0.12, first = false; const keys = {};
 addEventListener('keydown', (e) => { keys[e.code] = true; if (e.code === 'KeyV') first = !first; });
 addEventListener('keyup', (e) => (keys[e.code] = false));
-let stickId = null, lookId = null, sx = 0, sy = 0, lx = 0, ly = 0;
+let stickId = null, dragged = 0, lookId = null, sx = 0, sy = 0, lx = 0, ly = 0;
 const cvs = renderer.domElement;
 cvs.addEventListener('pointerdown', (e) => { if (e.clientX < innerWidth * 0.45 && stickId === null) { stickId = e.pointerId; sx = e.clientX; sy = e.clientY; Object.assign($('stick').style, { left: sx - 55 + 'px', top: sy - 55 + 'px', bottom: 'auto', opacity: 1 }); }
   else if (lookId === null) { lookId = e.pointerId; lx = e.clientX; ly = e.clientY; } cvs.setPointerCapture(e.pointerId); });
@@ -147,41 +147,71 @@ cvs.addEventListener('pointerup', up); cvs.addEventListener('pointercancel', up)
 $('btnView').onclick = () => (first = !first); $('btnRun').onpointerdown = () => (input.lock = !input.lock, $('btnRun').classList.toggle('on', input.lock));
 
 // ---------------------------------------------------------------- loop
-const clock = new THREE.Clock(), ray = new THREE.Raycaster(), tmp = new THREE.Vector3(); let shadeT = 0, lit = 1, litWant = 1, fpsT = 0, frames = 0;
-function loop() {
-  requestAnimationFrame(loop); const dt = Math.min(0.05, clock.getDelta());
-  let mx = input.x + ((keys.KeyD || keys.ArrowRight) ? 1 : 0) - ((keys.KeyA || keys.ArrowLeft) ? 1 : 0), my = input.y + ((keys.KeyW || keys.ArrowUp) ? 1 : 0) - ((keys.KeyS || keys.ArrowDown) ? 1 : 0);
-  const mag = Math.min(1, Math.hypot(mx, my)); const running = input.run || input.lock || keys.ShiftLeft;
-  if (mag > 0.1) { const a = yaw + Math.atan2(-mx, my); const sp = (running ? 4.2 : 1.45) * (running ? 1 : Math.max(0.6, mag));
-    player.position.x += Math.sin(a) * sp * dt; player.position.z += Math.cos(a) * sp * dt;
-    let d = a - player.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d)); player.rotation.y += d * Math.min(1, dt * 10); play(running ? 'run' : 'walk'); if (cur) cur.timeScale = running ? 1.0 : Math.max(0.75, mag); }
-  else play('idle');
-  player.position.x = Math.max(-49, Math.min(49, player.position.x)); player.position.z = Math.max(-9.2, Math.min(9.2, player.position.z));
-  player.position.y = Math.abs(player.position.z) > 5.1 ? 0.14 : 0.0;     // up on the sidewalk, down on the road
+const clock = new THREE.Clock(), ray = new THREE.Raycaster(), tmp = new THREE.Vector3(), want = new THREE.Vector3(), look = new THREE.Vector3();
+let shadeT = 0, lit = 1, litWant = 1, fpsT = 0, frames = 0, speed = 0, refresh = 60, cap = 0, lastDraw = 0, drive = null, camInit = false;
+const parked = [];
+// the frame limit button: highest the screen allows / 60
+$('btnFps').onclick = () => { cap = cap ? 0 : 60; $('btnFps').textContent = cap ? '٦٠' : 'أعلى'; };
+$('btnCar').onclick = () => { if (drive) { // get out on the driver's side
+    const c = drive.car, h = c.rotation.y; player.position.set(c.position.x - Math.cos(h) * 1.4, 0, c.position.z + Math.sin(h) * 1.4); player.rotation.y = h; player.visible = true; drive = null; speed = 0; }
+  else { const c = nearCar(); if (c) { drive = { car: c, v: 0 }; player.visible = false; c.userData.parked = false; yaw = c.rotation.y; } } };
+function nearCar() { let best = null, bd = 3.2; for (const c of parked) { const d = Math.hypot(c.position.x - player.position.x, c.position.z - player.position.z); if (d < bd) { bd = d; best = c; } } return best; }
+const ang = (d) => Math.atan2(Math.sin(d), Math.cos(d));
+function loop(now) {
+  requestAnimationFrame(loop);
+  if (cap && now - lastDraw < 1000 / cap - 2) return; lastDraw = now;
+  const dt = Math.min(0.05, clock.getDelta());
+  const mx = THREE.MathUtils.clamp(input.x + ((keys.KeyD || keys.ArrowRight) ? 1 : 0) - ((keys.KeyA || keys.ArrowLeft) ? 1 : 0), -1, 1), my = THREE.MathUtils.clamp(input.y + ((keys.KeyW || keys.ArrowUp) ? 1 : 0) - ((keys.KeyS || keys.ArrowDown) ? 1 : 0), -1, 1);
+  const running = input.run || input.lock || keys.ShiftLeft; lookT -= dt;
+  let target = player, behind = 3.4, height = 1.62;
+  if (drive) { // ---- driving: stick up = gas, down = brake/reverse, sideways = steer
+    const c = drive.car; let v = drive.v; const gas = my;
+    if (gas > 0.05) v += gas * (v < 0 ? 14 : 7.5) * dt; else if (gas < -0.05) v += gas * (v > 0.5 ? 16 : 4) * dt; else v -= Math.sign(v) * Math.min(Math.abs(v), 2.2 * dt);
+    v = THREE.MathUtils.clamp(v * (1 - 0.06 * dt), -6, 24);
+    c.rotation.y -= -mx * Math.min(1, Math.abs(v) / 5) * (1.7 - Math.min(0.9, Math.abs(v) / 30)) * dt * Math.sign(v || 1);
+    c.position.x += Math.sin(c.rotation.y) * v * dt; c.position.z += Math.cos(c.rotation.y) * v * dt;
+    if (Math.abs(c.position.z) > 8.6 || Math.abs(c.position.x) > 49) { c.position.x = THREE.MathUtils.clamp(c.position.x, -49, 49); c.position.z = THREE.MathUtils.clamp(c.position.z, -8.6, 8.6); v *= -0.25; }
+    for (const o of [...movers, ...parked]) { if (o === c) continue; const dx = c.position.x - o.position.x, dz = c.position.z - o.position.z; if (Math.abs(dx) < 4.4 && Math.abs(dz) < 1.9) { c.position.x = o.position.x + Math.sign(dx || 1) * 4.4; v *= -0.3; } }
+    drive.v = v; c.position.y = 0; player.position.copy(c.position); target = c; behind = 7.0; height = 2.3; play('idle');
+    if (lookT <= 0) yaw += ang(c.rotation.y + (v < -0.5 ? 0 : 0) - yaw) * Math.min(1, dt * 3.5);
+  } else { // ---- on foot: the camera stays behind; up = walk forward, down = step back, sideways = turn
+    const fwd = my > 0.12 ? my : 0, back = my < -0.3;
+    player.rotation.y += mx * (running ? 2.2 : 2.6) * dt * (Math.abs(mx) > 0.15 ? 1 : 0);
+    const want2 = fwd ? (running ? 4.2 : 1.45 * Math.max(0.65, fwd)) : back ? -0.9 : 0; speed += (want2 - speed) * Math.min(1, dt * 7);
+    player.position.x += Math.sin(player.rotation.y) * speed * dt; player.position.z += Math.cos(player.rotation.y) * speed * dt;
+    if (Math.abs(speed) > 0.15) { play(speed > 2.5 ? 'run' : 'walk'); if (cur) cur.timeScale = speed > 2.5 ? speed / 4.2 : speed / 1.45 * (speed < 0 ? 0.9 : 1); }
+    else if (Math.abs(mx) > 0.15) { play('walk'); if (cur) cur.timeScale = 0.6; } else play('idle');
+    player.position.x = THREE.MathUtils.clamp(player.position.x, -49, 49); player.position.z = THREE.MathUtils.clamp(player.position.z, -9.2, 9.2);
+    for (const o of [...movers, ...parked]) { const dx = player.position.x - o.position.x, dz = player.position.z - o.position.z; if (Math.abs(dx) < 2.55 && Math.abs(dz) < 1.2) { if (2.55 - Math.abs(dx) < 1.2 - Math.abs(dz)) player.position.x = o.position.x + Math.sign(dx || 1) * 2.55; else player.position.z = o.position.z + Math.sign(dz || 1) * 1.2; } }
+    player.position.y = Math.abs(player.position.z) > 5.1 ? 0.14 : 0.0;
+    if (lookT <= 0) yaw += ang(player.rotation.y - yaw) * Math.min(1, dt * 4.5);
+    $('btnCar').style.display = nearCar() ? 'block' : 'none';
+  }
+  $('btnCar').textContent = drive ? 'انزل' : 'اركب'; if (drive) $('btnCar').style.display = 'block';
   mixer.update(dt);
-  for (const c of movers) { c.position.x += c.userData.dir * c.userData.v * dt; if (c.position.x > 56) c.position.x = -56; if (c.position.x < -56) c.position.x = 56;
-    const dx = player.position.x - c.position.x, dz = player.position.z - c.position.z; if (Math.abs(dx) < 2.6 && Math.abs(dz) < 1.25) player.position.z = c.position.z + Math.sign(dz || 1) * 1.25; }
+  for (const c of movers) { c.position.x += c.userData.dir * c.userData.v * dt; if (c.position.x > 56) c.position.x = -56; if (c.position.x < -56) c.position.x = 56; }
   for (const w of walkers) { w.position.x += w.userData.dir * w.userData.v * dt; if (Math.abs(w.position.x) > 47) { w.userData.dir *= -1; w.rotation.y += Math.PI; w.position.x = Math.sign(w.position.x) * 47; } w.userData.mx.update(dt); }
-  // the camera swings back behind the person while walking forward (unless you are turning it yourself)
-  lookT -= dt; if (mag > 0.1 && lookT <= 0 && my > -0.2) { let d = player.rotation.y - yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); yaw += d * Math.min(1, dt * 2.2 * Math.max(0.3, my / Math.max(mag, 0.01))); }
-  // in a building's shadow? (rays to the sun against the baked street) then the live sun fades out on the person and cars
-  shadeT -= dt; if (shadeT <= 0) { shadeT = 0.25; tmp.copy(player.position).y += 1.2; ray.set(tmp, sun.userData.dir); ray.far = 60; litWant = ray.intersectObjects(statics, false).length ? 0 : 1; }
+  // in a building's shadow? the live sun fades on the person and cars
+  shadeT -= dt; if (shadeT <= 0) { shadeT = 0.25; tmp.copy(target.position).y += 1.2; ray.set(tmp, sun.userData.dir); ray.far = 60; litWant = ray.intersectObjects(statics, false).length ? 0 : 1; }
   lit += (litWant - lit) * Math.min(1, dt * 4); sun.intensity = sunBase * (0.08 + 0.92 * lit);
-  sun.position.copy(player.position).addScaledVector(sun.userData.dir, 40); sun.target.position.copy(player.position);
-  // camera
-  const head = tmp.copy(player.position).add(new THREE.Vector3(0, 1.62, 0));
-  if (first) { player.children[0].visible = false; camera.position.copy(head).add(new THREE.Vector3(Math.sin(player.rotation.y) * 0.15, 0, Math.cos(player.rotation.y) * 0.15)); camera.lookAt(head.x + Math.sin(yaw) * Math.cos(pitch), head.y - Math.sin(pitch), head.z + Math.cos(yaw) * Math.cos(pitch)); }
-  else { player.children[0].visible = true; const dist = 3.2; const side = 0.45;
-    const cx = head.x - Math.sin(yaw) * Math.cos(pitch) * dist + Math.cos(yaw) * side, cz = head.z - Math.cos(yaw) * Math.cos(pitch) * dist - Math.sin(yaw) * side, cy = head.y + Math.sin(pitch) * dist;
-    camera.position.set(cx, Math.max(0.4, cy), Math.max(-9.3, Math.min(9.3, cz))); camera.lookAt(head.x + Math.cos(yaw) * side, head.y - 0.1, head.z - Math.sin(yaw) * side); }
+  sun.position.copy(target.position).addScaledVector(sun.userData.dir, 40); sun.target.position.copy(target.position);
+  // camera: eased behind the shoulder (or the car), first-person on foot when chosen
+  const head = tmp.copy(target.position); head.y += height;
+  if (first && !drive) { player.children[0].visible = false; camera.position.copy(head).add(new THREE.Vector3(Math.sin(player.rotation.y) * 0.18, 0, Math.cos(player.rotation.y) * 0.18)); camera.lookAt(head.x + Math.sin(yaw) * Math.cos(pitch) * 5, head.y - Math.sin(pitch) * 5, head.z + Math.cos(yaw) * Math.cos(pitch) * 5); }
+  else { player.children[0].visible = true; const side = drive ? 0 : 0.4, p = drive ? Math.max(0.12, pitch) : pitch;
+    want.set(head.x - Math.sin(yaw) * Math.cos(p) * behind + Math.cos(yaw) * side, Math.max(0.5, head.y + Math.sin(p) * behind), head.z - Math.cos(yaw) * Math.cos(p) * behind - Math.sin(yaw) * side);
+    want.z = THREE.MathUtils.clamp(want.z, -9.3, 9.3); if (!camInit) { camera.position.copy(want); camInit = true; } camera.position.lerp(want, 1 - Math.exp(-dt * 12));
+    look.set(head.x + Math.cos(yaw) * side, head.y - 0.15, head.z - Math.sin(yaw) * side); camera.lookAt(look); }
   renderer.render(scene, camera);
-  frames++; fpsT += dt; if (fpsT > 1) { const f = frames / fpsT; $('fps').textContent = Math.round(f) + ' fps';
-    // keep it smooth: drop the resolution when frames fall, raise it again when there is room
-    const want = f < 45 ? Math.max(0.6, pr - 0.15) : f > 57 ? Math.min(prMax, pr + 0.1) : pr; if (Math.abs(want - pr) > 0.01) { pr = want; renderer.setPixelRatio(pr); renderer.setSize(innerWidth, innerHeight); }
+  frames++; fpsT += dt; if (fpsT > 1) { const f = frames / fpsT; $('fps').textContent = Math.round(f) + ' فريم';
+    if (!cap && f > refresh * 1.1) refresh = f > 100 ? 120 : f > 80 ? 90 : 60;      // the screen can go faster than we assumed
+    const goal = cap || refresh;
+    // keep it smooth: lower the resolution when frames fall below what the screen can show, raise it when there is room
+    const nw = f < goal * 0.85 ? Math.max(0.6, pr - 0.15) : f > goal * 0.97 ? Math.min(prMax, pr + 0.1) : pr; if (Math.abs(nw - pr) > 0.01) { pr = nw; renderer.setPixelRatio(pr); renderer.setSize(innerWidth, innerHeight); }
     frames = 0; fpsT = 0; }
 }
-const fail = (m) => { $('load').style.display = 'flex'; $('msg').textContent = 'Error: ' + m; };
+const fail = (m) => { $('load').style.display = 'flex'; $('msg').textContent = 'حصلت مشكلة: ' + m; };
 addEventListener('error', (e) => fail(e.message)); addEventListener('unhandledrejection', (e) => fail(e.reason && e.reason.message || String(e.reason)));
-renderer.domElement.addEventListener('webglcontextlost', () => fail('graphics memory ran out (WebGL context lost)'));
+renderer.domElement.addEventListener('webglcontextlost', () => fail('ذاكرة الرسوميات خلصت'));
 start().catch((e) => { fail(e.message); console.error(e); });
 window.__st = { scene, camera, renderer, get player() { return player; }, setYaw: (y, p) => { yaw = y; if (p != null) pitch = p; }, input };

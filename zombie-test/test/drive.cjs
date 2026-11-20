@@ -1,0 +1,12 @@
+const { chromium } = require('playwright'); const http = require('http'), fs = require('fs'), path = require('path'); const root = path.join(__dirname, '..');
+const srv = http.createServer((q, r) => { const u = decodeURIComponent(q.url.split('?')[0]); fs.readFile(path.join(root, u === '/' ? 'index.html' : u), (e, d) => { if (e) { r.writeHead(404); return r.end(); } r.end(d); }); }).listen(8097);
+(async () => { const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] }); const p = await b.newPage({ viewport: { width: 800, height: 450 } });
+  p.on('pageerror', (e) => console.log('ERR', e.message));
+  await p.goto('http://localhost:8097/'); await p.waitForFunction(() => document.getElementById('load').style.display === 'none', null, { timeout: 240000 });
+  const shot = (n) => p.screenshot({ path: path.join(root, 'shots/' + n + '.png'), timeout: 200000 });
+  await p.waitForTimeout(4000); await p.keyboard.down('KeyW'); await p.waitForTimeout(2500); await p.keyboard.down('KeyA'); await p.waitForTimeout(1200); await p.keyboard.up('KeyA'); await p.waitForTimeout(1500); await p.keyboard.up('KeyW');
+  await shot('walk'); console.log('walk', await p.evaluate(() => { const q = __st.player; return [q.position.x.toFixed(1), q.position.z.toFixed(1), q.rotation.y.toFixed(2)]; }));
+  await p.evaluate(() => { __st.player.position.set(-20, 0.14, 6.2); }); await p.waitForTimeout(800); await p.click('#btnCar');
+  await p.keyboard.down('KeyW'); await p.waitForTimeout(4000); await p.keyboard.down('KeyD'); await p.waitForTimeout(800); await p.keyboard.up('KeyD'); await p.waitForTimeout(800); await shot('drive'); await p.keyboard.up('KeyW');
+  console.log('drive', await p.evaluate(() => [__st.player.position.x.toFixed(1), __st.player.position.z.toFixed(1)]), await p.textContent('#fps'));
+  await p.click('#btnCar'); await p.waitForTimeout(800); await shot('out'); await b.close(); srv.close(); })();
