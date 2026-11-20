@@ -3,8 +3,11 @@
 import * as THREE from 'three';
 import { WH } from './world.js';
 
-const q = new THREE.Quaternion(), e = new THREE.Euler();
-const add = (b, x, y, z, w = 1) => { if (!b) return; e.set(x * w, y * w, z * w); q.setFromEuler(e); b.quaternion.multiply(q); };
+const qd = new THREE.Quaternion(), wq = new THREE.Quaternion(), pq = new THREE.Quaternion(), RIGHT = new THREE.Vector3(), UP = new THREE.Vector3();
+// turn a bone about an axis given in world space (the body's right or up axis)
+function rotW(b, axis, angle) { if (!b || !angle) return; b.updateWorldMatrix(true, false); b.getWorldQuaternion(wq); b.parent.getWorldQuaternion(pq); qd.setFromAxisAngle(axis, angle); b.quaternion.copy(pq.invert().multiply(qd.multiply(wq))); b.updateMatrixWorld(true); }
+function bodyAxes(m) { m.root.updateMatrixWorld(true); RIGHT.set(1, 0, 0).applyQuaternion(m.root.quaternion); UP.set(0, 1, 0); }
+// pitch > 0 bends forward (towards the way it faces); for legs and arms a negative angle swings them forward
 
 export class Specimen {
   constructor(m, tube, group) {
@@ -35,18 +38,18 @@ export class Specimen {
       if (ph < this.lastPh) { this.bang++; sound('knock'); if (this.stage === 'rage') sound('bang'); tb.crack.visible = true; tb.crack.material.opacity = Math.min(1, 0.35 + this.bang * 0.06); this.shake = 0.25; } this.lastPh = ph; }
     // twitches while asleep, eyes on from the wake stage
     this.twitch -= dt; if (this.twitch < -Math.random() * 9 - 3) this.twitch = 0.25; const tw = this.twitch > 0 ? Math.sin(this.twitch * 60) * 0.15 : 0;
-    add(b.spine, 0.45 * curl, 0, 0); add(b.chest, 0.35 * curl + breath, 0, 0); add(b.neck, 0.3 * curl, 0, tw); add(b.head, 0.35 * curl + tw, 0, 0);
-    add(b.tl, -1.35 * curl, 0, 0.1 * curl); add(b.tr, -1.35 * curl, 0, -0.1 * curl); add(b.sl, 1.9 * curl, 0, 0); add(b.sr, 1.9 * curl, 0, 0);
-    const drift = Math.sin(t * 0.7) * 0.2 * curl;
-    add(b.ul, -0.4 * curl - armUp * (1.4 + armSwing * 0.5) + drift, 0, 0.3 * curl); add(b.ur, -0.4 * curl - armUp * (1.4 + armSwing * 0.5) - drift, 0, -0.3 * curl);
-    add(b.fl, 0.8 * curl + armUp * 0.3, 0, 0); add(b.fr, 0.8 * curl + armUp * 0.3, 0, 0);
+    this.curl = this.curl == null ? curl : this.curl + (curl - this.curl) * Math.min(1, dt * 0.8); const c = this.curl; const drift = Math.sin(t * 0.7) * 0.12 * c;
+    this.pose = { c, breath, tw, armUp, armSwing, drift };
     // it turns to look at you once awake
     let face = m.yaw; if (player && this.stage !== 'sleep') { const want = Math.atan2(player.x - tb.x, player.z - tb.z); let d = want - (this.faceYaw ?? want); d = Math.atan2(Math.sin(d), Math.cos(d)); this.faceYaw = (this.faceYaw ?? want) + d * Math.min(1, dt * (this.stage === 'wake' ? 0.6 : 2)); face = this.faceYaw; }
     else { this.faceYaw = this.faceYaw ?? m.yaw; face = this.faceYaw + Math.sin(t * 0.2) * 0.4; }
     const fx = Math.sin(face), fz = Math.cos(face); this.shake = Math.max(0, (this.shake || 0) - dt);
     const bob = Math.sin(t * 0.9) * 0.08 * (curl > 0.5 ? 1 : 0.3);
     m.root.position.set(tb.x + fx * (lean * 0.35 + (armUp ? 0.2 : 0)), (curl > 0.5 ? 0.85 : 0.5) + bob, tb.z + fz * (lean * 0.35 + (armUp ? 0.2 : 0)));
-    m.root.rotation.set(0, face, 0); m.root.visible = true;
+    m.root.rotation.set(0, face, 0); m.root.visible = true; bodyAxes(m); const P = this.pose;
+    rotW(b.spine, RIGHT, 0.35 * P.c); rotW(b.chest, RIGHT, 0.25 * P.c + P.breath); rotW(b.neck, RIGHT, 0.2 * P.c); rotW(b.head, RIGHT, 0.3 * P.c + P.tw); rotW(b.head, UP, P.tw);
+    rotW(b.tl, RIGHT, -1.35 * P.c); rotW(b.tr, RIGHT, -1.35 * P.c); rotW(b.sl, RIGHT, 1.9 * P.c); rotW(b.sr, RIGHT, 1.9 * P.c);
+    const arm = -0.9 * P.c - P.armUp * (1.5 + P.armSwing * 0.45); rotW(b.ul, RIGHT, arm + P.drift); rotW(b.ur, RIGHT, arm - P.drift); rotW(b.fl, RIGHT, -0.7 * P.c - P.armUp * 0.15); rotW(b.fr, RIGHT, -0.7 * P.c - P.armUp * 0.15);
     if (tb.pod) { tb.pod.position.x = tb.x + (this.shake > 0 ? (Math.random() - 0.5) * 0.03 : 0); }
     if (m.eyes) m.eyes.intensity = this.stage === 'sleep' ? 0 : this.stage === 'wake' ? 0.8 + Math.sin(t * 3) * 0.3 : 2;
     // bubbles: more of them as it wakes
@@ -71,7 +74,7 @@ export function emerge(m, dt) {
   if (m.mixer) m.mixer.update(dt); const find = (re) => { let r = null; m.obj.traverse((o) => { if (!r && o.isBone && re.test(o.name)) r = o; }); return r; };
   m._eb = m._eb || { spine: find(/^spine/i), chest: find(/^chest/i), tl: find(/thigh.?l/i), tr: find(/thigh.?r/i), sl: find(/shin.?l/i), sr: find(/shin.?r/i), ul: find(/upperarm.?l/i), ur: find(/upperarm.?r/i) };
   const b = m._eb, w = k < 1.8 ? 1 : Math.max(0, 1 - (k - 1.8) / 1.2); // crouched, then standing up
-  add(b.spine, 0.9 * w, 0, 0); add(b.chest, 0.4 * w, 0, 0); add(b.tl, -1.5 * w, 0, 0); add(b.tr, -1.5 * w, 0, 0); add(b.sl, 2.2 * w, 0, 0); add(b.sr, 2.2 * w, 0, 0); add(b.ul, -1.1 * w, 0, 0); add(b.ur, -1.1 * w, 0, 0);
+  bodyAxes(m); rotW(b.spine, RIGHT, 0.8 * w); rotW(b.chest, RIGHT, 0.35 * w); rotW(b.tl, RIGHT, -1.3 * w); rotW(b.tr, RIGHT, -1.3 * w); rotW(b.sl, RIGHT, 2.0 * w); rotW(b.sr, RIGHT, 2.0 * w); rotW(b.ul, RIGHT, -1.0 * w); rotW(b.ur, RIGHT, -1.0 * w);
   m.root.position.y = -0.55 * w + (k < 0.35 ? (0.35 - k) * 2.5 : 0);
   return true;
 }

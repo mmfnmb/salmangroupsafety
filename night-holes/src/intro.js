@@ -169,11 +169,14 @@ export async function driveCutscene(ctx, house) {
   const lina = await person(FRIEND, 'sit', 1.7); lina.obj.position.set(-side * cw * 0.2, eye - 1.12, 0.12); lina.obj.rotation.y = Math.PI; rig.add(lina.obj);
   // headlights
   const heads = []; for (const s of [-1, 1]) { const h = new THREE.SpotLight(0xfff4dc, 70, 70, 0.42, 0.45, 1.3); h.position.set(s * 0.65, 0.75, -2.75); h.target.position.set(s * 0.4, 0, -30); h.castShadow = false; rig.add(h, h.target); heads.push(h); }
-  const cam = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.05, 260); if (window.__fitFov) window.__fitFov(cam, 70); addEventListener('resize', () => window.__fitFov && window.__fitFov(cam, 70)); const camX = side * cw * 0.19; cam.position.set(camX, eye, 0.12); rig.add(cam);
+  const cam = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.05, 260); if (window.__fitFov) window.__fitFov(cam, 70); addEventListener('resize', () => window.__fitFov && window.__fitFov(cam, 70)); let camX = side * cw * 0.19; cam.position.set(camX, eye, 0.12); rig.add(cam);
   // your own body in the driver's seat, hands on the wheel (two-bone reach solved every frame)
   const wc = new THREE.Vector3(); let nW = 0; car.traverse((m) => { if (!m.isMesh || !m.geometry.attributes.position) return; const pa = m.geometry.attributes.position; for (let i = 0; i < pa.count; i += 2) { v.fromBufferAttribute(pa, i).applyMatrix4(m.matrixWorld);
     if (Math.abs(v.x - camX) < 0.28 && v.y > eye - 0.75 && v.y < eye - 0.15 && v.z > -0.95 && v.z < -0.25) { wc.add(v); nW++; } } });
-  if (nW) wc.divideScalar(nW); else wc.set(camX, eye - 0.38, -0.5); wc.x = camX;
+  if (nW) wc.divideScalar(nW); else wc.set(camX, eye - 0.38, -0.5);
+  // sit straight behind the wheel that was found, whatever side the car drives on
+  if (nW > 30) { camX = wc.x; cam.position.x = camX; }
+  window.__drv = { side, left, right, nW, wc: wc.toArray().map((v) => +v.toFixed(2)), camX: +camX.toFixed(2), cw: +cw.toFixed(2), ch: +ch.toFixed(2), eye: +eye.toFixed(2) };
   const wheelAxis = new THREE.Vector3(0, 0.35, 1).normalize(); const pivot = new THREE.Group(); pivot.position.copy(wc); pivot.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), wheelAxis); rig.add(pivot); rig.updateMatrixWorld(true);
   const turners = []; car.traverse((m) => { if (!m.isMesh) return; const b = new THREE.Box3().setFromObject(m), c = b.getCenter(new THREE.Vector3()), sz = b.getSize(new THREE.Vector3()); if (c.distanceTo(wc) < 0.2 && Math.max(sz.x, sz.y, sz.z) < 0.5) turners.push(m); });
   const spin = new THREE.Group(); pivot.add(spin); for (const m of turners) spin.attach(m);
@@ -183,9 +186,14 @@ export async function driveCutscene(ctx, house) {
   const fingers = []; me.obj.traverse((o) => { if (o.isBone && /finger\d/i.test(o.name) && !/finger0/i.test(o.name)) fingers.push(o); });
   const curl = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, -0.95));
   const arms = ['L', 'R'].map((sd) => ({ sd, up: bone(new RegExp(sd + '.?UpperArm', 'i')), fo: bone(new RegExp(sd + '.?Fore.?arm', 'i')), ha: bone(new RegExp(sd + '.?Hand$', 'i')) })).filter((a) => a.up && a.fo && a.ha);
-  const qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), qp = new THREE.Quaternion(), va = new THREE.Vector3(), vb = new THREE.Vector3(), bp = new THREE.Vector3(), ep = new THREE.Vector3();
-  const reach = (a, target) => { for (let it = 0; it < 6; it++) for (const b of [a.fo, a.up]) { b.updateMatrixWorld(true); b.getWorldPosition(bp); a.ha.getWorldPosition(ep);
-      va.subVectors(ep, bp).normalize(); vb.subVectors(target, bp).normalize(); qa.setFromUnitVectors(va, vb); b.getWorldQuaternion(qb); b.parent.getWorldQuaternion(qp); b.quaternion.copy(qp.invert().multiply(qa.multiply(qb))); b.updateMatrixWorld(true); } };
+  const qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), qp = new THREE.Quaternion(), S0 = new THREE.Vector3(), E0 = new THREE.Vector3(), W0 = new THREE.Vector3(), tmp = new THREE.Vector3();
+  const turnTo = (b, from, to) => { qa.setFromUnitVectors(from.clone().normalize(), to.clone().normalize()); b.getWorldQuaternion(qb); b.parent.getWorldQuaternion(qp); b.quaternion.copy(qp.invert().multiply(qa.multiply(qb))); b.updateMatrixWorld(true); };
+  const reach = (a, target) => { a.up.updateWorldMatrix(true, true); a.up.getWorldPosition(S0); a.fo.getWorldPosition(E0); a.ha.getWorldPosition(W0);
+    const l1 = S0.distanceTo(E0), l2 = E0.distanceTo(W0), toT = target.clone().sub(S0); const d = Math.min(toT.length(), (l1 + l2) * 0.999); toT.setLength(d);
+    // elbow: in the plane of shoulder, target and a pole below and to the outside
+    const pole = S0.clone().add(new THREE.Vector3((a.sd === 'L' ? -1 : 1) * 0.35, -0.6, 0.1)).sub(S0); const dir = toT.clone().normalize(); const side = pole.sub(dir.clone().multiplyScalar(pole.dot(dir))).normalize();
+    const x = (l1 * l1 - l2 * l2 + d * d) / (2 * d), h = Math.sqrt(Math.max(0, l1 * l1 - x * x)); const elbow = S0.clone().add(dir.clone().multiplyScalar(x)).add(side.multiplyScalar(h));
+    turnTo(a.up, E0.clone().sub(S0), elbow.clone().sub(S0)); a.fo.getWorldPosition(E0); a.ha.getWorldPosition(W0); turnTo(a.fo, W0.clone().sub(E0), S0.clone().add(toT).sub(E0)); };
   let steer = 0; const grip = (sd) => { const a = (sd === 'L' ? -1.05 : 1.05) + steer; return pivot.localToWorld(new THREE.Vector3(Math.sin(a) * 0.155, Math.cos(a) * 0.15 - 0.01, 0.02)); };
   $('hud').hidden = true; $('fade').classList.remove('on');
   engine(true);
@@ -204,7 +212,7 @@ export async function driveCutscene(ctx, house) {
       cam.position.x = camX + (Math.random() - 0.5) * shake * 0.12; cam.position.y = eye + (Math.random() - 0.5) * shake * 0.12 + Math.sin(tt * 13) * 0.003 * Math.min(1, v / 20);
       cullT -= dt; if (cullT <= 0) { cullT = 0.25; const rz = rig.position.z; for (const tr of forest) tr.visible = tr.position.z < rz + 25 && tr.position.z > rz - (LOW ? 70 : 110); }
       steer = crashed ? steer : tt > 26 ? Math.sin((tt - 26) * 5) * 1.3 : tt > 19 ? Math.sin(tt * 3) * 0.12 : Math.sin(tt * 0.7) * 0.04; spin.rotation.z = -steer;
-      me.mix.update(dt); for (const fb of fingers) fb.quaternion.multiply(curl); rig.updateMatrixWorld(true); for (const a of arms) reach(a, grip(a.sd));
+      me.mix.update(dt); rig.updateMatrixWorld(true); for (const a of arms) reach(a, grip(a.sd));
       lina.mix.update(dt); post.render(sc, cam, dt); };
     loop();
   });
