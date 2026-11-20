@@ -70,14 +70,14 @@ async function start() {
   const people = [hum, hum2, hum3, hum2, hum3]; let pi = 0;
   for (const hb of people) { const k = Object.keys(hb)[0]; const pg = hb._g || (hb._g = await gltf.parseAsync(b64(hb[k]), '')); const o = SkeletonUtils.clone(pg.scene);
     o.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(o); o.scale.multiplyScalar((1.65 + Math.random() * 0.2) / (b.max.y - b.min.y)); o.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.frustumCulled = false; } });
-    const g2 = new THREE.Group(); g2.add(o); o.rotation.y = Math.PI; const side = pi % 2 ? 1 : -1, dir = pi < 2 ? 1 : -1;
+    if (!pg._ip) { inPlace(pg.animations); pg._ip = 1; } const g2 = new THREE.Group(); g2.add(o); const side = pi % 2 ? 1 : -1, dir = pi < 2 ? 1 : -1;
     g2.position.set(-40 + pi * 19, 0.14, side * (6.2 + Math.random() * 1.6)); g2.rotation.y = dir > 0 ? Math.PI / 2 : -Math.PI / 2; g2.userData = { dir, v: 1.1 + Math.random() * 0.4 };
     const mx = new THREE.AnimationMixer(o); const wc = pg.animations.find((q) => q.name.includes('walk')); if (wc) mx.clipAction(wc).play(); mx.update(Math.random() * 2); g2.userData.mx = mx; scene.add(g2); walkers.push(g2); pi++; }
   // the person
   const hk = Object.keys(hum)[0]; const hg = await gltf.parseAsync(b64(hum[hk]), ''); player = SkeletonUtils.clone(hg.scene);
   player.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(player); player.scale.multiplyScalar(1.78 / (bb.max.y - bb.min.y));
   player.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.frustumCulled = false; } });
-  const pl = new THREE.Group(); pl.add(player); player.rotation.y = Math.PI; pl.position.set(-30, 0.14, 7); pl.rotation.y = Math.PI / 2; scene.add(pl); player = pl;
+  const pl = new THREE.Group(); pl.add(player); inPlace(hg.animations); pl.position.set(-30, 0.14, 7); pl.rotation.y = Math.PI / 2; scene.add(pl); player = pl;
   mixer = new THREE.AnimationMixer(pl.children[0]); for (const c of hg.animations) acts[c.name] = mixer.clipAction(c); play('idle');
   bar(1, ''); $('load').style.display = 'none'; $('hud').style.display = 'block';
   renderer.compile(scene, camera); requestAnimationFrame(loop);
@@ -127,6 +127,8 @@ function fitCar(o, [x, z, ry]) {
   o.traverse((m) => { if (!m.isMesh) return; m.castShadow = true; const n = (m.name + ' ' + (m.material && m.material.name)).toLowerCase(); if (/logo|badge|emblem|symbols|manufacturerplate/.test(n)) m.visible = false; });
   g.rotation.y = Math.PI / 2 + ry; g.position.set(x, 0, z); return g;
 }
+// the recorded walk/run carry the body forward and snap it back each loop: keep the root in place (only up/down stays)
+function inPlace(clips) { for (const c of clips) for (const t of c.tracks) if (/^Bip01(_Pelvis)?\.position$/.test(t.name)) { const v = t.values, x0 = v[0], z0 = v[2]; for (let i = 0; i < v.length; i += 3) { v[i] = x0; v[i + 2] = z0; } } return clips; }
 function play(n) { const a = acts[n] || Object.values(acts).find((q) => q.getClip().name.includes(n)); if (!a || a === cur) return; a.reset().fadeIn(0.25).play(); if (cur) cur.fadeOut(0.25); cur = a; }
 
 // ---------------------------------------------------------------- controls: left stick to walk, drag on the right to look; WASD + mouse on a computer
@@ -150,9 +152,9 @@ function loop() {
   requestAnimationFrame(loop); const dt = Math.min(0.05, clock.getDelta());
   let mx = input.x + ((keys.KeyD || keys.ArrowRight) ? 1 : 0) - ((keys.KeyA || keys.ArrowLeft) ? 1 : 0), my = input.y + ((keys.KeyW || keys.ArrowUp) ? 1 : 0) - ((keys.KeyS || keys.ArrowDown) ? 1 : 0);
   const mag = Math.min(1, Math.hypot(mx, my)); const running = input.run || input.lock || keys.ShiftLeft;
-  if (mag > 0.1) { const a = yaw + Math.atan2(-mx, my); const sp = (running ? 4.6 : 1.55) * (running ? 1 : Math.max(0.6, mag));
+  if (mag > 0.1) { const a = yaw + Math.atan2(-mx, my); const sp = (running ? 4.2 : 1.45) * (running ? 1 : Math.max(0.6, mag));
     player.position.x += Math.sin(a) * sp * dt; player.position.z += Math.cos(a) * sp * dt;
-    let d = a - player.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d)); player.rotation.y += d * Math.min(1, dt * 10); play(running ? 'run' : 'walk'); }
+    let d = a - player.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d)); player.rotation.y += d * Math.min(1, dt * 10); play(running ? 'run' : 'walk'); if (cur) cur.timeScale = running ? 1.0 : Math.max(0.75, mag); }
   else play('idle');
   player.position.x = Math.max(-49, Math.min(49, player.position.x)); player.position.z = Math.max(-9.2, Math.min(9.2, player.position.z));
   player.position.y = Math.abs(player.position.z) > 5.1 ? 0.14 : 0.0;     // up on the sidewalk, down on the road
