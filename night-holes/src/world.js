@@ -91,14 +91,14 @@ export class World {
             if (first) { const slab = new THREE.Mesh(boxGeo(doorW, doorH, 0.12, 1.5), door.lock === 'exit' ? M.frame : M.door); slab.position.set(ex, doorH / 2, ez); slab.rotation.y = ry; slab.castShadow = true; grp.add(slab);
               // hazard stripe across the slab
               const stripe = new THREE.Mesh(new THREE.BoxGeometry(doorW, 0.16, 0.13), new THREE.MeshStandardMaterial({ color: door.lock ? 0xc8302a : 0xd8b23a, roughness: 0.6 })); stripe.position.set(0, -0.2, 0); slab.add(stripe);
-              door.obj = slab; door.base = slab.position.clone(); door.axis = new THREE.Vector3(Math.cos(ry), 0, -Math.sin(ry)); door.w = doorW; door.center = [ex, ez]; door.dir = [dx, dz];
+              door.obj = slab; slab.userData.dyn = true; door.base = slab.position.clone(); door.axis = new THREE.Vector3(Math.cos(ry), 0, -Math.sin(ry)); door.w = doorW; door.center = [ex, ez]; door.dir = [dx, dz];
             }
             // a button panel beside the door on this side
             const side = 1, bx = ex - dx * (inset + 0.17) + Math.cos(ry) * side * (doorW / 2 + 0.45), bz = ez - dz * (inset + 0.17) - Math.sin(ry) * side * (doorW / 2 + 0.45);
             const panel = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.32, 0.05), new THREE.MeshStandardMaterial({ color: 0x2b2f33, roughness: 0.5, metalness: 0.4 })); panel.position.set(bx, 1.35, bz); panel.rotation.y = ry; grp.add(panel);
             const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.03), new THREE.MeshBasicMaterial({ color: door.lock ? 0xff2a2a : 0x2aff6a })); lamp.position.set(0, 0.06, 0.03); panel.add(lamp);
             (door.lamps = door.lamps || []).push(lamp);
-            this.inter.push({ kind: 'door', f, door, x: bx - dx * 0.4, z: bz - dz * 0.4, r: 1.7 });
+            this.inter.push({ kind: 'door', f, door, x: ex - dx * 0.85, z: ez - dz * 0.85, r: 2.0 });
           } else if (n === '#' || !door) {
             if (!this.slots[f + c]) this.slots[f + c] = [];
             this.slots[f + c].push({ f, x: ex - dx * 0.95, z: ez - dz * 0.95, ry: ry + Math.PI, cell: [x, z], used: false });
@@ -155,8 +155,13 @@ export class World {
     let cur = [to[0], to[1]]; if (!prev.has(key(...cur))) return null;
     while (true) { const p = prev.get(key(...cur)); if (!p || (p[0] === from[0] && p[1] === from[1])) return p ? cur : null; cur = p; }
   }
+  // freeze everything that never moves so the renderer skips its matrices every frame; small things cast no shadow
+  freeze() { const walk = (o, dyn) => { const d = dyn || o.userData.dyn; if (!d) { o.matrixAutoUpdate = false; o.updateMatrix(); } if (o.isMesh && !d) { if (!o.geometry.boundingSphere) o.geometry.computeBoundingSphere(); const r = o.geometry.boundingSphere.radius * Math.max(o.scale.x, o.scale.y, o.scale.z); if (r < 0.6) o.castShadow = false; } for (const c of o.children) walk(c, d); };
+    for (const g of this.groups) { g.updateMatrixWorld(true); for (const c of g.children) walk(c, false); } }
   update(dt) {
-    for (const d of this.doors) { if (!d.obj) continue; d.open += Math.sign(d.target - d.open) * Math.min(Math.abs(d.target - d.open), dt * 1.8);
+    for (const d of this.doors) { if (!d.obj) continue;
+      if (d.target < 0.5 && d.open > 0.02 && this.blocked && this.blocked(d)) d.target = 1;
+      d.open += Math.sign(d.target - d.open) * Math.min(Math.abs(d.target - d.open), dt * 1.8);
       d.obj.position.copy(d.base).addScaledVector(d.axis, d.open * d.w * 0.98); if (d.jam > 0) d.jam -= dt;
       for (const l of d.lamps || []) l.material.color.setHex(d.lock && !d.unlocked ? 0xff2a2a : d.target > 0.5 ? 0x2aff6a : 0xffb020); }
   }

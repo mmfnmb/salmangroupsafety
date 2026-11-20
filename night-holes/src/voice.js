@@ -4,7 +4,7 @@
 import * as net from './net.js';
 
 const $ = (id) => document.getElementById(id);
-let ac = null, myStream = null, analyser = null, level = 0, muted = false, mode = 'off', dict = null, tts = null;
+let buf = null, ac = null, myStream = null, analyser = null, level = 0, muted = false, mode = 'off', dict = null, tts = null;
 const peers = new Map(); // pid -> { pc, panner, gain, el }
 let onSpeak = null, nameOf = () => '';
 
@@ -57,6 +57,6 @@ export function updateVoice(me, others, losFn) {
   if (ac && ac.listener && ac.listener.positionX) { const l = ac.listener; l.positionX.value = me.x; l.positionY.value = 1.6; l.positionZ.value = me.z; l.forwardX.value = -Math.sin(me.yaw); l.forwardY.value = 0; l.forwardZ.value = -Math.cos(me.yaw); l.upX.value = 0; l.upY.value = 1; l.upZ.value = 0; }
   for (const [pid, p] of peers) { if (!p.panner) continue; const o = others.get(pid); if (!o || o.f == null) continue; p.panner.positionX.value = o.x; p.panner.positionY.value = 1.6; p.panner.positionZ.value = o.z;
     const same = o.f === me.f, clear = same && losFn(o.x, o.z); p.gain.gain.value = !same ? 0.15 : clear ? 1 : 0.45; }
-  if (analyser && !muted) { const a = new Uint8Array(analyser.fftSize); analyser.getByteTimeDomainData(a); let s = 0; for (const v of a) s += ((v - 128) / 128) ** 2; level = Math.sqrt(s / a.length); } else level = 0;
+  if (analyser && !muted) { const a = buf || (buf = new Uint8Array(analyser.fftSize)); analyser.getByteTimeDomainData(a); let s = 0; for (const v of a) s += ((v - 128) / 128) ** 2; level = Math.sqrt(s / a.length); } else level = 0;
   return level; }
 export const voiceMode = () => mode;

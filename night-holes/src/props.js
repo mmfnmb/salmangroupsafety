@@ -58,7 +58,7 @@ export async function specimenTube(occupied = true) { const g = new THREE.Group(
   const liq = mesh(new THREE.CylinderGeometry(0.4, 0.4, 1.9, 20, 1, true), STD(0x1aff7a, 0.1, 0, { emissive: 0x0b8f3a, emissiveIntensity: 0.35, transparent: true, opacity: 0.38, depthWrite: false, side: THREE.DoubleSide }), 0, 1.27); g.add(liq);
   if (occupied) { const s = new THREE.Group(), dm = STD(0x101410, 0.8, 0, { transparent: true, opacity: 0.55 }); s.add(mesh(new THREE.SphereGeometry(0.12, 10, 8), dm, 0, 1.55, 0)); const body = mesh(new THREE.CapsuleGeometry(0.15, 0.45, 4, 8), dm, 0, 1.15, 0); body.rotation.x = 0.4; s.add(body);
     for (const sx of [-1, 1]) { const leg = mesh(new THREE.CapsuleGeometry(0.06, 0.35, 4, 6), dm, sx * 0.08, 0.85, 0.12); leg.rotation.x = -1.1; s.add(leg); const arm = mesh(new THREE.CapsuleGeometry(0.045, 0.3, 4, 6), dm, sx * 0.17, 1.2, 0.05); arm.rotation.z = sx * 0.4; s.add(arm); }
-    s.userData.bob = Math.random() * 6; g.add(s); g.userData.shape = s; }
+    s.userData.bob = Math.random() * 6; s.userData.dyn = true; g.add(s); g.userData.shape = s; }
   for (let i = 0; i < 2; i++) { const h = mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(0.2 * (i ? 1 : -1), 2.6, 0), new THREE.Vector3(0.35 * (i ? 1 : -1), 3.0, -0.3), new THREE.Vector3(0.3 * (i ? 1 : -1), WH, -0.6)]), 10, 0.025, 6), STD(0x1a1d20, 0.45)); g.add(h); }
   return g; }
 // a body bag (or plastic wrap) lying on a surface; an optional small dried stain

@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 
 const $ = (id) => document.getElementById(id);
-const W = 256, H = 144, FPS = 8, RING = FPS * 8, AFTER = FPS * 4;
+const W = 192, H = 108, FPS = 5, RING = FPS * 8, AFTER = FPS * 4;
 const NV = 'grayscale(1) brightness(1.7) contrast(1.2) sepia(1) hue-rotate(60deg) saturate(3.2)';
 
 // ---------------------------------------------------------------- storage
@@ -44,8 +44,9 @@ export class Camcorder {
     else if (near && near.d < 3 && this.cool <= 0 && !P.dead) { const a = Math.atan2(near.m.x - P.x, near.m.z - P.z); let df = a - (P.yaw + Math.PI); df = Math.atan2(Math.sin(df), Math.cos(df));
       this.pending = { kind: near.m.kind, min: near.d, behind: Math.abs(df) > 1.6, hidden: !!P.hidden, left: AFTER, start: this.ring.length - Math.min(this.ring.length, RING - AFTER) }; this.cool = 20; }
   }
-  finishClose() { const p = this.pending; this.pending = null; const frames = this.ring.slice(-RING).map((im) => { this.g.putImageData(im, 0, 0); this.g.fillStyle = '#fff'; this.g.font = '10px monospace'; this.g.fillText('CAM 02  ' + new Date().toLocaleTimeString(), 6, 12); this.g.fillStyle = '#f33'; this.g.fillText(`${p.kind.toUpperCase()}  ${p.min.toFixed(1)} m`, 6, H - 8); return this.cv.toDataURL('image/jpeg', 0.6); });
-    saveClip({ id: 'c' + Date.now(), date: Date.now(), kind: 'close', label: p.kind, dist: +p.min.toFixed(2), behind: p.behind, hidden: p.hidden, frames, fps: FPS }); }
+  finishClose() { const p = this.pending; this.pending = null; const src = this.ring.slice(-RING), frames = []; const step = () => { for (let k = 0; k < 3 && frames.length < src.length; k++) frames.push(this.encode(src[frames.length], p)); if (frames.length < src.length) return setTimeout(step, 30);
+    saveClip({ id: 'c' + Date.now(), date: Date.now(), kind: 'close', label: p.kind, dist: +p.min.toFixed(2), behind: p.behind, hidden: p.hidden, frames, fps: FPS }); }; step(); }
+  encode(im, p) { this.g.putImageData(im, 0, 0); this.g.fillStyle = '#fff'; this.g.font = '10px monospace'; this.g.fillText('CAM 02  ' + new Date().toLocaleTimeString(), 6, 12); this.g.fillStyle = '#f33'; this.g.fillText(`${p.kind.toUpperCase()}  ${p.min.toFixed(1)} m`, 6, H - 8); return this.cv.toDataURL('image/jpeg', 0.6); }
 }
 
 // ---------------------------------------------------------------- the Recordings screen

@@ -123,7 +123,10 @@ async function startGame(sd, zombie, opts) {
   ensurePlayer(); scene.add(camera);
   W = new World(scene, LOW); S = makeState(); await W.build(rng); $('loadBar').style.width = '62%';
   await populate(W, rng, S); $('loadBar').style.width = '75%';
-  S.bodies = await placeBodies(W, rng, FRIEND); await spawnItems(W, itemPlan(rng), rng, items); $('loadBar').style.width = '88%';
+  S.bodies = await placeBodies(W, rng, FRIEND); await spawnItems(W, itemPlan(rng), rng, items); $('loadBar').style.width = '88%'; W.freeze();
+  // nobody gets shut in a door: a door near any body (you, the others, a monster) stays open
+  W.blocked = (d) => { const [cx, cz] = d.center, near = (f, x, z) => f === d.f && Math.abs(x - cx) < 0.9 && Math.abs(z - cz) < 0.9;
+    if (near(P.f, P.x, P.z)) return true; for (const o of others.values()) if (o.f != null && near(o.f, o.x, o.z)) return true; for (const m of monsters) if (m.root && m.active && near(m.f, m.x, m.z)) return true; return false; };
   W.roomOn = {};
   // monsters: positions decided from the seed so every client builds the same lab
   const at = (f, x, z) => { const [a, b] = cellCenter(x, z); return [f, a, b]; };
@@ -131,7 +134,7 @@ async function startGame(sd, zombie, opts) {
   const myMon = net.getProfile().customMonster; if (myMon) { KINDS.mine = kindFromDesign(myMon); defs.push(['mine', ...at(1, 9, 1), ['W', 'H', 'V']]); }
   defs.push(['nurse', ...at(1, 17, 5), ['L', 'D', 'H']], ['mutant', ...at(1, 4, 8), ['A', 'H', 'K']], ['smiley', ...at(2, 17, 5), ['R', 'U', 'H']]);
   // ground floor monsters now; the rest load while you play the ground floor
-  for (const [k, f, x, z, home] of defs) { const m = new Monster(k, f, x, z, home); monsters.push(m); if (f === 0 || k === 'wretch') await m.load(scene); else m.loading = m.load(scene).catch(() => {}); }
+  for (const [k, f, x, z, home] of defs) { const m = new Monster(k, f, x, z, home); monsters.push(m); if (f === 0 || k === 'wretch') await m.load(scene); }
   clearInterval(mbT);
   const gaunt = monsters[0]; gaunt.active = true; gaunt.inTube = true; gaunt.yaw = 0; gaunt.obj.scale.multiplyScalar(0.78); gaunt.play('idle'); if (S.spec) S.spec.dispose(); S.spec = new Specimen(gaunt, S.tube, W.groups[0]);
   monsters[3].timer = 150; monsters[3].alpha = 0; monsters[1].active = false; monsters[1].yaw = Math.PI;
@@ -230,7 +233,7 @@ function useNearest() {
   if (i.kind === 'door') {
     const d = i.door;
     if (d.lock && !d.unlocked) { if (d.lock !== 'exit' && S.inv.acid) { S.inv.acid--; unlockDoor(d, true); toast(t('acid_used')); return; } if (d.lock === 'green' && S.inv.green) unlockDoor(d, true); else if (d.lock === 'valves') { sfx.locked(); toast(t('need_valves')); } else if (d.lock === 'exit') useStation('exit'); else { sfx.locked(); toast(t('need_green')); } return; }
-    d.target = d.target > 0.5 ? 0 : 1; if (d.target === 0) d.shutAt = performance.now(); sfx.door(); sfx.click(); net.emit('ev', { t: 'door', id: d.id, v: d.target }); return;
+    d.target = d.target > 0.5 ? 0 : 1; d.playerAt = performance.now(); d.autoClose = null; if (d.target === 0) d.shutAt = performance.now(); sfx.door(); sfx.click(); net.emit('ev', { t: 'door', id: d.id, v: d.target }); return;
   }
   if (i.kind === 'elevator') return elevator();
   useStation(i.kind, i);
@@ -309,7 +312,9 @@ function elevator() {
   const f = P.f; const p = panelBox(t('elevator'), `<div class="elev">${[0, 1, 2].map((to) => `<button class="cbtn ${to === f ? 'main' : ''}" data-to="${to}">${['G', 'B1', 'B2'][to]} · ${t('floor' + to)}</button>`).join('')}</div>`);
   p.querySelectorAll('[data-to]').forEach((b) => (b.onclick = () => { const to = +b.dataset.to; if (to === f) return; if (to === 2 && !S.power) { sfx.locked(); toast(t('need_power')); return; } closePanel(); ride(to); }));
 }
+function loadLowerMonsters() { for (const m of monsters) if (!m.root && !m.loading) m.loading = m.load(scene).catch(() => {}); }
 function ride(to) {
+  loadLowerMonsters();
   P.locked = true; $('fade').classList.add('on'); sfx.elevator(); game.rideN++; const stall = game.rideN === 1 && to === 1;
   if (stall) { setTimeout(() => { sfx.bang(0, 1); post.glitch(0.4); game.shake = 1; }, 1000); setTimeout(() => { sfx.knock(0.6, 0.8); subtitle('...', 1500); }, 2400); setTimeout(() => sfx.elevator(), 4200); }
   setTimeout(() => { const [x, z] = S.elev[to]; P.place(to, x, z + 0.6, P.yaw); P.hidden = null; floorBanner(to); $('fade').classList.remove('on'); P.locked = false; }, stall ? 6400 : 2400);
@@ -410,7 +415,7 @@ function director(dt) {
   const opts = ['bang', 'above', 'slam', 'shadow', 'lights', 'radio', 'flash'].filter((e) => !(e === 'above' && P.f === 0)); const pick = opts[(Math.random() * opts.length) | 0]; const f = P.f;
   if (pick === 'bang') { const a = Math.random() * 6.28; playAt(f, P.x + Math.sin(a) * 12, P.z + Math.cos(a) * 12, 'bang'); }
   else if (pick === 'above') sfx.above();
-  else if (pick === 'slam') { const ds = W.doors.filter((d) => d.f === f && d.obj && d.target > 0.5 && !d.lock && Math.hypot(d.center[0] - P.x, d.center[1] - P.z) > 5 && Math.hypot(d.center[0] - P.x, d.center[1] - P.z) < 26); const d = ds[(Math.random() * ds.length) | 0]; if (d) { d.target = 0; playAt(f, d.center[0], d.center[1], 'slam'); } else sfx.above(); }
+  else if (pick === 'slam') { const ds = W.doors.filter((d) => d.f === f && d.obj && d.target > 0.5 && performance.now() - (d.playerAt || -1e9) > 10000 && !d.lock && Math.hypot(d.center[0] - P.x, d.center[1] - P.z) > 5 && Math.hypot(d.center[0] - P.x, d.center[1] - P.z) < 26); const d = ds[(Math.random() * ds.length) | 0]; if (d) { d.target = 0; playAt(f, d.center[0], d.center[1], 'slam'); } else sfx.above(); }
   else if (pick === 'shadow') { const fx = -Math.sin(P.yaw), fz = -Math.cos(P.yaw); for (const dd of [14, 11, 8]) { const x = P.x + fx * dd, z = P.z + fz * dd; if (cellAt(f, toCell(x), toCell(z)) !== '#' && W.los(f, P.x, P.z, x, z)) { const rx = Math.cos(P.yaw), rz = -Math.sin(P.yaw); Object.assign(shadowMan, { f, from: [x - rx * 3, z - rz * 3], to: [x + rx * 3, z + rz * 3], t: 0 }); shadowMan.obj.visible = true; break; } } }
   else if (pick === 'lights') { flicker(f, 2.5); const a = W.anchors[f].map((q) => [q, Math.hypot(q.x - P.x, q.z - P.z)]).sort((a2, b2) => a2[1] - b2[1])[0]; if (a && a[0].on) { a[0].on = false; setTimeout(() => (a[0].on = true), 7000); } }
   else if (pick === 'radio') { const scr = W.inter.filter((i) => i.f === f && i.kind === 'computer'); const c = scr[(Math.random() * scr.length) | 0]; if (c) playAt(f, c.x, c.z, 'radio'); else sfx.whisper(0.6); }
@@ -446,7 +451,7 @@ function frame() {
       checkMatchOver();
     } else for (const m of monsters) if (m.tx != null) { m.x += (m.tx - m.x) * Math.min(1, dt * 8); m.z += (m.tz - m.z) * Math.min(1, dt * 8); }
     if (distraction) distraction.t -= dt;
-    for (const d of W.doors) if (d.autoClose != null) { d.autoClose -= dt; if (d.autoClose <= 0) { d.autoClose = null; if (!d.lock && Math.random() < 0.6) d.target = 0; } }
+    for (const d of W.doors) if (d.autoClose != null) { d.autoClose -= dt; if (d.autoClose <= 0) { d.autoClose = null; if (!d.lock && performance.now() - (d.playerAt || -1e9) > 10000 && Math.random() < 0.6) d.target = 0; } }
     for (const tr of game.traps) if (tr.t > 0) { tr.t -= dt; tr.tick -= dt; if (tr.tick <= 0) { tr.tick = 1; if (tr.f === P.f && Math.hypot(tr.x - P.x, tr.z - P.z) < 12) sfx.tick(); } if (tr.t <= 0) { playAt(tr.f, tr.x, tr.z, 'bottle'); for (let n = 0; n < 3; n++) setTimeout(() => playAt(tr.f, tr.x, tr.z, 'alarm'), n * 700); makeDistraction(tr.f, tr.x, tr.z, 9); tr.obj.visible = false; net.emit('ev', { t: 'noise', f: tr.f, x: tr.x, z: tr.z }); } }
     if (!monsters[1].active && game.t > 90) monsters[1].active = true;
     pushApart();
@@ -469,9 +474,16 @@ function frame() {
   post.expTarget = inDark() ? 1.25 : 0.9;
   hudT -= dt; if (hudT <= 0) { hudT = 0.12; updateHud(); }
   updateLab(dt); if (net.inRoom()) P.voice = voice.updateVoice(P, others, (x, z) => W.los(P.f, P.x, P.z, x, z));
+  for (let f = 0; f < 3; f++) W.groups[f].visible = f === P.f || (game.scareA && false);
+  autoQuality(dt);
   post.render(scene, camera, dt);
   cam.afterRender(dt, $('view'), game); if (!game.end && !P.dead && role !== 'monster') cam.watch(dt, scene, P, FLOOR_Y, monsters, game);
 }
+// automatic quality: if frames get slow, render fewer pixels (and drop the heavy effects); recover when it is smooth again
+const aq = { t: 0, n: 0, scale: 1 };
+function autoQuality(dt) { aq.t += dt; aq.n++; if (aq.t < 2) return; const fps = aq.n / aq.t; aq.t = 0; aq.n = 0; const base = Math.min(devicePixelRatio, HIGH ? 1.5 : 1);
+  if (fps < 28 && aq.scale > 0.55) aq.scale = Math.max(0.55, aq.scale - 0.15); else if (fps > 50 && aq.scale < 1) aq.scale = Math.min(1, aq.scale + 0.1); else return;
+  renderer.setPixelRatio(base * aq.scale); post.high = HIGH && aq.scale > 0.7; post.resize(); }
 function gauntTravel(m, players, dt) {
   const live = players.filter((p) => p.alive && !p.ghost); if (!live.length || m.state === 'chase' || m.calmT > 0) { m.awayT = 0; return; }
   if (live.some((p) => p.f === m.f)) { m.awayT = 0; return; }
@@ -494,8 +506,10 @@ function updateHud() {
   if (!P || !S || !W || !game) return; const i = !game.end && !P.dead ? nearest() : null; const pr = promptFor(i);
   $('prompt').textContent = pr; $('prompt').hidden = !pr || panelOpen(); $('bUse').textContent = pr || t('use');
   $('stam').style.width = (P.stamina * 100) + '%'; $('stam').style.background = P.adrT > 0 ? '#ff9a3c' : ''; $('batt').style.width = (P.battery * 100) + '%'; 
-  $('invIcons').innerHTML = ['green', 'red', 'key', 'screwdriver', 'fuse_r', 'fuse_y', 'fuse_b', 'bottle', 'adrenaline', 'trap', 'lighter', 'chem_r', 'chem_b', 'chem_y', 'sedative', 'smoke', 'acid', 'flare'].filter((k) => S.inv[k]).map((k) => `<span class="slot" title="${t(k)}">${ICON[k]}${S.inv[k] > 1 || ['bottle', 'adrenaline', 'trap'].includes(k) ? `<b>${S.inv[k]}</b>` : ''}</span>`).join('');
+  const invHtml = ['green', 'red', 'key', 'screwdriver', 'fuse_r', 'fuse_y', 'fuse_b', 'bottle', 'adrenaline', 'trap', 'lighter', 'chem_r', 'chem_b', 'chem_y', 'sedative', 'smoke', 'acid', 'flare'].filter((k) => S.inv[k]).map((k) => `<span class="slot" title="${t(k)}">${ICON[k]}${S.inv[k] > 1 || ['bottle', 'adrenaline', 'trap'].includes(k) ? `<b>${S.inv[k]}</b>` : ''}</span>`).join('');
+  if (invHtml !== lastInv) { lastInv = invHtml; $('invIcons').innerHTML = invHtml; }
 }
+let lastInv = '';
 
 // ---------------------------------------------------------------- experiment room
 function mixPanel() { const chems = ['chem_r', 'chem_b', 'chem_y'].filter((k) => S.inv[k]); const opt = (sel) => `<select class="mixSel">${['chem_r', 'chem_b', 'chem_y'].map((k) => `<option value="${k}" ${k === sel ? 'selected' : ''}>${t(k)} (${S.inv[k] || 0})</option>`).join('')}</select>`;
