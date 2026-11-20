@@ -47,7 +47,7 @@ export function selectCharacter(post, renderer) {
     const spot = new THREE.SpotLight(0xfff0dd, 60, 18, 0.55, 0.6, 1.5); spot.position.set(0, 6, 2.5); spot.target.position.set(0, 0, -0.5); spot.castShadow = true; spot.shadow.mapSize.set(1024, 1024); sc.add(spot, spot.target);
     const tube = mesh(new THREE.BoxGeometry(2.4, 0.05, 0.12), STD(0x111111, 0.4, 0, { emissive: 0xeef4ff, emissiveIntensity: 2 })); tube.position.set(0, 5.4, 0); sc.add(tube);
     sc.add(new THREE.HemisphereLight(0x8090a8, 0x101010, 0.35));
-    const cam = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.1, 60); cam.position.set(2.6, 1.3, 7.0); cam.lookAt(0.6, 0.45, -0.5);
+    const cam = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.1, 60); if (window.__fitFov) window.__fitFov(cam, 42); cam.position.set(2.6, 1.3, 7.0); cam.lookAt(0.6, 0.45, -0.5);
     const L = $('garage'); L.hidden = false; let idx = 0, cur = null, alive = true, mix = null, busy = false; const cache = {};
     const fill = () => { const c = CHARS[idx]; $('gName').textContent = c.name; $('gJob').textContent = c.job; $('gCar').textContent = c.carName; $('gNum').textContent = `${idx + 1} / ${CHARS.length}`; };
     const load = async () => { if (busy) return; busy = true; fill(); const c = CHARS[idx]; $('gLoad').hidden = false;
@@ -169,7 +169,7 @@ export async function driveCutscene(ctx, house) {
   const lina = await person(FRIEND, 'sit', 1.7); lina.obj.position.set(-side * cw * 0.2, eye - 1.12, 0.12); lina.obj.rotation.y = Math.PI; rig.add(lina.obj);
   // headlights
   const heads = []; for (const s of [-1, 1]) { const h = new THREE.SpotLight(0xfff4dc, 70, 70, 0.42, 0.45, 1.3); h.position.set(s * 0.65, 0.75, -2.75); h.target.position.set(s * 0.4, 0, -30); h.castShadow = false; rig.add(h, h.target); heads.push(h); }
-  const cam = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.05, 260); const camX = side * cw * 0.19; cam.position.set(camX, eye, 0.12); rig.add(cam);
+  const cam = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.05, 260); if (window.__fitFov) window.__fitFov(cam, 70); addEventListener('resize', () => window.__fitFov && window.__fitFov(cam, 70)); const camX = side * cw * 0.19; cam.position.set(camX, eye, 0.12); rig.add(cam);
   // your own body in the driver's seat, hands on the wheel (two-bone reach solved every frame)
   const wc = new THREE.Vector3(); let nW = 0; car.traverse((m) => { if (!m.isMesh || !m.geometry.attributes.position) return; const pa = m.geometry.attributes.position; for (let i = 0; i < pa.count; i += 2) { v.fromBufferAttribute(pa, i).applyMatrix4(m.matrixWorld);
     if (Math.abs(v.x - camX) < 0.28 && v.y > eye - 0.75 && v.y < eye - 0.15 && v.z > -0.95 && v.z < -0.25) { wc.add(v); nW++; } } });
@@ -180,6 +180,8 @@ export async function driveCutscene(ctx, house) {
   const me = await person((ctx.char || CHARS[0]).id, 'sit', 1.75); me.obj.position.set(camX, eye - 1.12, 0.17); me.obj.rotation.y = Math.PI; rig.add(me.obj);
   const bone = (re) => { let b = null; me.obj.traverse((o) => { if (!b && o.isBone && re.test(o.name)) b = o; }); return b; };
   const head = bone(/head$/i); if (head) head.scale.setScalar(0.001);
+  const fingers = []; me.obj.traverse((o) => { if (o.isBone && /finger\d/i.test(o.name) && !/finger0/i.test(o.name)) fingers.push(o); });
+  const curl = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, -0.95));
   const arms = ['L', 'R'].map((sd) => ({ sd, up: bone(new RegExp(sd + '.?UpperArm', 'i')), fo: bone(new RegExp(sd + '.?Fore.?arm', 'i')), ha: bone(new RegExp(sd + '.?Hand$', 'i')) })).filter((a) => a.up && a.fo && a.ha);
   const qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), qp = new THREE.Quaternion(), va = new THREE.Vector3(), vb = new THREE.Vector3(), bp = new THREE.Vector3(), ep = new THREE.Vector3();
   const reach = (a, target) => { for (let it = 0; it < 6; it++) for (const b of [a.fo, a.up]) { b.updateMatrixWorld(true); b.getWorldPosition(bp); a.ha.getWorldPosition(ep);
@@ -202,7 +204,7 @@ export async function driveCutscene(ctx, house) {
       cam.position.x = camX + (Math.random() - 0.5) * shake * 0.12; cam.position.y = eye + (Math.random() - 0.5) * shake * 0.12 + Math.sin(tt * 13) * 0.003 * Math.min(1, v / 20);
       cullT -= dt; if (cullT <= 0) { cullT = 0.25; const rz = rig.position.z; for (const tr of forest) tr.visible = tr.position.z < rz + 25 && tr.position.z > rz - (LOW ? 70 : 110); }
       steer = crashed ? steer : tt > 26 ? Math.sin((tt - 26) * 5) * 1.3 : tt > 19 ? Math.sin(tt * 3) * 0.12 : Math.sin(tt * 0.7) * 0.04; spin.rotation.z = -steer;
-      me.mix.update(dt); rig.updateMatrixWorld(true); for (const a of arms) reach(a, grip(a.sd));
+      me.mix.update(dt); for (const fb of fingers) fb.quaternion.multiply(curl); rig.updateMatrixWorld(true); for (const a of arms) reach(a, grip(a.sd));
       lina.mix.update(dt); post.render(sc, cam, dt); };
     loop();
   });

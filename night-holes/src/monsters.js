@@ -1,17 +1,21 @@
 // Monsters. The host (or solo player) runs the brains; everyone else only shows the positions it broadcasts.
 import * as THREE from 'three';
 import { rigged } from './assets.js';
-import { FLOOR_Y, toCell, cellCenter, cellAt, C, MAPS } from './world.js';
+import { FLOOR_Y, toCell, cellCenter, cellAt, C, MAPS, WH } from './world.js';
 import { sfx } from './audio.js';
+import { applyDesign } from './lab.js';
 
 // kind: model, height (m), speeds, home floor/rooms, special behaviour
 export const KINDS = {
-  gaunt: { file: 'mon/gaunt-horror-rigged.glb', h: 2.5, walk: 1.9, chase: 4.1, sight: 22, hear: 1.8, anims: { idle: /idle/i, walk: /stalk/i, run: /chase/i } },
-  matron: { file: 'mon/asylum_matron.glb', h: 2.05, walk: 0, chase: 5.2, sight: 30, hear: 0, statue: true },
-  dog: { file: 'mon/ditch_dog.glb', h: 0.95, walk: 2.2, chase: 4.0, sight: 10, hear: 1.2, smell: true, anims: { idle: /idle/i, walk: /walk/i, run: /walk/i, attack: /attack/i } },
+  gaunt: { file: 'mon/gaunt-horror-rigged.glb', h: 2.5, walk: 1.9, chase: 4.1, sight: 0, hear: 2.3, blind: true, r: 0.5, anims: { idle: /idle/i, walk: /stalk/i, run: /chase/i } },
+  matron: { file: 'mon/asylum_matron.glb', h: 2.05, r: 0.45, walk: 0, chase: 5.2, sight: 30, hear: 0, statue: true },
+  dog: { file: 'mon/ditch_dog.glb', h: 0.95, r: 0.4, walk: 2.2, chase: 4.0, sight: 10, hear: 1.2, smell: true, anims: { idle: /idle/i, walk: /walk/i, run: /walk/i, attack: /attack/i } },
   wretch: { file: 'mon/tide_hunter_monster.glb', h: 2.2, walk: 0, chase: 4.6, sight: 8, hear: 0, ambush: true, anims: { idle: /idle/i, walk: /walk/i, run: /run/i } },
-  deer: { file: 'mon/human_deer.glb', h: 2.6, walk: 1.1, chase: 4.4, sight: 22, hear: 0.8, runOnly: true, anims: { idle: /IDLE/, walk: /WALK/, run: /CHASE/, attack: /ATTACK/ } },
-  wendigo: { file: 'mon/wendigo.glb', h: 2.9, walk: 1.6, chase: 4.1, sight: 20, hear: 2, mimic: true, glide: true },
+  deer: { file: 'mon/human_deer.glb', h: 2.6, walk: 1.1, chase: 4.4, sight: 22, hear: 0, motionOnly: true, r: 0.5, anims: { idle: /IDLE/, walk: /WALK/, run: /CHASE/, attack: /ATTACK/ } },
+  wendigo: { file: 'mon/wendigo.glb', h: 2.9, walk: 1.6, chase: 4.1, sight: 20, hear: 2, mimic: true, glide: true, hatesLight: true, r: 0.55 },
+  nurse: { file: 'mon/nurse.glb', h: 1.95, walk: 1.3, chase: 4.3, sight: 14, hear: 0.6, darkOnly: true, r: 0.42, anims: { idle: /idle/i, walk: /stalk/i, run: /chase/i } },
+  smiley: { file: 'mon/smiley.glb', h: 2.1, walk: 1.5, chase: 3.8, sight: 12, hear: 1.4, ceiling: true, r: 0.45, anims: { idle: /idle/i } },
+  mutant: { file: 'mon/mutant.glb', h: 2.1, walk: 1.6, chase: 5.4, sight: 16, hear: 1, charger: true, r: 0.5, anims: { idle: /anim/i, walk: /anim/i, run: /anim/i } },
 };
 
 export class Monster {
@@ -20,6 +24,7 @@ export class Monster {
     const { obj, clips } = await rigged(this.k.file); this.obj = obj; const g = new THREE.Group(); g.add(obj); this.root = g; scene.add(g);
     obj.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(obj); const s = this.k.h / Math.max(0.01, bb.max.y - bb.min.y); obj.scale.multiplyScalar(s);
     obj.updateMatrixWorld(true); const b2 = new THREE.Box3().setFromObject(obj); obj.position.y -= b2.min.y; obj.position.x -= (b2.min.x + b2.max.x) / 2; obj.position.z -= (b2.min.z + b2.max.z) / 2;
+    if (this.k.design) { applyDesign(obj, this.k.design); obj.updateMatrixWorld(true); const b3 = new THREE.Box3().setFromObject(obj); obj.position.y -= b3.min.y; }
     obj.traverse((m) => { if (m.isMesh) { m.castShadow = true; if (m.material) { m.material = m.material.clone(); m.material.roughness = Math.max(0.55, m.material.roughness || 0.7); } } });
     // darken any red that reads as blood into black oil
     obj.traverse((m) => { if (m.isMesh && m.material && m.material.map) { m.material.color.multiplyScalar(0.92);
@@ -29,12 +34,15 @@ export class Monster {
     this.play('idle'); this.eyes = new THREE.PointLight(0xff3020, 0, 3, 2); this.eyes.position.y = this.k.h * 0.9; g.add(this.eyes);
     this.sync();
   }
-  play(n) { if (this.anim === n && this.cur) return; this.anim = n; const a = this.acts[n] || this.acts.walk || this.acts.idle; if (!a || a === this.cur) return; a.reset().fadeIn(0.25).play(); if (this.cur) this.cur.fadeOut(0.25); this.cur = a; }
+  play(n) { if (!this.acts) return; if (this.anim === n && this.cur) return; this.anim = n; const a = this.acts[n] || this.acts.walk || this.acts.idle; if (!a || a === this.cur) return; a.reset().fadeIn(0.25).play(); if (this.cur) this.cur.fadeOut(0.25); this.cur = a; }
   sync() { if (!this.root) return; this.root.position.set(this.x, FLOOR_Y[this.f], this.z); this.root.rotation.y = this.yaw; this.root.visible = this.active && this.alpha > 0.02; }
   // visual-only update (also used on clients)
   animate(dt) {
     this.t += dt; if (this.mixer) this.mixer.update(dt * (this.anim === 'run' ? 1.15 : 1));
     if (this.k.glide && this.obj) { this.obj.position.y = Math.sin(this.t * 1.7) * 0.06; this.obj.rotation.z = Math.sin(this.t * 0.9) * 0.05; this.obj.rotation.x = this.anim === 'run' ? 0.18 : 0.05; }
+    if (this.k.ceiling && this.obj) { // it hangs from the ceiling and drops when it is right on you
+      if (this.baseY == null) this.baseY = this.obj.position.y; this.drop = Math.max(0, Math.min(1, (this.drop || 0) + (this.state === 'chase' && this.near ? 3 : -1.5) * dt));
+      this.obj.rotation.x = Math.PI * (1 - this.drop); this.obj.position.y = this.baseY + (WH - 0.05) * (1 - this.drop); }
     if (this.k.statue && this.obj) this.obj.rotation.z = this.speed > 0.1 ? Math.sin(this.t * 25) * 0.02 : 0;
     if (this.eyes) this.eyes.intensity = this.state === 'chase' ? 2.2 : 0.4;
     this.sync();
@@ -49,7 +57,7 @@ export class Monster {
           if (this.doorT > (held ? 3.2 : 0.7)) { d.target = 1; d.autoClose = 4; this.doorT = 0; sfx.door(); } }
         const [dx0, dz0] = d.center; if (Math.hypot(dx0 - this.x, dz0 - this.z) < 1.1) { this.speed = 0; this.yaw = Math.atan2(dx0 - this.x, dz0 - this.z); return true; } } }
     const dx = gx - this.x, dz = gz - this.z, l = Math.hypot(dx, dz); if (l < 0.05) return true;
-    const step = Math.min(l, speed * dt); let nx = this.x + dx / l * step, nz = this.z + dz / l * step; [nx, nz] = W.collide(this.f, nx, nz, 0.34);
+    const step = Math.min(l, speed * dt); let nx = this.x + dx / l * step, nz = this.z + dz / l * step; [nx, nz] = W.collide(this.f, nx, nz, this.k.r || 0.45);
     this.x = nx; this.z = nz; const want = Math.atan2(dx, dz); let d = want - this.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); this.yaw += d * Math.min(1, dt * 8); this.speed = speed; return true;
   }
   randomPoint(W, rooms) { for (let i = 0; i < 40; i++) { const z = (Math.random() * MAPS[this.f].length) | 0, x = (Math.random() * 20) | 0; const c = cellAt(this.f, x, z); if (c !== '#' && (!rooms || rooms.includes(c))) return cellCenter(x, z); } return [this.x, this.z]; }
@@ -59,18 +67,26 @@ export class Monster {
 function grab(m, p, ctx) { if (m.lungeT != null || (m.cool || 0) > 0) return; m.lungeT = m.k.statue ? 0.25 : 0.7; m.lungePrey = p.id; if (ctx.warn) ctx.warn(m, p); }
 export function think(m, W, players, dt, ctx) {
   m.timer -= dt; m.speed = 0; m.cool = Math.max(0, (m.cool || 0) - dt);
-  if (!m.active) return;
+  if (!m.active || !m.root) return;
+  if (m.sleepT > 0) { m.sleepT -= dt; m.play('idle'); m.state = 'idle'; return; }
   if (m.lungeT != null) { m.lungeT -= dt; const p = players.find((q) => q.id === m.lungePrey); if (p) m.yaw = Math.atan2(p.x - m.x, p.z - m.z); m.play(m.acts.attack ? 'attack' : 'idle');
     if (m.lungeT <= 0) { m.lungeT = null; m.cool = 1.4; if (p && p.alive && !p.ghost && p.f === m.f && Math.hypot(p.x - m.x, p.z - m.z) < 1.75 && (!p.hidden || m.mem > 3 || m.k.smell)) ctx.caught(p, m); } return; }
   const alive = players.filter((p) => p.alive && !p.ghost && p.f === m.f);
   let best = null, bd = 1e9;
   for (const p of alive) { const d = Math.hypot(p.x - m.x, p.z - m.z);
     const facing = Math.cos(Math.atan2(p.x - m.x, p.z - m.z) - m.yaw) > -0.45 || d < 5 || (p.lit && d < 9);
-    const seen = !p.hidden && d < m.k.sight * (p.crouch ? 0.65 : 1) * (p.dark ? 0.6 : 1) * (p.lit ? 1.35 : 1) && facing && W.los(m.f, m.x, m.z, p.x, p.z);
-    const heard = m.k.hear && p.noise * m.k.hear > d;
+    const seen = !p.hidden && !p.smoke && d < m.k.sight * (p.crouch ? 0.65 : 1) * (p.dark ? 0.6 : 1) * (p.lit ? 1.35 : 1) && facing && W.los(m.f, m.x, m.z, p.x, p.z);
+    const heard = (m.k.hear && p.noise * m.k.hear > d) || (m.k.blind && !p.hidden && d < 1.8 && !p.holdBreath) || (m.k.blind && p.voice && p.voice * 14 > d);
+    if (m.k.motionOnly && p.noise < 0.5) continue; // standing still: invisible to it
     if ((seen || heard) && d < bd) { best = p; bd = d; } }
   if (m.calmT > 0) { m.calmT -= dt; best = null; }
-  const catchR = 1.05;
+  const catchR = 1.05; m.near = bd < 3;
+  // the nurse only moves in the dark: any light on her freezes her where she stands
+  if (m.k.darkOnly && ctx.isLit && ctx.isLit(m)) { m.speed = 0; m.play('idle'); if (m.mixer) m.frozen = true; return; } m.frozen = false;
+  // the wendigo backs off from a flashlight in its face
+  if (m.k.hatesLight && ctx.isLit && ctx.isLit(m)) { const p = alive[0]; if (p) { const a = Math.atan2(m.x - p.x, m.z - p.z); m.moveToward(W, m.x + Math.sin(a) * 3, m.z + Math.cos(a) * 3, 1.2, dt); } m.play('walk'); return; }
+  // the charger runs in short bursts, then stops to breathe
+  if (m.k.charger) { if (m.rest > 0) { m.rest -= dt; m.play('idle'); if (Math.random() < dt * 0.8) ctx.sound(m, 'growl'); return; } if (m.state === 'chase') { m.burst = (m.burst || 0) + dt; if (m.burst > 4) { m.burst = 0; m.rest = 3; m.state = 'search'; } } }
   // special: matron moves only while nobody looks at her
   if (m.k.statue) {
     const watched = alive.some((p) => { const d = Math.hypot(p.x - m.x, p.z - m.z); if (d > 22) return false; const a = Math.atan2(m.x - p.x, m.z - p.z); let df = a - (p.yaw + Math.PI); df = Math.atan2(Math.sin(df), Math.cos(df)); return Math.abs(df) < 0.75 && W.los(m.f, p.x, p.z, m.x, m.z); });
@@ -81,7 +97,7 @@ export function think(m, W, players, dt, ctx) {
   }
   // special: the vent ambusher drops near a player now and then, lunges, and climbs away
   if (m.k.ambush) {
-    if (m.state === 'idle') { m.alpha = 0; if (m.timer <= 0 && alive.length) { const p = alive[(Math.random() * alive.length) | 0]; const a = p.yaw + Math.PI + (Math.random() - 0.5) * 1.2; let x = p.x + Math.sin(a) * 4.5, z = p.z + Math.cos(a) * 4.5; [x, z] = W.collide(m.f, x, z, 0.4);
+    if (m.state === 'idle') { m.alpha = 0; if (m.timer < 2.2 && m.timer > 0 && !m.warned && alive.length) { m.warned = true; sfx.scratch(); } if (m.timer <= 0 && alive.length) { m.warned = false; const p = alive[(Math.random() * alive.length) | 0]; const a = p.yaw + Math.PI + (Math.random() - 0.5) * 1.2; let x = p.x + Math.sin(a) * 4.5, z = p.z + Math.cos(a) * 4.5; [x, z] = W.collide(m.f, x, z, 0.4);
         if (cellAt(m.f, toCell(x), toCell(z)) !== '#' && W.los(m.f, p.x, p.z, x, z)) { m.x = x; m.z = z; m.state = 'drop'; m.timer = 1.1; m.alpha = 1; m.prey = p.id; sfx.shriek(0, 0.8); ctx.flicker(m.f); } else m.timer = 2; } }
     else if (m.state === 'drop') { m.play('idle'); const p = alive.find((q) => q.id === m.prey); if (p) m.yaw = Math.atan2(p.x - m.x, p.z - m.z); if (m.timer <= 0) { m.state = 'chase'; m.timer = 3.2; } }
     else if (m.state === 'chase') { m.play('run'); const p = alive.find((q) => q.id === m.prey); if (!p || p.hidden || m.timer <= 0) { m.state = 'idle'; m.timer = 28 + Math.random() * 25; m.alpha = 0; return; }

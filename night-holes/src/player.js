@@ -34,7 +34,7 @@ export class Player {
     if (moving) {
       const s = Math.sin(this.yaw), c = Math.cos(this.yaw);
       let nx = this.x + (mx * c + mz * s) * speed * dt, nz = this.z + (-mx * s + mz * c) * speed * dt;
-      if (!this.ghost) [nx, nz] = W.collide(this.f, nx, nz, 0.32);
+      if (!this.ghost) [nx, nz] = W.collide(this.f, nx, nz, 0.38);
       this.x = nx; this.z = nz;
       this.bob += dt * speed * 2.2; this.stepT -= dt * speed;
       if (this.stepT <= 0 && !this.ghost) { this.stepT = 1.25; if (!this.crouch) sfx.step(this.running); }

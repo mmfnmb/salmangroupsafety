@@ -5,11 +5,17 @@ import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 
 const loader = new GLTFLoader(); loader.setMeshoptDecoder(MeshoptDecoder);
-const cache = new Map(), bundles = {}, PERFILE = ['hum', 'car'];
-// models ship as base64 inside assets/<folder>.json (the page host does not serve .glb files)
+const cache = new Map(), bundles = {};
+// one JSON bundle per model; kept in the browser cache so the second visit starts at once
+const CACHE = 'nh-assets-v3'; let manifest = null; export const loaded = { bytes: 0 };
+export async function getManifest() { if (!manifest) manifest = fetch('assets/manifest.json').then((r) => r.json()).catch(() => ({})); return manifest; }
+async function fetchJSON(url) {
+  let c = null; try { c = await caches.open(CACHE); const hit = await c.match(url); if (hit) return hit.json(); } catch (e) { c = null; }
+  const r = await fetch(url); if (!r.ok) throw new Error(url + ' ' + r.status); if (c) try { await c.put(url, r.clone()); } catch (e) {} return r.json();
+}
 async function buffer(path) {
-  const [dir, file] = path.split('/'); const key = PERFILE.includes(dir) ? dir + '-' + file.replace(/\.glb$/, '') : dir;
-  if (!bundles[key]) bundles[key] = fetch('assets/' + key + '.json').then((r) => r.json());
+  const [dir, file] = path.split('/'); const key = dir + '-' + file.replace(/\.glb$/, '');
+  if (!bundles[key]) bundles[key] = fetchJSON('assets/' + key + '.json').then(async (j) => { const m = await getManifest(); loaded.bytes += m[path] || 0; return j; });
   const b64 = (await bundles[key])[file]; if (!b64) throw new Error('missing ' + path);
   const bin = atob(b64), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u.buffer;
 }
@@ -26,8 +32,10 @@ export function load(path) {
   if (!cache.has(path)) cache.set(path, buffer(path).then((buf) => loader.parseAsync(buf, '')).then(shrink).catch((e) => { console.warn('model failed', path, e); return null; }));
   return cache.get(path);
 }
+// progress reports the share done plus megabytes: onProgress(fraction, doneMB, totalMB)
 export async function loadAll(paths, onProgress) {
-  let done = 0; await Promise.all(paths.map((p) => load(p).then(() => onProgress && onProgress(++done / paths.length))));
+  const m = await getManifest(); const total = paths.reduce((s, p) => s + (m[p] || 0), 0) / 1e6; let done = 0, mb = 0;
+  await Promise.all(paths.map((p) => load(p).then(() => { done++; mb += (m[p] || 0) / 1e6; onProgress && onProgress(done / paths.length, mb, total); })));
 }
 // a static copy (meshes share geometry and materials)
 export async function inst(path) { const g = await load(path); if (!g) return new THREE.Group(); const o = g.scene.clone(true); o.traverse((m) => { if (m.isMesh) { m.castShadow = false; m.receiveShadow = true; } }); return o; }

@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { inst, rigged } from './assets.js';
 import { cellCenter, C, WH, MAPS, cellAt, material, boxGeo, SECTIONS, sectionAt } from './world.js';
+import { dressRooms, bodyBag, stainDecal } from './props.js';
 
 const STD = (color, rough = 0.6, metal = 0, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: metal, ...extra });
 const glowTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.3, 'rgba(255,255,255,.35)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
@@ -25,9 +26,10 @@ const ITEM_MAKERS = {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(0.21, 0.27), STD(0xffffff, 0.9, 0, { map: tex, side: THREE.DoubleSide })); m.rotation.x = -Math.PI / 2; m.position.y = 0.006; return m; },
   adrenaline: () => { const g = new THREE.Group(); g.add(mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.14, 12), STD(0xf2f2f2, 0.2, 0, { transparent: true, opacity: 0.8 }))); g.add(mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.04, 12), STD(0xff7a00, 0.4, 0, { emissive: 0x803000, emissiveIntensity: 0.4 }), 0, 0.08)); g.rotation.z = Math.PI / 2; g.position.y = 0.017; return g; },
   lighter: () => { const g = new THREE.Group(); g.add(mesh(new THREE.BoxGeometry(0.025, 0.07, 0.012), STD(0xb01818, 0.35))); g.add(mesh(new THREE.BoxGeometry(0.025, 0.015, 0.012), STD(0xcccccc, 0.2, 1), 0, 0.042)); g.rotation.x = -Math.PI / 2; g.position.y = 0.007; return g; },
+  vial: (col) => { const g = new THREE.Group(); g.add(mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.11, 12), STD(0xe8f0f4, 0.08, 0, { transparent: true, opacity: 0.55 }), 0, 0.055)); g.add(mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.07, 12), STD(col, 0.3, 0, { emissive: col, emissiveIntensity: 0.5 }), 0, 0.036)); g.add(mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.02, 12), STD(0x222222, 0.5), 0, 0.12)); return g; },
   trap: () => { const g = new THREE.Group(); const body = mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.035, 20), STD(0x9a1010, 0.4, 0.4), 0, 0.06); body.rotation.x = Math.PI / 2; g.add(body); for (const s of [-1, 1]) g.add(mesh(new THREE.SphereGeometry(0.022, 10, 8, 0, 6.3, 0, 1.6), STD(0xcccccc, 0.25, 1), s * 0.03, 0.1)); return g; },
 };
-const ITEM_DEF = { battery: ['battery', 0xffe28a], bottle: ['bottle', 0x39ff9a], fuse_r: ['fuse', 0xff3b30], fuse_y: ['fuse', 0xffcc00], fuse_b: ['fuse', 0x2f7dff], screwdriver: ['screwdriver', 0xffe28a], green: ['card', 0x22dd55], red: ['card', 0xff2233], key: ['key', 0xffd27a], tape: ['tape', 0xffffff], note: ['note', 0xfff2c0], adrenaline: ['adrenaline', 0xff9a3c], lighter: ['lighter', 0xffb050], trap: ['trap', 0xff6a6a] };
+const ITEM_DEF = { battery: ['battery', 0xffe28a], bottle: ['bottle', 0x39ff9a], fuse_r: ['fuse', 0xff3b30], fuse_y: ['fuse', 0xffcc00], fuse_b: ['fuse', 0x2f7dff], screwdriver: ['screwdriver', 0xffe28a], green: ['card', 0x22dd55], red: ['card', 0xff2233], key: ['key', 0xffd27a], tape: ['tape', 0xffffff], note: ['note', 0xfff2c0], adrenaline: ['adrenaline', 0xff9a3c], lighter: ['lighter', 0xffb050], trap: ['trap', 0xff6a6a], chem_r: ['vial', 0xff3030], chem_b: ['vial', 0x3080ff], chem_y: ['vial', 0xffd020] };
 
 // ---------------------------------------------------------------- furniture made of real materials
 async function locker() { const g = new THREE.Group(); const metal = await material('metal_plate', 1, { color: 0x56606a });
@@ -38,7 +40,7 @@ function crt(screen) { const g = new THREE.Group(); const plastic = STD(0xcbc3ad
   const scr = mesh(new THREE.PlaneGeometry(0.33, 0.25), new THREE.MeshStandardMaterial({ color: 0x000000, emissive: 0xffffff, emissiveMap: screen, emissiveIntensity: 1.2, roughness: 0.15 }), 0, 0.21, 0.181); g.add(scr);
   g.add(mesh(new THREE.BoxGeometry(0.44, 0.03, 0.16), plastic, 0, 0.015, 0.3)); g.userData.screen = scr; return g; }
 export function screenTex(lines, col = '#5cff8a') { return canvasTex(256, 192, (c) => { c.fillStyle = '#031208'; c.fillRect(0, 0, 256, 192); c.fillStyle = col; c.font = '14px monospace'; lines.forEach((l, i) => c.fillText(l, 10, 22 + i * 18)); c.fillStyle = 'rgba(0,0,0,.25)'; for (let y = 0; y < 192; y += 3) c.fillRect(0, y, 256, 1); }); }
-async function steelTable(w = 1.8, d = 0.8) { const g = new THREE.Group(); const m = await material('metal_plate', 1, { color: 0xb8c0c6 }); g.add(mesh(boxGeo(w, 0.05, d, 1), m, 0, 0.9)); for (const sx of [-1, 1]) for (const sz of [-1, 1]) g.add(mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.9, 8), m, sx * (w / 2 - 0.08), 0.45, sz * (d / 2 - 0.08))); return g; }
+export async function steelTable(w = 1.8, d = 0.8) { const g = new THREE.Group(); const m = await material('metal_plate', 1, { color: 0xb8c0c6 }); g.add(mesh(boxGeo(w, 0.05, d, 1), m, 0, 0.9)); for (const sx of [-1, 1]) for (const sz of [-1, 1]) g.add(mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.9, 8), m, sx * (w / 2 - 0.08), 0.45, sz * (d / 2 - 0.08))); return g; }
 // a cloth sheet draped over a body lying on its back (no body is shown)
 function sheet(len = 1.85) { const geo = new THREE.PlaneGeometry(len + 0.3, 1.0, 64, 28); const p = geo.attributes.position;
   for (let i = 0; i < p.count; i++) { const x = p.getX(i) / (len / 2), y = p.getY(i), ax = Math.abs(y);
@@ -49,10 +51,13 @@ function sheet(len = 1.85) { const geo = new THREE.PlaneGeometry(len + 0.3, 1.0,
     p.setZ(i, 0.04 + top - fall + Math.sin(x * 23 + y * 9) * 0.004); }
   geo.computeVertexNormals(); const m = new THREE.Mesh(geo, STD(0xa9a59a, 1, 0, { side: THREE.DoubleSide })); m.rotation.x = -Math.PI / 2; m.castShadow = true; m.receiveShadow = true; return m; }
 // a real person lying still (the friend, and the workers who never left)
-export async function lyingBody(id, faceDown = false) { const { obj, clips } = await rigged('hum/hum_' + id + '.glb'); obj.updateMatrixWorld(true);
-  const bb = new THREE.Box3().setFromObject(obj); obj.scale.multiplyScalar(1.74 / (bb.max.y - bb.min.y));
-  const mix = new THREE.AnimationMixer(obj); const c = clips.find((q) => /idle/.test(q.name)); if (c) { const a = mix.clipAction(c); a.play(); mix.update(0.3); a.paused = true; }
-  const g = new THREE.Group(); obj.rotation.x = faceDown ? Math.PI / 2 : -Math.PI / 2; obj.position.y = 0.12; g.add(obj); g.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.frustumCulled = false; } }); return g; }
+export async function lyingBody(id, mode = 'side') { const { obj, clips } = await rigged('hum/hum_' + id + '.glb'); obj.updateMatrixWorld(true);
+  const bb = new THREE.Box3().setFromObject(obj); obj.scale.multiplyScalar(1.7 / (bb.max.y - bb.min.y));
+  const mix = new THREE.AnimationMixer(obj); const c = clips.find((q) => (mode === 'side' ? /sit/ : /idle/).test(q.name)) || clips[0]; if (c) { const a = mix.clipAction(c); a.play(); mix.update(mode === 'side' ? 0.8 : 0.3); a.paused = true; }
+  const g = new THREE.Group(), inner = new THREE.Group(); inner.add(obj); g.add(inner);
+  if (mode === 'side') { inner.rotation.z = Math.PI / 2; inner.rotation.x = 0.12; } else inner.rotation.x = Math.PI / 2;
+  g.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.frustumCulled = false; } }); g.updateMatrixWorld(true); const b2 = new THREE.Box3().setFromObject(g); inner.position.y -= b2.min.y - 0.01;
+  inner.position.x -= (b2.min.x + b2.max.x) / 2; inner.position.z -= (b2.min.z + b2.max.z) / 2; return g; }
 
 // a wall map: the floor plan with a red "you are here" dot
 const ROOM_NAMES = [{ K: 'STORAGE', S: 'SECURITY', I: 'DIRECTOR', E: 'LIFT', T: 'SPECIMEN LAB', X: 'CHEMISTRY', Y: 'CAFETERIA', C: 'CLINIC', M: 'MORGUE', O: 'OFFICES', B: 'WC' },
@@ -120,7 +125,7 @@ export async function populate(W, rand, state) {
   await onSlot('house/basin.glb', 0, 'C'); await onSlot('street/medical_box.glb', 0, 'C', { y: 0 });
   { const r = await onSlot('house/drawer_cabinet.glb', 0, 'C'); if (r) station(0, r.s.x + Math.sin(r.s.ry) * 0.5, r.s.z + Math.cos(r.s.ry) * 0.5, 'drawer'); }
   // morgue: covered bodies on steel tables and a wall of cold drawers
-  { const [cx, cz] = center(0, 'M'); for (const [dx, dz] of [[-1.6, -1.4], [1.6, -1.4], [0, 1.6]]) { const tb = await steelTable(2.0, 0.85); put(tb, 0, cx + dx, cz + dz, Math.PI / 2); solid(tb, 0); const sh = sheet(); sh.position.set(cx + dx, 0.93, cz + dz); sh.rotation.z = Math.PI / 2; W.groups[0].add(sh); } }
+  { const [cx, cz] = center(0, 'M'); for (const [dx, dz] of [[-1.6, -1.4], [1.6, -1.4], [0, 1.6]]) { const tb = await steelTable(2.0, 0.85); put(tb, 0, cx + dx, cz + dz, Math.PI / 2); solid(tb, 0); const bb = bodyBag(dx === 0 ? 'sheet' : 'bag', dx > 0); bb.position.set(cx + dx, 0.93, cz + dz); bb.rotation.y = Math.PI / 2; W.groups[0].add(bb); } }
   for (let i = 0; i < 2; i++) await custom(async () => { const m = await material('metal_plate', 1, { color: 0xaab2b8 }); const g = new THREE.Group(); g.add(mesh(new THREE.BoxGeometry(2.2, 2.2, 0.7), m, 0, 1.1)); for (let a = 0; a < 3; a++) for (let b = 0; b < 3; b++) { g.add(mesh(new THREE.BoxGeometry(0.62, 0.55, 0.02), STD(0x9aa2a8, 0.35, 0.8), -0.72 + a * 0.72, 0.45 + b * 0.68, 0.36)); g.add(mesh(new THREE.BoxGeometry(0.2, 0.03, 0.04), STD(0x555555, 0.3, 1), -0.72 + a * 0.72, 0.6 + b * 0.68, 0.38)); } return g; }, 0, 'M', { out: 0.1 });
   // offices
   for (let i = 0; i < 2; i++) await computer(0, 'O', ['MEMO 10/06/88', 'Night shift: 4 staff', 'Lift needs GREEN card', 'B1 power is DOWN.', 'Fuses in storage.'], 'computer', { mail: 'office' });
@@ -161,7 +166,7 @@ export async function populate(W, rand, state) {
       else g.add(mesh(new THREE.CylinderGeometry(0.56, 0.56, 2.1, 24, 1, true), STD(0xcfe8ff, 0.05, 0, { transparent: true, opacity: 0.14, depthWrite: false, side: THREE.DoubleSide }), 0, 1.4)); return g; }, 2, 'Z', { out: 0.3 });
     if (r && r.o.userData.broken) { state.brokenPod = { f: 2, x: r.s.x, z: r.s.z }; } }
   // autopsy / quarantine
-  { const [cx, cz] = center(2, 'U'); const tb = await steelTable(2.0, 0.85); put(tb, 2, cx, cz, 0); solid(tb, 2); const sh = sheet(); sh.position.set(cx, 0.93, cz); W.groups[2].add(sh); }
+  { const [cx, cz] = center(2, 'U'); const tb = await steelTable(2.0, 0.85); put(tb, 2, cx, cz, 0); solid(tb, 2); const bb = bodyBag('plastic', true); bb.position.set(cx, 0.93, cz); W.groups[2].add(bb); }
   await onSlot('house/steel_frame_shelves_03.glb', 2, 'U'); await onSlot('street/medical_box.glb', 2, 'U');
   // control room: wire panel
   { const r = await computer(2, 'Q', ['EMERGENCY TUNNEL', 'STATUS: SEALED', 'WIRE PANEL FAULT', 'RESET REQUIRED', '> EXIT CODE: ????'], 'wires'); }
@@ -188,6 +193,7 @@ export async function populate(W, rand, state) {
     for (let i = 0; i < 2; i++) { const s = S(f, 'H'); if (!s) continue; const px = s.x - Math.sin(s.ry) * 0.63, pz = s.z - Math.cos(s.ry) * 0.63; const tex = new THREE.CanvasTexture(mapCanvas(f, [px, pz])); tex.colorSpace = THREE.SRGBColorSpace;
       const m = mesh(new THREE.PlaneGeometry(0.9, 0.73), STD(0xffffff, 0.7, 0, { map: tex }), 0, 0, 0); put(m, f, px, pz, s.ry); m.position.y = 1.55; station(f, s.x, s.z, 'map', { here: [px, pz] }); } }
   wallThing(0, 'H', 'switch', button(0xdddddd, 'LIGHTS'), { room: 'H' }); wallThing(1, 'H', 'switch', button(0xdddddd, 'LIGHTS'), { room: 'H' });
+  await dressRooms(W, rand, { center, put, solid, custom, onSlot, steelTable, station });
   // wings: a painted stripe on every hall floor in the wing's colour, and hanging signs at the borders
   for (let f = 0; f < 3; f++) { const M = MAPS[f];
     M.forEach((r, z) => [...r].forEach((c, x) => { if (c !== 'H') return; const sec = sectionAt(f, x); const [cx, cz] = cellCenter(x, z);
@@ -203,9 +209,9 @@ export async function populate(W, rand, state) {
 export async function placeBodies(W, rand, friendId) {
   const out = {}; const [kx, kz] = cellCenter(1, 2);
   const friend = await lyingBody(friendId); friend.position.set(kx + 0.3, 0, kz - 0.2); friend.rotation.y = 0.4; W.groups[0].add(friend); out.friend = friend; W.addBox(0, friend.position.x, friend.position.z, 1.1, 1.1, 0.4);
-  const w1 = await lyingBody('Medical_Male_01', true); const [hx, hz] = cellCenter(1, 6); w1.position.set(hx, 0, hz); w1.rotation.y = 2.1; W.groups[0].add(w1); W.addBox(0, hx, hz, 1.1, 1.1, 0.4);
-  const w2 = await lyingBody('Construction_Male_01'); const [bx, bz] = cellCenter(9, 9); w2.position.set(bx, -0.0, bz); w2.rotation.y = -0.6; W.groups[1].add(w2); W.addBox(1, bx, bz, 1.1, 1.1, 0.4);
-  for (const [f, x, z] of [[1, 3, 9], [2, 5, 7], [0, 12, 8]]) { const s = sheet(); const [sx, sz] = cellCenter(x, z); s.position.set(sx, 0.0, sz); s.rotation.z = rand() * 3; W.groups[f].add(s); W.addBox(f, sx, sz, 1.2, 1.2, 0.4); }
+  // the workers who never left: zipped in bags, wrapped in plastic or under a sheet, some with a small dried stain
+  const spots = [[0, 1, 6, 'bag', true], [1, 9, 9, 'plastic', false], [1, 3, 9, 'sheet', true], [2, 5, 7, 'bag', false], [0, 12, 8, 'plastic', true]];
+  for (const [f, x, z, kind, st] of spots) { const [sx, sz] = cellCenter(x, z); const b = bodyBag(kind, st); b.position.set(sx, 0, sz); b.rotation.y = rand() * 6; W.groups[f].add(b); W.addBox(f, sx, sz, 1.0, 1.0, 0.4); if (st) W.groups[f].add(stainDecal(0.5, sx + 0.4, 0.012, sz + 0.2)); }
   return out;
 }
 
@@ -216,6 +222,7 @@ export function itemPlan(rand) {
   plan.push(['fuse_r', fuseRooms[0]], ['fuse_y', fuseRooms[1]], ['fuse_b', fuseRooms[2]]);
   plan.push(['screwdriver', pick(['1W', '1L', '0X'])], ['note', '0M', 2], ['note', pick(['1K', '1W', '1L']), 3], ['red', '2U'], ['tape', pick(['2R', '2Z', '2H'])]);
   plan.push(['lighter', '0K'], ['adrenaline', pick(['0C', '1L'])], ['adrenaline', pick(['2U', '2R'])], ['trap', pick(['0Y', '0O'])], ['trap', pick(['1W', '1A'])]);
+  for (const c of ['chem_r', 'chem_b', 'chem_y']) for (let i = 0; i < 2; i++) plan.push([c, pick(['0X', '0T', '0C', '1L', '1V', '2U', '2R', '0O'])]);
   for (let i = 0; i < 4; i++) plan.push(['battery', pick(['0H', '0O', '0S', '1H', '1W', '2H', '2Q'])]);
   for (let i = 0; i < 5; i++) plan.push(['bottle', pick(['0T', '0X', '0Y', '1W', '1K', '2H', '2Z'])]);
   return plan;

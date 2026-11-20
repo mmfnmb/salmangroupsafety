@@ -158,6 +158,28 @@ html[lang=ar] #storyCap { font-family: 'Cairo', sans-serif; font-weight: 700; }
 #langSel option { background: #07090b; }
 .mcard > *, .crow > *, .joinRow > * { min-width: 0; } .cbtn { letter-spacing: .07em; overflow-wrap: anywhere; } .joinRow .cbtn { max-width: 55%; }
 .kpad button, .pbtn, .pclose, .bottle, .valve, .slot, .fuse, .wn { border-radius: 0 !important; }
+
+/* camcorder overlay and night vision */
+#view.nv { filter: grayscale(1) brightness(1.7) contrast(1.2) sepia(1) hue-rotate(60deg) saturate(3.2); }
+#camHud { position: fixed; inset: 0; pointer-events: none; font: 500 15px var(--mono); color: #d8ffd8; text-shadow: 0 0 4px #000; z-index: 6; }
+#camRec { position: fixed; top: max(16px, env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); color: #ff3b30; letter-spacing: .1em; }
+#camTime { position: fixed; top: max(40px, env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); } .camDate { position: fixed; bottom: max(70px, env(safe-area-inset-bottom, 0px)); left: max(20px, env(safe-area-inset-left, 0px)); }
+.camBattery { position: fixed; bottom: max(70px, env(safe-area-inset-bottom, 0px)); right: max(20px, env(safe-area-inset-right, 0px)); width: 46px; height: 16px; border: 2px solid #d8ffd8; } .camBattery i { display: block; height: 100%; background: #d8ffd8; }
+.camCorners { position: fixed; inset: 8%; border: 2px solid transparent; background: linear-gradient(#d8ffd8, #d8ffd8) top left / 30px 2px no-repeat, linear-gradient(#d8ffd8, #d8ffd8) top left / 2px 30px no-repeat, linear-gradient(#d8ffd8, #d8ffd8) top right / 30px 2px no-repeat, linear-gradient(#d8ffd8, #d8ffd8) top right / 2px 30px no-repeat, linear-gradient(#d8ffd8, #d8ffd8) bottom left / 30px 2px no-repeat, linear-gradient(#d8ffd8, #d8ffd8) bottom left / 2px 30px no-repeat, linear-gradient(#d8ffd8, #d8ffd8) bottom right / 30px 2px no-repeat, linear-gradient(#d8ffd8, #d8ffd8) bottom right / 2px 30px no-repeat; }
+/* chat */
+#chatLog { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(34% + 40px); display: grid; gap: 4px; max-width: min(60vw, 420px); pointer-events: none; z-index: 7; }
+.chatLine { background: #000a; border-inline-start: 2px solid #c9c2ae; padding: 3px 8px; font: 14px var(--body); transition: opacity 2s; } .chatLine b { color: #3cff9a; } .chatLine.fade { opacity: 0; }
+#chatBox { position: fixed; left: 50%; bottom: 18%; transform: translateX(-50%); width: min(520px, 92vw); display: grid; gap: 6px; z-index: 9; }
+#chatIn { font: 16px var(--body); padding: 10px; background: #07090bee; color: #e9e4d4; border: 1px solid #c9c2ae88; border-radius: 0; } #chatQuick { display: flex; gap: 6px; flex-wrap: wrap; } #chatQuick .cbtn { width: auto; padding: 6px 10px; font-size: 13px; }
+#micState { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); top: 60px; font: 12px var(--body); letter-spacing: .1em; text-transform: uppercase; background: #000a; border: 1px solid #c9c2ae55; padding: 3px 8px; z-index: 7; }
+/* recordings */
+.card.wide { width: min(820px, 100%); } #recList { display: grid; gap: 8px; } #recList h3 { margin: 10px 0 2px; font-family: var(--display); font-weight: 400; }
+.recItem { display: grid; grid-template-columns: 128px 1fr; gap: 10px; text-align: start; border-radius: 0; background: #0b0f13; border: 1px solid var(--line); padding: 6px; } .recItem img { width: 128px; height: 72px; object-fit: cover; background: #000; } .recItem small { display: block; color: var(--dim); font-weight: 500; }
+#recImg { width: 100%; image-rendering: pixelated; background: #000; aspect-ratio: 16/9; } #recInfo { color: #ff6a5a; font: 15px var(--mono); }
+/* monster lab and builders */
+#mlab { align-items: flex-end; justify-content: flex-end; pointer-events: none; } .mlabCard { pointer-events: auto; width: min(380px, 100%); max-height: 100%; overflow: auto; background: #07090bdd; border: 2px solid #c9c2ae55; padding: 14px; box-sizing: border-box; display: grid; gap: 8px; }
+.mlabCard h2 { font-family: var(--display); font-weight: 400; margin: 0; } .bRow { display: grid; grid-template-columns: 110px 1fr; gap: 8px; align-items: center; font-size: 14px; color: #c9c2ae; } .bRow select, .bRow input { background: #0b0f13; color: #e9e4d4; border: 1px solid #c9c2ae55; border-radius: 0; padding: 5px; font: 14px var(--body); min-width: 0; }
+#mlSaved .cbtn { width: auto; padding: 5px 9px; font-size: 12px; } .pbox .bRow { text-align: start; } .growBar { height: 8px; border: 1px solid #c9c2ae77; } .growBar i { display: block; height: 100%; width: 0; background: #3cff9a; }
 </style>
 
 <canvas id="view"></canvas>
@@ -168,6 +190,7 @@ html[lang=ar] #storyCap { font-family: 'Cairo', sans-serif; font-weight: 700; }
     <p class="tag" data-t="tagline"></p>
     <button class="cbtn main" id="btnNew" data-t="new_game"></button>
     <button class="cbtn" id="btnSolo" data-t="quick"></button>
+    <div class="crow"><button class="cbtn" id="btnRec" data-t="rec_title"></button><button class="cbtn" id="btnLab" data-t="mlab_title"></button></div>
     <hr>
     <div class="crow"><button class="cbtn" id="btnCreate" data-t="create"></button><button class="cbtn" id="btnShop" data-t="zombie"></button></div>
     <div class="joinRow"><input id="joinCode" maxlength="5" placeholder="ABCD" aria-label="room code"><button class="cbtn" id="btnJoin" data-t="join" style="width:auto"></button></div>
@@ -211,9 +234,17 @@ html[lang=ar] #storyCap { font-family: 'Cairo', sans-serif; font-weight: 700; }
     <button id="bRun" data-t="run"></button><button id="bCrouch" data-t="crouch"></button><button id="bLight" data-t="light"></button>
     <button id="bThrow" data-t="throw"></button><button id="bAdr" data-t="use_adr"></button><button id="bTrap" data-t="use_trap"></button>
     <button id="bLighter" data-t="lighter"></button><button id="bNotes" data-t="journal"></button>
+    <button id="bCam" data-t="cam"></button><button id="bChat" data-t="chat"></button><button id="bTalk" data-t="talk"></button><button id="bItem" data-t="use_item"></button>
   </div>
 </div>
 <div id="panel" hidden></div>
+<div id="camHud" hidden><span id="camRec">&#9679; REC</span><span id="camTime">00:00</span><span class="camDate">03.03.2025</span><div class="camBattery"><i id="camBatt"></i></div><div class="camCorners"></div></div>
+<div id="chatLog"></div><div id="micState" hidden></div>
+<div id="chatBox" hidden><input id="chatIn" maxlength="160" autocomplete="off"><div id="chatQuick"></div></div>
+<div id="recLayer" class="layer" hidden><div class="card wide"><div class="row" style="justify-content:space-between;align-items:center"><h2 data-t="rec_title"></h2><button class="cbtn" id="recBack" data-t="back" style="width:auto"></button></div>
+  <div id="recList"></div><div id="recPlayer" hidden><img id="recImg" alt=""><p id="recInfo"></p><button class="cbtn" id="recDel" data-t="del" style="width:auto"></button></div></div></div>
+<div id="mlab" class="layer" hidden><div class="mlabCard"><div class="row" style="justify-content:space-between;align-items:center"><h2 data-t="mlab_title"></h2><button class="cbtn" id="mlBack" data-t="back" style="width:auto"></button></div>
+  <div id="mlSaved" class="row"></div><div id="mlForm"></div><div class="row"><button class="cbtn main" id="mlSave" data-t="save" style="width:auto"></button><button class="cbtn" id="mlUse" style="width:auto"></button><button class="cbtn" id="mlNew" data-t="new_design" style="width:auto"></button></div></div></div>
 <div id="sub" hidden></div><div id="eyes"></div><div id="scare"></div>
 <div id="flash"></div><div id="flash2"></div><div id="fade"></div><div id="toast" hidden></div><div id="endText" hidden></div>
 

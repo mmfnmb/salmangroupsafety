@@ -123,7 +123,7 @@ export class World {
   slot(f, room, rand) { const s = (this.slots[f + room] || []).filter((q) => !q.used); if (!s.length) return null; const q = s[(rand() * s.length) | 0]; q.used = true; return q; }
   async prop(name, f, x, z, ry, opts = {}) {
     const g = await load(name.includes('/') ? name : 'lab/' + name + '.glb'); const o = g ? g.scene.clone(true) : new THREE.Group();
-    const s = opts.s || 1; o.scale.setScalar(s); o.position.set(x, opts.y || 0, z); o.rotation.y = ry; this.groups[f].add(o);
+    let s = opts.s || 1; if (opts.fit) { o.updateMatrixWorld(true); const bb0 = new THREE.Box3().setFromObject(o); s = opts.fit / Math.max(0.01, bb0.max.y - bb0.min.y); } o.scale.setScalar(s); o.position.set(x, opts.y || 0, z); o.rotation.y = ry; this.groups[f].add(o);
     o.traverse((m) => { if (m.isMesh) { m.castShadow = !this.low; m.receiveShadow = true; if (opts.tint) { m.material = m.material.clone(); m.material.color = new THREE.Color(opts.tint); } } });
     if (opts.solid !== false) { const bb = new THREE.Box3().setFromObject(o); const gy = this.groups[f].position.y; this.addBox(f, (bb.min.x + bb.max.x) / 2, (bb.min.z + bb.max.z) / 2, Math.max(0.05, bb.max.x - bb.min.x - (opts.shrink || 0.1)), Math.max(0.05, bb.max.z - bb.min.z - (opts.shrink || 0.1)), bb.max.y - gy, opts.tag); }
     return o;

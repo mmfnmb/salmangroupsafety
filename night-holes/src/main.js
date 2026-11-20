@@ -7,8 +7,13 @@ import { Player, bindTouch } from './player.js';
 import { Monster, think, KINDS } from './monsters.js';
 import { PUZZLES, close as closePanel, isOpen as panelOpen } from './puzzles.js';
 import { audioStart, sfx, setHeartbeat, setAmbient, setTension, ringing, volume } from './audio.js';
-import { loadAll, rigged, CHARS, FRIEND, ZOMBIE_PRICE, setTextureLimit } from './assets.js';
+import { loadAll, rigged, CHARS, FRIEND, ZOMBIE_PRICE, setTextureLimit, loaded } from './assets.js';
 import { Post } from './post.js';
+import { Specimen, emerge } from './tube.js';
+import { Camcorder, openRecordings } from './camcorder.js';
+import * as voice from './voice.js';
+import { newDesign, loadDesigns, saveDesigns, kindFromDesign, buildCreature, builderHTML, bindBuilder, mixResult } from './lab.js';
+import { getAC } from './audio.js';
 import { storySlides, selectCharacter, houseLevel, driveCutscene, subtitle, trees, loadCar } from './intro.js';
 import * as net from './net.js';
 import { t, LANG, setLang, LANG_NAMES } from './i18n.js';
@@ -23,13 +28,15 @@ const scene = new THREE.Scene(); scene.background = new THREE.Color(0x020304); s
 scene.add(new THREE.HemisphereLight(0x1a2438, 0x050404, 0.12));
 { const pm = new THREE.PMREMGenerator(renderer); scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture; scene.environmentIntensity = 0.04; }
 const camera = new THREE.PerspectiveCamera(72, 1, 0.05, 70);
-const post = new Post(renderer, scene, camera); post.setQuality(HIGH);
-function resize() { post.resize(); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); }
+const post = new Post(renderer, scene, camera); post.setQuality(HIGH); const cam = new Camcorder(renderer, post); window.__t = (k) => t(k);
+export function fitFov(cam, base) { const a = innerWidth / innerHeight; cam.aspect = a; cam.fov = a >= 1 ? base : Math.min(105, THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(base) / 2) * 1.25 / a))); cam.updateProjectionMatrix(); }
+window.__fitFov = fitFov;
+function resize() { post.resize(); fitFov(camera, 72); }
 addEventListener('resize', resize); resize();
 
 let seed = 1; const rng = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
 let W = null, P = null, S = null, monsters = [], items = [], others = new Map(), lightPool = [], game = null, host = true, role = 'human', zombiePid = null, char = CHARS[0], shadowMan = null;
-let useHook = null;
+let useHook = null, chatReady = false;
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // ---------------------------------------------------------------- menus
@@ -49,6 +56,8 @@ async function pickForOnline() { $('menu').hidden = true; char = await selectCha
 $('btnCreate').onclick = async () => { audioStart(); if (!net.online()) return toast(t('online_off')); await pickForOnline(); const code = Math.random().toString(36).slice(2, 6).toUpperCase(); await enterLobby(code, true); };
 $('btnJoin').onclick = async () => { audioStart(); if (!net.online()) return toast(t('online_off')); const code = ($('joinCode').value || '').trim(); if (code.length < 3) return; await pickForOnline(); await enterLobby(code, false); };
 $('btnShop').onclick = () => { show('shop'); renderShop(); };
+$('btnRec').onclick = () => { $('menu').hidden = true; openRecordings(t, () => show('menu')); };
+$('btnLab').onclick = () => openMonsterLab();
 $('shopBack').onclick = () => show('menu');
 $('lobbyBack').onclick = () => { net.leaveRoom(); show('menu'); };
 $('btnMenu').onclick = $('btnMenu2').onclick = () => location.reload();
@@ -108,8 +117,9 @@ async function startGame(sd, zombie, opts) {
   show('loading'); $('loadBar').style.width = '0%'; $('fade').classList.remove('on'); subtitle('', 1); char = CHARS.find((c) => c.id === net.getProfile().skin) || char;
   for (const g of W ? W.groups : []) scene.remove(g); for (const m of monsters) if (m.root) scene.remove(m.root); for (const o of others.values()) if (o.root) scene.remove(o.root);
   monsters = []; items = []; others = new Map(); seed = (sd % 2147483646) + 1;
-  const files = ['mat/plastered_wall_02.glb', 'house/desk_wood.glb', 'street/Barrel_01.glb', ...Object.values(KINDS).map((k) => k.file)];
-  await loadAll(files, (p) => ($('loadBar').style.width = (p * 50) + '%'));
+  const b0 = loaded.bytes; const mbT = setInterval(() => { document.querySelector('#loading b').textContent = `${t('loading')} ${((loaded.bytes - b0) / 1e6).toFixed(1)} MB`; }, 250);
+  const files = ['mat/plastered_wall_02.glb', 'mat/concrete_floor_worn_001.glb', 'mat/painted_concrete.glb', KINDS.gaunt.file, KINDS.matron.file, KINDS.wretch.file];
+  await loadAll(files, (p) => ($('loadBar').style.width = (p * 40) + '%'));
   ensurePlayer(); scene.add(camera);
   W = new World(scene, LOW); S = makeState(); await W.build(rng); $('loadBar').style.width = '62%';
   await populate(W, rng, S); $('loadBar').style.width = '75%';
@@ -118,8 +128,12 @@ async function startGame(sd, zombie, opts) {
   // monsters: positions decided from the seed so every client builds the same lab
   const at = (f, x, z) => { const [a, b] = cellCenter(x, z); return [f, a, b]; };
   const defs = [['gaunt', 0, S.tube.x, S.tube.z, null], ['matron', ...at(0, 5, 10), ['M', 'C', 'B']], ['dog', ...at(1, 7, 1), ['W', 'H', 'K', 'L']], ['wretch', 0, 0, 0, null], ['deer', ...at(2, 4, 7), ['H']], ['wendigo', ...at(2, 7, 1), ['Z', 'H', 'Q', 'R']]];
-  for (const [k, f, x, z, home] of defs) { const m = new Monster(k, f, x, z, home); await m.load(scene); monsters.push(m); }
-  const gaunt = monsters[0]; gaunt.active = true; gaunt.inTube = true; gaunt.yaw = 0; gaunt.obj.scale.multiplyScalar(0.78); gaunt.play('idle');
+  const myMon = net.getProfile().customMonster; if (myMon) { KINDS.mine = kindFromDesign(myMon); defs.push(['mine', ...at(1, 9, 1), ['W', 'H', 'V']]); }
+  defs.push(['nurse', ...at(1, 17, 5), ['L', 'D', 'H']], ['mutant', ...at(1, 4, 8), ['A', 'H', 'K']], ['smiley', ...at(2, 17, 5), ['R', 'U', 'H']]);
+  // ground floor monsters now; the rest load while you play the ground floor
+  for (const [k, f, x, z, home] of defs) { const m = new Monster(k, f, x, z, home); monsters.push(m); if (f === 0 || k === 'wretch') await m.load(scene); else m.loading = m.load(scene).catch(() => {}); }
+  clearInterval(mbT);
+  const gaunt = monsters[0]; gaunt.active = true; gaunt.inTube = true; gaunt.yaw = 0; gaunt.obj.scale.multiplyScalar(0.78); gaunt.play('idle'); if (S.spec) S.spec.dispose(); S.spec = new Specimen(gaunt, S.tube, W.groups[0]);
   monsters[3].timer = 150; monsters[3].alpha = 0; monsters[1].active = false; monsters[1].yaw = Math.PI;
   Monster.onBang = (m, d) => { if (m.f !== P.f) return; const dx = d.center[0] - P.x, dz = d.center[1] - P.z, dist = Math.hypot(dx, dz); if (dist < 24) sfx.bang(Math.sin(-(Math.atan2(dx, dz) - (P.yaw + Math.PI))), Math.max(0.2, 1 - dist / 24)); };
   // a black silhouette that sometimes crosses the far end of a hall
@@ -134,7 +148,8 @@ async function startGame(sd, zombie, opts) {
   game = { t: 0, end: false, monT: 0, escaped: false, tubeAt: role === 'monster' || zombie ? 60 : 180, warn: 0, earned: 0, nextEvent: 25, rideN: 0, traps: [], bombT: null, b2Seen: false, scareA: null, shake: 0 };
   $('loadBar').style.width = '100%';
   await wait(250); show('hud'); $('meters').hidden = false; $('inv').hidden = false; $('objective').textContent = '';
-  $('mobileBtns').hidden = !MOBILE; $('controlsHelp').hidden = MOBILE; $('controlsHelp').textContent = t('controls2');
+  $('mobileBtns').hidden = !MOBILE; $('controlsHelp').hidden = MOBILE; $('controlsHelp').textContent = t('controls3'); if (cam.on) cam.toggle(); cam.battery = 1;
+  if (net.inRoom()) { if (!chatReady) { chatReady = true; voice.initChat(t, myName); } voice.startVoice(getAC()); }
   if (opts.intro) { P.locked = true; $('eyes').classList.remove('blink'); void $('eyes').offsetWidth; $('eyes').classList.add('blink'); ringing(3); setAmbient(0.3);
     setTimeout(() => subtitle(t('wake_1'), 3500), 1500); setTimeout(() => subtitle(t('wake_2'), 3000), 5200); setTimeout(() => { P.locked = false; floorBanner(0); toast(t('hint_start'), true); }, 6000); }
   else { floorBanner(0); toast(role === 'monster' ? t('monster_you') : t('hint_start'), true); setAmbient(0.4); }
@@ -155,12 +170,25 @@ function keyAction(code) {
   if (useHook) return; // the house handles its own use key
   if (!game || game.end) return;
   if (code === 'KeyE') useNearest(); else if (code === 'KeyF') toggleLight(); else if (code === 'KeyC') P.crouch = !P.crouch; else if (code === 'KeyG') throwBottle(); else if (code === 'KeyJ') toggleJournal();
-  else if (code === 'KeyQ') useAdrenaline(); else if (code === 'KeyT') setTrap(); else if (code === 'KeyL') toggleLighter();
+  else if (code === 'KeyQ') useAdrenaline(); else if (code === 'KeyT') { if (net.inRoom()) voice.openChat(); else setTrap(); } else if (code === 'KeyL') toggleLighter();
+  else if (code === 'KeyV') toggleCam(); else if (code === 'Enter') voice.openChat(); else if (code === 'KeyM') voice.toggleMute(); else if (code === 'Digit1') useCraft('sedative'); else if (code === 'Digit2') useCraft('smoke'); else if (code === 'Digit3') useCraft('flare');
+  else if (code === 'KeyB' && !talking) { talking = true; voice.talkDown(); }
   else if (code === 'Escape' && panelOpen()) closePanel();
 }
 $('bUse').onclick = () => (useHook ? useHook() : useNearest()); $('bLight').onclick = () => toggleLight(); $('bCrouch').onclick = () => { P.crouch = !P.crouch; $('bCrouch').classList.toggle('on', P.crouch); };
 $('bThrow').onclick = () => throwBottle(); $('bNotes').onclick = () => toggleJournal(); $('bAdr').onclick = () => useAdrenaline(); $('bTrap').onclick = () => setTrap(); $('bLighter').onclick = () => toggleLighter();
 $('bRun').addEventListener('touchstart', (e) => { P.runBtn = true; e.preventDefault(); }, { passive: false }); $('bRun').addEventListener('touchend', () => (P.runBtn = false));
+let talking = false; addEventListener('keyup', (e) => { if (e.code === 'KeyB' && talking) { talking = false; voice.talkUp(); } });
+function toggleCam() { if (!game || game.end) return; if (!cam.toggle()) toast(t('cam_dead')); sfx.click(); }
+$('bCam').onclick = () => toggleCam(); $('bChat').onclick = () => voice.openChat(); $('bItem').onclick = () => useCraft(['sedative', 'smoke', 'flare'].find((k) => S && S.inv[k]));
+$('bTalk').addEventListener('touchstart', (e) => { e.preventDefault(); voice.talkDown(); }, { passive: false }); $('bTalk').addEventListener('touchend', () => voice.talkUp());
+// crafted tools from the experiment table
+function useCraft(k) { if (!k || !S || !S.inv[k] || P.dead) return; S.inv[k]--;
+  if (k === 'sedative') { const fx = -Math.sin(P.yaw), fz = -Math.cos(P.yaw); const m = monsters.filter((q) => q.root && q.active && q.f === P.f && !q.inTube).map((q) => [q, Math.hypot(q.x - P.x, q.z - P.z), ((q.x - P.x) * fx + (q.z - P.z) * fz) / (Math.hypot(q.x - P.x, q.z - P.z) || 1)]).filter((a) => a[1] < 9 && a[2] > 0.6).sort((a, b) => a[1] - b[1])[0];
+    sfx.bottle(0, 0.6); if (m) { m[0].sleepT = 20; toast(t('sedated')); } }
+  if (k === 'smoke') { P.smokeT = 10; toast(t('smoke_on')); sfx.whisper(0); const puff = new THREE.Mesh(new THREE.SphereGeometry(2.4, 16, 12), new THREE.MeshBasicMaterial({ color: 0x8a8f90, transparent: true, opacity: 0.55, depthWrite: false })); puff.position.set(P.x, 1.2, P.z); W.groups[P.f].add(puff); game.puffs = game.puffs || []; game.puffs.push({ o: puff, t: 10 }); }
+  if (k === 'flare') { const l = new THREE.PointLight(0xff3020, 6, 9, 1.6); l.position.set(P.x, 0.3, P.z); W.groups[P.f].add(l); game.flares = game.flares || []; game.flares.push({ l, t: 20, f: P.f, x: P.x, z: P.z }); }
+  updateHud(); }
 function toggleLight() { if (!P) return; if (P.battery <= 0) { toast(t('battery_dead')); return; } P.lightOn = !P.lightOn; sfx.click(); }
 function toggleLighter() { if (!S || !S.inv.lighter) return; P.lighterOn = !P.lighterOn; sfx.lighter(); }
 function useAdrenaline() { if (!S || !S.inv.adrenaline || P.dead) return; S.inv.adrenaline--; P.adrT = 10; sfx.pickup(); toast(t('adr_on')); post.glitch(0.2); updateHud(); }
@@ -201,7 +229,7 @@ function useNearest() {
   if (i.kind === 'locker') { P.hidden = i; P.x = i.x - Math.sin(i.ry) * 0.3; P.z = i.z - Math.cos(i.ry) * 0.3; P.yaw = i.ry + Math.PI; sfx.door(); $('lockerView').hidden = false; return; }
   if (i.kind === 'door') {
     const d = i.door;
-    if (d.lock && !d.unlocked) { if (d.lock === 'green' && S.inv.green) unlockDoor(d, true); else if (d.lock === 'valves') { sfx.locked(); toast(t('need_valves')); } else if (d.lock === 'exit') useStation('exit'); else { sfx.locked(); toast(t('need_green')); } return; }
+    if (d.lock && !d.unlocked) { if (d.lock !== 'exit' && S.inv.acid) { S.inv.acid--; unlockDoor(d, true); toast(t('acid_used')); return; } if (d.lock === 'green' && S.inv.green) unlockDoor(d, true); else if (d.lock === 'valves') { sfx.locked(); toast(t('need_valves')); } else if (d.lock === 'exit') useStation('exit'); else { sfx.locked(); toast(t('need_green')); } return; }
     d.target = d.target > 0.5 ? 0 : 1; if (d.target === 0) d.shutAt = performance.now(); sfx.door(); sfx.click(); net.emit('ev', { t: 'door', id: d.id, v: d.target }); return;
   }
   if (i.kind === 'elevator') return elevator();
@@ -237,16 +265,18 @@ function useStation(kind, i) {
   if (kind === 'wires') { if (S.solved.wires) return toast(t('opened')); return PUZZLES.wires(S, () => solve('wires', () => giveItem('key'))); }
   if (kind === 'exit') { if (!(S.inv.red && S.inv.key)) { sfx.locked(); return toast(t('exit_need')); } return PUZZLES.exit(S, () => solve('exit', () => { const d = W.doors.find((q) => q.lock === 'exit'); unlockDoor(d, true); sfx.alarm(); })); }
   if (kind === 'computer') return computerPanel(i);
+  if (kind === 'mix') return mixPanel();
+  if (kind === 'grow') return growPanel();
   if (kind === 'map') { const p = panelBox(t('map'), '<div class="bigmap"></div>'); p.querySelector('.bigmap').appendChild(mapCanvas(P.f, [P.x, P.z], 640, 500)); return; }
   if (kind === 'switch') { const key = i.f + i.room; W.roomOn[key] = W.roomOn[key] === false; for (const a of W.anchors[i.f]) if (a.room === i.room) a.on = W.roomOn[key] !== false; sfx.click(); toast(W.roomOn[key] === false ? t('lights_off') : t('lights_on')); return; }
   if (kind === 'intercom') { const rooms = [...new Set(MAPS[P.f].join('').replace(/[#H]/g, ''))]; const p = panelBox(t('intercom'), `<p class="phint">${t('intercom_h')}</p><div class="elev">${rooms.map((r) => `<button class="cbtn" data-r="${r}">${r}</button>`).join('')}</div>`);
     p.querySelectorAll('[data-r]').forEach((b) => (b.onclick = () => { const cells = []; MAPS[P.f].forEach((row, z) => [...row].forEach((c, x) => { if (c === b.dataset.r) cells.push(cellCenter(x, z)); })); const [x, z] = cells[(cells.length / 2) | 0]; closePanel(); setTimeout(() => { playAt(P.f, x, z, 'intercom'); playAt(P.f, x, z, 'voice'); makeDistraction(P.f, x, z, 10); net.emit('ev', { t: 'noise', f: P.f, x, z }); }, 400); })); return; }
   if (kind === 'alarm') { const k = 'a' + i.x + ',' + i.z; if (S.used[k]) return toast(t('empty')); S.used[k] = 1; toast(t('alarm_used'), true); for (let n = 0; n < 4; n++) setTimeout(() => sfx.alarm(), n * 2900); makeDistraction(i.f, i.x, i.z, 14); flicker(i.f, 1); net.emit('ev', { t: 'noise', f: i.f, x: i.x, z: i.z }); return; }
-  if (kind === 'drawer') { const k = i.x + ',' + i.z; if (S.used[k]) return toast(t('empty')); S.used[k] = 1; sfx.door(); const r = Math.random(); const loot = r < 0.3 ? 'battery' : r < 0.48 ? 'bottle' : r < 0.6 ? 'adrenaline' : r < 0.72 ? 'trap' : r < 0.78 && !S.inv.lighter ? 'lighter' : null; if (loot) giveItem(loot); else toast(t('empty')); return; }
+  if (kind === 'drawer') { const k = i.x + ',' + i.z; if (S.used[k]) return toast(t('empty')); S.used[k] = 1; sfx.door(); const r = Math.random(); const loot = r < 0.22 ? 'battery' : r < 0.32 ? ['chem_r', 'chem_b', 'chem_y'][(Math.random() * 3) | 0] : r < 0.48 ? 'bottle' : r < 0.6 ? 'adrenaline' : r < 0.72 ? 'trap' : r < 0.78 && !S.inv.lighter ? 'lighter' : null; if (loot) giveItem(loot); else toast(t('empty')); return; }
   if (kind === 'decon') { P.scentT = 45; sfx.whisper(0); for (let n = 0; n < 6; n++) setTimeout(() => sfx.step(false, 0, 0.6), n * 220); toast(t('decon_done'), true); return; }
   if (kind === 'bomb') { if (game.bombT != null) return; if (!S.solved.exit) { sfx.locked(); return toast(t('bomb_need')); } armBomb(); return; }
 }
-function giveItem(type) { S.inv[type] = (S.inv[type] || 0) + 1; sfx.pickup(); toast(`${t('got')}: ${t(type)}`); if (type === 'battery') { P.battery = Math.min(1, P.battery + 0.45); S.inv.battery--; } if (type === 'lighter') toast(`${t('got')}: ${t('lighter')} (L)`); updateHud(); }
+function giveItem(type) { if (type === 'battery') cam.addBattery(0.5); S.inv[type] = (S.inv[type] || 0) + 1; sfx.pickup(); toast(`${t('got')}: ${t(type)}`); if (type === 'battery') { P.battery = Math.min(1, P.battery + 0.45); S.inv.battery--; } if (type === 'lighter') toast(`${t('got')}: ${t('lighter')} (L)`); updateHud(); }
 function giveNote(n) { S.notes[n] = S.exitCode[n]; sfx.pickup(); toast(`${t('note')}: ${'_ _ _ _'.split(' ').map((c, i) => (i === n ? S.exitCode[n] : c)).join(' ')}`, true); }
 function takeItem(i, local) {
   if (i.taken) return; i.taken = true; i.obj.visible = false; S.itemsTaken++;
@@ -258,13 +288,13 @@ function powerOn(local) { if (S.power) return; S.power = true; sfx.solved(); toa
 function tubeWarnings() {
   const left = game.tubeAt - game.t; const tb = S.tube;
   if (game.warn < 1 && left < 60) { game.warn = 1; tb.crack.visible = true; tb.crack.material.opacity = 0.4; if (P.f === 0) { sfx.crack(); toast(t('tube_crack'), true); } }
-  if (game.warn < 2 && left < 30) { game.warn = 2; tb.crack.material.opacity = 0.75; playAt(0, tb.x, tb.z, 'knock'); setTimeout(() => playAt(0, tb.x, tb.z, 'knock'), 2500); if (P.f === 0) toast(t('tube_knock'), true); }
-  if (game.warn < 3 && left < 12) { game.warn = 3; tb.crack.material.opacity = 1; flicker(0, 4); playAt(0, tb.x, tb.z, 'knock'); if (P.f === 0) toast(t('tube_flicker'), true); }
+  if (game.warn < 2 && left < 30) { game.warn = 2; if (P.f === 0) toast(t('tube_knock'), true); }
+  if (game.warn < 3 && left < 12) { game.warn = 3; flicker(0, 4); for (let n = 0; n < 3; n++) setTimeout(() => P.f === 0 && sfx.alarm(), n * 3000); if (P.f === 0) toast(t('tube_flicker'), true); }
 }
 function breakTube(local) {
   if (S.tubeBroken) return; S.tubeBroken = true; const tb = S.tube; flicker(0, 2.6); if (P.f === 0) sfx.glass(); setTimeout(() => playAt(0, tb.x, tb.z, 'growl'), 600);
   setTimeout(() => { tb.pod.traverse((m) => { if (m.userData && m.userData.glass) m.visible = false; }); tb.liquid.visible = false; tb.light.color.set(0xff2a2a); tb.light.intensity = 1.2;
-    const g = monsters[0]; g.inTube = false; g.obj.scale.multiplyScalar(1 / 0.78); g.x = tb.x; g.z = tb.z + 1.6; g.state = 'patrol'; g.calmT = 40;
+    const g = monsters[0]; g.inTube = false; g.obj.scale.multiplyScalar(1 / 0.78); g.x = tb.x; g.z = tb.z + 1.2; g.state = 'patrol'; g.calmT = 40; g.emerging = true; g.emergeT = 0; if (S.spec) S.spec.release(); game.shake = Math.max(game.shake || 0, P.f === 0 ? 1 : 0);
     const puddle = new THREE.Mesh(new THREE.CircleGeometry(1.8, 32), new THREE.MeshStandardMaterial({ color: 0x0a3a20, emissive: 0x041a0c, roughness: 0.02, metalness: 0.3, transparent: true, opacity: 0.8 })); puddle.rotation.x = -Math.PI / 2; puddle.position.set(tb.x, 0.012, tb.z); W.groups[0].add(puddle);
     for (const a of W.anchors[0]) { a.red = true; a.on = true; }
     if (role === 'monster') { P.locked = false; P.place(0, tb.x, tb.z + 1.6, 0); }
@@ -313,10 +343,11 @@ function localCaught(m) {
 }
 function updateScare(dt) { const a = game.scareA; if (!a) return; a.t += dt; const k = Math.min(1, a.t / a.dur); const e = 1 - Math.pow(1 - k, 3);
   const m = a.m; const fx = -Math.sin(P.yaw), fz = -Math.cos(P.yaw), rx = Math.cos(P.yaw), rz = -Math.sin(P.yaw);
-  const dist = a.from[2] + (0.42 - a.from[2]) * e, side = a.from[0] * (1 - e), up = a.from[1] * (1 - e);
+  let dist = a.from[2] + (0.42 - a.from[2]) * e, side = a.from[0] * (1 - e); const up = a.from[1] * (1 - e);
+  for (let k2 = 0; k2 < 12; k2++) { const x = P.x + fx * dist + rx * side, z = P.z + fz * dist + rz * side; if (cellAt(P.f, toCell(x), toCell(z)) !== '#' && W.los(P.f, P.x, P.z, x, z)) break; dist = Math.max(0.42, dist * 0.75); side *= 0.6; }
   m.x = P.x + fx * dist + rx * side; m.z = P.z + fz * dist + rz * side; m.yaw = Math.atan2(P.x - m.x, P.z - m.z); m.sync(); m.root.visible = true;
   const head = m.k.h * 0.86; m.root.position.y = FLOOR_Y[P.f] + 1.6 - head + up + Math.sin(a.t * 40) * 0.02 * (1 - e);
-  camera.fov = 72 - 14 * e; camera.updateProjectionMatrix(); }
+  fitFov(camera, 72 - 14 * e); game.fovSet = 0; }
 
 // ---------------------------------------------------------------- the demolition charge and the way out
 function armBomb(remote) {
@@ -362,9 +393,12 @@ function updateOthers(dt) {
   }
 }
 function lobbyPeersLive() { return (lobby.peers || []).filter((p) => p.pid !== net.PID && !p.lobby); }
+function isLit(m) { const a = W.anchors[m.f].find((q) => q.on && Math.hypot(q.x - m.x, q.z - m.z) < 3);
+  if (a) return true; if (m.f !== P.f || !P.lightOn || P.battery <= 0 || P.hidden || P.dead) return false; const dx = m.x - P.x, dz = m.z - P.z, d = Math.hypot(dx, dz); if (d > 14) return false;
+  let df = Math.atan2(-dx, -dz) - P.yaw; df = Math.atan2(Math.sin(df), Math.cos(df)); return Math.abs(df) < 0.45 && W.los(m.f, P.x, P.z, m.x, m.z); }
 function inDark() { const a = W.anchors[P.f].find((q) => Math.hypot(q.x - P.x, q.z - P.z) < 3.2); return (!a || !a.on) && !(P.lightOn && P.battery > 0) && !P.lighterOn; }
 function playersForBrains() {
-  const me = { id: net.PID, f: P.f, x: P.x, z: P.z, yaw: P.yaw, hidden: !!P.hidden, noise: P.noise, alive: !P.dead, ghost: P.ghost, crouch: P.crouch, running: P.running, dark: inDark(), scentless: P.scentT > 0, lit: P.lightOn && P.battery > 0 };
+  const me = { id: net.PID, f: P.f, x: P.x, z: P.z, yaw: P.yaw, hidden: !!P.hidden, noise: P.noise, alive: !P.dead, ghost: P.ghost, crouch: P.crouch, running: P.running, dark: inDark(), scentless: P.scentT > 0, lit: P.lightOn && P.battery > 0, smoke: P.smokeT > 0, voice: P.voice || 0 };
   const list = role === 'monster' ? [] : [me];
   for (const o of others.values()) if (o.f != null && o.role !== 'monster' && !o.escaped) list.push({ id: o.pid, f: o.f, x: o.x, z: o.z, yaw: o.yaw, hidden: o.hidden, noise: o.noise, alive: o.alive !== false && !o.dead, ghost: o.ghost, crouch: o.crouch, running: o.running });
   return list;
@@ -399,10 +433,11 @@ function frame() {
     if (host) {
       if (!S.tubeBroken) { tubeWarnings(); if (game.t > game.tubeAt) breakTube(true); }
       const players = playersForBrains(); const rage = Math.min(0.5, S.itemsTaken * 0.03);
-      const ctx = { caught, warn, distraction, rage, flicker: (f) => flicker(f, 0.8), sound: (m, s) => playAt(m.f, m.x, m.z, s) };
+      const ctx = { caught, warn, distraction, rage, isLit, flicker: (f) => flicker(f, 0.8), sound: (m, s) => playAt(m.f, m.x, m.z, s) };
       for (const m of monsters) {
         if (m.kind === 'gaunt' && (m.inTube || role === 'monster' || (zombiePid && zombiePid !== net.PID))) { if (zombiePid && !m.inTube) { const z = others.get(zombiePid); if (z && z.f != null) { m.f = z.f; m.x = z.x; m.z = z.z; m.yaw = (z.yaw || 0) + Math.PI; m.play(z.running ? 'run' : z.noise > 1 ? 'walk' : 'idle'); } }
           if (!m.inTube) for (const p of players) if (p.f === m.f && p.alive && !p.ghost && !p.hidden && Math.hypot(p.x - m.x, p.z - m.z) < 1.1) caught(p, m); continue; }
+        if (!m.root || m.emerging) continue;
         if (m.kind === 'wretch') { const live = players.filter((p) => p.alive && !p.ghost); if (m.state === 'idle' && live.length) m.f = live[(game.t * 7 | 0) % live.length].f; }
         if (m.kind === 'gaunt') gauntTravel(m, players, dt);
         think(m, W, players, dt, ctx);
@@ -419,17 +454,23 @@ function frame() {
     director(dt); updateBomb(dt);
     net.presence({ f: P.f, x: +P.x.toFixed(2), z: +P.z.toFixed(2), yaw: +P.yaw.toFixed(2), hidden: !!P.hidden, noise: P.noise, alive: !P.dead, ghost: P.ghost, crouch: P.crouch, running: P.running, role, skin: char.id, name: myName(), escaped: game.escaped });
   }
-  for (const m of monsters) { if (m.inTube) { m.t += dt; if (m.mixer) m.mixer.update(dt * 0.3); m.root.position.set(S.tube.x, 0.5 + Math.sin(m.t) * 0.06, S.tube.z); m.root.rotation.y = m.yaw + Math.sin(m.t * 0.3) * 0.3; m.root.visible = P.f === 0; continue; } m.animate(dt); m.root.visible = m.root.visible && m.f === P.f; }
+  for (const m of monsters) { if (!m.root) continue;
+    if (m.inTube) { S.spec.update(dt, game.tubeAt - game.t, P.f === 0 ? { x: P.x, z: P.z } : null, (snd) => playAt(0, S.tube.x, S.tube.z, snd)); m.root.visible = P.f === 0; continue; }
+    if (m.emerging) { m.sync(); m.root.visible = m.f === P.f; if (!emerge(m, dt)) { m.emerging = false; playAt(m.f, m.x, m.z, 'growl'); } continue; }
+    m.animate(dt); m.root.visible = m.root.visible && m.f === P.f; }
+  if (W.specimens && P.f === 0) for (const sp of W.specimens) if (sp.userData.shape) { const sh = sp.userData.shape; sh.userData.bob += dt; sh.position.y = Math.sin(sh.userData.bob * 0.8) * 0.06; sh.rotation.y += dt * 0.05; }
   updateScare(dt); updateShadow(dt); updateOthers(dt); W.update(dt); updateLights(dt);
   if (W.leds) for (const l of W.leds) if (Math.random() < dt * 2) l.visible = !l.visible;
   // fear: heartbeat, music and shake from the closest active monster on this floor
   let fear = 0, chase = false; for (const m of monsters) if (m.active && m.f === P.f && m.alpha > 0.5 && !m.inTube) { fear = Math.max(fear, 1 - Math.hypot(m.x - P.x, m.z - P.z) / 16); if (m.state === 'chase') chase = true; }
   if (!P.dead && role !== 'monster') { setHeartbeat(Math.max(0, fear)); setTension(fear * 0.7 + (chase ? 0.4 : 0) + (game.bombT != null ? 0.6 : 0)); } $('vig').style.opacity = 0.35 + fear * 0.55;
   if (game.shake > 0) { game.shake = Math.max(0, game.shake - dt * 1.8); camera.position.x += (Math.random() - 0.5) * 0.05 * game.shake; camera.position.y += (Math.random() - 0.5) * 0.05 * game.shake; camera.rotation.z += (Math.random() - 0.5) * 0.02 * game.shake; }
-  if (!game.scareA && camera.fov !== 72) { camera.fov = 72; camera.updateProjectionMatrix(); }
+  if (!game.scareA && game.fovSet !== innerWidth / innerHeight) { game.fovSet = innerWidth / innerHeight; fitFov(camera, 72); }
   post.expTarget = inDark() ? 1.25 : 0.9;
   hudT -= dt; if (hudT <= 0) { hudT = 0.12; updateHud(); }
+  updateLab(dt); if (net.inRoom()) P.voice = voice.updateVoice(P, others, (x, z) => W.los(P.f, P.x, P.z, x, z));
   post.render(scene, camera, dt);
+  cam.afterRender(dt, $('view'), game); if (!game.end && !P.dead && role !== 'monster') cam.watch(dt, scene, P, FLOOR_Y, monsters, game);
 }
 function gauntTravel(m, players, dt) {
   const live = players.filter((p) => p.alive && !p.ghost); if (!live.length || m.state === 'chase' || m.calmT > 0) { m.awayT = 0; return; }
@@ -453,16 +494,55 @@ function updateHud() {
   if (!P || !S || !W || !game) return; const i = !game.end && !P.dead ? nearest() : null; const pr = promptFor(i);
   $('prompt').textContent = pr; $('prompt').hidden = !pr || panelOpen(); $('bUse').textContent = pr || t('use');
   $('stam').style.width = (P.stamina * 100) + '%'; $('stam').style.background = P.adrT > 0 ? '#ff9a3c' : ''; $('batt').style.width = (P.battery * 100) + '%'; 
-  $('invIcons').innerHTML = ['green', 'red', 'key', 'screwdriver', 'fuse_r', 'fuse_y', 'fuse_b', 'bottle', 'adrenaline', 'trap', 'lighter'].filter((k) => S.inv[k]).map((k) => `<span class="slot" title="${t(k)}">${ICON[k]}${['bottle', 'adrenaline', 'trap'].includes(k) ? `<b>${S.inv[k]}</b>` : ''}</span>`).join('');
+  $('invIcons').innerHTML = ['green', 'red', 'key', 'screwdriver', 'fuse_r', 'fuse_y', 'fuse_b', 'bottle', 'adrenaline', 'trap', 'lighter', 'chem_r', 'chem_b', 'chem_y', 'sedative', 'smoke', 'acid', 'flare'].filter((k) => S.inv[k]).map((k) => `<span class="slot" title="${t(k)}">${ICON[k]}${S.inv[k] > 1 || ['bottle', 'adrenaline', 'trap'].includes(k) ? `<b>${S.inv[k]}</b>` : ''}</span>`).join('');
 }
 
+// ---------------------------------------------------------------- experiment room
+function mixPanel() { const chems = ['chem_r', 'chem_b', 'chem_y'].filter((k) => S.inv[k]); const opt = (sel) => `<select class="mixSel">${['chem_r', 'chem_b', 'chem_y'].map((k) => `<option value="${k}" ${k === sel ? 'selected' : ''}>${t(k)} (${S.inv[k] || 0})</option>`).join('')}</select>`;
+  const p = panelBox(t('mix'), `<p class="phint">${t('chem_r')} + ${t('chem_b')} = ? · ${t('chem_r')} + ${t('chem_y')} = ? · ${t('chem_b')} + ${t('chem_y')} = ?</p><div class="row">${opt(chems[0] || 'chem_r')}${opt(chems[1] || chems[0] || 'chem_b')}</div><p class="pmsg" id="mixMsg"></p><button class="cbtn main" id="mixGo" style="width:auto">${t('mix_go')}</button>`);
+  p.querySelector('#mixGo').onclick = () => { const [a, b] = [...p.querySelectorAll('.mixSel')].map((e) => e.value); const need = {}; need[a] = (need[a] || 0) + 1; need[b] = (need[b] || 0) + 1;
+    if (Object.entries(need).some(([k, n]) => (S.inv[k] || 0) < n)) { sfx.wrong(); p.querySelector('#mixMsg').textContent = t('mix_need'); return; }
+    for (const [k, n] of Object.entries(need)) S.inv[k] -= n; const res = mixResult(a, b);
+    if (!res) { sfx.bang(0, 0.8); makeDistraction(P.f, P.x, P.z, 6); p.querySelector('#mixMsg').textContent = t('mix_bang'); return; }
+    giveItem(res); p.querySelector('#mixMsg').textContent = `${t('got')}: ${t(res)}`; game.earned += 5; }; }
+function growPanel() { const d = game.growDesign || (game.growDesign = Object.assign(newDesign(), loadDesigns()[0] || {}));
+  const p = panelBox(t('grow'), `<div class="bForm">${builderHTML(d, t)}</div><div class="growBar"><i id="growBar"></i></div><p class="pmsg" id="growMsg"></p><div class="row"><button class="cbtn main" id="growGo" style="width:auto">${game.grown ? t('release') : t('grow_go')}</button></div>`);
+  bindBuilder(p, d, () => {}); p.querySelector('#growGo').onclick = async () => {
+    if (game.grown) { closePanel(); releaseCreature(); return; } if (game.growing) return; game.growing = true; p.querySelector('#growMsg').textContent = t('growing');
+    const c = await buildCreature(d); const inc = W.incubator || { x: P.x, z: P.z }; c.g.position.set(inc.x, 0.35, inc.z); c.g.scale.setScalar(0.05); W.groups[0].add(c.g); game.creature = { c, d, t: 0 }; }; }
+function releaseCreature() { const cr = game.creature; if (!cr) return; W.groups[0].remove(cr.c.g); game.grown = false; game.creature = null;
+  const id = 'custom' + monsters.length; KINDS[id] = kindFromDesign(cr.d); const m = new Monster(id, 0, cr.c.g.position.x, cr.c.g.position.z + 1.2, null); monsters.push(m);
+  m.load(scene).then(() => { m.calmT = 30; m.decoy = true; }); toast(cr.d.name, true); sfx.growl(0, 1); }
+function updateLab(dt) { const cr = game.creature; if (cr && !game.grown) { cr.t += dt; const k = Math.min(1, cr.t / 15); cr.c.g.scale.setScalar(0.05 + k * 0.45); cr.c.mix.update(dt * 0.3); const bar = $('growBar'); if (bar) bar.style.width = k * 100 + '%'; if (k >= 1) { game.grown = true; game.growing = false; toast(t('grown')); } } else if (cr) cr.c.mix.update(dt * 0.3);
+  for (const pf of game.puffs || []) { pf.t -= dt; pf.o.material.opacity = Math.max(0, Math.min(0.55, pf.t / 4)); pf.o.scale.setScalar(1 + (10 - pf.t) * 0.06); if (pf.t <= 0 && pf.o.parent) pf.o.parent.remove(pf.o); }
+  for (const fl of game.flares || []) { fl.t -= dt; fl.l.intensity = fl.t > 0 ? 5 + Math.random() * 2 : 0; if (fl.t > 0 && Math.random() < dt * 2) makeDistraction(fl.f, fl.x, fl.z, 2); }
+  for (const m of monsters) if (m.decoy && m.calmT > 0 && Math.random() < dt) makeDistraction(m.f, m.x, m.z, 3);
+  if (P.smokeT > 0) P.smokeT -= dt; }
+// ---------------------------------------------------------------- monster lab (start screen)
+async function openMonsterLab() {
+  $('menu').hidden = true; $('mlab').hidden = false; let designs = loadDesigns(), d = Object.assign(newDesign(), designs[0] || {}), cur = null, mix = null, alive = true, rebuild = 0;
+  const sc = new THREE.Scene(); sc.background = new THREE.Color(0x050608); sc.fog = new THREE.Fog(0x050608, 6, 18); sc.add(new THREE.HemisphereLight(0x8090a8, 0x101010, 0.5)); const sp = new THREE.SpotLight(0xfff0dd, 40, 14, 0.6, 0.6, 1.4); sp.position.set(1.5, 5, 3); sc.add(sp, sp.target);
+  const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, 3, 32, 1, true), new THREE.MeshStandardMaterial({ color: 0x1aff7a, emissive: 0x0b5f2a, emissiveIntensity: 0.4, transparent: true, opacity: 0.15, depthWrite: false, side: THREE.DoubleSide })); tube.position.y = 1.5; sc.add(tube);
+  const floor = new THREE.Mesh(new THREE.CircleGeometry(4, 40), new THREE.MeshStandardMaterial({ color: 0x1a1c1e, roughness: 0.9 })); floor.rotation.x = -Math.PI / 2; sc.add(floor);
+  const vc = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 50); fitFov(vc, 45);
+  const build = async () => { const my = ++rebuild; const c = await buildCreature(d); if (my !== rebuild) return; if (cur) sc.remove(cur); cur = c.g; mix = c.mix; sc.add(cur); };
+  const form = () => { $('mlForm').innerHTML = builderHTML(d, t); bindBuilder($('mlForm'), d, () => build());
+    $('mlSaved').innerHTML = designs.map((x, i) => `<button class="cbtn" data-i="${i}"></button>`).join(''); $('mlSaved').querySelectorAll('[data-i]').forEach((b) => { b.textContent = designs[+b.dataset.i].name; b.onclick = () => { d = Object.assign(newDesign(), designs[+b.dataset.i]); form(); build(); }; });
+    const pr = net.getProfile(); $('mlUse').textContent = pr.customMonster && pr.customMonster.name === d.name ? t('in_game') : t('use_mine'); };
+  $('mlSave').onclick = () => { designs = designs.filter((x) => x.name !== d.name); designs.unshift({ ...d }); saveDesigns(designs); designs = loadDesigns(); sfx.pickup(); form(); };
+  $('mlNew').onclick = () => { d = newDesign(); d.name = 'SPECIMEN ' + (9 + designs.length); form(); build(); };
+  $('mlUse').onclick = () => { const pr = net.getProfile(); pr.customMonster = pr.customMonster && pr.customMonster.name === d.name ? null : { ...d }; net.saveProfile(); sfx.click(); form(); };
+  $('mlBack').onclick = () => { alive = false; $('mlab').hidden = true; show('menu'); };
+  form(); await build(); let last = performance.now(), a = 0;
+  const loop = () => { if (!alive) return; requestAnimationFrame(loop); const now = performance.now(), dt = Math.min(0.05, (now - last) / 1000); last = now; a += dt * 0.4; if (mix) mix.update(dt);
+    vc.position.set(Math.sin(a) * 5.5, 1.8, Math.cos(a) * 5.5); vc.lookAt(0, 1.2, 0); post.render(sc, vc, dt); }; loop(); }
 // classic line drawings for the inventory slots
 const sv = (body, col = 'currentColor') => `<svg viewBox="0 0 24 24" fill="none" stroke="${col}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
 const card = (c) => sv(`<rect x="3" y="6" width="18" height="12" fill="${c}" stroke="#e9e4d4"/><path d="M3 14h18" stroke="#e9e4d4"/>`);
 const fuse = (c) => sv(`<rect x="7" y="9" width="10" height="6" fill="${c}"/><path d="M3 12h4M17 12h4"/>`);
 const ICON = { green: card('#1f8a3a'), red: card('#a3202a'), key: sv('<circle cx="7" cy="12" r="3.5"/><path d="M10.5 12H21M17 12v3M20 12v2"/>'), screwdriver: sv('<path d="M4 20l5-5"/><rect x="9" y="8" width="4" height="8" transform="rotate(45 11 12)" fill="#c9a000"/><path d="M14 10l6-6"/>'),
   fuse_r: fuse('#c0302a'), fuse_y: fuse('#d0a800'), fuse_b: fuse('#2a5fc0'), bottle: sv('<path d="M10 3h4M10.5 3v5L7 13v8h10v-8l-3.5-5V3"/><path d="M7 15h10" stroke="#3cff9a"/>'),
-  adrenaline: sv('<path d="M4 20l3-3M7 17l8-8 2 2-8 8zM15 9l3-3M17 5l2 2M12 12l1 1"/>'), trap: sv('<circle cx="12" cy="13" r="6"/><path d="M12 10v3l2 1M6 5l2 2M18 5l-2 2"/>'), lighter: sv('<rect x="8" y="10" width="8" height="11"/><path d="M12 9c-2-2 0-4 0-6 2 2 3 4 0 6z" fill="#e08a20" stroke="#e08a20"/>') };
+  adrenaline: sv('<path d="M4 20l3-3M7 17l8-8 2 2-8 8zM15 9l3-3M17 5l2 2M12 12l1 1"/>'), trap: sv('<circle cx="12" cy="13" r="6"/><path d="M12 10v3l2 1M6 5l2 2M18 5l-2 2"/>'), chem_r: sv('<path d="M9 3h6M10 3v6l-4 11h12l-4-11V3"/><path d="M7.5 16h9" stroke="#ff3030"/>'), chem_b: sv('<path d="M9 3h6M10 3v6l-4 11h12l-4-11V3"/><path d="M7.5 16h9" stroke="#3080ff"/>'), chem_y: sv('<path d="M9 3h6M10 3v6l-4 11h12l-4-11V3"/><path d="M7.5 16h9" stroke="#ffd020"/>'), sedative: sv('<path d="M5 19l4-4M9 15l7-7 3 3-7 7zM16 8l2-2"/>'), smoke: sv('<circle cx="9" cy="14" r="4"/><circle cx="15" cy="12" r="4"/><circle cx="12" cy="8" r="3.5"/>'), acid: sv('<path d="M12 3c3 5 5 8 5 11a5 5 0 0 1-10 0c0-3 2-6 5-11z" stroke="#9fff40"/>'), flare: sv('<path d="M10 21l1-11h2l1 11z"/><path d="M12 9c-2-2-1-4 0-6 1 2 2 4 0 6z" fill="#ff3020" stroke="#ff3020"/>'), lighter: sv('<rect x="8" y="10" width="8" height="11"/><path d="M12 9c-2-2 0-4 0-6 2 2 3 4 0 6z" fill="#e08a20" stroke="#e08a20"/>') };
 
 // player bodies cannot pass through monsters or other players
 function pushApart() { if (P.ghost || P.hidden || P.dead) return;
@@ -537,7 +617,7 @@ function endRun(win, why) {
   const m = Math.floor(game.t / 60), s = Math.floor(game.t % 60);
   if (win) { show('results'); $('resTitle').textContent = t('escaped'); $('resBody').innerHTML = `<p>${t('time')}: <b>${m}:${String(s).padStart(2, '0')}</b></p><p>${t('puzzles')}: <b>${Object.keys(S.solved).length}</b> · ${t('items')}: <b>${S.itemsTaken}</b></p><p>${t('earned')}: <b>+${earned}</b> ${t('coins')}</p>${S.foundTape ? `<p class="secret">${t('secret')}</p>` : ''}`; }
   else { show('dead'); $('deadTitle').textContent = why ? t(why) : t('caught'); $('deadBody').textContent = `${t('earned')}: +${earned} ${t('coins')}`; }
-  ui();
+  ui(); for (const id of ['resBody', 'deadBody']) { const b = document.createElement('button'); b.className = 'cbtn'; b.style.marginTop = '10px'; b.textContent = t('watch_rec'); b.onclick = () => { for (const l of ['dead', 'results']) $(l).hidden = true; openRecordings(t, () => show(win ? 'results' : 'dead')); }; $(id).appendChild(b); }
 }
 
 // ---------------------------------------------------------------- boot
@@ -545,4 +625,4 @@ function endRun(win, why) {
   setLang(LANG); await net.initCaps(); await net.loadProfile(); ui(); show('menu');
   requestAnimationFrame(frame);
 })();
-window.__nh = () => ({ P, S, W, monsters, items, game, useNearest, useStation, breakTube, ride, nearest, takeItem, localCaught, runBombEnding, armBomb, startGame, post, camera, cellCenter, newGame, trees, testDrive: async () => { $('menu').hidden = true; audioStart(); await driveCutscene({ post, renderer, LOW, char: CHARS[1] }, { car: await loadCar(CHARS[1].car) }); return 'done'; } });
+window.__nh = () => ({ P, S, W, monsters, items, game, useNearest, useStation, breakTube, ride, nearest, takeItem, localCaught, runBombEnding, armBomb, startGame, post, camera, cellCenter, newGame, trees, cam, testDrive: async () => { $('menu').hidden = true; audioStart(); await driveCutscene({ post, renderer, LOW, char: CHARS[1] }, { car: await loadCar(CHARS[1].car) }); return 'done'; } });

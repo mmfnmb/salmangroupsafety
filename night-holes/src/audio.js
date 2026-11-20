@@ -63,6 +63,7 @@ export const sfx = {
   tick() { tone(2000, 0.04, 0.12, 'square'); },
   explosion() { noise(3.5, 1.0, 900, 40, 'lowpass'); tone(38, 3, 0.9, 'sine', 22); noise(2.0, 0.5, 6000, 500, 'bandpass', 0, 0.4); },
   intercom(pan = 0) { tone(1046, 0.18, 0.1, 'sine', null, pan); tone(784, 0.25, 0.1, 'sine', null, pan, 0.2); noise(1.2, 0.08, 2000, 1800, 'bandpass', pan, 3); },
+  scratch(pan = 0) { for (let i = 0; i < 7; i++) setTimeout(() => noise(0.12, 0.16, 3500, 1200, 'bandpass', pan + (Math.random() - 0.5) * 0.4, 3), i * 170 + Math.random() * 60); },
   ding() { tone(1320, 0.6, 0.1, 'sine'); tone(990, 0.8, 0.08, 'sine', null, 0, 0.25); },
 };
 export function setHeartbeat(level) { // 0..1, faster and louder as a monster gets closer
@@ -87,3 +88,4 @@ let pad = null;
 export function setTension(v) { if (!ac) return; if (!pad) { pad = ac.createGain(); pad.gain.value = 0; const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 700; f.Q.value = 2; f.connect(pad); pad.connect(master);
     for (const fr of [233, 247, 349, 370]) { const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.value = fr; const l = ac.createOscillator(); l.frequency.value = 0.2 + Math.random() * 0.3; const lg = ac.createGain(); lg.gain.value = 3; l.connect(lg); lg.connect(o.frequency); o.connect(f); o.start(); l.start(); } }
   pad.gain.setTargetAtTime(Math.max(0, Math.min(1, v)) * 0.05, now(), 0.8); }
+export const getAC = () => ac;
