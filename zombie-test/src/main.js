@@ -6,12 +6,13 @@ import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 
+const LM_SCALE = 4.0;   // lightmaps are stored as JPEG: value / LM_SCALE, sRGB encoded
 const $ = (id) => document.getElementById(id);
 const bar = (p, t) => { $('bar').style.width = Math.round(p * 100) + '%'; if (t) $('msg').textContent = t; };
 const b64 = (s) => { const bin = atob(s), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u.buffer; };
 async function bundle(name) {
   let c = null; const url = 'assets/' + name + '.json';
-  try { c = await caches.open('street-v1'); const hit = await c.match(url); if (hit) return hit.json(); } catch (e) { c = null; }
+  try { c = await caches.open('street-v2'); const hit = await c.match(url); if (hit) return hit.json(); } catch (e) { c = null; }
   const r = await fetch(url); if (!r.ok) throw new Error(url + ' ' + r.status); if (c) try { await c.put(url, r.clone()); } catch (e) {} return r.json();
 }
 const gltf = new GLTFLoader(); gltf.setMeshoptDecoder(MeshoptDecoder);
@@ -32,19 +33,20 @@ dispatchEvent(new Event('resize'));
 let sun, sunBase = 3.0, statics = [], player, mixer, acts = {}, cur;
 async function start() {
   bar(0.05, 'Loading street…');
-  const [st0, lt, hum, ...cars] = await Promise.all([bundle('street'), bundle('light'), bundle('hum'), bundle('car-1'), bundle('car-2'), bundle('car-3')]);
-  bar(0.6, 'Building…'); const st = { ...st0, ...lt };
+  const names = ['street', 'hum', 'car-1', 'car-2', 'car-3']; let done = 0;
+  const [st, hum, ...cars] = await Promise.all(names.map((n) => bundle(n).then((j) => (bar(0.05 + 0.6 * ++done / names.length, 'Loading… ' + done + '/' + names.length), j))));
+  bar(0.7, 'Building…');
   const meta = st['street.json'] ? JSON.parse(atob(st['street.json'])) : { sun: [0.5, 0.5, 0.5] };
   // sky: background and reflections
   const sky = hdr(b64(st['sky.hdr'])); sky.mapping = THREE.EquirectangularReflectionMapping;
   const pm = new THREE.PMREMGenerator(renderer); const env = pm.fromEquirectangular(sky).texture; scene.environment = env; scene.background = sky; scene.backgroundIntensity = 0.9;
   // street with baked light: textures times the Cycles lightmap (no live light on it)
   const g = await gltf.parseAsync(b64(st['street.glb']), '');
-  const lms = {}; for (const k of Object.keys(st)) if (k.startsWith('lm_')) lms[k.slice(3, -4)] = hdr(b64(st[k]));
+  const lms = {}; for (const k of Object.keys(st)) if (k.startsWith('lm_')) { const im = await createImageBitmap(new Blob([b64(st[k])], { type: 'image/jpeg' })); const t = new THREE.Texture(im); t.flipY = false; t.colorSpace = THREE.SRGBColorSpace; t.needsUpdate = true; lms[k.slice(3, -4)] = t; }
   g.scene.traverse((m) => {
     if (!m.isMesh) return; const root = (m.parent && m.parent.isGroup && m.parent !== g.scene ? m.parent.name : m.name).split('.')[0].replace(/_\d+$/, '');
     const lm = lms[root] || lms[m.name.split('.')[0].replace(/_\d+$/, '')]; const mats = Array.isArray(m.material) ? m.material : [m.material];
-    if (lm) { const nm = mats.map((o) => { const b = new THREE.MeshBasicMaterial({ map: o.map, color: o.color, lightMap: lm, lightMapIntensity: Math.PI, transparent: o.transparent, alphaTest: o.alphaTest, side: o.side });
+    if (lm) { const nm = mats.map((o) => { const b = new THREE.MeshBasicMaterial({ map: o.map, color: o.color, lightMap: lm, lightMapIntensity: Math.PI * LM_SCALE, transparent: o.transparent, alphaTest: o.alphaTest, side: o.side });
         if (b.map) b.map.anisotropy = renderer.capabilities.getMaxAnisotropy(); return b; }); lm.channel = 1; m.material = Array.isArray(m.material) ? nm : nm[0]; statics.push(m); }
     else { for (const o of mats) { o.color = new THREE.Color(0x0a0c0e); o.metalness = 1.0; o.roughness = 0.04; o.envMapIntensity = 1.0; } }  // glass reflects the sky
     m.matrixAutoUpdate = false; m.updateMatrix();
@@ -120,5 +122,8 @@ function loop() {
   renderer.render(scene, camera);
   frames++; fpsT += dt; if (fpsT > 1) { $('fps').textContent = Math.round(frames / fpsT) + ' fps'; frames = 0; fpsT = 0; }
 }
-start().catch((e) => { $('msg').textContent = 'Error: ' + e.message; console.error(e); });
+const fail = (m) => { $('load').style.display = 'flex'; $('msg').textContent = 'Error: ' + m; };
+addEventListener('error', (e) => fail(e.message)); addEventListener('unhandledrejection', (e) => fail(e.reason && e.reason.message || String(e.reason)));
+renderer.domElement.addEventListener('webglcontextlost', () => fail('graphics memory ran out (WebGL context lost)'));
+start().catch((e) => { fail(e.message); console.error(e); });
 window.__st = { scene, camera, renderer, get player() { return player; }, setYaw: (y, p) => { yaw = y; if (p != null) pitch = p; }, input };
