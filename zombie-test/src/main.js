@@ -13,7 +13,7 @@ const b64 = (s) => { const bin = atob(s), u = new Uint8Array(bin.length); for (l
 async function bundle(name) {
   if (window.__B && window.__B[name]) return window.__B[name];
   let c = null; const url = 'assets/' + name + '.json';
-  try { c = await caches.open('street-v2'); const hit = await c.match(url); if (hit) return hit.json(); } catch (e) { c = null; }
+  try { c = await caches.open('street-v3'); const hit = await c.match(url); if (hit) return hit.json(); } catch (e) { c = null; }
   const r = await fetch(url); if (!r.ok) throw new Error(url + ' ' + r.status); if (c) try { await c.put(url, r.clone()); } catch (e) {} return r.json();
 }
 const gltf = new GLTFLoader(); gltf.setMeshoptDecoder(MeshoptDecoder);
