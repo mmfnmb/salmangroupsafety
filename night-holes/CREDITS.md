@@ -28,3 +28,8 @@
   - "2022 Porsche Cayenne Turbo GT" by Ddiaz Design – https://sketchfab.com/3d-models/74fbea5a4dfc4197839fdd2bf654369a – CC BY 4.0 (`porsche-cayenne.glb`)
   - Intro car: "Mercedes E Class W212" by Peter_D (better_peter) – sketchfab.com/3d-models/mercedes-e-class-w212-119c5e10733142b197aa53b86f6aeb04 – CC BY 4.0 (via github.com/HDB-productions/Schule). Textures compressed; brand badges to be removed in game.
 - Fonts: Special Elite, Oswald (Apache 2.0).
+- More monsters (CC BY 4.0, from Sketchfab; resized/compressed):
+  - "Silent Horror Nurse – Stylized Creeping Model" by PurplePoint – sketchfab.com/3d-models/silent-horror-nurse-stylized-creeping-model-59d0fa69d7c4440e8e72d7d616c5fe30 (rig and actions via github.com/loronajay/javascript-game-factory)
+  - "Smily Horror Monster" by Bento – sketchfab.com/3d-models/smily-horror-monster-3d3fc31eddaa409a8f2df564823154e1 (via github.com/daffazub/shadow_of_abandoned)
+  - "zombie monster slasher necromorph" by wojciechmiedziocha (via github.com/huaichuan-li/GoodbyeMyLover)
+- Hospital pieces (CC BY 4.0, via github.com/huaichuan-li/GoodbyeMyLover): "Hospital Trolley" by creative_beast, "Crutch and IV Drip" by Matt_LeMoine, "Old hospital bed (PBR/GR)" by tris09.
