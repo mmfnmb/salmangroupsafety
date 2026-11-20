@@ -94,7 +94,7 @@ export async function dressRooms(W, rand, h) {
   // GROUND: analysis lab: microscopes, racks, syringes, petri dishes, a sample fridge and a centrifuge
   { const r = await onTable(0, 'X', [microscope, tubeRack, syringeTray]); if (r) h.station(0, r.s.x + Math.sin(r.s.ry) * 0.6, r.s.z + Math.cos(r.s.ry) * 0.6, 'mix'); }
   // the incubator: an empty tube with a control box, where a creature can be grown from parts
-  { const r = await custom(async () => { const g = await specimenTube(false); g.add(mesh(new THREE.BoxGeometry(0.5, 0.7, 0.3), STD(0x3a3f45, 0.5, 0.5), 0.75, 0.35, 0.1)); return g; }, 0, 'X', { out: 0.4 }); if (r) { h.station(0, r.s.x + Math.sin(r.s.ry) * 1.1, r.s.z + Math.cos(r.s.ry) * 1.1, 'grow'); W.incubator = { x: r.s.x + Math.sin(r.s.ry) * 0.4, z: r.s.z + Math.cos(r.s.ry) * 0.4 }; } } await onTable(0, 'X', [petri, centrifuge, () => tubeRack(4)]); await custom(sampleFridge, 0, 'X', { out: 0.05 });
+  { const r = await custom(async () => { const g = await specimenTube(false); g.add(mesh(new THREE.BoxGeometry(0.5, 0.7, 0.3), STD(0x3a3f45, 0.5, 0.5), 0.75, 0.35, 0.1)); return g; }, 0, 'X', { out: 0.4 }); if (r) { h.station(0, r.s.x + Math.sin(r.s.ry) * 1.1, r.s.z + Math.cos(r.s.ry) * 1.1, 'grow'); W.incubator = { x: r.s.x + Math.sin(r.s.ry) * 0.4, z: r.s.z + Math.cos(r.s.ry) * 0.4 }; } } await onTable(0, 'X', [petri, centrifuge, () => tubeRack(4)]); { const r = await custom(sampleFridge, 0, 'X', { out: 0.05 }); if (r) h.station(0, r.s.x + Math.sin(r.s.ry) * 0.7, r.s.z + Math.cos(r.s.ry) * 0.7, 'drawer'); }
   { const [cx, cz] = center(0, 'X'); const g = await h.steelTable(1.8, 0.8); [microscope, syringeTray, petri].forEach((it, i) => { const o = it(); o.position.set(-0.6 + i * 0.6, 0.925, 0); g.add(o); }); put(g, 0, cx, cz + 0.6, 0); solid(g, 0); }
   // tube lab: two rows of specimen tubes, most occupied
   { const [cx, cz, cells] = center(0, 'T'); const xs = cells.map((c) => c[0]), zs = cells.map((c) => c[1]); const x0 = Math.min(...xs), x1 = Math.max(...xs), z0 = Math.min(...zs), z1 = Math.max(...zs);
@@ -102,8 +102,8 @@ export async function dressRooms(W, rand, h) {
   // clinic: hospital beds, IV stands, trolley, heart monitor
   { const r = await onTable(0, 'C', [syringeTray, () => tubeRack(3)], 1.0); } await custom(heartMonitor, 0, 'C', { out: 0.3 }); await h.onSlot('house/iv_drip.glb', 0, 'C', { out: 0.3, fit: 1.8 }); await h.onSlot('house/trolley.glb', 0, 'C', { out: 0.2, fit: 0.95 }); await h.onSlot('house/hospital_bed.glb', 0, 'C', { out: 0.5, fit: 1.0 });
   // security: a cabinet left open; offices: file cabinets, papers on the floor, a notice board
-  await custom(gunCabinet, 0, 'S', { out: 0.05 });
-  for (let i = 0; i < 2; i++) await custom(fileCabinet, 0, 'O', { out: 0.05 }); { const [cx, cz] = center(0, 'O'); const p = papers(12); put(p, 0, cx, cz, 0); }
+  { const r = await custom(gunCabinet, 0, 'S', { out: 0.05 }); if (r) h.station(0, r.s.x + Math.sin(r.s.ry) * 0.7, r.s.z + Math.cos(r.s.ry) * 0.7, 'drawer'); }
+  for (let i = 0; i < 2; i++) { const r = await custom(fileCabinet, 0, 'O', { out: 0.05 }); if (r) h.station(0, r.s.x + Math.sin(r.s.ry) * 0.7, r.s.z + Math.cos(r.s.ry) * 0.7, 'drawer'); } { const [cx, cz] = center(0, 'O'); const p = papers(12); put(p, 0, cx, cz, 0); }
   { const s = W.slot(0, 'O', rand); if (s) { const b = noticeBoard(); put(b, 0, s.x - Math.sin(s.ry) * 0.63, s.z - Math.cos(s.ry) * 0.63, s.ry, 1.6); } }
   // cafeteria: trays, a coffee machine, chairs knocked over
   { const [cx, cz] = center(0, 'Y'); for (const dz of [-2.6, 0, 2.6]) { const t = tray(); put(t, 0, cx + (rand() - 0.5) * 0.6, cz + dz, rand() * 6, 0.76); } await custom(async () => { const g = await h.steelTable(1.0, 0.6); const c = coffeeMachine(); c.position.y = 0.925; g.add(c); return g; }, 0, 'Y', { out: 0.1 });
@@ -111,7 +111,7 @@ export async function dressRooms(W, rand, h) {
   // B1: power: fuse panels and cables; medical stores: medicine shelves and oxygen
   for (let i = 0; i < 2; i++) { const s = W.slot(1, 'G', rand) || W.slot(1, 'P', rand); if (s) { const p = fusePanel(); put(p, 1, s.x - Math.sin(s.ry) * 0.55, s.z - Math.cos(s.ry) * 0.55, s.ry); } }
   { const [cx, cz] = center(1, 'G'); const c = cables(5); put(c, 1, cx, cz, 0.3); }
-  await custom(medShelf, 1, 'L', { out: 0.05 }); await custom(() => oxygenTanks(3), 1, 'L', { out: 0.05 });
+  { const r = await custom(medShelf, 1, 'L', { out: 0.05 }); if (r) h.station(1, r.s.x + Math.sin(r.s.ry) * 0.7, r.s.z + Math.cos(r.s.ry) * 0.7, 'drawer'); } await custom(() => oxygenTanks(3), 1, 'L', { out: 0.05 });
   // B2: containment: holding cells; control: a big console; tunnel: rails and a cart
   for (let i = 0; i < 2; i++) await custom(cell, 2, 'Z', { out: 0.4 });
   { const [cx, cz] = center(2, 'Q'); const c = controlConsole(); put(c, 2, cx, cz + 0.6, Math.PI); solid(c, 2); }

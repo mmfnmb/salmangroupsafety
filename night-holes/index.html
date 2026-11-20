@@ -180,6 +180,9 @@ html[lang=ar] #storyCap { font-family: 'Cairo', sans-serif; font-weight: 700; }
 #mlab { align-items: flex-end; justify-content: flex-end; pointer-events: none; } .mlabCard { pointer-events: auto; width: min(380px, 100%); max-height: 100%; overflow: auto; background: #07090bdd; border: 2px solid #c9c2ae55; padding: 14px; box-sizing: border-box; display: grid; gap: 8px; }
 .mlabCard h2 { font-family: var(--display); font-weight: 400; margin: 0; } .bRow { display: grid; grid-template-columns: 110px 1fr; gap: 8px; align-items: center; font-size: 14px; color: #c9c2ae; } .bRow select, .bRow input { background: #0b0f13; color: #e9e4d4; border: 1px solid #c9c2ae55; border-radius: 0; padding: 5px; font: 14px var(--body); min-width: 0; }
 #mlSaved .cbtn { width: auto; padding: 5px 9px; font-size: 12px; } .pbox .bRow { text-align: start; } .growBar { height: 8px; border: 1px solid #c9c2ae77; } .growBar i { display: block; height: 100%; width: 0; background: #3cff9a; }
+#mobileBtns button { font-size: 9px !important; letter-spacing: 0 !important; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+#cross { position: fixed; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: #e9e4d4aa; pointer-events: none; transition: all .15s; }
+#cross.on { width: 18px; height: 18px; margin: -9px 0 0 -9px; background: transparent; border: 2px solid #e9e4d4; }
 </style>
 
 <canvas id="view"></canvas>
@@ -227,7 +230,7 @@ html[lang=ar] #storyCap { font-family: 'Cairo', sans-serif; font-weight: 700; }
   <div class="meters" id="meters"><small data-t="stamina"></small><div class="meter"><i id="stam"></i></div><small data-t="flash"></small><div class="meter"><i id="batt"></i></div></div>
   <div id="inv"><span id="invIcons"></span></div>
   <div id="objective"></div>
-  <div id="prompt" hidden></div><div id="banner"></div><div id="controlsHelp"></div><div id="bombTimer" hidden></div>
+  <div id="cross"></div><div id="prompt" hidden></div><div id="banner"></div><div id="controlsHelp"></div><div id="bombTimer" hidden></div>
   <div id="journal" hidden></div>
   <div id="mobileBtns" hidden>
     <button id="bUse" data-t="use"></button>

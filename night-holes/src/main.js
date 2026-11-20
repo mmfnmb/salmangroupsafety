@@ -46,7 +46,7 @@ function ui() {
   $('btnQuality').textContent = `${t('quality')}: ${HIGH ? t('q_high') : t('q_low')}`; $('langSel').value = LANG;
 }
 function show(id) { for (const s of ['menu', 'lobby', 'shop', 'loading', 'hud', 'dead', 'results']) $(s).hidden = s !== id; }
-function ensurePlayer() { if (!P) { P = new Player(camera, scene, LOW); P.onKey = keyAction; bindTouch($('touch'), P); } }
+function ensurePlayer() { if (!P) { P = new Player(camera, scene, LOW); P.onKey = keyAction; P.onTap = (x, y) => (useHook ? useHook() : tapUse(x, y)); bindTouch($('touch'), P); } }
 $('langSel').innerHTML = Object.entries(LANG_NAMES).map(([k, n]) => `<option value="${k}">${n}</option>`).join('');
 $('langSel').onchange = (e) => { setLang(e.target.value); ui(); renderLobby(); };
 $('btnQuality').onclick = () => { HIGH = !HIGH; try { localStorage.setItem('nh_q', HIGH ? 'high' : 'low'); } catch (e) {} post.setQuality(HIGH); ui(); };
@@ -210,10 +210,18 @@ function throwBottle() {
 let distraction = null; function makeDistraction(f, x, z, sec = 6) { distraction = { f, x, z, t: sec }; }
 
 // nearest interactable in front of the player
+// tap on a thing (phone) or click (mouse): use the interactable drawn closest to that point on screen
+const tapV = new THREE.Vector3();
+function hAt(i) { return i.kind === 'door' ? 1.3 : i.kind === 'item' ? 0.15 : i.kind === 'locker' ? 1.2 : 1.0; }
+function tapUse(cx, cy) { if (!game || game.end || P.dead || P.locked || panelOpen()) return; if (P.hidden) return useNearest();
+  let best = null, bd = 110; for (const i of W.inter) { if (i.f !== P.f || i.taken) continue; const d = Math.hypot(i.x - P.x, i.z - P.z); if (d > Math.max(i.r, 1.6) + 1.4) continue;
+    tapV.set(i.x, FLOOR_Y[P.f] + hAt(i), i.z).project(camera); if (tapV.z > 1) continue; const sx = (tapV.x + 1) / 2 * innerWidth, sy = (1 - tapV.y) / 2 * innerHeight; const pd = Math.hypot(sx - cx, sy - cy); if (pd < bd) { bd = pd; best = i; } }
+  if (best) useThing(best); }
+addEventListener('mousedown', (e) => { if (e.button === 0 && document.pointerLockElement && game && !game.end) useNearest(); });
 function nearest() {
   let best = null, bd = 9; const fx = -Math.sin(P.yaw), fz = -Math.cos(P.yaw);
   for (const i of W.inter) { if (i.f !== P.f || i.taken) continue; const dx = i.x - P.x, dz = i.z - P.z, d = Math.hypot(dx, dz); if (d > i.r) continue;
-    const dot = (dx * fx + dz * fz) / (d || 1); const score = d - dot * 0.8; if (dot > -0.2 || d < 0.9) if (score < bd) { bd = score; best = i; } }
+    const dot = (dx * fx + dz * fz) / (d || 1); const score = d - dot * 1.1; if (dot > -0.35 || d < 1.1) if (score < bd) { bd = score; best = i; } }
   return best;
 }
 function promptFor(i) {
@@ -226,7 +234,9 @@ function promptFor(i) {
 function useNearest() {
   if (!game || P.dead || game.end || panelOpen() || P.locked) return;
   if (P.hidden) { const L = P.hidden; P.hidden = null; P.x = L.x; P.z = L.z; sfx.door(); $('lockerView').hidden = true; return; }
-  const i = nearest(); if (!i) return;
+  const i = nearest(); if (!i) return; useThing(i); }
+function useThing(i) {
+  if (!game || P.dead || game.end || panelOpen() || P.locked) return;
   if (role === 'monster') return;
   if (i.kind === 'item') return takeItem(i, true);
   if (i.kind === 'locker') { P.hidden = i; P.x = i.x - Math.sin(i.ry) * 0.3; P.z = i.z - Math.cos(i.ry) * 0.3; P.yaw = i.ry + Math.PI; sfx.door(); $('lockerView').hidden = false; return; }
@@ -502,9 +512,11 @@ function updateLights(dt) {
     l.intensity = on * (red ? 4.5 : 3.2) * pulse; l.position.set(a.x, FLOOR_Y[f] + WH - 0.35, a.z); l.distance = 7.5; a.vis = on * pulse; });
   for (let ff = 0; ff < 3; ff++) for (const a of W.anchors[ff]) { const v = a.vis != null && ff === f ? a.vis : a.on ? 1 : 0; a.lamp.material.emissiveIntensity = v ? (a.red ? 0.6 : 1.0) * v : 0.02; a.lamp.material.emissive.set(a.red ? 0xff2020 : 0xf4f7ff); a.vis = null; }
 }
+const marker = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.strokeStyle = 'rgba(233,228,212,.95)'; g.lineWidth = 3; g.beginPath(); g.arc(32, 32, 22, 0, 7); g.stroke(); const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false, transparent: true })); s.scale.setScalar(0.35); s.renderOrder = 10; s.visible = false; scene.add(s); return s; })();
 function updateHud() {
   if (!P || !S || !W || !game) return; const i = !game.end && !P.dead ? nearest() : null; const pr = promptFor(i);
-  $('prompt').textContent = pr; $('prompt').hidden = !pr || panelOpen(); $('bUse').textContent = pr || t('use');
+  $('prompt').textContent = pr; $('prompt').hidden = !pr || panelOpen(); $('cross').classList.toggle('on', !!pr);
+  marker.visible = !!i && !P.hidden && !panelOpen(); if (i) marker.position.set(i.x, FLOOR_Y[P.f] + hAt(i), i.z); $('bUse').textContent = pr || t('use');
   $('stam').style.width = (P.stamina * 100) + '%'; $('stam').style.background = P.adrT > 0 ? '#ff9a3c' : ''; $('batt').style.width = (P.battery * 100) + '%'; 
   const invHtml = ['green', 'red', 'key', 'screwdriver', 'fuse_r', 'fuse_y', 'fuse_b', 'bottle', 'adrenaline', 'trap', 'lighter', 'chem_r', 'chem_b', 'chem_y', 'sedative', 'smoke', 'acid', 'flare'].filter((k) => S.inv[k]).map((k) => `<span class="slot" title="${t(k)}">${ICON[k]}${S.inv[k] > 1 || ['bottle', 'adrenaline', 'trap'].includes(k) ? `<b>${S.inv[k]}</b>` : ''}</span>`).join('');
   if (invHtml !== lastInv) { lastInv = invHtml; $('invIcons').innerHTML = invHtml; }

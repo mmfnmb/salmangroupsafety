@@ -59,10 +59,10 @@ export function bindTouch(el, P) {
   const base = document.getElementById('stick'), knob = document.getElementById('knob');
   el.addEventListener('touchstart', (e) => { for (const t of e.changedTouches) {
     if (t.clientX < innerWidth * 0.45 && stick.id === null) { stick.id = t.identifier; stick.ox = t.clientX; stick.oy = t.clientY; base.style.left = (t.clientX - 60) + 'px'; base.style.top = (t.clientY - 60) + 'px'; base.hidden = false; }
-    else if (lookT.id === null) { lookT.id = t.identifier; lookT.x = t.clientX; lookT.y = t.clientY; } } e.preventDefault(); }, { passive: false });
+    else if (lookT.id === null) { lookT.id = t.identifier; lookT.x = lookT.sx = t.clientX; lookT.y = lookT.sy = t.clientY; lookT.t0 = performance.now(); } } e.preventDefault(); }, { passive: false });
   el.addEventListener('touchmove', (e) => { for (const t of e.changedTouches) {
     if (t.identifier === stick.id) { let dx = t.clientX - stick.ox, dy = t.clientY - stick.oy; const l = Math.hypot(dx, dy), m = 55; if (l > m) { dx *= m / l; dy *= m / l; } P.move = [dx / m, dy / m]; knob.style.transform = `translate(${dx}px,${dy}px)`; }
     else if (t.identifier === lookT.id) { if (!P.locked) P.look((t.clientX - lookT.x) * 0.006, (t.clientY - lookT.y) * 0.006); lookT.x = t.clientX; lookT.y = t.clientY; } } e.preventDefault(); }, { passive: false });
-  const end = (e) => { for (const t of e.changedTouches) { if (t.identifier === stick.id) { stick.id = null; P.move = [0, 0]; knob.style.transform = ''; base.hidden = true; } if (t.identifier === lookT.id) lookT.id = null; } };
+  const end = (e) => { for (const t of e.changedTouches) { if (t.identifier === stick.id) { stick.id = null; P.move = [0, 0]; knob.style.transform = ''; base.hidden = true; } if (t.identifier === lookT.id) { if (Math.hypot(t.clientX - lookT.sx, t.clientY - lookT.sy) < 14 && performance.now() - lookT.t0 < 350 && P.onTap) P.onTap(t.clientX, t.clientY); lookT.id = null; } } };
   el.addEventListener('touchend', end); el.addEventListener('touchcancel', end);
 }
