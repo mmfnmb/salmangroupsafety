@@ -2,7 +2,7 @@
 # static surface into lightmaps with Cycles (CPU), and exports glTF (+ HDR lightmaps + an equirect sky) for three.js.
 # Usage: python street.py -- <input glb folder> <output folder> [samples] [lightmap size]
 import bpy, bmesh, sys, os, math, random, json
-from mathutils import Vector
+from mathutils import Vector, Matrix
 
 args = sys.argv[sys.argv.index('--') + 1:]
 IN, OUT = args[0], args[1]
@@ -40,6 +40,8 @@ MAT['awning_g'] = flat('awning_g', (0.05, 0.22, 0.12), 0.8)
 MAT['awning_b'] = flat('awning_b', (0.08, 0.12, 0.3), 0.8)
 MAT['curb'] = MAT['Concrete049']
 MAT['line'] = flat('line', (0.85, 0.82, 0.7), 0.7)
+for k, c in (('sign_a', (0.75, 0.62, 0.15)), ('sign_b', (0.1, 0.1, 0.12)), ('sign_c', (0.55, 0.1, 0.08)), ('sign_d', (0.85, 0.85, 0.82))): MAT[k] = flat(k, c, 0.5)
+AC = []
 
 # ---------------------------------------------------------------- geometry helpers (UVs in metres for tiling textures)
 def box(name, cx, cy, cz, sx, sy, sz, mat, tile=2.0, parts=None):
@@ -53,8 +55,8 @@ def box(name, cx, cy, cz, sx, sy, sz, mat, tile=2.0, parts=None):
             if abs(n.z) > 0.5: l[uv].uv = (p.x / tile, p.y / tile)
             elif abs(n.x) > 0.5: l[uv].uv = (p.y / tile, p.z / tile)
             else: l[uv].uv = (p.x / tile, p.z / tile)
-    me = bpy.data.meshes.new(name); bm.to_mesh(me); bm.free()
-    o = bpy.data.objects.new(name, me); sc.collection.objects.link(o); o.data.materials.append(mat)
+    me = bpy.data.meshes.new(name); bm.to_mesh(me); bm.free(); me.transform(Matrix.Translation((-cx, -cy, -cz)))   # origin at the centre so rotations work
+    o = bpy.data.objects.new(name, me); sc.collection.objects.link(o); o.data.materials.append(mat); o.location = (cx, cy, cz)
     if parts is not None: parts.append(o)
     return o
 
@@ -95,7 +97,27 @@ def building(x0, w, side, floors, facade):
     box('shopframe', x0 + w / 2, fy - side * 0.08, 0.35, w - 1.4, 0.14, 0.7, MAT['frame_dark'], 1.0, STATIC)
     for xx in (x0 + 0.75, x0 + w - 0.75, x0 + w / 2): box('mullion', xx, fy - side * 0.08, 1.6, 0.12, 0.14, 2.6, MAT['frame_dark'], 1.0, STATIC)
     aw = box('awning', x0 + w / 2, fy - side * 0.9, 3.15, w - 1.2, 1.8, 0.06, MAT[random.choice(['awning_r', 'awning_g', 'awning_b'])], 1.0, STATIC)
-    aw.rotation_euler.x = side * -0.28
+    aw.rotation_euler.x = side * 0.28
+    # shop sign board above the awning
+    box('sign', x0 + w / 2, fy - side * 0.1, 3.75, min(w - 2.0, 7.0), 0.12, 0.75, MAT[random.choice(['sign_a', 'sign_b', 'sign_c', 'sign_d'])], 1.0, STATIC)
+    # balconies on some buildings: slab + railing posts + top rail
+    if random.random() < 0.55:
+        for f in range(1, floors):
+            if random.random() < 0.35: continue
+            z = f * fh + 0.95
+            for k in range(n):
+                if random.random() < 0.5: continue
+                x = x0 + step * (k + 0.5)
+                box('balc', x, fy - side * 0.55, z - 0.06, 1.9, 1.1, 0.14, MAT['Concrete049'], 1.0, STATIC)
+                box('rail', x, fy - side * 1.07, z + 0.55, 1.9, 0.05, 0.05, MAT['frame_dark'], 1.0, STATIC)
+                for i in range(9): box('rail', x - 0.9 + i * 0.225, fy - side * 1.07, z + 0.28, 0.025, 0.025, 0.55, MAT['frame_dark'], 1.0, STATIC)
+                for dx in (-0.93, 0.93): box('rail', x + dx, fy - side * 0.55, z + 0.55, 0.05, 1.05, 0.05, MAT['frame_dark'], 1.0, STATIC)
+    # wall air-conditioners under some windows, a drain pipe at the corner, roof tanks
+    for f in range(1, floors):
+        for k in range(n):
+            if random.random() < 0.18: AC.append((x0 + step * (k + 0.5) + 0.3, fy - side * 0.3, f * fh + 0.55, side))
+    box('pipe', x0 + 0.25, fy - side * 0.12, h / 2, 0.11, 0.11, h, MAT['rusty_metal_02'], 1.0, STATIC)
+    if random.random() < 0.6: box('tank', x0 + w * random.uniform(0.3, 0.7), cy, h + 1.2, 1.4, 1.4, 1.5, MAT['metal_plate'], 1.0, STATIC)
 
 for side in (-1, 1):
     x = -L / 2
@@ -117,6 +139,25 @@ for x in range(-45, 46, 15):
 for x, s, n in [(-38, -1, 'metal_trash_can'), (-12, 1, 'fire_hydrant'), (8, -1, 'utility_box_02'), (22, 1, 'metal_trash_can'), (31, -1, 'fire_hydrant'), (-26, 1, 'utility_box_02')]:
     prop(n, x, s * 6.0, random.random() * 6)
 prop('concrete_road_barrier', 44, 3.0, 1.57); prop('concrete_road_barrier', 44, -1.0, 1.57)
+for (x, y, z, side) in AC:
+    objs = prop('exterior_aircon_unit', x, y, 0 if side < 0 else math.pi); keep = random.random() < 0.5
+    for o in objs:
+        if o.type == 'MESH' and (('rusted' in o.name) != keep):
+            if o in STATIC: STATIC.remove(o)
+            bpy.data.objects.remove(o, do_unlink=True); continue
+        if o.parent is None: o.location.z = z; o.scale = (0.8, 0.8, 0.8)
+# overhead cables across the street, sagging between the buildings
+for x in (-33, -8, 17, 39):
+    for dz in (0.0, 0.35):
+        pts = [Vector((x + 0.3 * math.sin(i), -9.4 + i * 18.8 / 12, 7.6 + dz - 0.9 * math.sin(math.pi * i / 12))) for i in range(13)]
+        for a, b in zip(pts, pts[1:]):
+            m = (a + b) / 2; d = b - a; o = box('wire', m.x, m.y, m.z, 0.025, d.length, 0.025, MAT['frame_dark'], 1.0, STATIC); o.rotation_euler.x = math.atan2(d.z, d.y)
+# the scanned lamps are very dense: thin them before baking
+bpy.context.view_layer.update()
+for o in STATIC:
+    if o.type == 'MESH' and o.name.startswith('street_lamp') and len(o.data.vertices) > 4000:
+        md = o.modifiers.new('dec', 'DECIMATE'); md.ratio = 0.12; bpy.context.view_layer.update()
+        dg = bpy.context.evaluated_depsgraph_get(); nm = bpy.data.meshes.new_from_object(o.evaluated_get(dg)); o.modifiers.clear(); o.data = nm
 
 # ---------------------------------------------------------------- sky and sun (physical, late afternoon)
 w = bpy.data.worlds.new('sky'); sc.world = w; w.use_nodes = True; nt = w.node_tree
@@ -167,7 +208,7 @@ for key, test in [('ground', lambda o: abs(o.location.y) < 9.6 and o.dimensions.
                   ('left', lambda o: True), ('right', lambda o: True)]:
     pass
 ground = [o for o in STATIC if o.name.split('.')[0] in ('road', 'walk', 'curb', 'dash')]
-props = [o for o in STATIC if o not in ground and not o.name.split('.')[0] in ('bld', 'cornice', 'parapet', 'band', 'wf', 'sill', 'shopframe', 'mullion', 'awning')]
+props = [o for o in STATIC if o not in ground and not o.name.split('.')[0] in ('bld', 'cornice', 'parapet', 'band', 'wf', 'sill', 'shopframe', 'mullion', 'awning', 'sign', 'balc', 'rail', 'pipe', 'tank', 'wire')]
 rest = [o for o in STATIC if o not in ground and o not in props]
 bpy.context.view_layer.update()
 left = [o for o in rest if (o.matrix_world @ Vector(o.bound_box[0])).y < 0]

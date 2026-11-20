@@ -18,13 +18,14 @@ canvas { display: block; touch-action: none; }
 .btn { position: fixed; bottom: max(22px, env(safe-area-inset-bottom)); width: 58px; height: 58px; border-radius: 50%; border: 2px solid #fff6; background: #0006; color: #fff; font-size: 12px; font-weight: 600; }
 .btn.on { background: #e8b04acc; color: #111; }
 #btnRun { right: 22px; } #btnView { right: 92px; }
-#stick { display: none; position: fixed; width: 110px; height: 110px; border-radius: 50%; border: 2px solid #fff5; background: #0003; pointer-events: none; }
+#vig { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.38) 100%); }
+#stick { display: block; left: 30px; bottom: 30px; opacity: .55; position: fixed; width: 110px; height: 110px; border-radius: 50%; border: 2px solid #fff5; background: #0003; pointer-events: none; }
 #knob { position: absolute; left: 35px; top: 35px; width: 40px; height: 40px; border-radius: 50%; background: #fff8; }
 </style></head>
 <body>
 <div id="load"><h1>TEST STREET</h1><div class="track"><div id="bar"></div></div><div id="msg">Loading…</div></div>
 <div id="hud"><div id="fps"></div><div id="help">Left side: walk · Right side: look<br>WASD + mouse · Shift run · V view</div>
-<button class="btn" id="btnView">VIEW</button><button class="btn" id="btnRun">RUN</button></div>
-<div id="stick"><div id="knob"></div></div>
+<button class="btn" id="btnView">VIEW</button><button class="btn" id="btnRun">RUN</button>
+<div id="vig"></div><div id="stick"><div id="knob"></div></div></div>
 <script src="game.js"></script>
 </body></html>

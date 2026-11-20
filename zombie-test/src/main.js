@@ -25,17 +25,18 @@ const phone = Math.min(innerWidth, innerHeight) < 700 || /Android|iPhone|iPad/i.
 const renderer = new THREE.WebGLRenderer({ antialias: !phone, powerPreference: 'high-performance' });
 renderer.setPixelRatio(Math.min(devicePixelRatio, phone ? 1.5 : 2)); renderer.setSize(innerWidth, innerHeight);
 renderer.toneMapping = THREE.AgXToneMapping; renderer.toneMappingExposure = 1.0; renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = phone ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
 document.body.prepend(renderer.domElement);
 const scene = new THREE.Scene(); const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 400);
 addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.fov = camera.aspect < 1 ? 75 : 60; camera.updateProjectionMatrix(); });
 dispatchEvent(new Event('resize'));
 
+const movers = [], walkers = []; let pr = Math.min(devicePixelRatio, phone ? 1.5 : 2), prMax = pr, lookT = 0;
 let sun, sunBase = 3.0, statics = [], player, mixer, acts = {}, cur;
 async function start() {
   bar(0.05, 'Loading street…');
-  const names = ['street', 'hum', 'car-1', 'car-2', 'car-3']; let done = 0;
-  const [st, hum, ...cars] = await Promise.all(names.map((n) => bundle(n).then((j) => (bar(0.05 + 0.6 * ++done / names.length, 'Loading… ' + done + '/' + names.length), j))));
+  const names = ['street', 'hum', 'car-1', 'car-2', 'car-3', 'hum2', 'hum3']; let done = 0;
+  const [st, hum, c1, c2, c3, hum2, hum3] = await Promise.all(names.map((n) => bundle(n).then((j) => (bar(0.05 + 0.6 * ++done / names.length, 'Loading… ' + done + '/' + names.length), j))));
   bar(0.7, 'Building…');
   const meta = st['street.json'] ? JSON.parse(atob(st['street.json'])) : { sun: [0.5, 0.5, 0.5] };
   // sky: background and reflections
@@ -49,7 +50,7 @@ async function start() {
     const lm = lms[root] || lms[m.name.split('.')[0].replace(/_\d+$/, '')]; const mats = Array.isArray(m.material) ? m.material : [m.material];
     if (lm) { const nm = mats.map((o) => { const b = new THREE.MeshBasicMaterial({ map: o.map, color: o.color, lightMap: lm, lightMapIntensity: Math.PI * LM_SCALE, transparent: o.transparent, alphaTest: o.alphaTest, side: o.side });
         if (b.map) b.map.anisotropy = renderer.capabilities.getMaxAnisotropy(); return b; }); lm.channel = 1; m.material = Array.isArray(m.material) ? nm : nm[0]; statics.push(m); }
-    else { for (const o of mats) { o.color = new THREE.Color(0x0a0c0e); o.metalness = 1.0; o.roughness = 0.04; o.envMapIntensity = 1.0; } }  // glass reflects the sky
+    else m.material = interiorMat(sky);   // windows: rooms behind the glass + sky reflection
     m.matrixAutoUpdate = false; m.updateMatrix();
   });
   scene.add(g.scene); g.scene.updateMatrixWorld(true);
@@ -61,8 +62,17 @@ async function start() {
   const catcher = new THREE.Mesh(new THREE.PlaneGeometry(100, 19), new THREE.ShadowMaterial({ opacity: 0.55 })); catcher.rotation.x = -Math.PI / 2; catcher.position.y = 0.012; catcher.receiveShadow = true; scene.add(catcher);
   const walk = catcher.clone(); walk.geometry = new THREE.PlaneGeometry(100, 4.3); for (const s of [-1, 1]) { const w = walk.clone(); w.position.set(0, 0.155, s * 7.25); scene.add(w); }
   // parked cars along both curbs
-  let ci = 0; for (const cb of cars) { const k = Object.keys(cb)[0]; const cg = await gltf.parseAsync(b64(cb[k]), ''); const spots = [[-20, 3.9, 0], [6, -3.9, Math.PI], [28, 3.9, 0]][ci++];
-    scene.add(fitCar(cg.scene, spots)); }
+  const carG = []; for (const cb of [c1, c2, c3]) { const k = Object.keys(cb)[0]; carG.push((await gltf.parseAsync(b64(cb[k]), '')).scene); }
+  [[-20, 3.9, 0], [6, -3.9, Math.PI], [28, 3.9, 0]].forEach((sp, i) => scene.add(fitCar(carG[i], sp)));
+  // two cars driving up and down the street
+  for (const [i, z, dir, x] of [[2, -2.3, 1, -40], [0, 2.3, -1, 30]]) { const c = fitCar(carG[i].clone(true), [x, z, dir > 0 ? 0 : Math.PI]); c.userData = { dir, v: 7 + i }; scene.add(c); movers.push(c); }
+  // people walking on the sidewalks
+  const people = [hum, hum2, hum3, hum2, hum3]; let pi = 0;
+  for (const hb of people) { const k = Object.keys(hb)[0]; const pg = hb._g || (hb._g = await gltf.parseAsync(b64(hb[k]), '')); const o = SkeletonUtils.clone(pg.scene);
+    o.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(o); o.scale.multiplyScalar((1.65 + Math.random() * 0.2) / (b.max.y - b.min.y)); o.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.frustumCulled = false; } });
+    const g2 = new THREE.Group(); g2.add(o); o.rotation.y = Math.PI; const side = pi % 2 ? 1 : -1, dir = pi < 2 ? 1 : -1;
+    g2.position.set(-40 + pi * 19, 0.14, side * (6.2 + Math.random() * 1.6)); g2.rotation.y = dir > 0 ? Math.PI / 2 : -Math.PI / 2; g2.userData = { dir, v: 1.1 + Math.random() * 0.4 };
+    const mx = new THREE.AnimationMixer(o); const wc = pg.animations.find((q) => q.name.includes('walk')); if (wc) mx.clipAction(wc).play(); mx.update(Math.random() * 2); g2.userData.mx = mx; scene.add(g2); walkers.push(g2); pi++; }
   // the person
   const hk = Object.keys(hum)[0]; const hg = await gltf.parseAsync(b64(hum[hk]), ''); player = SkeletonUtils.clone(hg.scene);
   player.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(player); player.scale.multiplyScalar(1.78 / (bb.max.y - bb.min.y));
@@ -71,6 +81,43 @@ async function start() {
   mixer = new THREE.AnimationMixer(pl.children[0]); for (const c of hg.animations) acts[c.name] = mixer.clipAction(c); play('idle');
   bar(1, ''); $('load').style.display = 'none'; $('hud').style.display = 'block';
   renderer.compile(scene, camera); requestAnimationFrame(loop);
+}
+// Fake rooms behind every window (interior mapping): the view ray is traced through a grid of boxes behind the facade,
+// so each window shows walls, floor and ceiling with parallax, some rooms lit, some dark; mixed with the sky reflection.
+function interiorMat(sky) {
+  return new THREE.ShaderMaterial({ uniforms: { sky: { value: sky } },
+    vertexShader: `varying vec3 vW; varying vec3 vN; void main(){ vec4 w = modelMatrix * vec4(position,1.0); vW = w.xyz; vN = normalize(mat3(modelMatrix) * normal); gl_Position = projectionMatrix * viewMatrix * w; }`,
+    fragmentShader: `uniform sampler2D sky; varying vec3 vW; varying vec3 vN;
+      float h1(vec3 p){ return fract(sin(dot(p, vec3(12.9898,78.233,37.719))) * 43758.5453); }
+      vec3 skyAt(vec3 r){ if (r.y < 0.0) return mix(vec3(0.10,0.09,0.085), vec3(0.22,0.2,0.18), clamp(1.0 + r.y*3.0, 0.0, 1.0)); vec2 uv = vec2(atan(r.z, r.x) / 6.2831853 + 0.5, asin(clamp(r.y,-1.0,1.0)) / 3.1415927 + 0.5); return texture2D(sky, uv).rgb; }
+      void main(){
+        vec3 n = normalize(vN); if (abs(n.z) < 0.5) { gl_FragColor = vec4(0.03,0.03,0.035,1.0); return; }
+        vec3 V = normalize(vW - cameraPosition); float inz = -sign(n.z);           // depth goes away from the street
+        bool shop = vW.y < 3.0; vec3 sz = shop ? vec3(6.0, 3.0, 6.0) : vec3(2.6, 3.2, 4.0); float y0 = shop ? 0.0 : 1.0;
+        vec3 cell = vec3(floor(vW.x / sz.x), floor((vW.y - y0) / sz.y), sign(n.z));
+        float x0 = cell.x * sz.x, yb = y0 + cell.y * sz.y;
+        float tx = V.x > 0.0 ? (x0 + sz.x - vW.x) / V.x : (x0 - vW.x) / V.x;
+        float ty = V.y > 0.0 ? (yb + sz.y - vW.y) / V.y : (yb - vW.y) / V.y;
+        float vz = V.z * inz; float tz = vz > 0.001 ? sz.z / vz : 1e5;
+        float t = min(tx, min(ty, tz)); vec3 hp = vW + V * t; float dep = clamp(t * max(vz, 0.05) / sz.z, 0.0, 1.0);
+        float r = h1(cell), r2 = h1(cell + 7.1);
+        vec3 wall = mix(vec3(0.62,0.56,0.46), mix(vec3(0.45,0.52,0.47), vec3(0.6,0.62,0.66), step(0.5, r2)), step(0.4, r));
+        vec3 c;
+        if (t == ty) c = V.y < 0.0 ? (shop ? vec3(0.42,0.4,0.37) * (0.8 + 0.2*step(0.5, fract(hp.x*1.2)+0.0)) : vec3(0.32,0.2,0.12) * (0.85 + 0.15*fract(hp.x*4.0))) : vec3(0.7,0.7,0.68);
+        else if (t == tx) c = wall * 0.85; else c = wall;
+        // a ceiling lamp glow and furniture-ish dark band at the back
+        if (t == ty && V.y > 0.0) c += vec3(1.0,0.85,0.6) * 1.5 * smoothstep(0.6, 0.0, length(hp.xz - vec2(x0 + sz.x*0.5, hp.z)) );
+        if (t == tz && hp.y - yb < 0.9) c *= 0.45;
+        float lit = shop ? 0.9 : (r > 0.35 ? 0.35 + 0.5 * r2 : 0.05);
+        c *= 0.32 * lit * mix(1.0, 0.4, dep) * (shop ? vec3(1.0,0.95,0.85) : vec3(1.0,0.9,0.75));
+        // blinds on some windows
+        if (!shop && r2 > 0.72 && vW.y - (yb + 1.0) > 0.55 - r * 0.6) c = vec3(0.55,0.52,0.48) * (0.6 + 0.4*step(0.5, fract(vW.y*14.0))) * 0.25;
+        float F = 0.06 + 0.94 * pow(1.0 - max(dot(-V, n), 0.0), 5.0);
+        vec3 col = c * (1.0 - F) + skyAt(reflect(V, n)) * (0.08 + 0.5 * F);
+        gl_FragColor = vec4(col, 1.0);
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+      }` });
 }
 function fitCar(o, [x, z, ry]) {
   o.updateMatrixWorld(true); let bb = new THREE.Box3().setFromObject(o); const g = new THREE.Group(); g.add(o);
@@ -88,12 +135,12 @@ addEventListener('keydown', (e) => { keys[e.code] = true; if (e.code === 'KeyV')
 addEventListener('keyup', (e) => (keys[e.code] = false));
 let stickId = null, lookId = null, sx = 0, sy = 0, lx = 0, ly = 0;
 const cvs = renderer.domElement;
-cvs.addEventListener('pointerdown', (e) => { if (e.clientX < innerWidth * 0.45 && stickId === null) { stickId = e.pointerId; sx = e.clientX; sy = e.clientY; $('stick').style.display = 'block'; $('stick').style.left = sx - 55 + 'px'; $('stick').style.top = sy - 55 + 'px'; }
+cvs.addEventListener('pointerdown', (e) => { if (e.clientX < innerWidth * 0.45 && stickId === null) { stickId = e.pointerId; sx = e.clientX; sy = e.clientY; Object.assign($('stick').style, { left: sx - 55 + 'px', top: sy - 55 + 'px', bottom: 'auto', opacity: 1 }); }
   else if (lookId === null) { lookId = e.pointerId; lx = e.clientX; ly = e.clientY; } cvs.setPointerCapture(e.pointerId); });
 cvs.addEventListener('pointermove', (e) => {
   if (e.pointerId === stickId) { let dx = (e.clientX - sx) / 50, dy = (e.clientY - sy) / 50; const l = Math.hypot(dx, dy); if (l > 1) { dx /= l; dy /= l; } input.x = dx; input.y = -dy; input.run = l > 1.6; $('knob').style.transform = `translate(${dx * 40}px,${dy * 40}px)`; }
-  else if (e.pointerId === lookId || (e.pointerType === 'mouse' && e.buttons)) { yaw -= (e.clientX - lx) * 0.006; pitch = Math.max(-0.5, Math.min(0.9, pitch + (e.clientY - ly) * 0.004)); lx = e.clientX; ly = e.clientY; } });
-const up = (e) => { if (e.pointerId === stickId) { stickId = null; input.x = input.y = 0; input.run = false; $('stick').style.display = 'none'; $('knob').style.transform = ''; } if (e.pointerId === lookId) lookId = null; };
+  else if (e.pointerId === lookId || (e.pointerType === 'mouse' && e.buttons)) { yaw -= (e.clientX - lx) * 0.006; lookT = 1.2; pitch = Math.max(-0.5, Math.min(0.9, pitch + (e.clientY - ly) * 0.004)); lx = e.clientX; ly = e.clientY; } });
+const up = (e) => { if (e.pointerId === stickId) { stickId = null; input.x = input.y = 0; input.run = false; Object.assign($('stick').style, { left: '30px', top: 'auto', bottom: '30px', opacity: .55 }); $('knob').style.transform = ''; } if (e.pointerId === lookId) lookId = null; };
 cvs.addEventListener('pointerup', up); cvs.addEventListener('pointercancel', up);
 $('btnView').onclick = () => (first = !first); $('btnRun').onpointerdown = () => (input.lock = !input.lock, $('btnRun').classList.toggle('on', input.lock));
 
@@ -110,6 +157,11 @@ function loop() {
   player.position.x = Math.max(-49, Math.min(49, player.position.x)); player.position.z = Math.max(-9.2, Math.min(9.2, player.position.z));
   player.position.y = Math.abs(player.position.z) > 5.1 ? 0.14 : 0.0;     // up on the sidewalk, down on the road
   mixer.update(dt);
+  for (const c of movers) { c.position.x += c.userData.dir * c.userData.v * dt; if (c.position.x > 56) c.position.x = -56; if (c.position.x < -56) c.position.x = 56;
+    const dx = player.position.x - c.position.x, dz = player.position.z - c.position.z; if (Math.abs(dx) < 2.6 && Math.abs(dz) < 1.25) player.position.z = c.position.z + Math.sign(dz || 1) * 1.25; }
+  for (const w of walkers) { w.position.x += w.userData.dir * w.userData.v * dt; if (Math.abs(w.position.x) > 47) { w.userData.dir *= -1; w.rotation.y += Math.PI; w.position.x = Math.sign(w.position.x) * 47; } w.userData.mx.update(dt); }
+  // the camera swings back behind the person while walking forward (unless you are turning it yourself)
+  lookT -= dt; if (mag > 0.1 && lookT <= 0 && my > -0.2) { let d = player.rotation.y - yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); yaw += d * Math.min(1, dt * 2.2 * Math.max(0.3, my / Math.max(mag, 0.01))); }
   // in a building's shadow? (rays to the sun against the baked street) then the live sun fades out on the person and cars
   shadeT -= dt; if (shadeT <= 0) { shadeT = 0.25; tmp.copy(player.position).y += 1.2; ray.set(tmp, sun.userData.dir); ray.far = 60; litWant = ray.intersectObjects(statics, false).length ? 0 : 1; }
   lit += (litWant - lit) * Math.min(1, dt * 4); sun.intensity = sunBase * (0.08 + 0.92 * lit);
@@ -121,7 +173,10 @@ function loop() {
     const cx = head.x - Math.sin(yaw) * Math.cos(pitch) * dist + Math.cos(yaw) * side, cz = head.z - Math.cos(yaw) * Math.cos(pitch) * dist - Math.sin(yaw) * side, cy = head.y + Math.sin(pitch) * dist;
     camera.position.set(cx, Math.max(0.4, cy), Math.max(-9.3, Math.min(9.3, cz))); camera.lookAt(head.x + Math.cos(yaw) * side, head.y - 0.1, head.z - Math.sin(yaw) * side); }
   renderer.render(scene, camera);
-  frames++; fpsT += dt; if (fpsT > 1) { $('fps').textContent = Math.round(frames / fpsT) + ' fps'; frames = 0; fpsT = 0; }
+  frames++; fpsT += dt; if (fpsT > 1) { const f = frames / fpsT; $('fps').textContent = Math.round(f) + ' fps';
+    // keep it smooth: drop the resolution when frames fall, raise it again when there is room
+    const want = f < 45 ? Math.max(0.6, pr - 0.15) : f > 57 ? Math.min(prMax, pr + 0.1) : pr; if (Math.abs(want - pr) > 0.01) { pr = want; renderer.setPixelRatio(pr); renderer.setSize(innerWidth, innerHeight); }
+    frames = 0; fpsT = 0; }
 }
 const fail = (m) => { $('load').style.display = 'flex'; $('msg').textContent = 'Error: ' + m; };
 addEventListener('error', (e) => fail(e.message)); addEventListener('unhandledrejection', (e) => fail(e.reason && e.reason.message || String(e.reason)));
