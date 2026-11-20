@@ -181,6 +181,7 @@ html[lang=ar] #storyCap { font-family: 'Cairo', sans-serif; font-weight: 700; }
 .mlabCard h2 { font-family: var(--display); font-weight: 400; margin: 0; } .bRow { display: grid; grid-template-columns: 110px 1fr; gap: 8px; align-items: center; font-size: 14px; color: #c9c2ae; } .bRow select, .bRow input { background: #0b0f13; color: #e9e4d4; border: 1px solid #c9c2ae55; border-radius: 0; padding: 5px; font: 14px var(--body); min-width: 0; }
 #mlSaved .cbtn { width: auto; padding: 5px 9px; font-size: 12px; } .pbox .bRow { text-align: start; } .growBar { height: 8px; border: 1px solid #c9c2ae77; } .growBar i { display: block; height: 100%; width: 0; background: #3cff9a; }
 #mobileBtns button { font-size: 9px !important; letter-spacing: 0 !important; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+@media (orientation: portrait) { #mobileBtns { grid-template-columns: repeat(4, 46px) !important; gap: 6px !important; } #mobileBtns button { width: 46px !important; height: 40px !important; } #mobileBtns #bUse { height: 44px !important; } }
 #cross { position: fixed; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: #e9e4d4aa; pointer-events: none; transition: all .15s; }
 #cross.on { width: 18px; height: 18px; margin: -9px 0 0 -9px; background: transparent; border: 2px solid #e9e4d4; }
 </style>
