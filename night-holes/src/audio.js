@@ -89,3 +89,38 @@ export function setTension(v) { if (!ac) return; if (!pad) { pad = ac.createGain
     for (const fr of [233, 247, 349, 370]) { const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.value = fr; const l = ac.createOscillator(); l.frequency.value = 0.2 + Math.random() * 0.3; const lg = ac.createGain(); lg.gain.value = 3; l.connect(lg); lg.connect(o.frequency); o.connect(f); o.start(); l.start(); } }
   pad.gain.setTargetAtTime(Math.max(0, Math.min(1, v)) * 0.05, now(), 0.8); }
 export const getAC = () => ac;
+
+// ---------------------------------------------------------------- recorded sounds (CC0, see CREDITS.md)
+// Loaded once after the first click; each sfx below plays the recording when it is ready and falls back to the synth.
+const BUF = {}; let sampling = null;
+function loadSamples() { if (sampling || !ac) return sampling; sampling = fetch('assets/snd.json').then((r) => r.json()).then((j) => Promise.all(Object.entries(j).map(async ([k, b64]) => {
+  const bin = atob(b64), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+  try { BUF[k] = await new Promise((ok, no) => ac.decodeAudioData(u.buffer, ok, no)); } catch (e) {} }))).then(startBeds).catch(() => {}); return sampling; }
+function play(name, vol = 1, pan = 0, rate = 1, at = 0) { const b = BUF[name]; if (!b || !ac) return false; const s = ac.createBufferSource(); s.buffer = b; s.playbackRate.value = rate * (0.94 + Math.random() * 0.12);
+  s.connect(out(vol, pan)); s.start(now() + at); return true; }
+const pick = (...n) => n[(Math.random() * n.length) | 0];
+// quiet loops under everything: a low rumble and a draught
+function startBeds() { for (const [k, v] of [['rumble', 0.22], ['wind', 0.07]]) { const b = BUF[k]; if (!b) continue; const s = ac.createBufferSource(); s.buffer = b; s.loop = true; s.playbackRate.value = k === 'wind' ? 0.6 : 0.8; const g = ac.createGain(); g.gain.value = v; s.connect(g); g.connect(amb || master); s.start(); } }
+const synth = { ...sfx };
+Object.assign(sfx, {
+  step(run, pan = 0, vol = 1) { if (!play(pick('step1', 'step2', 'step3', 'step4'), (run ? 0.55 : 0.32) * vol, pan, run ? 1.1 : 1)) synth.step(run, pan, vol); },
+  door() { if (!play(pick('door_open1', 'door_open2'), 0.55)) synth.door(); else if (Math.random() < 0.5) play(pick('creak1', 'creak2', 'creak3'), 0.35, 0, 0.9, 0.1); },
+  slam(pan = 0) { if (!play('door_close2', 0.9, pan, 0.85)) synth.slam(pan); },
+  locked() { if (!play('latch', 0.6)) synth.locked(); },
+  pickup() { if (!play('pickup', 0.6)) synth.pickup(); },
+  growl(pan = 0, vol = 1) { if (!play(pick('growl', 'roar'), 0.7 * vol, pan, 0.8)) synth.growl(pan, vol); },
+  shriek(pan = 0, vol = 1) { if (!play('shriek', 0.6 * vol, pan)) synth.shriek(pan, vol); },
+  scream() { if (!play('roar', 1, 0, 0.9)) synth.scream(); play('shriek', 0.8, 0, 0.8, 0.05); play('hit', 0.8); },
+  glass() { if (!play('glass1', 0.9)) synth.glass(); play('glass2', 0.7, 0.3, 0.9, 0.15); play('glass1', 0.5, -0.3, 1.2, 0.3); },
+  crack() { if (!play('glass2', 0.25, 0, 1.6)) synth.crack(); },
+  knock(pan = 0, vol = 1) { if (!BUF.wood) return synth.knock(pan, vol); for (let i = 0; i < 3; i++) play('wood', 0.6 * vol, pan, 0.7, i * 0.32); },
+  bang(pan = 0, vol = 1) { if (!play('metal', 0.7 * vol, pan, 0.7)) synth.bang(pan, vol); },
+  explosion() { if (!play('explosion', 1, 0, 0.8)) synth.explosion(); play('rumble', 0.8, 0, 0.6, 0.2); },
+  whisper(pan = 0) { if (!play('haunt', 0.35, pan, 0.8)) synth.whisper(pan); },
+  sniff(pan = 0) { if (!play('breath', 0.4, pan, 1.3)) synth.sniff(pan); },
+  above() { if (!BUF.step1) return synth.above(); for (let i = 0; i < 6; i++) play(pick('step1', 'step2', 'step3'), 0.12, (Math.random() - 0.5) * 0.6, 0.7, i * 0.52); },
+});
+const heartSynth = setHeartbeat;
+export function heartbeat(level) { if (!BUF.heart) return heartSynth(level); if (!ac || level < 0.05) return; heart = heart || { next: 0 }; const t = now(); if (t < heart.next) return; heart.next = t + 1.1 - level * 0.65; play('heart', 0.6 * level + 0.1); }
+const startOrig = audioStart;
+export function audioStart2() { startOrig(); loadSamples(); }

@@ -182,6 +182,8 @@ html[lang=ar] #storyCap { font-family: 'Cairo', sans-serif; font-weight: 700; }
 #mlSaved .cbtn { width: auto; padding: 5px 9px; font-size: 12px; } .pbox .bRow { text-align: start; } .growBar { height: 8px; border: 1px solid #c9c2ae77; } .growBar i { display: block; height: 100%; width: 0; background: #3cff9a; }
 #mobileBtns button { font-size: 9px !important; letter-spacing: 0 !important; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 @media (orientation: portrait) { #mobileBtns { grid-template-columns: repeat(4, 46px) !important; gap: 6px !important; } #mobileBtns button { width: 46px !important; height: 40px !important; } #mobileBtns #bUse { height: 44px !important; } }
+#tutor { position: fixed; left: 50%; top: 22%; transform: translateX(-50%); max-width: 86vw; text-align: center; background: #07090bcc; border: 1px solid #c9c2ae66; padding: 8px 14px; font: 500 15px var(--body); pointer-events: none; }
+#objective { white-space: normal !important; max-width: 70vw; text-align: center; font-size: 12px !important; }
 #cross { position: fixed; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: #e9e4d4aa; pointer-events: none; transition: all .15s; }
 #cross.on { width: 18px; height: 18px; margin: -9px 0 0 -9px; background: transparent; border: 2px solid #e9e4d4; }
 </style>
@@ -204,7 +206,7 @@ html[lang=ar] #storyCap { font-family: 'Cairo', sans-serif; font-weight: 700; }
     <p>People: Microsoft Rocketbox avatars & animations (MIT, © Microsoft Corporation). Furniture, props and surface scans: Poly Haven (CC0). Trees: EZ-Tree by Daniel Greenheck (MIT).</p>
     <p>Cars (CC BY 4.0, from Sketchfab; badges removed, textures compressed): see CREDITS.md in the project for each author.</p>
     <p>Monsters: "Gaunt Horror Creature" by PurplePoint; "Wendigo – Antlered Famine Horror Creature" and "Bandaged Asylum Matron Needle Horror" by Pigcraft; "Ditch Dog – Rigged and Animated" by Greeble3d; "The Human Deer" by ceeleste; "Silent Horror Nurse" by PurplePoint; "Smily Horror Monster" by Bento; "zombie monster slasher necromorph" by wojciechmiedziocha; hospital trolley by creative_beast, IV drip by Matt_LeMoine, old hospital bed by tris09 (all CC BY 4.0); "3D Horror Game Monster" by HorrorGameMaker.com (CC0). creativecommons.org/licenses/by/4.0</p>
-    <p>Fonts: Special Elite, Oswald (Apache 2.0); Cairo, Lalezar (SIL OFL). Sound: synthesized in the game.</p></details>
+    <p>Fonts: Special Elite, Oswald (Apache 2.0); Cairo, Lalezar (SIL OFL). Sounds: Kenney (CC0) and freesound.org CC0 recordings; the rest synthesized in the game.</p></details>
   </div>
 </div>
 
@@ -231,7 +233,7 @@ html[lang=ar] #storyCap { font-family: 'Cairo', sans-serif; font-weight: 700; }
   <div class="meters" id="meters"><small data-t="stamina"></small><div class="meter"><i id="stam"></i></div><small data-t="flash"></small><div class="meter"><i id="batt"></i></div></div>
   <div id="inv"><span id="invIcons"></span></div>
   <div id="objective"></div>
-  <div id="cross"></div><div id="prompt" hidden></div><div id="banner"></div><div id="controlsHelp"></div><div id="bombTimer" hidden></div>
+  <div id="cross"></div><div id="tutor" hidden></div><div id="prompt" hidden></div><div id="banner"></div><div id="controlsHelp"></div><div id="bombTimer" hidden></div>
   <div id="journal" hidden></div>
   <div id="mobileBtns" hidden>
     <button id="bUse" data-t="use"></button>
@@ -252,7 +254,7 @@ html[lang=ar] #storyCap { font-family: 'Cairo', sans-serif; font-weight: 700; }
 <div id="sub" hidden></div><div id="eyes"></div><div id="scare"></div>
 <div id="flash"></div><div id="flash2"></div><div id="fade"></div><div id="toast" hidden></div><div id="endText" hidden></div>
 
-<div id="dead" class="layer" hidden><div class="card"><h2 id="deadTitle"></h2><p id="deadBody"></p><div class="row"><button class="cbtn" id="btnRetry" data-t="retry" style="width:auto"></button><button class="cbtn" id="btnMenu" data-t="menu" style="width:auto"></button></div></div></div>
+<div id="dead" class="layer" hidden><div class="card"><h2 id="deadTitle"></h2><p id="deadBody"></p><div class="row"><button class="cbtn main" id="btnLoad" data-t="load_save" style="width:auto" hidden></button><button class="cbtn" id="btnRetry" data-t="retry" style="width:auto"></button><button class="cbtn" id="btnMenu" data-t="menu" style="width:auto"></button></div></div></div>
 <div id="results" class="layer" hidden><div class="card"><h2 id="resTitle"></h2><div id="resBody"></div><button class="cbtn" id="btnMenu2" data-t="menu"></button></div></div>
 
 <script src="game.js"></script>

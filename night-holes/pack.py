@@ -13,3 +13,6 @@ for d in ['mon', 'house', 'street', 'mat', 'hum', 'car']:
         man[f'{d}/{f}'] = os.path.getsize(p)
 json.dump(man, open('assets/manifest.json', 'w'), separators=(',', ':'))
 print(len(man), 'bundles', round(sum(man.values()) / 1e6, 1), 'MB')
+# sounds: one small bundle of mp3s, keyed by name
+out = {f[:-4]: base64.b64encode(open('assets/snd/' + f, 'rb').read()).decode() for f in sorted(os.listdir('assets/snd')) if f.endswith('.mp3')}
+json.dump(out, open('assets/snd.json', 'w'), separators=(',', ':')); print('snd', len(out), os.path.getsize('assets/snd.json'))

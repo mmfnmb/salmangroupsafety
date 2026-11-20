@@ -192,6 +192,9 @@ export async function populate(W, rand, state) {
   for (const f of [0, 1, 2]) { wallThing(f, 'H', 'alarm', button(0xff2020, 'ALARM'));
     for (let i = 0; i < 2; i++) { const s = S(f, 'H'); if (!s) continue; const px = s.x - Math.sin(s.ry) * 0.63, pz = s.z - Math.cos(s.ry) * 0.63; const tex = new THREE.CanvasTexture(mapCanvas(f, [px, pz])); tex.colorSpace = THREE.SRGBColorSpace;
       const m = mesh(new THREE.PlaneGeometry(0.9, 0.73), STD(0xffffff, 0.7, 0, { map: tex }), 0, 0, 0); put(m, f, px, pz, s.ry); m.position.y = 1.55; station(f, s.x, s.z, 'map', { here: [px, pz] }); } }
+  // old wall phones: save points, one per floor
+  for (const f of [0, 1, 2]) wallThing(f, 'H', 'save', () => { const g = new THREE.Group(); g.add(mesh(new THREE.BoxGeometry(0.2, 0.3, 0.08), STD(0x2a2420, 0.5), 0, 1.4, 0)); const hs = mesh(new THREE.CapsuleGeometry(0.03, 0.16, 4, 8), STD(0x1a1614, 0.4), 0.06, 1.43, 0.06); hs.rotation.z = 0.2; g.add(hs);
+    g.add(mesh(new THREE.BoxGeometry(0.1, 0.12, 0.01), STD(0xd8d0b8, 0.6), -0.03, 1.36, 0.045)); const l = mesh(new THREE.SphereGeometry(0.012, 8, 6), new THREE.MeshBasicMaterial({ color: 0x40ff60 }), -0.07, 1.52, 0.045); g.add(l); return g; });
   wallThing(0, 'H', 'switch', button(0xdddddd, 'LIGHTS'), { room: 'H' }); wallThing(1, 'H', 'switch', button(0xdddddd, 'LIGHTS'), { room: 'H' });
   await dressRooms(W, rand, { center, put, solid, custom, onSlot, steelTable, station });
   // wings: a painted stripe on every hall floor in the wing's colour, and hanging signs at the borders

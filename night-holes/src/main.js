@@ -6,7 +6,7 @@ import { populate, placeBodies, itemPlan, spawnItems, mapCanvas, canvasTex } fro
 import { Player, bindTouch } from './player.js';
 import { Monster, think, KINDS } from './monsters.js';
 import { PUZZLES, close as closePanel, isOpen as panelOpen } from './puzzles.js';
-import { audioStart, sfx, setHeartbeat, setAmbient, setTension, ringing, volume } from './audio.js';
+import { audioStart2 as audioStart, heartbeat as setHeartbeat, sfx, setAmbient, setTension, ringing, volume } from './audio.js';
 import { loadAll, rigged, CHARS, FRIEND, ZOMBIE_PRICE, setTextureLimit, loaded } from './assets.js';
 import { Post } from './post.js';
 import { Specimen, emerge } from './tube.js';
@@ -61,7 +61,7 @@ $('btnLab').onclick = () => openMonsterLab();
 $('shopBack').onclick = () => show('menu');
 $('lobbyBack').onclick = () => { net.leaveRoom(); show('menu'); };
 $('btnMenu').onclick = $('btnMenu2').onclick = () => location.reload();
-$('btnRetry').onclick = () => { startGame(Math.floor(Math.random() * 1e9), null, {}); };
+$('btnRetry').onclick = () => { try { localStorage.removeItem('nh_save'); } catch (e) {} startGame(Math.floor(Math.random() * 1e9), null, {}); };
 const reqLock = () => { if (!MOBILE && !panelOpen() && !$('hud').hidden && $('view').requestPointerLock) $('view').requestPointerLock(); };
 $('touch').addEventListener('click', reqLock); $('view').addEventListener('click', reqLock);
 
@@ -148,11 +148,13 @@ async function startGame(sd, zombie, opts) {
   Object.assign(P, { dead: false, ghost: false, hidden: null, battery: 1, stamina: 1, locked: false, crouch: false, lightOn: true, lighterOn: false, adrT: 0, scentT: 0 });
   if (role === 'monster') { P.place(0, S.tube.x, S.tube.z + 2, 0); P.locked = true; P.lightOn = false; }
   if (!lightPool.length) for (let i = 0; i < (LOW ? 4 : 8); i++) { const l = new THREE.PointLight(0xffe7c2, 0, 9, 1.7); scene.add(l); lightPool.push(l); }
-  game = { t: 0, end: false, monT: 0, escaped: false, tubeAt: role === 'monster' || zombie ? 60 : 180, warn: 0, earned: 0, nextEvent: 25, rideN: 0, traps: [], bombT: null, b2Seen: false, scareA: null, shake: 0 };
+  game = { seed: sd, t: 0, end: false, monT: 0, escaped: false, tubeAt: role === 'monster' || zombie ? 60 : 180, warn: 0, earned: 0, nextEvent: 25, rideN: 0, traps: [], bombT: null, b2Seen: false, scareA: null, shake: 0 };
+  if (opts.save) applySave(opts.save);
   $('loadBar').style.width = '100%';
   await wait(250); show('hud'); $('meters').hidden = false; $('inv').hidden = false; $('objective').textContent = '';
   $('mobileBtns').hidden = !MOBILE; $('controlsHelp').hidden = MOBILE; $('controlsHelp').textContent = t('controls3'); if (cam.on) cam.toggle(); cam.battery = 1;
   if (net.inRoom()) { if (!chatReady) { chatReady = true; voice.initChat(t, myName); } voice.startVoice(getAC()); }
+  tut.step = opts.save || localStorage.getItem('nh_tut') ? 99 : 0; tut.t = 0; $('tutor').hidden = true;
   if (opts.intro) { P.locked = true; $('eyes').classList.remove('blink'); void $('eyes').offsetWidth; $('eyes').classList.add('blink'); ringing(3); setAmbient(0.3);
     setTimeout(() => subtitle(t('wake_1'), 3500), 1500); setTimeout(() => subtitle(t('wake_2'), 3000), 5200); setTimeout(() => { P.locked = false; floorBanner(0); toast(t('hint_start'), true); }, 6000); }
   else { floorBanner(0); toast(role === 'monster' ? t('monster_you') : t('hint_start'), true); setAmbient(0.4); }
@@ -228,7 +230,7 @@ function promptFor(i) {
   if (!i) return ''; if (P.hidden) return t('leave');
   switch (i.kind) { case 'item': return `${t('take')}: ${t(i.type)}`; case 'locker': return t('hide');
     case 'door': return i.door.lock && !i.door.unlocked ? t('locked') : i.door.target > 0.5 ? t('close_door') : t('open');
-    case 'elevator': return t('elevator'); case 'drawer': return S.used[i.x + ',' + i.z] ? t('empty') : t('drawer');
+    case 'elevator': return t('elevator'); case 'save': return t('save_phone'); case 'drawer': return S.used[i.x + ',' + i.z] ? t('empty') : t('drawer');
     default: return t('p_' + i.kind) !== 'p_' + i.kind ? t('p_' + i.kind) : t(i.kind); }
 }
 function useNearest() {
@@ -236,6 +238,7 @@ function useNearest() {
   if (P.hidden) { const L = P.hidden; P.hidden = null; P.x = L.x; P.z = L.z; sfx.door(); $('lockerView').hidden = true; return; }
   const i = nearest(); if (!i) return; useThing(i); }
 function useThing(i) {
+  tut.used = true;
   if (!game || P.dead || game.end || panelOpen() || P.locked) return;
   if (role === 'monster') return;
   if (i.kind === 'item') return takeItem(i, true);
@@ -279,6 +282,7 @@ function useStation(kind, i) {
   if (kind === 'exit') { if (!(S.inv.red && S.inv.key)) { sfx.locked(); return toast(t('exit_need')); } return PUZZLES.exit(S, () => solve('exit', () => { const d = W.doors.find((q) => q.lock === 'exit'); unlockDoor(d, true); sfx.alarm(); })); }
   if (kind === 'computer') return computerPanel(i);
   if (kind === 'mix') return mixPanel();
+  if (kind === 'save') return saveGame();
   if (kind === 'grow') return growPanel();
   if (kind === 'map') { const p = panelBox(t('map'), '<div class="bigmap"></div>'); p.querySelector('.bigmap').appendChild(mapCanvas(P.f, [P.x, P.z], 640, 500)); return; }
   if (kind === 'switch') { const key = i.f + i.room; W.roomOn[key] = W.roomOn[key] === false; for (const a of W.anchors[i.f]) if (a.room === i.room) a.on = W.roomOn[key] !== false; sfx.click(); toast(W.roomOn[key] === false ? t('lights_off') : t('lights_on')); return; }
@@ -482,8 +486,8 @@ function frame() {
   if (game.shake > 0) { game.shake = Math.max(0, game.shake - dt * 1.8); camera.position.x += (Math.random() - 0.5) * 0.05 * game.shake; camera.position.y += (Math.random() - 0.5) * 0.05 * game.shake; camera.rotation.z += (Math.random() - 0.5) * 0.02 * game.shake; }
   if (!game.scareA && game.fovSet !== innerWidth / innerHeight) { game.fovSet = innerWidth / innerHeight; fitFov(camera, 72); }
   post.expTarget = inDark() ? 1.25 : 0.9;
-  hudT -= dt; if (hudT <= 0) { hudT = 0.12; updateHud(); }
-  updateLab(dt); if (net.inRoom()) P.voice = voice.updateVoice(P, others, (x, z) => W.los(P.f, P.x, P.z, x, z));
+  hudT -= dt; if (hudT <= 0) { hudT = 0.12; updateHud(); const o = objective(); $('objective').textContent = o && !P.dead ? t(o) : ''; }
+  tutorial(dt); updateLab(dt); if (net.inRoom()) P.voice = voice.updateVoice(P, others, (x, z) => W.los(P.f, P.x, P.z, x, z));
   for (let f = 0; f < 3; f++) W.groups[f].visible = f === P.f || (game.scareA && false);
   autoQuality(dt);
   post.render(scene, camera, dt);
@@ -522,6 +526,30 @@ function updateHud() {
   if (invHtml !== lastInv) { lastInv = invHtml; $('invIcons').innerHTML = invHtml; }
 }
 let lastInv = '';
+
+// ---------------------------------------------------------------- saving at the old phones (solo)
+function saveGame() { if (net.inRoom()) return toast(t('no_save_online'));
+  const sv = { seed: game.seed, t: game.t, tubeAt: game.tubeAt, warn: game.warn, P: { f: P.f, x: P.x, z: P.z, yaw: P.yaw, battery: P.battery }, cam: cam.battery,
+    S: { inv: S.inv, notes: S.notes, solved: S.solved, power: S.power, tubeBroken: S.tubeBroken, knowChart: S.knowChart, itemsTaken: S.itemsTaken, foundTape: S.foundTape, used: S.used },
+    taken: items.filter((i) => i.taken).map((i) => i.id), doors: W.doors.filter((d) => d.unlocked).map((d) => d.id), rideN: game.rideN, char: char.id };
+  try { localStorage.setItem('nh_save', JSON.stringify(sv)); } catch (e) {} sfx.pickup(); toast(t('saved')); }
+function applySave(sv) { Object.assign(S, sv.S); for (const id of sv.taken) { const i = items.find((q) => q.id === id); if (i) { i.taken = true; i.obj.visible = false; } }
+  for (const id of sv.doors) { const d = W.doors.find((q) => q.id === id); if (d) { d.unlocked = true; d.target = 1; } }
+  if (S.power) { S.power = false; powerOn(false); } if (sv.S.tubeBroken) { S.tubeBroken = false; breakTube(false); }
+  game.t = sv.t; game.tubeAt = sv.tubeAt; game.warn = sv.warn; game.rideN = sv.rideN; P.place(sv.P.f, sv.P.x, sv.P.z, sv.P.yaw); P.battery = sv.P.battery; cam.battery = sv.cam; if (sv.P.f > 0) loadLowerMonsters(); }
+const loadSaved = () => { try { return JSON.parse(localStorage.getItem('nh_save')); } catch (e) { return null; } };
+// ---------------------------------------------------------------- what to do next, and the first-minute lessons
+function objective() { if (!S || !W || role === 'monster') return '';
+  const lift = W.doors.find((d) => d.lock === 'green'), fuses = ['r', 'y', 'b'].filter((c) => S.inv['fuse_' + c]).length;
+  if (!(lift && lift.unlocked)) return S.inv.green ? 'obj_lift' : 'obj_safe';
+  if (!S.power) { if (P.f === 0) return 'obj_lift'; if (!S.solved.valves) return S.knowChart ? 'obj_valves' : 'obj_chart'; if (!S.inv.screwdriver || fuses < 3) return 'obj_fuses'; return 'obj_power'; }
+  if (P.f !== 2) return 'obj_down'; if (!S.inv.red) return 'obj_red'; if (!S.solved.wires) return 'obj_wires';
+  if (Object.keys(S.notes).length < 4) return 'obj_code'; if (!S.solved.exit) return 'obj_exit'; return 'obj_bomb'; }
+const tut = { step: 99, t: 0, x: 0, z: 0, used: false };
+const TUT = [['tut_move', () => Math.hypot(P.x - tut.x, P.z - tut.z) > 2.5], ['tut_light', () => tut.light !== P.lightOn], ['tut_crouch', () => P.crouch], ['tut_use', () => tut.used], ['tut_hide', () => !!P.hidden], ['tut_cam', () => cam.on], ['tut_done', () => tut.t > 4]];
+function tutorial(dt) { if (tut.step >= TUT.length || P.locked || panelOpen()) return; if (tut.t === 0) { tut.x = P.x; tut.z = P.z; tut.light = P.lightOn; tut.used = false; } tut.t += dt;
+  const [k, done] = TUT[tut.step]; $('tutor').textContent = t(k); $('tutor').hidden = false;
+  if (done() || tut.t > 14) { tut.step++; tut.t = 0; sfx.click(); if (tut.step >= TUT.length) { $('tutor').hidden = true; try { localStorage.setItem('nh_tut', '1'); } catch (e) {} } } }
 
 // ---------------------------------------------------------------- experiment room
 function mixPanel() { const chems = ['chem_r', 'chem_b', 'chem_y'].filter((k) => S.inv[k]); const opt = (sel) => `<select class="mixSel">${['chem_r', 'chem_b', 'chem_y'].map((k) => `<option value="${k}" ${k === sel ? 'selected' : ''}>${t(k)} (${S.inv[k] || 0})</option>`).join('')}</select>`;
@@ -642,7 +670,7 @@ function endRun(win, why) {
   if (role === 'monster') { pr.tickets = Math.max(0, pr.tickets - 1); } net.saveProfile();
   const m = Math.floor(game.t / 60), s = Math.floor(game.t % 60);
   if (win) { show('results'); $('resTitle').textContent = t('escaped'); $('resBody').innerHTML = `<p>${t('time')}: <b>${m}:${String(s).padStart(2, '0')}</b></p><p>${t('puzzles')}: <b>${Object.keys(S.solved).length}</b> · ${t('items')}: <b>${S.itemsTaken}</b></p><p>${t('earned')}: <b>+${earned}</b> ${t('coins')}</p>${S.foundTape ? `<p class="secret">${t('secret')}</p>` : ''}`; }
-  else { show('dead'); $('deadTitle').textContent = why ? t(why) : t('caught'); $('deadBody').textContent = `${t('earned')}: +${earned} ${t('coins')}`; }
+  else { show('dead'); $('deadTitle').textContent = why ? t(why) : t('caught'); const sv = loadSaved(); $('btnLoad').hidden = !sv || net.inRoom(); $('btnLoad').onclick = () => { char = CHARS.find((c) => c.id === sv.char) || char; startGame(sv.seed, null, { save: sv }); }; $('deadBody').textContent = `${t('earned')}: +${earned} ${t('coins')}`; }
   ui(); for (const id of ['resBody', 'deadBody']) { const b = document.createElement('button'); b.className = 'cbtn'; b.style.marginTop = '10px'; b.textContent = t('watch_rec'); b.onclick = () => { for (const l of ['dead', 'results']) $(l).hidden = true; openRecordings(t, () => show(win ? 'results' : 'dead')); }; $(id).appendChild(b); }
 }
 

@@ -33,3 +33,7 @@
   - "Smily Horror Monster" by Bento – sketchfab.com/3d-models/smily-horror-monster-3d3fc31eddaa409a8f2df564823154e1 (via github.com/daffazub/shadow_of_abandoned)
   - "zombie monster slasher necromorph" by wojciechmiedziocha (via github.com/huaichuan-li/GoodbyeMyLover)
 - Hospital pieces (CC BY 4.0, via github.com/huaichuan-li/GoodbyeMyLover): "Hospital Trolley" by creative_beast, "Crutch and IV Drip" by Matt_LeMoine, "Old hospital bed (PBR/GR)" by tris09.
+- Sounds (all CC0 / public domain; converted to mono mp3):
+  - Kenney "RPG Audio" (doors, creaks, latch, handling) and "Impact Sounds" (concrete footsteps, metal, glass, wood) – kenney.nl, CC0 (copies via github.com/Nazarwadim/School-Hooligan and github.com/iree-gd/iree.gd).
+  - freesound.org CC0 recordings (via github.com/Ketbome/minepanel): Dragon Roar (203105), Deep Monster Growl (222523), Single Heartbeat (22440), 4th dimension banshee (10347), Booming punchy explosion (251759), air over mic (20108), Ominous Rumble (593785), Haunted 1 (789680), Monster breathing (567723), Book Turn Page (119127), Punch_02 (118513), Rat (536753).
+  - Everything else is synthesized in the game.

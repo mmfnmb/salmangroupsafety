@@ -6,6 +6,9 @@ import { WH } from './world.js';
 const qd = new THREE.Quaternion(), wq = new THREE.Quaternion(), pq = new THREE.Quaternion(), RIGHT = new THREE.Vector3(), UP = new THREE.Vector3();
 // turn a bone about an axis given in world space (the body's right or up axis)
 function rotW(b, axis, angle) { if (!b || !angle) return; b.updateWorldMatrix(true, false); b.getWorldQuaternion(wq); b.parent.getWorldQuaternion(pq); qd.setFromAxisAngle(axis, angle); b.quaternion.copy(pq.invert().multiply(qd.multiply(wq))); b.updateMatrixWorld(true); }
+const A = new THREE.Vector3(), B2 = new THREE.Vector3();
+function aim(b, child, target) { b.updateWorldMatrix(true, true); b.getWorldPosition(A); child.getWorldPosition(B2); const from = B2.sub(A).normalize(), to = target.clone().sub(A).normalize(); qd.setFromUnitVectors(from, to);
+  b.getWorldQuaternion(wq); b.parent.getWorldQuaternion(pq); b.quaternion.copy(pq.invert().multiply(qd.multiply(wq))); b.updateMatrixWorld(true); }
 function bodyAxes(m) { m.root.updateMatrixWorld(true); RIGHT.set(1, 0, 0).applyQuaternion(m.root.quaternion); UP.set(0, 1, 0); }
 // pitch > 0 bends forward (towards the way it faces); for legs and arms a negative angle swings them forward
 
@@ -14,7 +17,7 @@ export class Specimen {
     this.m = m; this.tube = tube; this.g = group; this.t = 0; this.stage = 'sleep'; this.bang = 0; this.out = 0; this.twitch = 0;
     const find = (re) => { let r = null; m.obj.traverse((o) => { if (!r && o.isBone && re.test(o.name)) r = o; }); return r; };
     this.b = { spine: find(/^spine/i), chest: find(/^chest/i), neck: find(/^neck/i), head: find(/^head/i), ul: find(/upperarm.?l/i), ur: find(/upperarm.?r/i), fl: find(/forearm.?l/i), fr: find(/forearm.?r/i),
-      tl: find(/thigh.?l/i), tr: find(/thigh.?r/i), sl: find(/shin.?l/i), sr: find(/shin.?r/i), pelvis: find(/^pelvis/i) };
+      hl: find(/hand.?l/i), hr: find(/hand.?r/i), tl: find(/thigh.?l/i), tr: find(/thigh.?r/i), sl: find(/shin.?l/i), sr: find(/shin.?r/i), pelvis: find(/^pelvis/i) };
     // hoses from the cap into its back
     const hm = new THREE.MeshStandardMaterial({ color: 0x1a1d20, roughness: 0.45, metalness: 0.2 });
     this.hoses = [0, 1, 2].map((i) => { const h = new THREE.Mesh(new THREE.BufferGeometry(), hm); h.userData.a = i * 2.1; group.add(h); return h; });
@@ -49,7 +52,11 @@ export class Specimen {
     m.root.rotation.set(0, face, 0); m.root.visible = true; bodyAxes(m); const P = this.pose;
     rotW(b.spine, RIGHT, 0.35 * P.c); rotW(b.chest, RIGHT, 0.25 * P.c + P.breath); rotW(b.neck, RIGHT, 0.2 * P.c); rotW(b.head, RIGHT, 0.3 * P.c + P.tw); rotW(b.head, UP, P.tw);
     rotW(b.tl, RIGHT, -1.35 * P.c); rotW(b.tr, RIGHT, -1.35 * P.c); rotW(b.sl, RIGHT, 1.9 * P.c); rotW(b.sr, RIGHT, 1.9 * P.c);
-    const arm = -0.9 * P.c - P.armUp * (1.5 + P.armSwing * 0.45); rotW(b.ul, RIGHT, arm + P.drift); rotW(b.ur, RIGHT, arm - P.drift); rotW(b.fl, RIGHT, -0.7 * P.c - P.armUp * 0.15); rotW(b.fr, RIGHT, -0.7 * P.c - P.armUp * 0.15);
+    const fwd = new THREE.Vector3(Math.sin(face), 0, Math.cos(face)), cp = new THREE.Vector3(); (b.chest || m.obj).getWorldPosition(cp);
+    for (const [up, fo, ha, sd] of [[b.ul, b.fl, b.hl, -1], [b.ur, b.fr, b.hr, 1]]) { if (!up || !fo || !ha) continue; const right = RIGHT.clone().multiplyScalar(sd);
+      const hug = cp.clone().addScaledVector(fwd, 0.28).addScaledVector(UP, -0.3).addScaledVector(right, 0.12);
+      const glass = cp.clone().addScaledVector(fwd, 0.62).addScaledVector(UP, 0.25 + P.armSwing * 0.15).addScaledVector(right, 0.22 + P.drift);
+      const tgt = hug.lerp(glass, P.armUp); aim(up, fo, tgt); aim(fo, ha, tgt); }
     if (tb.pod) { tb.pod.position.x = tb.x + (this.shake > 0 ? (Math.random() - 0.5) * 0.03 : 0); }
     if (m.eyes) m.eyes.intensity = this.stage === 'sleep' ? 0 : this.stage === 'wake' ? 0.8 + Math.sin(t * 3) * 0.3 : 2;
     // bubbles: more of them as it wakes
