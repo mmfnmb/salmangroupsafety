@@ -1,0 +1,917 @@
+Lantai
+Balok tinggi
+Pagar
+Panah kecepatan
+Ban berjalan
+Pegas
+Pemantul
+Gergaji
+Lengan berputar
+Balok berduri
+Jebakan duri
+Peti rapuh
+Peti baja
+Meriam
+Koin
+Peti senjata
+Mulai
+Finis
+Petamu
+Peta yang kamu buat
+Beku + Dorong
+Kembali ke awal
+Pemain
+Biru klasik
+Stroberi
+Mint
+Lemon
+Anggur
+Jeruk
+Melon
+Salju
+Tengah malam
+Lava
+Kristal
+Langka
+Pelangi
+Lava cair
+Legendaris
+Galaksi
+Emas berkilau
+Lubang hitam
+Mitos
+Wasit
+Bolt asli
+Eksklusif
+Mahkota emas
+Mahkota ratu
+Topi pesta
+Cupcake
+Donat
+Kotak hadiah
+Kacamata
+Kacamata hitam
+Rompi kulit
+Zirah besi
+Zirah ninja
+Zirah emas
+Bintang pahlawan
+Ransel
+Tas samping
+Perisai kayu
+Perisai ksatria
+Stik golf
+Seimbang dalam segala hal
+Baguette
+Pukulan tercepat
+Spatula
+Melambungkan bola sangat tinggi
+Penggiling adonan
+Menjaga bola tetap di tanah
+Corn dog
+Yang kamu pukul menempel sedetik
+Tulang
+Membuat bola memantul tinggi
+Ikan
+Yang kamu pukul terpeleset
+Pisang
+Yang kamu pukul terpeleset dan berputar
+Permen tongkat
+Membuat bola melengkung
+Dayung
+Jangkauan terjauh
+Wajan
+BONG! Yang kamu pukul jadi pusing
+Palu
+Menghempaskan semua orang di sekitarmu
+Gada
+Pukulan terkuat
+Palu emas
+Yang legendaris
+Warna
+Kepala
+Wajah
+Badan
+Punggung
+Pemukul
+Ronde {n} dari {m}
+Kumpulkan 30 koin di ronde
+Lolos di 3 ronde
+Lompat terjun 15 kali
+Menangkan mahkota di Show
+Lolos di 20 ronde
+Kumpulkan 300 koin di ronde
+Lolos pertama
+Kemenangan pertama
+Mahkota pertama
+Main 10 Show
+Mainkan semua mode
+Lompat terjun 100 kali
+Dapatkan karakter langka
+Lolos 50 kali
+5 mahkota
+koin
+Tantangan selesai
+Pencapaian
+Level musim {n}
+Musim: {x} terbuka
+Musim
+Hadiah harian (hari {n})
+The Show
+4 ronde berturut-turut. Menangkan yang terakhir untuk mendapat mahkota
+Tim
+Peta pemain unggulan
+Selesai
+Musim 1
+Level {n}
+Musim selesai!
+Hadiah harian
+Siap
+Besok
+Ambil {n}
+Sudah diambil hari ini
+Acara minggu ini
+Koin ganda sepanjang minggu
+Penawaran toko hari ini
+Kamu punya semuanya
+Datang setiap hari: hadiah naik sampai 500 di hari ke-7.
+Tantangan
+Hari ini
+Minggu ini
+Pencapaian
+Pilih mode
+Memuat gambar…
+Segera hadir
+Online dengan teman
+Main dengan temanmu memakai kode ruang
+Roda keberuntungan
+Putaran gratis hari ini!
+Putaran ekstra 500 koin
+Putar gratis
+Putar 500
+Tukar kode
+Ketik kode untuk dapat hadiah. Beberapa kode memberi karakter langka kalau kamu beruntung.
+Tukar
+Pengaturan
+Grafis
+Ringan
+Sedang
+Fantasi
+Suara
+Nyala
+Mati
+Kecepatan kamera
+Lambat
+Normal
+Cepat
+Bahasa
+Tonton video pembuka lagi
+Profilmu
+Namamu
+Simpan
+Show dimainkan
+Ronde
+Lolos
+Mahkota
+Level
+Koin didapat
+Tersimpan
+Aksesori
+Langka!
+Jackpot
+Kamu sudah punya {x}, jadi kamu dapat {n} koin
+Selamat! Kamu menang {x} ({r})
+Kamu butuh 500 koin
+Kamu menang {x}
+Kamu punya semuanya! Ambil 300 koin
+Kamu menang {n} koin
+Kode itu tidak valid
+Kamu sudah memakai kode ini
+{x}: karakter eksklusifmu!
+Toko
+Lemari
+Penawaran hari ini, baru setiap hari
+Ganti warnamu, berdandan dan pilih pemukulmu
+Kamu sudah beli semuanya! Kembali besok untuk penawaran baru.
+Dipakai
+Dimiliki
+Kekuatan
+Kecepatan
+Jangkauan
+Tanah berubah emas di belakangmu saat berlari
+Lubang hitam berputar di sekitarmu
+Percikan api keluar darimu
+Bintang berkelip di sekitarmu
+Berkilau dan bening seperti berlian
+Warnamu tidak pernah berhenti berubah
+Emas dan lubang hitam bersama: karakter eksklusif
+Hanya dengan kode
+Beli seharga {n}
+Kurang {n}
+Kamu membeli {x}
+Peta itu sudah tidak ada
+Mencari pemain
+Tips: terjun di bawah lengan berputar
+Tips: panah kuning melontarkanmu ke depan
+Tips: di Hex Drop, jangan diam 3 detik
+Tips: wajan membuat orang pusing
+Tips: peti kayu bisa pecah, peti baja tidak
+Ketemu!
+Peta buatan {x}
+Ronde terakhir
+Ronde
+Tim pemenang lolos
+{n} pertama yang finis lolos
+Yang terakhir bertahan menang
+{n} terakhir yang bertahan lolos
+Lolos!
+Sedikit terlambat
+Tersingkir!
+Kamu menyelesaikan petamu! Sekarang bisa dipublikasikan
+Kamu menang mahkota!
+Kamu menang!
+Gagal kali ini
+Tim {x} menang {a} - {b}
+Merah
+Biru
+{n} dari {m} lolos
+Kamu
+Ronde berikutnya
+Main lagi
+Hadiah awal: 500 koin untuk toko
+Posisi · putaran {n}/{m}
+Posisi · {n} teratas lolos
+Tersisa · {n}d
+Tersisa
+MULAI!
+Publikasi bisa dilakukan saat bermain dari tautan yang dipublikasikan
+Memuat peta…
+Kamu butuh akses kontributor untuk publikasi
+Pasang titik mulai dan finis dulu
+Kamu harus menyelesaikan petamu dulu (uji dan capai finis)
+Kamu mencapai batas ({n} peta). Hapus satu dulu
+Kamu butuh {n} koin
+Siap dipublikasikan
+Peta tidak bisa dimuat sekarang, coba lagi sebentar
+Peta pemain muncul saat kamu membuka game dari tautan yang dipublikasikan
+Belum ada peta. Buat dan publikasikan yang pertama!
+Unggulan
+Oleh {x}
+Dimainkan {n} kali
+Hapus
+Suka
+Hapus dari mode utama
+Jadikan mode utama
+Main
+Orang memainkan petamu ({n} kali)
+Tidak berhasil, coba lagi
+Dihapus dari mode utama
+Peta ini sekarang jadi mode utama!
+Dihapus
+Yakin?
+Ketik nama peta
+Peta dipublikasikan! Kamu dapat 5 koin setiap kali ada yang memainkannya
+Batas tercapai
+Publikasi gagal, coba lagi
+Depan
+Kanan
+Hapus semua
+Peta asli dikembalikan
+Pasang bagian mulai dulu
+Pasang bagian finis dulu
+Model gagal dimuat
+Lari rintangan (klasik)
+Balapan
+Lari ke bendera melewati pintu, gergaji, dan meriam
+Checkpoint
+Lari rintangan
+Sirkuit berliku dua putaran: jungkat-jungkit, bantal memantul, palu, bola penghancur, kipas, dan papan peluncur
+Putaran {n} dari {m}
+Hex Drop
+Ubin retak saat pertama diinjak dan jatuh saat kedua. Diam 3 detik dan ubin juga jatuh
+RPG + Granat + Beku + Terbang (langka)
+Tangkap bintang
+Bintang
+Dua tim. Bintang kecil 1, bintang besar 3, permata 5, kristal 10. Kalau terkena pukulan, bintangmu jatuh
+Tarik + Beku
+Kamu menjatuhkan {n} bintang!
+Bola pemukul
+Bola
+Dua tim dengan pemukul: pukul bola ke gawang tim lawan. Setiap pemukul punya kekuatannya sendiri
+SEMPURNA!
+Gol untuk Merah!
+Gol untuk Biru!
+Dua tim dengan pemukul: pukul bola ke lubang tim lawan. Tahan untuk mengisi tenaga dan lepas di hijau untuk pukulan sempurna
+Hindari meriam
+Meriam
+Bertahan di platform sampai waktu habis. Meriam menembak makin cepat
+Blaster terbang
+Puncak
+Panjat platform sampai mahkota di paling atas
+Blaster bingung
+Arena
+Semua melawan semua, dan pinggirannya terus runtuh. Yang terakhir bertahan menang
+Blaster cepat + Roket pelacak + Bom lengket
+Arena menyusut!
+Blaster dorong
+Blaster cepat
+Blaster beku
+Blaster tarik
+RPG
+Roket pelacak
+Granat
+Bom lengket
+Mendorong mundur yang terkena
+Banyak tembakan yang masing-masing mendorong sedikit
+Membekukan yang terkena
+Menarik yang terkena ke arahmu
+Tembak seseorang untuk melontarkannya, atau tembak tanah untuk terbang sendiri
+Membalik kontrol yang terkena
+Menghancurkan lantai dan peti
+Terbang sendiri ke pemain terdekat
+Lempar dan meledak setelah 1,5 detik
+Meninggalkan genangan lengket yang memperlambat pemain
+Menyiapkan arena…
+Bangun
+Menari
+Melambai
+Ya
+Tidak
+Tinju
+Mode
+Ganti
+Beli
+Mode bangun
+Bangun petamu sendiri dari potongan dan uji melawan 3 bot. Selesaikan sendiri dan kamu bisa mempublikasikannya untuk semua.
+Mulai membangun
+Nama peta
+Publikasikan · 1500
+Peta pemain
+Mainkan peta orang lain. Pembuatnya dapat 5 koin setiap kali ada yang bermain.
+Batal
+Ronde 1
+Ketuk layar untuk langsung mulai
+Posisi
+Jeda
+Terjun
+Lompat
+Pukul
+WASD: lari · Spasi: lompat · Shift: terjun · F atau klik: pukul (tahan untuk mengisi) · Seret: putar kamera · Q: dorong · G (tahan): pegang
+Tutup
+Lewati
+Dijeda
+Lanjut
+Menu
+Pilih potongan dan ketuk kotak. Seret untuk bergerak, roda mouse untuk zoom.
+Arah:
+Hapus potongan
+Peta asli
+Uji peta
+Lubang merah
+Lubang biru
+Titik bola
+Capai garis finis lebih dulu
+Bertahan hidup
+Bertahan di peta sampai waktu habis
+Dua tim memukul bola ke lubang lawan
+Pasang lubang merah
+Pasang lubang biru
+Pasang titik bola
+Kamu harus menang di petamu sendiri dulu (uji)
+Ubah
+Publikasikan
+Buat
+Bangun peta Balapan, Bertahan hidup, atau Bola milikmu dan publikasikan
+Mainkan peta buatan pemain lain
+Pilih jenis peta. Selesaikan petamu sendiri, lalu publikasikan seharga 1500 koin. Kamu dapat 5 koin setiap kali ada yang memainkannya.
+Semua
+Kiper
+Bek
+Gelandang
+Pilih posisimu
+Kamu bermain sebagai {x}
+{x} juga ingin {y}! Memutar…
+Kamu dapat {x}!
+{x} mendapatkannya. Kamu bermain sebagai {y}
+Bolt Golf
+Golf
+Pukul bolamu sendiri ke lubang. Air mengembalikannya dengan penalti 1 pukulan. Tahan untuk mengisi, lepas untuk memukul
+Stik golf
+Byur! +1 pukulan
+Masuk lubang! {n} pukulan
+Volley Bash
+Voli
+Dua tim dan net. Pukul bola melewati net dan jangan biarkan jatuh di sisimu. Tahan untuk mengisi, lepas di hijau untuk smes sempurna
+Keluar!
+Poin untuk Merah!
+Poin untuk Biru!
+Bolt Sepak Bola
+Sepak bola
+Sepak bola sungguhan: bola menempel di kakimu. Terjun untuk mengoper, tahan Pukul untuk menendang, dan terjun ke pembawa bola untuk merebutnya
+Kakimu
+Tekel!
+Puck Rush
+Puck
+Pukul puck logam ke gawang kecil mana pun milik lawan. Gawang samping bernilai 1, gawang tengah yang dijaga bernilai 3
+Penyerang
+Episode 1: Awal
+Episode 2
+Bolt Dash: serial
+Musim 1: Liga Permainan Pesta
+Musim {n}
+Episode berikutnya: segera
+Film
+Ubin lava
+Lava
+Ubin menyala dan jatuh ke lava. Setiap 20 detik datang bahaya baru. Yang terakhir bertahan menang
+Dorong + Pegang
+Awas: lengan berputar!
+Meriam!
+Gergaji!
+Lebih banyak meriam!
+Bom panas
+Bom
+Seseorang membawa bom yang berdetak. Sentuh pemain lain untuk memberikannya. Saat meledak, yang memegangnya tersingkir
+Bom ada padamu! Berikan ke orang lain!
+Lari: W A S D
+Lari: geser tuas di kiri
+Lompati celah: Spasi
+Lompati celah: tombol kuning
+Terjun di bawah lengan: Shift
+Terjun di bawah lengan: tombol hijau
+Tabrak pintu untuk memecahkan yang lemah
+Dorong boneka: Q. Tahan G untuk memegangnya
+Dorong boneka: tombol oranye. Tahan tombol ungu untuk memegangnya
+Panah kecepatan melontarkanmu ke depan. Capai benderanya!
+Latihan
+Pelajari setiap gerakan langkah demi langkah. Tips menunjukkan tombol keyboard atau tombol ponselmu
+Lava naik
+Lava terus naik. Lompati batu secepat yang kamu bisa. Yang terakhir bertahan menang
+Kartu pemain
+Kecepatan
+Tendangan
+Operan
+Kontrol
+Perunggu
+Perak
+Emas
+Adu cat
+Cat
+Empat tim. Setiap ubin yang kamu injak berubah jadi warnamu. Tim dengan ubin terbanyak saat waktu habis menang
+Hijau
+Kuning
+Tim {x} menang dengan {n} ubin
+Tahanan Gila
+Pencapaian
+Topeng hoki
+Kepala labu
+Golok
+Gergaji mesin
+Golok Tahanan Gila
+Gergaji mesin Tahanan Gila
+Dia jadi gila! Jangan sentuh gergaji mesinnya!
+Malam Pembantai
+Pembantai
+Malam panjang penuh monster dan tiruan Tahanan Gila. Kalahkan dia di akhir untuk membuka penampilannya. Mati sekali dan kamu keluar
+Pemukulmu
+Hutan
+Jalanan sepi
+Rumah tua
+Halaman penjara
+Tahanan Gila!
+Dia memanggil tiruannya!
+ROAR!
+Lantainya retak!
+Lampu padam...
+Pencapaian: kamu membuka Tahanan Gila!
+Helm ksatria
+Topi beruang
+Topi penyihir
+Jubah cokelat
+Jubah merah
+Jubah merah muda
+Jubah hijau
+Lari lebih cepat
+Jatuh pelan dari tempat tinggi dan arahkan untuk mendarat
+Lompat sekali lagi di udara
+Lompat lebih tinggi
+Bos
+Zona {n}/{m}
+Kalahkan semua monster untuk membuka gerbang
+Gerbang terbuka!
+Peliharaan
+Anak anjing
++15% koin dari setiap ronde
+Anak kucing
+Bangun lebih cepat setelah terkena pukulan
+Anak ayam
+Lari sedikit lebih cepat
+Burung kecil
+Terjun lebih jauh
+Merpati
+Lompat sedikit lebih tinggi
+Cactoro
+Lendir lengket dan perlambatan hampir tidak berpengaruh
+Mushnub
++20% XP musim
+Blob merah muda
+Lebih sulit didorong dan dijatuhkan
+Blob hijau
+Beku dan pusing hilang dua kali lebih cepat
+Ikan kecil
+Jauh lebih jarang terpeleset di es dan pisang
+Glub
+Jatuh sedikit lebih pelan
+Lebah zirah
+Dorong dan pegang terisi lebih cepat
+Alpaking
++10% koin dan +10% XP
+Trailer pertama
+Trailer
+7 ronde berturut-turut. Menangkan yang terakhir untuk mendapat mahkota
+Seret karaktermu untuk memutarnya
++15% koin dari setiap ronde. Menggigit musuh di dekatmu
+Bangun lebih cepat. Mencakar musuh di dekatmu
+Lendir dan perlambatan hampir tak berpengaruh. Bernyanyi untuk membingungkan semua di sekitarmu
+Glitch
+Pemilik
+Kosmos
+Tak terlihat
+Too heavy! You need to be healthy and strong (eat power food)
+Too heavy to lift: you drag it (eat power food to lift it)
+Hits harder in your next match
+Jumps higher in your next match
+Runs faster in your next match
+Slips less in your next match
+Gets up faster in your next match
+Everything spins for a while
+The World
+World
+Live in the city: eat, work, buy a home, travel
+Police station
+a car
+Go outside
+Take it
+Decorate
+Get out of the car
+Drive
+Restaurant
+Drinks shop
+Clothes shop
+Furniture shop
+Homes for sale
+Stadium
+Jobs
+Airport
+Business
+Go home
+The door is open...
+Climb in through the window
+Revenge! +1500 coins
+Driving! Press the action button to get out
+Too much heavy food! You will be a bit slower next match
+Delivered to your home: place it with Decorate
+Furnished house
+Empty house
+Sofa, TV, bed and kitchen included
+Buy furniture and place it yourself
+You bought a home! You will wake up here
+An alarm goes off!
+Nobody saw you... for now
+Buy furniture at the furniture shop first
+Placed where you stand
+Someone saw you! Wanted level up
+The police found the evidence. They are coming for you!
+Arrested! You paid a {n} coin fine
+Turn yourself in
+Pay a smaller fine and clear your wanted level
+Your record is clean
+You died. A new life begins... and a revenge file is open
+Delivery
+Take the parcel to the address before time runs out
+Taxi driver
+Get in a car, pick up the passenger, drive them home
+Shop worker
+Serve the customers at the till
+Police officer
+Catch the thief running through the city
+Pro player
+Play a Show match for a salary
+Deliver the parcel
+Pick up the passenger
+Serve 5 customers
+Catch the thief
+Get in a car first
+Passenger on board! Drive to the star
+Serve!
+Too late! Job failed
+Serve {n} more customers
+Job done! +{n} coins
+Play {x}
+The famous game of {x}
+Plane: safe and fast
+Ship: cheap, but storms happen
+A storm! You washed up on the shore and lost {n} coins
+Your {x} (earning)
+Building your {x}...
+Land for sale
+Collect your earnings
+Buy the land, then build an arena, cinema or restaurant
+Cinema
+Construction started! Come back in 10 minutes
+You collected {n} coins
+Your {x} is open!
+Food power for this match
+Loading the city…
+The city could not load. Open the game from its published link
+Welcome to the city! Gift: 200 coins
+Burger
+Burger Cheese
+Burger Double
+Burger Cheese Double
+Sandwich
+Sub
+Hot Dog
+Corn Dog
+Taco
+Pizza
+Fries
+Chinese
+Dim Sum
+Maki Salmon
+Maki Roe
+Maki Vegetable
+Sushi Salmon
+Sushi Egg
+Rice Ball
+Skewer
+Skewer Vegetables
+Meat Cooked
+Meat Ribs
+Meat Sausage
+Sausage
+Frikandel Speciaal
+Turkey
+Whole Ham
+Fish
+Mussel Open
+Egg Cooked
+Pancakes
+Waffle
+Croissant
+Loaf
+Loaf Round
+Loaf Baguette
+Bread
+Bowl Soup
+Bowl Broth
+Bowl Cereal
+Salad
+Pan Stew
+Pot Stew
+Tajine
+Pie
+Mincemeat Pie
+Cake
+Cake Birthday
+Cupcake
+Muffin
+Donut
+Donut Chocolate
+Donut Sprinkles
+Cookie
+Cookie Chocolate
+Ginger Bread
+Chocolate
+Candy Bar
+Lollypop
+Pudding
+Sundae
+Ice Cream
+Ice Cream Cup
+Ice Cream Scoop Chocolate
+Ice Cream Scoop Mint
+Popsicle
+Popsicle Chocolate
+Whipped Cream
+Honey
+Peanut Butter
+Cheese
+Apple
+Banana
+Orange
+Pear
+Grapes
+Cherries
+Strawberry
+Watermelon
+Pineapple
+Coconut
+Lemon
+Avocado
+Tomato
+Carrot
+Corn
+Broccoli
+Cauliflower
+Mushroom
+Eggplant
+Paprika
+Onion
+Pumpkin
+Radish
+Cabbage
+Beet
+Leek
+Celery Stick
+Bacon
+Cola
+Diet Cola
+Lemon Soda
+Orange Fizz
+Grape Fizz
+Cherry Pop
+Ginger Ale
+Root Beer
+Cream Soda
+Sparkling Water
+Orange Juice
+Apple Juice
+Mango Juice
+Guava Juice
+Strawberry Juice
+Lemonade
+Mint Lemonade
+Watermelon Juice
+Sugarcane Juice
+Sobia
+Tamarind
+Licorice
+Hibiscus
+Dates Milk
+Milk
+Chocolate Milk
+Strawberry Milk
+Banana Milk
+Yogurt Drink
+Smoothie
+Milkshake
+Frappe
+Iced Coffee
+Coffee
+Espresso
+Turkish Coffee
+Latte
+Cappuccino
+Hot Chocolate
+Tea
+Mint Tea
+Green Tea
+Anise
+Sahlab
+Iced Tea
+Energy Bolt
+Energy Bolt Zero
+Sports Drink
+Coconut Water
+Dizzy Drink
+Lounge Sofa
+Lounge Sofa Corner
+Lounge Chair
+Table Coffee
+Television Modern
+Cabinet Television
+Bed Double
+Bed Single
+Kitchen Fridge
+Kitchen Stove
+Kitchen Sink
+Kitchen Cabinet
+Table
+Chair
+Bookcase Open
+Lamp Round Floor
+Rug Rectangle
+Potted Plant
+Plant Small1
+Desk
+Chair Desk
+Computer Screen
+Speaker
+Radio
+Bathtub
+Toilet
+Washer
+Side Table
+Coat Rack Standing
+Bear
+Gym
+Hospital
+Car dealer
+Street race
+Steal the car
+Hidden coin! +100 ({n} found)
+Train
+Get stronger: at 5 you can lift heavy things
+You are as strong as can be!
+Strength {n}/10
+Get healed
+Back to full health
+You are healthy!
+All better!
+Yours: bring it here
+Buy your own car
+Your new car is outside!
+Street race: drive through the stars
+Street race! Drive through 8 stars before time runs out
+Too heavy to lift: you drag it (eat power food or train at the gym)
+a car crash
+Race Future
+Hatchback Sports
+Suv Luxury
+Sedan Sports
+Sedan
+Komentator
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

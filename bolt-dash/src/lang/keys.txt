@@ -1,0 +1,918 @@
+Floor
+Raised block
+Fence
+Speed arrows
+Conveyor
+Spring
+Bouncer
+Saw
+Spinning arm
+Spike block
+Spike trap
+Breakable crate
+Steel crate
+Cannon
+Coin
+Weapon crate
+Start
+Finish
+Your map
+The map you built
+Freeze + Push
+Back to the start
+Player
+Classic Blue
+Strawberry
+Mint
+Lemon
+Grape
+Orange
+Melon
+Snow
+Midnight
+Lava
+Crystal
+Rare
+Rainbow
+Molten Lava
+Legendary
+Galaxy
+Radiant Gold
+Black Hole
+Mythic
+Referee
+Original Bolt
+Exclusive
+Gold Crown
+Queen's Crown
+Party Hat
+Cupcake
+Donut
+Gift Box
+Glasses
+Sunglasses
+Leather Vest
+Iron Armor
+Ninja Armor
+Gold Armor
+Hero Star
+Backpack
+Side Bag
+Wooden Shield
+Knight Shield
+Golf Club
+Balanced at everything
+Baguette
+Fastest swing
+Spatula
+Lobs the ball up high
+Rolling Pin
+Keeps the ball on the ground
+Corn Dog
+Whoever you hit gets stuck for a second
+Bone
+Makes the ball bounce high
+Fish
+Whoever you hit slips
+Banana
+Whoever you hit slips and spins
+Candy Cane
+Curves the ball
+Paddle
+Longest reach
+Frying Pan
+BONG! Whoever you hit gets dizzy
+Hammer
+Smashes everyone around you away
+Club
+Strongest hit
+Golden Hammer
+The legendary one
+Colors
+Head
+Face
+Body
+Back
+Bats
+Round {n} of {m}
+Collect 30 coins in rounds
+Qualify in 3 rounds
+Dive 15 times
+Win the crown in a Show
+Qualify in 20 rounds
+Collect 300 coins in rounds
+First qualification
+First win
+First crown
+Play 10 Shows
+Play every mode
+Dive 100 times
+Get a rare character
+Qualify 50 times
+5 crowns
+coins
+Challenge complete
+Achievement
+Season level {n}
+Season: unlocked {x}
+Season
+Daily reward (day {n})
+The Show
+4 rounds in a row. Win the last one to take the crown
+Teams
+Featured player map
+Done
+Season 1
+Level {n}
+Season complete!
+Daily reward
+Ready
+Tomorrow
+Claim {n}
+Claimed today
+Event of the week
+Double coins all week
+Today's shop deals
+You own everything
+Come back every day: the reward grows to 500 on day 7.
+Challenges
+Today
+This week
+Achievements
+Choose a mode
+Loading picture…
+Coming soon
+Online with friends
+Play with your friends using a room code
+Lucky Wheel
+Free spin today!
+Extra spin for 500 coins
+Spin free
+Spin for 500
+Redeem code
+Type a code to get your prize. Some codes give a rare character if you are lucky.
+Redeem
+Settings
+Graphics
+Light
+Medium
+Fantasy
+Sound
+On
+Off
+Camera speed
+Slow
+Normal
+Fast
+Language
+Watch the intro film again
+Your profile
+Your name
+Save
+Shows played
+Rounds
+Qualified
+Crowns
+Level
+Coins earned
+Saved
+Accessory
+Rare!
+Jackpot
+You already have {x}, so you got {n} coins instead
+Congrats! You won {x} ({r})
+You need 500 coins
+You won {x}
+You have everything! Take 300 coins
+You won {n} coins
+That code is not valid
+You already used this code
+{x}: your exclusive character!
+Shop
+Wardrobe
+Today's deals, new every day
+Change your colour, dress up and pick your bat
+You bought everything! Come back tomorrow for new deals.
+Wearing
+Owned
+Power
+Speed
+Reach
+The ground turns gold behind you as you run
+A black hole swirls around you
+Fire sparks fly off you
+Stars twinkle around you
+Shiny and clear like a diamond
+Your colour never stops changing
+Gold and black hole together: the exclusive character
+Code only
+Buy for {n}
+Need {n} more
+You bought {x}
+That map no longer exists
+Finding players
+Tip: dive under spinning arms
+Tip: yellow speed arrows launch you forward
+Tip: in Hex Drop, never stand still for 3 seconds
+Tip: the frying pan makes people dizzy
+Tip: wooden crates break, steel ones don't
+Found them!
+A map made by {x}
+Final round
+Round
+The winning team qualifies
+First {n} to finish qualify
+Last one standing wins
+Last {n} standing qualify
+Qualified!
+A bit too late
+Eliminated!
+You finished your map! You can publish it now
+You won the crown!
+You won!
+Out this time
+{x} team won {a} - {b}
+Red
+Blue
+{n} of {m} qualified
+You
+Next round
+Play again
+Starter gift: 500 coins for the shop
+Place · lap {n}/{m}
+Place · top {n} qualify
+Left · {n}s
+Left
+GO!
+Publishing works when you play from the published link
+Loading maps…
+You need contributor access to publish
+Add a start and a finish first
+You must finish your own map first (test it and reach the finish)
+You reached the limit ({n} maps). Delete one first
+You need {n} coins
+Ready to publish
+Maps won't load right now, try again in a bit
+Player maps show up when you open the game from the published link
+No maps yet. Build and publish the first one!
+Featured
+By {x}
+Played {n} times
+Delete
+Like
+Remove from main modes
+Promote to main modes
+Play
+People played your maps ({n} times)
+That didn't work, try again
+Removed from main modes
+The map is now one of the main modes!
+Deleted
+Sure?
+Type a name for the map
+Map published! You get 5 coins every time someone plays it
+Limit reached
+Publishing failed, try again
+Forward
+Right
+Clear all
+Original map restored
+Place the start piece first
+Place the finish piece first
+The models failed to load
+Obstacle Dash (Classic)
+Race
+Run to the flag past doors, saws and cannons
+Checkpoint
+Obstacle Dash
+A winding two-lap circuit: seesaws, bouncy pillows, hammers, wrecking balls, fans and launch pads
+Lap {n} of {m}
+Hex Drop
+Tiles crack the first time you step on them and drop the second time. Stand still for 3 seconds and they drop too
+RPG + Grenade + Freeze + Fly (rare)
+Star Grab
+Stars
+Two teams. Small star 1, big star 3, gem 5, crystal 10. Get hit and you drop your stars
+Pull + Freeze
+You dropped {n} stars!
+Bat Ball
+Ball
+Two teams with bats: knock the ball into the other team's goal. Every bat has its own power
+PERFECT!
+Goal for Red!
+Goal for Blue!
+Two teams with bats: knock the ball into the other team's pit. Hold to charge your swing and let go in the green for a perfect hit
+Cannon Dodge
+Cannons
+Stay on the platform until time runs out. The cannons fire faster and faster
+Fly Blaster
+The Summit
+Climb the platforms to the crown at the very top
+Confuse Blaster
+Arena
+Everyone against everyone, and the edges keep falling away. Last one standing wins
+Rapid Blaster + Homing Rocket + Sticky Bomb
+The arena is shrinking!
+Push Blaster
+Rapid Blaster
+Freeze Blaster
+Pull Blaster
+RPG
+Homing Rocket
+Grenade
+Sticky Bomb
+Knocks whoever it hits backwards
+Lots of shots that push a little each
+Freezes whoever it hits
+Pulls whoever it hits towards you
+Shoot someone to launch them, or shoot the ground to fly yourself
+Reverses the controls of whoever it hits
+Breaks floors and crates
+Flies by itself to the nearest player
+Throw it and it blows up after 1.5 seconds
+Leaves a sticky puddle that slows players
+Getting the arena ready…
+Build
+Dance
+Wave
+Yes
+No
+Punch
+Mode
+Change
+Buy
+Build mode
+Build your own map from pieces and test it against 3 bots. Finish it yourself and you can publish it for everyone.
+Start building
+Map name
+Publish · 1500
+Player maps
+Play other people's maps. The creator gets 5 coins every time someone plays.
+Cancel
+Round 1
+Tap the screen to start right away
+Place
+Pause
+Dive
+Jump
+Hit
+WASD: run · Space: jump · Shift: dive · F or click: hit (hold to charge) · Drag: turn the camera · Q: push · G (hold): grab
+Close
+Skip
+Paused
+Resume
+Menu
+Pick a piece and tap a square. Drag to move around, mouse wheel to zoom.
+Direction:
+Erase piece
+Original map
+Test map
+Red pit
+Blue pit
+Ball spot
+Reach the finish line first
+Survival
+Stay on the map until time runs out
+Two teams knock a ball into the other pit
+Place the red pit
+Place the blue pit
+Place the ball spot
+You must win your own map first (test it)
+Edit
+Publish
+Create
+Build your own Race, Survival or Ball map and publish it
+Play maps made by other players
+Pick a map type to build. Finish your map yourself, then publish it for 1500 coins. You get 5 coins every time someone plays it.
+All
+Goalkeeper
+Defender
+Midfielder
+Pick your position
+You play as {x}
+{x} wants {y} too! Spinning…
+You got {x}!
+{x} got it. You play {y}
+Bolt Golf
+Golf
+Hit your own ball to the hole. Water sends it back with a 1-stroke penalty. Hold to charge your swing, let go to hit
+Golf club
+Splash! +1 stroke
+In the hole! {n} strokes
+Volley Bash
+Volley
+Two teams and a net. Hit the ball over and don't let it land on your side. Hold to charge, let go in the green for a perfect spike
+Out!
+Point for Red!
+Point for Blue!
+Bolt Football
+Football
+Real football: the ball sticks to your feet. Dive to pass, hold Hit to shoot, and dive into the player with the ball to tackle
+Your feet
+Tackle!
+Puck Rush
+Puck
+Slap the metal puck into any of the other team's small goals. Side goals are worth 1, the guarded middle goal is worth 3
+Attacker
+Episode 1: The Beginning
+Episode 2
+Bolt Dash: the series
+Season 1: the Party Games League
+Season {n}
+Next episode: coming soon
+Movie
+Lava Tiles
+Lava
+Tiles glow and drop into the lava. Every 20 seconds a new danger joins in. Last one standing wins
+Push + Grab
+Watch out: the spinning arm!
+Cannons!
+Saws!
+More cannons!
+Hot Bomb
+Bomb
+Someone carries a ticking bomb. Touch another player to pass it on. When it explodes, whoever holds it is out
+You have the bomb! Pass it on!
+Run: W A S D
+Run: drag the stick on the left
+Jump the gap: Space
+Jump the gap: yellow button
+Dive under the arm: Shift
+Dive under the arm: green button
+Run into the doors to break the weak ones
+Push the dummy: Q. Hold G to grab him
+Push the dummy: orange button. Hold the purple button to grab him
+Speed arrows throw you forward. Reach the flag!
+Training
+Learn every move step by step. The tips show your keys or your phone buttons
+Lava Rising
+The lava keeps rising. Jump up the rocks as fast as you can. Last ones standing win
+Player card
+Pace
+Shooting
+Passing
+Control
+Bronze
+Silver
+Gold
+Paint Rush
+Paint
+Four teams. Every tile you step on takes your colour. The team with the most tiles when time runs out wins
+Green
+Yellow
+{x} team won with {n} tiles
+Mad Prisoner
+Achievement
+Hockey Mask
+Pumpkin Head
+Cleaver
+Chainsaw
+The Mad Prisoner's cleaver
+The Mad Prisoner's chainsaw
+He has gone mad! Do not touch the chainsaw!
+Slasher Night
+Slasher
+A long night of monsters and copies of the Mad Prisoner. Beat him at the end to unlock his skin. Die once and you are out
+Your bat
+The forest
+The empty streets
+The old house
+The prison yard
+The Mad Prisoner!
+He calls his copies!
+ROAR!
+The floor is cracking!
+Lights out...
+Achievement: you unlocked the Mad Prisoner!
+Knight Helmet
+Bear Hat
+Wizard Hat
+Brown Cape
+Red Cape
+Pink Cape
+Green Cape
+Run faster
+Fall slowly from high places and steer to land
+Jump again in the air
+Jump higher
+Boss
+Zone {n}/{m}
+Kill all the monsters to open the gate
+The gate is open!
+Pets
+Puppy
++15% coins from every round
+Kitty
+Get back up faster after a hit
+Chick
+Run a little faster
+Birb
+Dive further
+Pigeon
+Jump a little higher
+Cactoro
+Sticky goo and slow-downs barely touch you
+Mushnub
++20% season XP
+Pink Blob
+Harder to push and knock over
+Green Blob
+Freezes and dizziness wear off twice as fast
+Fishy
+Slip much less on ice and bananas
+Glub
+Fall a bit slower
+Armabee
+Push and grab recharge faster
+Alpaking
++10% coins and +10% XP
+The first trailer
+Trailer
+7 rounds in a row. Win the last one to take the crown
+Drag your character to turn it around
++15% coins from every round. Bites enemies near you
+Get back up faster after a hit. Scratches enemies near you
+Sticky goo and slow-downs barely touch you. Sings to confuse everyone around you
+Glitch
+Owner
+Cosmos
+Invisible
+Too heavy! You need to be healthy and strong (eat power food)
+Too heavy to lift: you drag it (eat power food to lift it)
+Hits harder in your next match
+Jumps higher in your next match
+Runs faster in your next match
+Slips less in your next match
+Gets up faster in your next match
+Everything spins for a while
+The World
+World
+Live in the city: eat, work, buy a home, travel
+Police station
+a car
+Go outside
+Take it
+Decorate
+Get out of the car
+Drive
+Restaurant
+Drinks shop
+Clothes shop
+Furniture shop
+Homes for sale
+Stadium
+Jobs
+Airport
+Business
+Go home
+The door is open...
+Climb in through the window
+Revenge! +1500 coins
+Driving! Press the action button to get out
+Too much heavy food! You will be a bit slower next match
+Delivered to your home: place it with Decorate
+Furnished house
+Empty house
+Sofa, TV, bed and kitchen included
+Buy furniture and place it yourself
+You bought a home! You will wake up here
+An alarm goes off!
+Nobody saw you... for now
+Buy furniture at the furniture shop first
+Placed where you stand
+Someone saw you! Wanted level up
+The police found the evidence. They are coming for you!
+Arrested! You paid a {n} coin fine
+Turn yourself in
+Pay a smaller fine and clear your wanted level
+Your record is clean
+You died. A new life begins... and a revenge file is open
+Delivery
+Take the parcel to the address before time runs out
+Taxi driver
+Get in a car, pick up the passenger, drive them home
+Shop worker
+Serve the customers at the till
+Police officer
+Catch the thief running through the city
+Pro player
+Play a Show match for a salary
+Deliver the parcel
+Pick up the passenger
+Serve 5 customers
+Catch the thief
+Get in a car first
+Passenger on board! Drive to the star
+Serve!
+Too late! Job failed
+Serve {n} more customers
+Job done! +{n} coins
+Play {x}
+The famous game of {x}
+Plane: safe and fast
+Ship: cheap, but storms happen
+A storm! You washed up on the shore and lost {n} coins
+Your {x} (earning)
+Building your {x}...
+Land for sale
+Collect your earnings
+Buy the land, then build an arena, cinema or restaurant
+Cinema
+Construction started! Come back in 10 minutes
+You collected {n} coins
+Your {x} is open!
+Food power for this match
+Loading the city…
+The city could not load. Open the game from its published link
+Welcome to the city! Gift: 200 coins
+Burger
+Burger Cheese
+Burger Double
+Burger Cheese Double
+Sandwich
+Sub
+Hot Dog
+Corn Dog
+Taco
+Pizza
+Fries
+Chinese
+Dim Sum
+Maki Salmon
+Maki Roe
+Maki Vegetable
+Sushi Salmon
+Sushi Egg
+Rice Ball
+Skewer
+Skewer Vegetables
+Meat Cooked
+Meat Ribs
+Meat Sausage
+Sausage
+Frikandel Speciaal
+Turkey
+Whole Ham
+Fish
+Mussel Open
+Egg Cooked
+Pancakes
+Waffle
+Croissant
+Loaf
+Loaf Round
+Loaf Baguette
+Bread
+Bowl Soup
+Bowl Broth
+Bowl Cereal
+Salad
+Pan Stew
+Pot Stew
+Tajine
+Pie
+Mincemeat Pie
+Cake
+Cake Birthday
+Cupcake
+Muffin
+Donut
+Donut Chocolate
+Donut Sprinkles
+Cookie
+Cookie Chocolate
+Ginger Bread
+Chocolate
+Candy Bar
+Lollypop
+Pudding
+Sundae
+Ice Cream
+Ice Cream Cup
+Ice Cream Scoop Chocolate
+Ice Cream Scoop Mint
+Popsicle
+Popsicle Chocolate
+Whipped Cream
+Honey
+Peanut Butter
+Cheese
+Apple
+Banana
+Orange
+Pear
+Grapes
+Cherries
+Strawberry
+Watermelon
+Pineapple
+Coconut
+Lemon
+Avocado
+Tomato
+Carrot
+Corn
+Broccoli
+Cauliflower
+Mushroom
+Eggplant
+Paprika
+Onion
+Pumpkin
+Radish
+Cabbage
+Beet
+Leek
+Celery Stick
+Bacon
+Cola
+Diet Cola
+Lemon Soda
+Orange Fizz
+Grape Fizz
+Cherry Pop
+Ginger Ale
+Root Beer
+Cream Soda
+Sparkling Water
+Orange Juice
+Apple Juice
+Mango Juice
+Guava Juice
+Strawberry Juice
+Lemonade
+Mint Lemonade
+Watermelon Juice
+Sugarcane Juice
+Sobia
+Tamarind
+Licorice
+Hibiscus
+Dates Milk
+Milk
+Chocolate Milk
+Strawberry Milk
+Banana Milk
+Yogurt Drink
+Smoothie
+Milkshake
+Frappe
+Iced Coffee
+Coffee
+Espresso
+Turkish Coffee
+Latte
+Cappuccino
+Hot Chocolate
+Tea
+Mint Tea
+Green Tea
+Anise
+Sahlab
+Iced Tea
+Energy Bolt
+Energy Bolt Zero
+Sports Drink
+Coconut Water
+Dizzy Drink
+Lounge Sofa
+Lounge Sofa Corner
+Lounge Chair
+Table Coffee
+Television Modern
+Cabinet Television
+Bed Double
+Bed Single
+Kitchen Fridge
+Kitchen Stove
+Kitchen Sink
+Kitchen Cabinet
+Table
+Chair
+Bookcase Open
+Lamp Round Floor
+Rug Rectangle
+Potted Plant
+Plant Small1
+Desk
+Chair Desk
+Computer Screen
+Speaker
+Radio
+Bathtub
+Toilet
+Washer
+Side Table
+Coat Rack Standing
+Bear
+Gym
+Hospital
+Car dealer
+Street race
+Steal the car
+Hidden coin! +100 ({n} found)
+Train
+Get stronger: at 5 you can lift heavy things
+You are as strong as can be!
+Strength {n}/10
+Get healed
+Back to full health
+You are healthy!
+All better!
+Yours: bring it here
+Buy your own car
+Your new car is outside!
+Street race: drive through the stars
+Street race! Drive through 8 stars before time runs out
+Too heavy to lift: you drag it (eat power food or train at the gym)
+a car crash
+Race Future
+Hatchback Sports
+Suv Luxury
+Sedan Sports
+Sedan
+Announcer
+Throws a cream pie: whoever it hits slips and falls
+Drops something slippery behind you
+A big kick that sends people flying
+A quick dash forward
+Pulls the nearest player to you
+Nothing can knock you over for 3 seconds
+A shout that stuns everyone close by
+Throws a laughing clown bomb that knocks people back a little
+Thunder Storm
+Calls down lightning on himself, then on everyone close by
+Juggling Surprise
+Juggles balls that turn into clubs in the air, drops them all, catches one, squeezes it and it explodes
+Balloon Dog & Hammer
+Ties a balloon dog to someone so they float away, then spins with a giant hammer
+Overcharge
+Plugs into his charging station, fills up with lightning and blasts it out in a shockwave
+Axe Cyclone
+Pulls out a giant axe and spins like a tornado
+Laser Landing
+Flies up, sweeps a laser across the arena and lands with a shockwave
+Saw Magnet
+Charges a giant battery, then a spinning saw magnet drags everyone in and flings them
+Shadow Blades
+Draws the katana, throws shurikens, and blades spin around the ninja
+Jetpack Strike
+Blasts up on a jetpack with a glowing blade and dives down
+Meteor Roar
+A roar so loud that meteors fall from the sky
+Rock Concert
+Plays a guitar solo so loud the sound waves blow everyone away
+Dynamite Kick
+Lights a cartoon dynamite and kicks it into the crowd
+Cauldron Curse
+Stirs her cauldron and everyone close is locked in ice for 3 seconds
+Golden Judgment
+Reads from the holy book, the golden statue rises, and a giant hammer comes down
+Pit Stop
+Red, red, green: a race car zooms out and runs everyone over
+Rockslide
+Pitches a tent, has a drink, and rocks roll down onto the others
+Club Quake
+Lights a campfire, raises the club and slams the ground so hard the rocks fly
+Toy Train
+A toy train circles around her and runs over everyone in its way
+Candy Workshop
+Hammers away at the workbench, then candy canes whirl around and knock everyone over
+Kickflip Wave
+Lands a huge kickflip and the shockwave pushes everyone away
+Golden Kick
+Kicks a flaming football that bounces from player to player
+Hydrant Blast
+Opens a fire hydrant and the water blasts everyone in front away
+Clown
+Robot
+Battle Mech
+Superhero
+Robot Mk2
+Ninja
+Space Ranger
+Dino Kid
+Teddy
+Action Hero
+Witch
+Paladin
+Driver
+Hiker
+Caveman
+Elf
+Elf Boy
+Skater Girl
+Cap Kid
+Veteran
+Common
+Epic
+Knockout
+Characters
+Test the announcer voice
+Voice: Claude
+Voice: this device
+This device has no voice for this language
+Reading aloud is turned off for this game in its Permissions menu
+This device can't speak: captions only
+Voice: recorded commentators
+Voice: live AI voice on this device
