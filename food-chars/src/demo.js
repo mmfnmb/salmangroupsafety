@@ -18,6 +18,7 @@ function play(a, n, once) { const x = a.A[n]; if (!x) return; if (a.cur && a.cur
 document.getElementById('jump').onclick = () => { for (const a of actors) { a.jumpT = 0.9; play(a, 'Jump', true); } };
 document.getElementById('run').onclick = (e) => { running = !running; e.target.textContent = running ? 'وقّف' : 'اجري'; for (const a of actors) play(a, running ? 'Run' : 'Idle'); };
 document.getElementById('shake').onclick = () => { for (const a of actors) a.shake = 0.6; };
+window.__zoom = () => { const a = actors[0]; const p = a.root.position; oc.target.set(p.x, 1.7, p.z); cam.position.set(p.x + 2.2, 2.4, p.z + 3.2); oc.update(); };
 const clk = new THREE.Clock();
 r.setAnimationLoop(() => { const dt = Math.min(clk.getDelta(), 0.05);
   for (const a of actors) { if (running) a.ang += dt * 0.55; const R = 6; a.root.position.set(Math.cos(a.ang) * R, 0, Math.sin(a.ang) * R); a.root.rotation.y = running ? -a.ang : a.root.rotation.y;

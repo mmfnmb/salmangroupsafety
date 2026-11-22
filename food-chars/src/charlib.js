@@ -102,7 +102,25 @@ export function rig(o, opt = {}) {
       bones.push(b); inv.push(b.matrixWorld.clone().invert()); const bi = bones.length - 1; const len = ymax - yb;
       const hidx = sk.bones.indexOf(head); for (let i = 0; i < P.count; i++) { const x = P.getX(i), y = P.getY(i); if (x * sd < 0.12 || y < yb - 0.02) continue; const w = Math.min(1, Math.max(0, (y - yb + 0.02) / 0.25)); SI.setXYZW(i, bi, hidx, 0, 0); SW.setXYZW(i, w, 1 - w, 0, 0); }
       springs.push({ b, len, k: opt.earK ?? 60, d: opt.earD ?? 7, max: 0.9 }); }
-    SI.needsUpdate = true; SW.needsUpdate = true; const nsk = new THREE.Skeleton(bones, inv); body.bind(nsk, body.bindMatrix);
+    SI.needsUpdate = true; SW.needsUpdate = true;
+    // ---- hair strands ----
+    if (hair && hair.visible && opt.hair !== false) { const HG = hair.geometry, HP = HG.attributes.position, HI = HG.index, HSI = HG.attributes.skinIndex, HSW = HG.attributes.skinWeight; const nv = HP.count; const par = new Int32Array(nv).map((_, i) => i); const f = (x) => { while (par[x] !== x) { par[x] = par[par[x]]; x = par[x]; } return x; };
+      for (let t = 0; t < HI.count; t += 3) { const a = f(HI.getX(t)), b = f(HI.getX(t + 1)), c = f(HI.getX(t + 2)); par[b] = a; par[f(c)] = a; }
+      const key = new Map(); for (let v = 0; v < nv; v++) { const k = HP.getX(v).toFixed(4) + ',' + HP.getY(v).toFixed(4) + ',' + HP.getZ(v).toFixed(4); if (key.has(k)) par[f(v)] = f(key.get(k)); else key.set(k, v); }
+      const comps = new Map(); for (let v = 0; v < nv; v++) { const r = f(v); if (!comps.has(r)) comps.set(r, []); comps.get(r).push(v); }
+      // head sphere (bind space)
+      let hc = new THREE.Vector3(), hn = 0; const BP = body.geometry.attributes.position; for (let i = 0; i < BP.count; i++) { const y = BP.getY(i); if (y > 2.3 && y < 3.15) { hc.x += BP.getX(i); hc.y += y; hc.z += BP.getZ(i); hn++; } } hc.divideScalar(hn); let hr = 0; for (let i = 0; i < BP.count; i++) { const y = BP.getY(i); if (y > 2.3 && y < 3.15) hr += Math.hypot(BP.getX(i) - hc.x, y - hc.y, BP.getZ(i) - hc.z); } hr = (hr / hn) * 1.02;
+      const hidx = sk.bones.indexOf(head); const headQ2 = new THREE.Quaternion(); head.getWorldQuaternion(headQ2); const strands = [];
+      for (const vs of comps.values()) { if (vs.length < 30) continue; let root = null, tip = null, dmin = 1e9, dmax = -1; for (const v of vs) { const p = new THREE.Vector3(HP.getX(v), HP.getY(v), HP.getZ(v)); const d = p.distanceTo(hc); if (d < dmin) { dmin = d; root = p; } }
+        for (const v of vs) { const p = new THREE.Vector3(HP.getX(v), HP.getY(v), HP.getZ(v)); const d = p.distanceTo(root); if (d > dmax) { dmax = d; tip = p; } } if (dmax < 0.25) continue;
+        const NB = 3; const axis = tip.clone().sub(root); const L = axis.length(); const joints = []; for (let k = 0; k <= NB; k++) joints.push(root.clone().addScaledVector(axis, k / NB));
+        const chain = []; let parent = head; for (let k = 0; k < NB; k++) { const b = new THREE.Bone(); b.name = 'HairB'; parent.add(b); const wpos = joints[k].clone().applyMatrix4(hair.bindMatrix); b.position.copy(parent.worldToLocal(wpos)); const pq2 = new THREE.Quaternion(); parent.getWorldQuaternion(pq2); b.quaternion.copy(pq2.invert()); b.updateMatrixWorld(true); bones.push(b); inv.push(b.matrixWorld.clone().invert()); chain.push({ b, i: bones.length - 1 }); parent = b; }
+        const tipObj = new THREE.Object3D(); chain[NB - 1].b.add(tipObj); tipObj.position.copy(chain[NB - 1].b.worldToLocal(joints[NB].clone().applyMatrix4(hair.bindMatrix)));
+        for (const v of vs) { const p = new THREE.Vector3(HP.getX(v), HP.getY(v), HP.getZ(v)); let t = Math.max(0, Math.min(0.9999, p.clone().sub(root).dot(axis) / (L * L))) * NB; const k = Math.floor(t), w = t - k; const ia = chain[k].i, ib = k + 1 < NB ? chain[k + 1].i : chain[k].i; const rootW = Math.max(0, 1 - t * 1.5) * 0.6; // near root, keep some head weight
+          HSI.setXYZW(v, ia, ib, hidx, 0); const wa = (1 - w) * (1 - rootW), wb = w * (1 - rootW); HSW.setXYZW(v, wa, wb, rootW, 0); }
+        strands.push({ chain, tipObj, L }); }
+      HSI.needsUpdate = true; HSW.needsUpdate = true; o.userData.hairStrands = strands; o.userData.headSphere = { c: hc, r: hr }; o.userData.headInv = sk.boneInverses[hidx].clone(); }
+    const nsk = new THREE.Skeleton(bones, inv); body.bind(nsk, body.bindMatrix);
     if (hair) hair.bind(nsk, hair.bindMatrix); }
   // tail spring: wrap tail meshes (attached to hips, low & behind) in pivot
   for (const q of o.userData.added || []) { if (q.parent !== hips) continue; const bb = new THREE.Box3().setFromObject(q); if (bb.getCenter(new THREE.Vector3()).z > -0.2) continue; }
@@ -111,6 +129,20 @@ export function rig(o, opt = {}) {
   // init spring state
   for (const s of springs) { s.b.updateMatrixWorld(true); s.rest = s.b.quaternion.clone(); s.tip = new THREE.Vector3(0, s.len, 0).applyMatrix4(s.b.matrixWorld); s.vel = new THREE.Vector3(); }
   const up = new THREE.Vector3(0, 1, 0), tmpQ = new THREE.Quaternion(), pq = new THREE.Quaternion();
+  const HS = o.userData.hairStrands || [], HSph = o.userData.headSphere; const earBones = springs.filter((q) => q.b.isBone && q.b.name.startsWith('Ear'));
+  for (const st of HS) { st.restQ = st.chain.map((c) => c.b.quaternion.clone()); st.p = []; st.v = []; }
+  const _v = new THREE.Vector3(), _q = new THREE.Quaternion(), _q2 = new THREE.Quaternion();
+  function hairStep(dt) { if (!HS.length) return; const M = head.matrixWorld.clone().multiply(o.userData.headInv).multiply(body.bindMatrix); const hcW = HSph.c.clone().applyMatrix4(M); const sc = new THREE.Vector3().setFromMatrixScale(M).x; const hrW = HSph.r * sc;
+    for (const st of HS) { const N = st.chain.length; st.chain.forEach((c, k) => c.b.quaternion.copy(st.restQ[k])); st.chain[0].b.updateMatrixWorld(true);
+      const rest = st.chain.map((c) => new THREE.Vector3().setFromMatrixPosition(c.b.matrixWorld)); rest.push(new THREE.Vector3().setFromMatrixPosition(st.tipObj.matrixWorld));
+      if (!st.p.length) { st.p = rest.map((q) => q.clone()); st.v = rest.map(() => new THREE.Vector3()); }
+      st.p[0].copy(rest[0]); const segL = rest[0].distanceTo(rest[1]);
+      for (let k = 1; k <= N; k++) { const a = rest[k].clone().sub(st.p[k]).multiplyScalar(opt.hairK ?? 45).addScaledVector(st.v[k], -(opt.hairD ?? 6)); a.y -= 6 * segL; st.v[k].addScaledVector(a, dt); st.p[k].addScaledVector(st.v[k], dt);
+        const d = st.p[k].clone().sub(st.p[k - 1]); st.p[k].copy(st.p[k - 1]).addScaledVector(d.normalize(), rest[k].distanceTo(rest[k - 1]));
+        const hd = st.p[k].clone().sub(hcW); const hl = hd.length(); if (hl < hrW) st.p[k].copy(hcW).addScaledVector(hd.normalize(), hrW);
+        for (const e of earBones) { const eo = new THREE.Vector3().setFromMatrixPosition(e.b.matrixWorld); const et = e.tip; const ax = et.clone().sub(eo); const t = Math.max(0, Math.min(1, st.p[k].clone().sub(eo).dot(ax) / ax.lengthSq())); const cp = eo.clone().addScaledVector(ax, t); const dd = st.p[k].clone().sub(cp); const er = 0.17 * sc; if (dd.length() < er) st.p[k].copy(cp).addScaledVector(dd.normalize(), er); } }
+      for (let k = 0; k < N; k++) { const b = st.chain[k].b; b.quaternion.copy(st.restQ[k]); b.updateMatrixWorld(true); const r0 = new THREE.Vector3().setFromMatrixPosition(b.matrixWorld); const rNext = k + 1 < N ? new THREE.Vector3().setFromMatrixPosition(st.chain[k + 1].b.matrixWorld) : new THREE.Vector3().setFromMatrixPosition(st.tipObj.matrixWorld);
+        const restDir = rNext.sub(r0).normalize(); const curDir = st.p[k + 1].clone().sub(st.p[k]).normalize(); _q.setFromUnitVectors(restDir, curDir); b.getWorldQuaternion(_q2); const newW = _q.clone().multiply(_q2); const pw = new THREE.Quaternion(); b.parent.getWorldQuaternion(pw); b.quaternion.copy(pw.invert().multiply(newW)); b.updateMatrixWorld(true); } } }
   return function step(dt) {
     dt = Math.min(dt, 1 / 30);
     for (const s of springs) { s.b.quaternion.copy(s.rest); s.b.updateMatrixWorld(true); const target = new THREE.Vector3(0, s.len, 0).applyMatrix4(s.b.matrixWorld); const origin = new THREE.Vector3().setFromMatrixPosition(s.b.matrixWorld);
@@ -120,5 +152,6 @@ export function rig(o, opt = {}) {
       s.b.parent.getWorldQuaternion(pq); const restW = pq.clone().multiply(s.rest); const localDir = dir.clone().applyQuaternion(restW.clone().invert()); tmpQ.setFromUnitVectors(up, localDir);
       const ang = 2 * Math.acos(Math.min(1, Math.abs(tmpQ.w))); if (ang > s.max) tmpQ.slerp(new THREE.Quaternion(), 1 - s.max / ang);
       s.b.quaternion.copy(s.rest).multiply(tmpQ); }
+    hairStep(dt);
   };
 }
