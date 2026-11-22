@@ -12,8 +12,8 @@ os.makedirs(OUT, exist_ok=True)
 def reset():
     bpy.ops.wm.read_factory_settings(use_empty=True); sc = bpy.context.scene
     sc.render.engine = 'CYCLES'; sc.cycles.device = 'CPU'; sc.cycles.samples = SAMPLES; sc.cycles.use_denoising = True
-    sc.render.resolution_x = sc.render.resolution_y = 800; sc.view_settings.view_transform = 'AgX'; sc.view_settings.look = 'AgX - Medium High Contrast'
-    w = bpy.data.worlds.new('w'); sc.world = w; w.use_nodes = True; bg = w.node_tree.nodes['Background']; bg.inputs['Color'].default_value = (1.0, 0.95, 0.88, 1); bg.inputs['Strength'].default_value = 0.6
+    sc.render.resolution_x = sc.render.resolution_y = 800; sc.view_settings.view_transform = 'Standard'; sc.view_settings.look = 'None'; sc.view_settings.exposure = -0.3
+    w = bpy.data.worlds.new('w'); sc.world = w; w.use_nodes = True; bg = w.node_tree.nodes['Background']; bg.inputs['Color'].default_value = (1.0, 0.95, 0.88, 1); bg.inputs['Strength'].default_value = 0.25
     return sc
 
 def mat(name, rgb, rough=0.5, coat=0.0, sss=0.0, noise=0.0, noise_scale=8.0, rgb2=None, alpha=1.0, metal=0.0, transmission=0.0):
@@ -82,7 +82,7 @@ def strand(points, r, m, name='strand'):
     sp.use_endpoint_u = True; sp.order_u = 3; o = bpy.data.objects.new(name, cu); bpy.context.collection.objects.link(o); o.data.materials.append(m); return o
 
 def studio(sc, target_z=0.35, dist=3.2):
-    for (loc, e, sz, col) in [((2.5, -2.5, 3.5), 500, 2.5, (1, 0.95, 0.88)), ((-3, -1, 2), 160, 3, (0.9, 0.95, 1)), ((0, 3, 2.5), 260, 2, (1, 1, 1))]:
+    for (loc, e, sz, col) in [((2.5, -2.5, 3.5), 320, 2.5, (1, 0.95, 0.88)), ((-3, -1, 2), 90, 3, (0.9, 0.95, 1)), ((0, 3, 2.5), 180, 2, (1, 1, 1))]:
         bpy.ops.object.light_add(type='AREA', location=loc); l = bpy.context.object; l.data.energy = e; l.data.size = sz; l.data.color = col
         l.rotation_euler = (Vector((0, 0, target_z)) - l.location).to_track_quat('-Z', 'Y').to_euler()
     bpy.ops.mesh.primitive_plane_add(size=20); fl = bpy.context.object; fl.data.materials.append(mat('floor', (1.0, 0.94, 0.86), 0.8))
@@ -108,7 +108,7 @@ heap = mound('heap', 0.84, 0.38, 0.3, mat('ricebase', (0.92, 0.82, 0.6), 0.6, ss
 scatter(heap, piece('rice', 'capsule', 0.016, mat('rice', (0.98, 0.95, 0.86), 0.45, sss=0.4), (0.7, 0.7, 2.0)), 2600, seed=1)
 scatter(heap, piece('lentil', 'ico', 0.026, mat('lentil', (0.5, 0.29, 0.13), 0.4, noise=0.25), (1, 1, 0.45)), 1300, seed=2, rot=0.3)
 scatter(heap, piece('pasta', 'tube', 0.022, mat('pasta', (0.95, 0.78, 0.42), 0.4, sss=0.2)), 260, seed=3)
-metaballs('sauce', [(0, 0, 0.67, 0.22, 1.6, 1.6, 0.35), (0.12, 0.06, 0.66, 0.15, 1.3, 1.1, 0.35), (-0.1, -0.08, 0.66, 0.15, 1.2, 1.4, 0.35), (0.05, -0.15, 0.64, 0.1, 1, 1, 0.4)], mat('sauce', (0.72, 0.1, 0.05), 0.12, coat=1, sss=0.2, noise=0.2, noise_scale=4))
+metaballs('sauce', [(0, 0, 0.67, 0.3, 1.8, 1.8, 0.35), (0.12, 0.06, 0.66, 0.15, 1.3, 1.1, 0.35), (-0.1, -0.08, 0.66, 0.15, 1.2, 1.4, 0.35), (0.05, -0.15, 0.64, 0.1, 1, 1, 0.4)], mat('sauce', (0.72, 0.1, 0.05), 0.12, coat=1, sss=0.2, noise=0.2, noise_scale=4))
 onion = mat('onion', (0.45, 0.22, 0.07), 0.35, noise=0.35, rgb2=(0.75, 0.45, 0.15))
 for i in range(60):
     a = R.random() * math.tau; d = R.random() * 0.35; z = 0.72 + R.random() * 0.06; pts = []
@@ -145,7 +145,8 @@ finish('kunafa', sc, studio(sc, 0.15))
 
 # ======================================================================== QASHTOUTA
 sc = reset()
-cup = spin('cup', [(0, 0), (0.42, 0), (0.46, 0.05), (0.62, 1.0), (0.66, 1.04), (0.6, 1.04), (0.58, 0.99), (0.43, 0.08), (0, 0.04)], mat('plastic', (1, 1, 1), 0.02, transmission=1.0))
+pm = mat('plastic', (1, 1, 1), 0.1, alpha=0.18); pm.blend_method = 'BLEND' if hasattr(pm, 'blend_method') else None
+cup = spin('cup', [(0, 0), (0.42, 0), (0.46, 0.05), (0.62, 1.0), (0.66, 1.04), (0.6, 1.04), (0.58, 0.99), (0.43, 0.08), (0, 0.04)], pm)
 spin('cake', [(0, 0.05), (0.42, 0.05), (0.51, 0.52), (0, 0.52)], mat('cake', (0.96, 0.84, 0.58), 0.85, sss=0.2, noise=0.25, noise_scale=20, rgb2=(0.85, 0.66, 0.38)))
 spin('milk', [(0, 0.52), (0.51, 0.52), (0.55, 0.66), (0, 0.66)], mat('milk', (0.98, 0.95, 0.88), 0.35, sss=0.6))
 metaballs('cream', [(0, 0, 0.72, 0.36, 1.4, 1.4, 0.45), (0, 0, 0.86, 0.2, 1, 1, 0.8), (0.18, 0.1, 0.76, 0.16, 1, 1, 0.6), (-0.15, -0.12, 0.76, 0.15, 1, 1, 0.6)], mat('cream', (1, 0.98, 0.94), 0.4, sss=0.5), 0.015)
@@ -154,5 +155,5 @@ mm = mat('mangocube', (1.0, 0.62, 0.08), 0.15, coat=0.8, sss=0.3)
 for i in range(8):
     a = R.random() * math.tau; d = 0.08 + R.random() * 0.17
     bpy.ops.mesh.primitive_cube_add(size=0.09, location=(math.cos(a) * d, math.sin(a) * d, 1.04 + R.random() * 0.03), rotation=(R.random(), R.random(), R.random())); c = bpy.context.object; c.data.materials.append(mm); smooth(c, 2, bevel=0.02)
-finish('qashtouta', sc, studio(sc, 0.6, 3.0))
+finish('qashtouta', sc, studio(sc, 0.65, 2.7))
 print('DONE')
