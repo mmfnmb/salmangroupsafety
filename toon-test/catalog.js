@@ -86,7 +86,18 @@ function edit(root, e) {
     const o = edit(g.scene, e); o.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(o), c = b.getCenter(new THREE.Vector3()), s = b.getSize(new THREE.Vector3());
     const grp = new THREE.Group(); o.position.sub(c); grp.add(o); grp.scale.setScalar(1.6 / Math.max(s.x, s.y, s.z)); grp.rotation.set(0.42, -0.55, 0); sc.add(grp);
     if (e && e.boss) grp.scale.multiplyScalar(1.15);
-    const cam = new THREE.PerspectiveCamera(32, 1, 0.01, 50); cam.position.set(0, 0.2, 3.2); cam.lookAt(0, 0, 0);
+    // a cartoon face and legs: big eyes on the front, two little legs with shoes underneath
+    grp.scale.multiplyScalar(0.8); grp.position.y += 0.25; grp.updateMatrixWorld(true); const wb = new THREE.Box3().setFromObject(grp), ws = wb.getSize(new THREE.Vector3()), wc = wb.getCenter(new THREE.Vector3());
+    const er = Math.min(0.15, Math.min(ws.x, ws.y) * 0.1 + 0.03), white = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.25 }), black = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.2 });
+    for (const sx of [-1, 1]) { const eye = new THREE.Group(); const w = new THREE.Mesh(new THREE.SphereGeometry(er, 24, 16), white); w.scale.z = 0.6; eye.add(w);
+      const pu = new THREE.Mesh(new THREE.SphereGeometry(er * 0.55, 20, 12), black); pu.position.set(0, -er * 0.05, er * 0.45); pu.scale.z = 0.5; eye.add(pu);
+      const hl = new THREE.Mesh(new THREE.SphereGeometry(er * 0.18, 10, 8), white); hl.position.set(er * 0.2, er * 0.2, er * 0.7); eye.add(hl);
+      eye.position.set(wc.x + sx * Math.max(er * 1.15, ws.x * 0.16), wc.y + ws.y * 0.12, wb.max.z - er * 0.2); sc.add(eye); }
+    const legM = new THREE.MeshStandardMaterial({ color: 0x3b2a20, roughness: 0.5 }), shoe = new THREE.MeshStandardMaterial({ color: 0xe8443a, roughness: 0.4 }); const LL = 0.32;
+    for (const sx of [-1, 1]) { const leg = new THREE.Mesh(new THREE.CapsuleGeometry(0.035, LL, 4, 10), legM); leg.position.set(wc.x + sx * Math.max(0.12, ws.x * 0.18), wb.min.y - LL / 2 + 0.05, wc.z); sc.add(leg);
+      const f = new THREE.Mesh(new THREE.SphereGeometry(0.075, 16, 10), shoe); f.scale.set(1, 0.6, 1.5); f.position.set(wc.x + sx * Math.max(0.12, ws.x * 0.18), wb.min.y - LL + 0.02, wc.z + 0.05); sc.add(f); }
+
+    const cam = new THREE.PerspectiveCamera(34, 1, 0.01, 50); cam.position.set(0, 0.0, 3.6); cam.lookAt(0, 0, 0);
     const col = i % COLS, row = Math.floor(i / COLS); const x = col * CELL, y = Hh - (row + 1) * (CELL + LABEL) + LABEL;
     r.setViewport(x, y, CELL, CELL); r.setScissor(x, y, CELL, CELL); r.setClearColor(0xfff4e0); r.clear(); r.render(sc, cam);
     } catch (err) { console.log('fail', name, err.message); } }
