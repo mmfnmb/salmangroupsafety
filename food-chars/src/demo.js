@@ -3,7 +3,7 @@ import { build, rig } from './charlib.js';
 const CH = window.CHARS;
 const r = new THREE.WebGLRenderer({ antialias: true }); r.setPixelRatio(Math.min(2, devicePixelRatio)); r.setSize(innerWidth, innerHeight); r.outputColorSpace = THREE.SRGBColorSpace; r.toneMapping = THREE.ACESFilmicToneMapping; r.shadowMap.enabled = true; document.body.appendChild(r.domElement);
 const sc = new THREE.Scene(); sc.background = new THREE.Color(0xbfe3ff); sc.environment = new THREE.PMREMGenerator(r).fromScene(new RoomEnvironment(), 0.04).texture; sc.environmentIntensity = 0.5;
-const cam = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 200); cam.position.set(0, 4.5, 10.5); const oc = new OrbitControls(cam, r.domElement); oc.target.set(0, 2, 0); oc.update();
+const cam = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 200); cam.position.set(0, 7.5, 14); const oc = new OrbitControls(cam, r.domElement); oc.target.set(0, 2, 0); oc.update();
 sc.add(new THREE.HemisphereLight(0xffffff, 0x88aa66, 1.3)); const sun = new THREE.DirectionalLight(0xffffff, 2.2); sun.position.set(6, 12, 8); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); Object.assign(sun.shadow.camera, { left: -15, right: 15, top: 15, bottom: -15 }); sc.add(sun);
 const ground = new THREE.Mesh(new THREE.CircleGeometry(14, 48), new THREE.MeshStandardMaterial({ color: 0x8fd06a })); ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; sc.add(ground);
 const path = new THREE.Mesh(new THREE.RingGeometry(5.3, 6.7, 64), new THREE.MeshStandardMaterial({ color: 0xe8d6a8 })); path.rotation.x = -Math.PI / 2; path.position.y = 0.01; sc.add(path);
