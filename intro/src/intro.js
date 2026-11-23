@@ -36,11 +36,12 @@ async function buildStage() {
   for (let i = -1; i <= 1; i++) { const c = await obj('sushi/Environment_Counter_Straight_2.gltf', { h: COUNTER_Y }); c.position.set(i * 4.2, 0, 1.2); stage.add(c); }
 }
 // ---------- actors ----------
-let panda, pmix, pAct = {}, knife, pan, board;
+let panda, pmix, pAct = {}, knife, pan, board, flyKnife;
 async function buildActors() {
   panda = await obj('panda_tools.gltf', { h: 7.6 }); stage.add(panda);
   panda.traverse((m) => { if (m.isMesh) m.frustumCulled = false; if (m.name === 'Knife') knife = m; if (m.name === 'Pan') pan = m; });
   pmix = new THREE.AnimationMixer(panda.children[0]); for (const c of panda.userData.anims) pAct[c.name] = pmix.clipAction(c);
+  flyKnife = await obj('kr/knife.gltf', { w: 1.2 }); flyKnife.visible = false; stage.add(flyKnife);
   board = await obj('kr/cuttingboard.gltf', { w: 3.2 }); board.position.set(0, COUNTER_Y, 1.6); stage.add(board);
 }
 // play a clip at an absolute time (deterministic)
@@ -61,6 +62,18 @@ scenes.push({ name: 'المطبخ الضلمة', dur: 4, update(t) {
   const k = ease(t / 4); cam.position.set(lerp(-2, 0, k), lerp(5.2, 4.6, k), lerp(22, 15, k)); cam.lookAt(0, lerp(3.4, 4.2, k), 0);
 } });
 
+const lit = () => { spot.intensity = 260; spot.target.position.set(0, COUNTER_Y, 1.6); hemi.intensity = 1.7; fill.intensity = 1.6; };
+let handBone = null; const hand = () => { if (!handBone) panda.traverse((b) => { if (b.isBone && b.name === 'Middle1R') handBone = b; }); const v = new THREE.Vector3(); panda.updateMatrixWorld(true); handBone.getWorldPosition(v); return v; };
+// 2) knife toss: throws the knife up, it spins and comes back to his hand
+scenes.push({ name: 'السكينة', dur: 3.4, update(t) {
+  lit(); pan.visible = false; flyKnife.visible = false; panda.position.set(0, 0, -1.4); panda.rotation.y = 0;
+  if (t < 0.55) pose('Idle_Holding', t);
+  else if (t < 2.2) pose2('Idle_Holding', t, 'Jump_Idle', t, 0.0);
+  else pose2('Sword', (t - 2.2) * 1.1, 'Idle_Holding', t, ease(seg(t, 3.0, 3.4)));
+  const h0 = hand(); knife.visible = !(t > 0.55 && t < 2.0);
+  if (t > 0.55 && t < 2.0) { const u = seg(t, 0.55, 2.0); flyKnife.visible = true; flyKnife.position.set(h0.x + Math.sin(u * Math.PI) * 0.3, h0.y + Math.sin(u * Math.PI) * 3.6, h0.z + 0.4); flyKnife.rotation.set(0, 0, u * Math.PI * 6); }
+  const up = Math.sin(seg(t, 0.4, 2.1) * Math.PI); cam.position.set(lerp(3.5, 2, t / 3.4), 6.4 + up * 1.4, 13 + up * 1.5); cam.lookAt(0, 5.4 + up * 2.2, 0);
+} });
 // ---------- runner ----------
 const total = () => scenes.reduce((a, s) => a + s.dur, 0);
 function at(T) { let acc = 0; for (const s of scenes) { if (T < acc + s.dur || s === scenes[scenes.length - 1]) { s.update(Math.min(T - acc, s.dur)); return s; } acc += s.dur; } }
