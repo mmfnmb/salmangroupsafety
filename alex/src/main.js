@@ -83,7 +83,7 @@ for (const [f, x, z, w] of [['kwater/boat-fishing-small.glb', -40, -40, 12], ['k
   jobs.push(place(f, { x, y: -2.4, z, w, ry: Math.random() * 6 }).then((p) => boats.push({ o: p.o, ph: Math.random() * 6 })));
 
 // ---------- panda restaurant ----------
-const RW = 40, RD = 26, RH = 11, RZ0 = ROAD_Z1 + SIDE;
+const RW = 54, RD = 34, RH = 13, RZ0 = ROAD_Z1 + SIDE;
 const R = new THREE.Group(); R.position.set(0, 0.4, RZ0); sc.add(R); R.updateMatrixWorld(true);
 add(new THREE.Mesh(new THREE.BoxGeometry(RW, 0.4, RD), std(0xffffff, { map: wood([RW / 4, RD / 4]) })), 0, 0, RD / 2, R);
 const wallMat = std(0xf3e6cf), woodMat = std(0xc98a4b), trimMat = std(0x8a5a32);
@@ -99,6 +99,8 @@ for (const sx of [-1, 1]) { const g = new THREE.Mesh(new THREE.PlaneGeometry(RW 
 for (const x of [-RW / 2, -RW / 4 - 1, -3, 3, RW / 4 + 1, RW / 2]) add(new THREE.Mesh(new THREE.BoxGeometry(0.4, RH, 0.45), trimMat), x, RH / 2, 0, R);
 add(new THREE.Mesh(new THREE.BoxGeometry(RW + 0.6, 2.2, 0.6), std(0x2a2630)), 0, RH - 1.1, 0, R);
 const sign = new THREE.Mesh(new THREE.PlaneGeometry(18, 2), new THREE.MeshBasicMaterial({ map: textTex('🐼 مطعم الباندا', '#2a2630', '#ffffff') })); sign.position.set(0, RH - 1.1, -0.32); sign.rotation.y = Math.PI; R.add(sign);
+const roof = add(new THREE.Mesh(new THREE.BoxGeometry(RW + 1.6, 0.7, RD + 1.6), std(0x3b2f2a)), 0, RH + 0.35, RD / 2, R);
+const roofTrim = add(new THREE.Mesh(new THREE.BoxGeometry(RW + 2.2, 0.4, RD + 2.2), std(0xc98a4b)), 0, RH + 0.05, RD / 2, R);
 const awn = new THREE.Group(); awn.position.set(0, RH - 2.7, -1.6); awn.rotation.x = -0.35; R.add(awn);
 for (let i = 0; i < 20; i++) add(new THREE.Mesh(new THREE.BoxGeometry(RW / 20, 0.15, 3.4), std(i % 2 ? 0xffffff : 0xe23b3b)), -RW / 2 + RW / 40 + i * RW / 20, 0, 0, awn);
 // drive-thru window on the right wall (KayKit order window)
@@ -124,18 +126,19 @@ for (let i = 0; i < 5; i++) IN.push([S('Environment_Stool'), { x: -7 + i * 3.5, 
 [[-15, 6], [-15, 15], [15, 6], [15, 15]].forEach(([tx, tz], k) => { IN.push([S('Environment_Table'), { x: tx, z: tz, h: 1.9 }]); IN.push([S('Environment_Chair1'), { x: tx - 2.3, z: tz, h: 2.4, ry: Math.PI / 2 }]); IN.push([S('Environment_Chair1'), { x: tx + 2.3, z: tz, h: 2.4, ry: -Math.PI / 2 }]); IN.push([S(['Food_SalmonRoll', 'Food_Ramen', 'Food_Dango', 'Food_Onigiri'][k]), { x: tx, y: 1.9, z: tz, h: 0.7 }]); });
 for (const sx of [-1, 1]) IN.push([S('Decoration_Light'), { x: sx * 17, y: 7.8, z: 2, h: 2.4 }]);
 for (let i = 0; i < 3; i++) IN.push([S('Decoration_Sign'), { x: -8 + i * 2.4, y: 6.6, z: RD - 0.5, h: 2.4, ry: Math.PI }]);
-IN.push([S('Decoration_SakuraFlower'), { x: 13, y: 3.0, z: 10.8, h: 2.0 }]);
+IN.push([S('Decoration_SakuraFlower'), { x: 9.5, y: 3.0, z: 10.9, h: 2.0 }]);
 IN.push([S('Decoration_Painting'), { x: 0, y: 6.4, z: RD - 0.35, h: 2.6, ry: Math.PI }]);
 IN.push([S('Decoration_Plant1'), { x: -18, z: 1.6, h: 3 }]); IN.push([S('Decoration_Plant2'), { x: 18, z: 1.6, h: 3 }]);
-for (const [f, o] of IN) jobs.push(place(f, { ...o, parent: R }));
+const KX = RW / 40, KZ = RD / 26;
+for (const [f, o] of IN) { const oo = { ...o, x: (o.x || 0) * KX, z: o.z > 20 ? RD - (26 - o.z) : o.z * KZ, parent: R }; jobs.push(place(f, oo)); }
 
-const mixers = [];
-async function actor(f, x, z, ry, clip, h = 4.6) { const p = await place('chars/' + f + '.gltf', { x, z, h, ry, parent: R }); p.o.traverse((m) => { if (m.isMesh) m.frustumCulled = false; }); const mx = new THREE.AnimationMixer(p.o); const c = p.anims.find((a) => a.name === clip) || p.anims.find((a) => a.name === 'Idle'); if (c) mx.clipAction(c).play(); mixers.push(mx); }
+const mixers = []; const player0 = [];
+async function actor(f, x, z, ry, clip, h = 4.6) { const p = await place('chars/' + f + '.gltf', { x: x * RW / 40, z: z * RD / 26, h, ry, parent: R }); player0.push(p); p.o.traverse((m) => { if (m.isMesh) m.frustumCulled = false; }); const mx = new THREE.AnimationMixer(p.o); const c = p.anims.find((a) => a.name === clip) || p.anims.find((a) => a.name === 'Idle'); if (c) mx.clipAction(c).play(); mixers.push(mx); }
 jobs.push(actor('Panda', 0, 14.5, Math.PI, 'Idle', 5.6));
 jobs.push(actor('Rabbit_Pink', -15, 3.2, 0, 'Idle'));
 jobs.push(actor('Rabbit_Cyan', 12, 3.5, -0.6, 'Wave'));
 jobs.push(actor('Rabbit_Grey', -4, 5.2, 0.3, 'Idle'));
-jobs.push(actor('Rabbit_Blond', 18, 13.5, -Math.PI / 2, 'Idle'));
+
 const lamp = new THREE.PointLight(0xffd9a0, 60, 40, 1.6); lamp.position.set(0, 9, 12); R.add(lamp);
 
 // ---------- neighbouring buildings edge to edge ----------
@@ -149,12 +152,52 @@ for (let i = 0; i < 4; i++) jobs.push(place('kaykit/car_taxi.gltf', { x: -80 + i
   p.o.traverse((m) => { if (m.isMesh) { m.material = m.material.clone(); m.material.map = null; m.material.color.set(0xf2c230); } });
   movers.push({ o: p.o, v: 10 + Math.random() * 4, dir: i % 2 ? -1 : 1 }); }));
 
-Promise.all(jobs).then(() => { document.getElementById('msg').textContent = 'مطعم الباندا — اسحب بصباعك عشان تلف، وقرّب عشان تدخل جوه'; window.READY = true; }).catch((e) => { document.getElementById('msg').textContent = 'خطأ: ' + e.message; console.error(e); window.READY = true; });
+Promise.all(jobs).then(() => { document.getElementById('msg').textContent = 'شمال: امشي — يمين: لف الكاميرا — زرار: نط'; window.READY = true; }).catch((e) => { document.getElementById('msg').textContent = 'خطأ: ' + e.message; console.error(e); window.READY = true; });
 
+// ---------- colliders ----------
+const boxes = []; // world AABBs in xz: [x0,z0,x1,z1]
+const T = 0.6;
+boxes.push([-RW / 2 - T, RZ0 + RD - T, RW / 2 + T, RZ0 + RD + T]); // back
+boxes.push([-RW / 2 - T, RZ0, -RW / 2 + T, RZ0 + RD]); boxes.push([RW / 2 - T, RZ0, RW / 2 + T, RZ0 + RD]); // sides
+boxes.push([-RW / 2, RZ0 - T, -3, RZ0 + T]); boxes.push([3, RZ0 - T, RW / 2, RZ0 + T]); // front (door gap in the middle)
+boxes.push([-RW * 0.17, RZ0 + RD * 0.36, RW * 0.17, RZ0 + RD * 0.48]); // sushi bar
+boxes.push([-RW / 2, RZ0 + RD - 3.4, RW / 2, RZ0 + RD]); // back counters
+boxes.push([-LEN / 2, WZ - 1, LEN / 2, WZ + 0.8]); // corniche wall
+// ---------- player ----------
+let player = null, pmix = null, pA = {}, pcur = null, vy = 0, onGround = true;
+const pos = new THREE.Vector3(0, 0.4, 2); let yaw = 0, camYaw = Math.PI, camPitch = 0.35, camDist = 13, freeCam = false;
+L.loadAsync('models/chars/Rabbit_Blond.gltf').then((g) => { player = g.scene; const bb = new THREE.Box3().setFromObject(player); player.scale.setScalar(4.6 / (bb.max.y - bb.min.y)); player.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.frustumCulled = false; } }); sc.add(player); pmix = new THREE.AnimationMixer(player); for (const c of g.animations) pA[c.name] = pmix.clipAction(c); play('Idle'); });
+function play(n, once) { const a = pA[n]; if (!a || a === pcur) return; if (pcur) pcur.fadeOut(0.15); a.reset().setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, Infinity); a.clampWhenFinished = true; a.fadeIn(0.15).play(); pcur = a; }
+// input: keyboard + touch joystick (left) + drag to look (right) + jump button
+const keys = {}; addEventListener('keydown', (e) => { keys[e.code] = true; if (e.code === 'Space') jump(); }); addEventListener('keyup', (e) => (keys[e.code] = false));
+const joy = { x: 0, y: 0, id: null, ox: 0, oy: 0 }; const look = { id: null, lx: 0, ly: 0 };
+const stick = document.getElementById('stick'), knob = document.getElementById('knob');
+r.domElement.addEventListener('pointerdown', (e) => { if (freeCam) return; if (e.clientX < innerWidth * 0.45 && joy.id === null) { joy.id = e.pointerId; joy.ox = e.clientX; joy.oy = e.clientY; stick.style.display = 'block'; stick.style.left = e.clientX - 60 + 'px'; stick.style.top = e.clientY - 60 + 'px'; } else if (look.id === null) { look.id = e.pointerId; look.lx = e.clientX; look.ly = e.clientY; } });
+addEventListener('pointermove', (e) => { if (e.pointerId === joy.id) { let dx = e.clientX - joy.ox, dy = e.clientY - joy.oy; const l = Math.hypot(dx, dy), m = 50; if (l > m) { dx *= m / l; dy *= m / l; } joy.x = dx / m; joy.y = dy / m; knob.style.transform = `translate(${dx}px,${dy}px)`; } else if (e.pointerId === look.id) { camYaw -= (e.clientX - look.lx) * 0.006; camPitch = Math.max(0.05, Math.min(1.2, camPitch + (e.clientY - look.ly) * 0.004)); look.lx = e.clientX; look.ly = e.clientY; } });
+const up = (e) => { if (e.pointerId === joy.id) { joy.id = null; joy.x = joy.y = 0; knob.style.transform = ''; stick.style.display = 'none'; } if (e.pointerId === look.id) look.id = null; };
+addEventListener('pointerup', up); addEventListener('pointercancel', up);
+function jump() { if (onGround) { vy = 13; onGround = false; play('Jump', true); } }
+document.getElementById('jump').addEventListener('pointerdown', (e) => { e.stopPropagation(); jump(); });
+oc.enabled = false;
+function collide(p, rad = 1.1) { for (const b of boxes) { const cx = Math.max(b[0], Math.min(p.x, b[2])), cz = Math.max(b[1], Math.min(p.z, b[3])); const dx = p.x - cx, dz = p.z - cz, d = Math.hypot(dx, dz); if (d < rad) { if (d < 1e-4) { p.z = b[1] - rad; continue; } p.x = cx + dx / d * rad; p.z = cz + dz / d * rad; } } p.x = Math.max(-LEN / 2 + 2, Math.min(LEN / 2 - 2, p.x)); p.z = Math.max(WZ + 1, Math.min(RZ0 + RD + 40, p.z)); }
 const clk = new THREE.Clock();
 r.setAnimationLoop(() => { const dt = Math.min(clk.getDelta(), 0.05), t = clk.elapsedTime; seaMat.uniforms.t.value = t;
   for (const b of boats) { b.o.position.y = -2.2 + Math.sin(t * 1.2 + b.ph) * 0.3; b.o.rotation.z = Math.sin(t * 0.9 + b.ph) * 0.05; }
   for (const m of movers) { m.o.position.x += m.v * m.dir * dt; if (m.o.position.x > LEN / 2 + 10) m.o.position.x = -LEN / 2 - 10; if (m.o.position.x < -LEN / 2 - 10) m.o.position.x = LEN / 2 + 10; }
-  for (const m of mixers) m.update(dt); r.render(sc, cam); });
+  for (const m of mixers) m.update(dt);
+  if (player && !freeCam) {
+    let ix = joy.x + ((keys.KeyD || keys.ArrowRight) ? 1 : 0) - ((keys.KeyA || keys.ArrowLeft) ? 1 : 0), iz = joy.y + ((keys.KeyS || keys.ArrowDown) ? 1 : 0) - ((keys.KeyW || keys.ArrowUp) ? 1 : 0);
+    const mag = Math.min(1, Math.hypot(ix, iz));
+    if (mag > 0.1) { const fwd = new THREE.Vector3(-Math.sin(camYaw), 0, -Math.cos(camYaw)), right = new THREE.Vector3(-fwd.z, 0, fwd.x); const dir = right.multiplyScalar(ix).add(fwd.multiplyScalar(-iz)).normalize(); pos.addScaledVector(dir, 13 * mag * dt); yaw = Math.atan2(dir.x, dir.z); if (onGround) play(mag > 0.6 ? 'Run' : 'Walk'); }
+    else if (onGround) play('Idle');
+    vy -= 32 * dt; pos.y += vy * dt; const floorY = (pos.z > RZ0 && pos.z < RZ0 + RD && Math.abs(pos.x) < RW / 2) || (pos.z > ROAD_Z1 || pos.z < ROAD_Z0) ? 0.4 : 0.0; if (pos.y <= floorY) { pos.y = floorY; if (!onGround) { onGround = true; } vy = 0; }
+    collide(pos); player.position.copy(pos); player.rotation.y += ((yaw - player.rotation.y + Math.PI * 3) % (Math.PI * 2) - Math.PI) * Math.min(1, dt * 12); pmix.update(dt);
+    const inside = pos.z > RZ0 + 0.5 && pos.z < RZ0 + RD && Math.abs(pos.x) < RW / 2; roof.visible = roofTrim.visible = !inside;
+    const dist = inside ? 9 : camDist; const tgt = pos.clone().add(new THREE.Vector3(0, 3.2, 0));
+    const want = tgt.clone().add(new THREE.Vector3(Math.sin(camYaw) * Math.cos(camPitch) * dist, Math.sin(camPitch) * dist, Math.cos(camYaw) * Math.cos(camPitch) * dist));
+    cam.position.lerp(want, Math.min(1, dt * 8)); cam.lookAt(tgt);
+  }
+  r.render(sc, cam); });
 addEventListener('resize', () => { cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); r.setSize(innerWidth, innerHeight); });
-window.__cam = setCam;
+window.__cam = (p, t) => { freeCam = true; oc.enabled = true; roof.visible = roofTrim.visible = !window.__noRoof; setCam(p, t); };
+window.__walk = (x, z, cy) => { freeCam = false; pos.set(x, 0.4, z); camYaw = cy; };
