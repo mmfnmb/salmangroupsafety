@@ -181,6 +181,7 @@ function at(T) { let acc = 0; for (const s of scenes) { if (T < acc + s.dur || s
 window.SCENES = scenes.map((s) => ({ name: s.name, dur: s.dur }));
 window.renderAt = (T) => { at(T); r.render(sc, cam); };
 window.renderScene = (i, t) => { scenes[i].update(t); r.render(sc, cam); };
+window.portrait = (i, t, p, l, bg) => { scenes[i].update(t); cam.position.set(...p); cam.lookAt(...l); const old = sc.background; const hid = []; if (bg) { sc.background = new THREE.Color(bg); stage.children.forEach((c) => { if (c !== panda && c !== flyKnife && c.visible) { c.visible = false; hid.push(c); } }); } r.render(sc, cam); sc.background = old; hid.forEach((c) => (c.visible = true)); return r.domElement.toDataURL('image/png'); };
 (async () => { await buildStage(); await buildActors(); window.READY = true;
   if (!window.REC) { const clk = new THREE.Clock(); r.setAnimationLoop(() => { const T = clk.getElapsedTime() % total(); window.renderAt(T); }); } })();
 addEventListener('resize', () => { if (window.REC) return; cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); r.setSize(innerWidth, innerHeight); });
