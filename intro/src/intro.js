@@ -91,26 +91,63 @@ scenes.push({ name: 'السكينة', dur: 3.4, update(t) { hide();
   if (t > 0.55 && t < 2.0) { const u = seg(t, 0.55, 2.0); flyKnife.visible = true; flyKnife.position.set(h0.x + Math.sin(u * Math.PI) * 0.3, h0.y + Math.sin(u * Math.PI) * 3.6, h0.z + 0.4); flyKnife.rotation.set(0, 0, u * Math.PI * 6); }
   const up = Math.sin(seg(t, 0.4, 2.1) * Math.PI); cam.position.set(lerp(3.5, 2, t / 3.4), 6.4 + up * 1.4, 13 + up * 1.5); cam.lookAt(0, 5.4 + up * 2.2, 0);
 } });
-// 3) vegetables fall from above, get sliced mid-air, slices land arranged on a plate
-scenes.push({ name: 'الخضار', dur: 4.6, update(t) { hide();
-  lit(); pan.visible = false; flyKnife.visible = false; knife.visible = true; panda.position.set(0, 0, -1.4); panda.rotation.y = 0;
-  track([['Idle_Holding', -1], ['Chop_Loop', 0.3, 1.6], ['Idle_Holding', 4.1]], t);
-  const plateP = new THREE.Vector3(0, COUNTER_Y + 0.08, 1.9); veg.plate.visible = true; veg.plate.position.copy(plateP); veg.plate.updateMatrixWorld(true); const pTop = new THREE.Box3().setFromObject(veg.plate).max.y;
-  const items = [['tomato', 'tS', 0.7, 1.25, 0], ['onion', 'oS', 1.6, 0.72, 0.4], ['carrot', 'cS', 2.5, 0.25, 0.8]];
-  for (const [w, sk, tc, ringR, phase] of items) {
-    const v = veg[w], hitY = 4.6, fallT = 0.8;
-    const fall = seg(t, tc - fallT, tc);
-    v.visible = t > tc - fallT && t < tc; v.position.set(0.25, lerp(11, hitY, fall * fall), 0.6); v.rotation.set(t * 4, t * 3, 0);
-    veg[sk].forEach((p, i) => { const n = veg[sk].length; const u = ease(seg(t, tc, tc + 0.9)); p.visible = t >= tc;
-      const a = phase + (i / n) * Math.PI * 2; const tgt = new THREE.Vector3(plateP.x + Math.cos(a) * ringR, pTop - 0.12 + (w === 'carrot' ? 0.16 : w === 'onion' ? 0.08 : 0), plateP.z + Math.sin(a) * ringR * 0.9);
-      const start = new THREE.Vector3(0.25 + Math.cos(a) * 0.15, hitY, 0.6 + Math.sin(a) * 0.15);
-      p.position.lerpVectors(start, tgt, u); p.position.y += Math.sin(u * Math.PI) * 1.6;
-      p.rotation.set((1 - u) * (i + 1) * 5, a, (1 - u) * 3); });
-  }
-  // slash flash when each one is hit
-  const k = ease(t / 4.6); cam.position.set(lerp(-3, 2.5, k), lerp(8.5, 7.2, k), lerp(12, 9.5, k)); cam.lookAt(0, lerp(5, 3.4, k), 1.2);
+// ---------- effects ----------
+const FX = {};
+function buildFX() {
+  const tg = new THREE.BufferGeometry(); const NT = 14; tg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(NT * 2 * 3), 3)); tg.setAttribute('color', new THREE.BufferAttribute(new Float32Array(NT * 2 * 3), 3));
+  const idx = []; for (let i = 0; i < NT - 1; i++) { const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); } tg.setIndex(idx);
+  FX.trail = new THREE.Mesh(tg, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide })); FX.trail.frustumCulled = false; FX.NT = NT; sc.add(FX.trail);
+  FX.drops = new THREE.InstancedMesh(new THREE.SphereGeometry(0.06, 8, 6), new THREE.MeshStandardMaterial({ roughness: 0.2 }), 160); FX.drops.frustumCulled = false; FX.drops.count = 0; sc.add(FX.drops);
+  const fc = document.createElement('canvas'); fc.width = fc.height = 128; const x = fc.getContext('2d'); const g = x.createRadialGradient(64, 64, 0, 64, 64, 64); g.addColorStop(0, 'rgba(255,255,240,1)'); g.addColorStop(0.3, 'rgba(255,230,160,0.8)'); g.addColorStop(1, 'rgba(255,200,100,0)'); x.fillStyle = g; x.fillRect(0, 0, 128, 128);
+  for (let i = 0; i < 8; i++) { x.save(); x.translate(64, 64); x.rotate(i * Math.PI / 4); x.fillStyle = 'rgba(255,255,255,0.9)'; x.fillRect(-1.5, 0, 3, 62); x.restore(); }
+  FX.flash = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(fc), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true })); FX.flash.visible = false; sc.add(FX.flash);
+}
+let knifeBox = new THREE.Box3(); const knifeCenter = () => { knife.visible = true; panda.updateMatrixWorld(true); knifeBox.setFromObject(knife, true); return knifeBox.getCenter(new THREE.Vector3()); };
+function rng(seed) { let s = seed * 9301 + 49297; return () => { s = (s * 9301 + 49297) % 233280; return s / 233280; }; }
+// deterministic projectile with bounces on the counter / board / floor
+function surfaceY(x, z) { if (Math.abs(x) < 6.3 && z > -0.1 && z < 2.6) return COUNTER_Y + (Math.abs(x) < 2 && z > 0.6 && z < 2.6 ? 0.12 : 0); return 0; }
+function ballistic(p0, v0, tau, rest = 0.35, r = 0.05) { const p = p0.clone(), v = v0.clone(); const dt = 1 / 120; for (let s = 0; s < tau; s += dt) { v.y -= 22 * dt; p.addScaledVector(v, dt); const gy = surfaceY(p.x, p.z) + r; if (p.y < gy) { p.y = gy; if (v.y < 0) v.y = -v.y * rest; v.x *= 0.7; v.z *= 0.7; } } return p; }
+// time warp: slow motion around hit moments (te = scene time on the "action" clock)
+function makeWarp(hits, dur, slow = 0.28, win = 0.14) { const N = 2000, tab = [0]; let acc = 0; const rate = (te) => { let r = 1; for (const h of hits) { const d = Math.abs(te - h); if (d < win) r = Math.min(r, slow + (1 - slow) * (d / win) ** 2); } return r; };
+  const dte = dur / N; for (let i = 1; i <= N; i++) { acc += dte / rate(i * dte); tab.push(acc); } return { real: acc, te: (t) => { let lo = 0, hi = N; while (lo < hi) { const m = (lo + hi) >> 1; if (tab[m] < t) lo = m + 1; else hi = m; } return lo * dte; } }; }
+
+// 3) vegetables fall straight into the knife's path: the blade passes through them, with slash trail, juice, slow motion
+const CH = { list: [['Idle_Holding', -1], ['Chop_Loop', 0.3, 1.3], ['Idle_Holding', 4.3]] };
+function prepChop() { const ys = []; for (let te = 0.9; te < 4.0; te += 1 / 90) { track(CH.list, te); ys.push([te, knifeCenter().y]); }
+  const mins = []; for (let i = 2; i < ys.length - 2; i++) if (ys[i][1] < ys[i - 1][1] && ys[i][1] <= ys[i + 1][1] && ys[i][1] < ys[i - 2][1] && ys[i][1] <= ys[i + 2][1]) mins.push(ys[i][0]);
+  // the slash is the fast downward stroke just before the lowest point
+  const hits = []; for (const m of mins) { if (hits.length && m - hits[hits.length - 1] < 0.7) continue; hits.push(m - 0.06); } CH.hits = hits.slice(0, 3);
+  CH.pts = CH.hits.map((h) => { track(CH.list, h); return knifeCenter(); }); CH.warp = makeWarp(CH.hits, 4.6); }
+scenes.push({ name: 'الخضار', get dur() { return CH.warp ? CH.warp.real : 6; }, update(t) { hide();
+  if (!CH.hits) prepChop(); const te = CH.warp.te(t);
+  lit(); pan.visible = false; flyKnife.visible = false; knife.visible = true;
+  const plateP = new THREE.Vector3(-0.9, COUNTER_Y + 0.08, 1.8); veg.plate.visible = true; veg.plate.position.copy(plateP); veg.plate.updateMatrixWorld(true); const pTop = new THREE.Box3().setFromObject(veg.plate).max.y;
+  const items = [['tomato', 'tS', 1.25, 0, 0xd8321f], ['onion', 'oS', 0.72, 0.4, 0xf3ead2], ['carrot', 'cS', 0.25, 0.8, 0xf08a1c]];
+  FX.drops.count = 0; let flashOn = false; const dummy = new THREE.Object3D();
+  items.forEach(([w, sk, ringR, phase, col], k) => { const h = CH.hits[k], hp = CH.pts[k]; if (h == null) return;
+    const v = veg[w], fallT = 0.75; const f = seg(te, h - fallT, h);
+    v.visible = te > h - fallT && te < h; v.position.set(hp.x, lerp(hp.y + 7, hp.y, f * f), hp.z); v.rotation.set(te * 4 + k, te * 3, 0);
+    const tau = te - h; const R = rng(k + 1);
+    // slices: burst out of the cut, bounce on the counter, then slide into place on the plate
+    veg[sk].forEach((p, i) => { const n = veg[sk].length; p.visible = tau >= 0; if (tau < 0) return; const a = phase + (i / n) * Math.PI * 2;
+      const tgt = new THREE.Vector3(plateP.x + Math.cos(a) * ringR, pTop - 0.12 + (w === 'carrot' ? 0.16 : w === 'onion' ? 0.08 : 0), plateP.z + Math.sin(a) * ringR * 0.9);
+      const T = 0.55 + R() * 0.15; const v0 = new THREE.Vector3((tgt.x - hp.x) / T, (tgt.y - hp.y) / T + 11 * T, (tgt.z - hp.z) / T); const free = ballistic(hp, v0, Math.min(tau, T), 0.3, 0.06);
+      const u = ease(seg(tau, 0.6, 0.95)); p.position.lerpVectors(free, tgt, u); p.rotation.set((1 - u) * (tau * 14 + i), a, (1 - u) * tau * 6); });
+    // juice droplets
+    if (tau >= 0 && tau < 1.2) { const RR = rng(k * 7 + 3); FX.drops.material.color.setHex(col); for (let j = 0; j < 40 && FX.drops.count < 160; j++) { const v0 = new THREE.Vector3((RR() - 0.5) * 6, 2 + RR() * 4, (RR() - 0.2) * 4); dummy.position.copy(ballistic(hp, v0, tau, 0.2, 0.04)); const s2 = (0.5 + RR()) * (1 - seg(tau, 0.6, 1.2)); dummy.scale.setScalar(s2); dummy.updateMatrix(); FX.drops.setMatrixAt(FX.drops.count++, dummy.matrix); } FX.drops.instanceMatrix.needsUpdate = true; }
+    if (Math.abs(tau) < 0.09) { flashOn = true; FX.flash.position.copy(hp).add(new THREE.Vector3(0, 0, 0.3)); FX.flash.scale.setScalar(2.4 * (1 - Math.abs(tau) / 0.09) + 0.3); }
+  });
+  FX.flash.visible = flashOn;
+  // slash trail: where the blade has been during the last few frames
+  const P = FX.trail.geometry.attributes.position, C = FX.trail.geometry.attributes.color; const pts = []; for (let i = 0; i < FX.NT; i++) { track(CH.list, te - i * 0.014); pts.push(knifeCenter()); }
+  track(CH.list, te); const speed = pts[0].distanceTo(pts[3]); const vis = Math.min(1, Math.max(0, (speed - 0.25) * 3));
+  const vd = new THREE.Vector3(); for (let i = 0; i < FX.NT; i++) { const d = (i < FX.NT - 1 ? pts[i].clone().sub(pts[i + 1]) : pts[i - 1].clone().sub(pts[i])).normalize(); vd.copy(cam.position).sub(pts[i]).normalize(); const side = d.clone().cross(vd).normalize().multiplyScalar(0.22 * (1 - i / FX.NT));
+    P.setXYZ(i * 2, pts[i].x + side.x, pts[i].y + side.y, pts[i].z + side.z); P.setXYZ(i * 2 + 1, pts[i].x - side.x, pts[i].y - side.y, pts[i].z - side.z); const a = vis * (1 - i / FX.NT); C.setXYZ(i * 2, a, a * 0.95, a * 0.8); C.setXYZ(i * 2 + 1, a, a * 0.95, a * 0.8); }
+  P.needsUpdate = C.needsUpdate = true; FX.trail.visible = vis > 0.02;
+  const k = ease(te / 4.6); let shake = 0; for (const h of CH.hits) shake = Math.max(shake, 1 - Math.abs(te - h) / 0.12); shake = Math.max(0, shake) * 0.08;
+  cam.position.set(lerp(-3.5, 2.5, k) + Math.sin(t * 80) * shake, lerp(7.8, 7.0, k) + Math.cos(t * 70) * shake, lerp(12, 10, k)); cam.lookAt(0.6, lerp(4.8, 3.6, k), 1.2);
 } });
-function hide() { veg.plate.visible = false; X.plate2.visible = false; for (const k of ['tomato', 'onion', 'carrot']) veg[k].visible = false; for (const k of ['tS', 'oS', 'cS']) veg[k].forEach((p) => (p.visible = false)); X.fal.forEach((p) => (p.visible = false)); X.rolls.forEach((p) => (p.visible = false)); X.kun.visible = X.kosh.visible = X.duck.visible = X.title.visible = false; X.rab.forEach((r2) => (r2.visible = false)); flyKnife.visible = false; board.visible = true; panda.position.set(0, 0, -1.4); panda.rotation.y = 0; }
+function hide() { veg.plate.visible = false; X.plate2.visible = false; for (const k of ['tomato', 'onion', 'carrot']) veg[k].visible = false; for (const k of ['tS', 'oS', 'cS']) veg[k].forEach((p) => (p.visible = false)); X.fal.forEach((p) => (p.visible = false)); X.rolls.forEach((p) => (p.visible = false)); X.kun.visible = X.kosh.visible = X.duck.visible = X.title.visible = false; X.rab.forEach((r2) => (r2.visible = false)); flyKnife.visible = false; board.visible = true; panda.position.set(0, 0, -1.4); panda.rotation.y = 0; if (FX.trail) { FX.trail.visible = false; FX.flash.visible = false; FX.drops.count = 0; } }
 let lhBone = null; const lhand = () => { if (!lhBone) panda.traverse((b) => { if (b.isBone && b.name === 'Middle1L') lhBone = b; }); const v = new THREE.Vector3(); panda.updateMatrixWorld(true); (lhBone || handBone).getWorldPosition(v); return v; };
 const plateAt = (pl, x, z) => { pl.visible = true; pl.position.set(x, COUNTER_Y + 0.08, z); pl.updateMatrixWorld(true); return new THREE.Box3().setFromObject(pl).max.y; };
 const rblend = (i, n, t, t0) => { const { mx, acts } = X.rmix[i]; for (const k in acts) acts[k].stop(); const w = ease((t - t0) / BL); const a = acts.Idle, b = acts[n]; a.play(); a.setEffectiveWeight(1 - w); a.time = t % a.getClip().duration; b.play(); b.setEffectiveWeight(w); b.time = Math.max(0, t - t0) % b.getClip().duration; mx.update(0); };
@@ -178,10 +215,10 @@ scenes.push({ name: 'الشعار', dur: 4.6, update(t) {
 // ---------- runner ----------
 const total = () => scenes.reduce((a, s) => a + s.dur, 0);
 function at(T) { let acc = 0; for (const s of scenes) { if (T < acc + s.dur || s === scenes[scenes.length - 1]) { s.update(Math.min(T - acc, s.dur)); return s; } acc += s.dur; } }
-window.SCENES = scenes.map((s) => ({ name: s.name, dur: s.dur }));
+
 window.renderAt = (T) => { at(T); r.render(sc, cam); };
 window.renderScene = (i, t) => { scenes[i].update(t); r.render(sc, cam); };
 window.portrait = (i, t, p, l, bg) => { scenes[i].update(t); cam.position.set(...p); cam.lookAt(...l); const old = sc.background; const hid = []; if (bg) { sc.background = new THREE.Color(bg); stage.children.forEach((c) => { if (c !== panda && c !== flyKnife && c.visible) { c.visible = false; hid.push(c); } }); } r.render(sc, cam); sc.background = old; hid.forEach((c) => (c.visible = true)); return r.domElement.toDataURL('image/png'); };
-(async () => { await buildStage(); await buildActors(); window.READY = true;
+(async () => { await buildStage(); await buildActors(); buildFX(); prepChop(); window.SCENES = scenes.map((s) => ({ name: s.name, dur: s.dur })); window.READY = true;
   if (!window.REC) { const clk = new THREE.Clock(); r.setAnimationLoop(() => { const T = clk.getElapsedTime() % total(); window.renderAt(T); }); } })();
 addEventListener('resize', () => { if (window.REC) return; cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); r.setSize(innerWidth, innerHeight); });
