@@ -142,7 +142,7 @@ scenes.push({ name: 'الكشري الهربان', dur: 4.2, update(t) {
 scenes.push({ name: 'السوشي', dur: 3.2, update(t) {
   hide(); lit(); knife.visible = true; pan.visible = false; pose('Chop_Loop', t * 2);
   X.rolls.forEach((r2, i) => { const t0 = 0.4 + i * 0.32; const u = seg(t, t0, t0 + 0.35); r2.visible = t > t0; const b = u < 1 ? Math.sin(u * Math.PI) * 0.5 : 0; r2.position.set(-1.6 + i * 0.64, COUNTER_Y + 0.25 + b, 1.75); r2.scale.setScalar(u < 1 ? 0.4 + 0.8 * u : 1); r2.rotation.set(Math.PI / 2, 0, 0); });
-  const k = ease(t / 3.2); cam.position.set(lerp(-2.5, 2.5, k), 5.4, 8); cam.lookAt(0, 3.2, 1.6);
+  const k = ease(t / 3.2); cam.position.set(lerp(-3, 3, k), 6.6, 11.5); cam.lookAt(0, 4.2, 1.2);
 } });
 // 8) the legendary duck runs across the counter and dodges the panda
 scenes.push({ name: 'البطة', dur: 3.6, update(t) {
