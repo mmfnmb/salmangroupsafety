@@ -237,20 +237,46 @@ scenes.push({ name: 'البطة', dur: 3.6, update(t) {
   panda.rotation.y = lerp(-0.6, 0.6, ease(seg(t, 0.4, 3.0)));
   cam.position.set(0, 5.8, 13); cam.lookAt(dx * 0.35, 3.4, 1);
 } });
-// 10) packaging + hand-off: lid drops on with a bounce, bag wraps it, panda slides it down the counter, the delivery rabbit catches it and runs
-scenes.push({ name: 'التسليم', dur: 5.6, update(t) {
-  hide(); lit(); knife.visible = false; pan.visible = false; track([['Idle', -1], ['Assembly_Loop', 0.4, 1.1], ['Punch', 2.25, 1.3], ['Wave', 3.1], ['Idle', 5.0]], t);
-  const slide = t < 2.4 ? 0 : 1 - Math.pow(1 - seg(t, 2.4, 3.6), 3); const x = lerp(0, 5.6, slide);
-  const bp = new THREE.Vector3(0, COUNTER_Y + 0.05, 1.9); X.bowl.visible = t < 1.75; X.bowl.position.copy(bp); X.bowl.updateMatrixWorld(true); const btop = new THREE.Box3().setFromObject(X.bowl).max.y;
-  X.kosh2.visible = t < 1.75; X.kosh2.position.set(bp.x, btop - 0.75, bp.z); X.clip.constant = 99;
-  X.lid.visible = t > 0.3 && t < 1.75; const lf = seg(t, 0.3, 0.75); const bounce = t > 0.75 ? Math.abs(Math.sin((t - 0.75) * 14)) * 0.35 * Math.max(0, 1 - (t - 0.75) * 2.5) : 0; X.lid.position.set(bp.x, lerp(btop + 4, btop + 0.02, lf * lf) + bounce, bp.z); X.lid.rotation.set(0, t * 2 * (1 - seg(t, 0.3, 0.9)), 0);
-  const wrap = ease(seg(t, 1.3, 1.8)); X.bag.visible = t > 1.3; X.bag.scale.set(lerp(1.4, 1, wrap), wrap, lerp(1.4, 1, wrap));
-  // catch: the rabbit is waiting at the end of the counter
-  const rb = X.rab[3]; rb.visible = true; const runOff = seg(t, 4.0, 5.6); rb.position.set(lerp(7.6, 16, runOff * runOff), 0, 3.6); rb.rotation.y = t < 4.0 ? -Math.PI / 2 + 0.3 : Math.PI / 2;
-  const { mx, acts } = X.rmix[3]; for (const kk in acts) acts[kk].stop(); const run = t >= 3.9, w = ease((t - 3.9) / BL); const A1 = acts[t < 3.6 ? 'Idle' : 'Idle_Holding'], A2 = acts.Run_Holding || acts.Run; A1.play(); A1.setEffectiveWeight(run ? 1 - w : 1); A1.time = t % A1.getClip().duration; if (run) { A2.play(); A2.setEffectiveWeight(w); A2.time = (t - 3.9) % A2.getClip().duration; } mx.update(0);
-  if (t < 3.6) X.bag.position.set(bp.x + x, COUNTER_Y + 0.05, bp.z); else { const hp2 = new THREE.Vector3(); rb.updateMatrixWorld(true); const hb = new THREE.Box3().setFromObject(rb, true); hp2.set((hb.min.x + hb.max.x) / 2, hb.min.y + 1.4, hb.max.z - 0.2); const u = ease(seg(t, 3.6, 3.9)); X.bag.position.lerpVectors(new THREE.Vector3(5.6, COUNTER_Y + 0.05, bp.z), hp2, u); X.bag.position.y += Math.sin(u * Math.PI) * 0.8; X.bag.scale.setScalar(lerp(1, 0.6, u)); }
-  FX.parts.count = 0; if (t > 2.4 && t < 3.6) emitter(t, { t0: 2.4, t1: 3.4, rate: 40, life: 0.4, seed: 31, src: () => X.bag.position.clone().add(new THREE.Vector3(-0.9, 0.05, 0.6)), vel: (R) => new THREE.Vector3(-1 - R(), 0.8 + R(), (R() - 0.5)), col: 0xffe9b0, size: 0.6 }); partsDone();
-  const k = ease(t / 5.6); cam.position.set(lerp(-1.5, 7.5, ease(seg(t, 1.8, 4.6))), lerp(7.4, 6.4, k), lerp(11.5, 13, k)); cam.lookAt(lerp(0, 7.5, ease(seg(t, 1.8, 4.4))), 3.6, 2);
+// 10) packaging + hand-off: a helper brings the bag, panda lifts the bowl into it, hands it to the courier, who slings it on his back and runs
+const rtrack = (i, list, t) => { const { mx, acts } = X.rmix[i]; for (const k in acts) acts[k].stop(); let j = 0; for (let q = 0; q < list.length; q++) if (t >= list[q][1]) j = q; const cur = list[j], prev = list[j - 1]; const w = prev ? ease((t - cur[1]) / BL) : 1; const A = acts[cur[0]]; A.play(); A.setEffectiveWeight(w); A.time = Math.max(0, t - cur[1]) * (cur[2] || 1) % A.getClip().duration; if (prev && w < 1) { const B = acts[prev[0]]; B.play(); B.setEffectiveWeight(1 - w); B.time = Math.max(0, t - prev[1]) * (prev[2] || 1) % B.getClip().duration; } mx.update(0); };
+const toWorld = (r2, lx, ly, lz) => { const ry = r2.rotation.y, c = Math.cos(ry), s2 = Math.sin(ry); return new THREE.Vector3(r2.position.x + lx * c + lz * s2, r2.position.y + ly, r2.position.z - lx * s2 + lz * c); };
+const arc = (a, b, u, h) => { const v = a.clone().lerp(b, u); v.y += Math.sin(u * Math.PI) * h; return v; };
+scenes.push({ name: 'التسليم', dur: 7.0, update(t) {
+  hide(); lit(); knife.visible = false; pan.visible = false;
+  // panda: idle, reaches for the bowl, turns to the bag, then turns to the courier and hands it over
+  track([['Idle', -1], ['Idle_Holding', 1.9], ['Wave', 4.75], ['Idle', 6.2]], t);
+  panda.rotation.y = t < 2.6 ? 0 : t < 3.8 ? lerp(0, -0.55, ease(seg(t, 2.6, 3.2))) : lerp(-0.55, 0.7, ease(seg(t, 3.8, 4.3)));
+  const bp = new THREE.Vector3(0, COUNTER_Y + 0.05, 1.9); X.bowl.position.copy(bp); X.bowl.updateMatrixWorld(true); const topOff = new THREE.Box3().setFromObject(X.bowl).max.y - bp.y;
+  const BAG = new THREE.Vector3(-2.4, COUNTER_Y + 0.05, 1.5);
+  const hm = hand().add(lhand()).multiplyScalar(0.5).add(new THREE.Vector3(0, -topOff - 0.2, 0.3));
+  // bowl path: rest -> into the panda's hands -> over the bag -> down inside it
+  let bw = bp.clone();
+  if (t > 2.0 && t < 2.6) bw = arc(bp, hm, ease(seg(t, 2.0, 2.6)), 0.6); else if (t >= 2.6 && t < 3.2) bw = hm; else if (t >= 3.2) { const over = BAG.clone().add(new THREE.Vector3(0, 2.7, 0)); const u1 = ease(seg(t, 3.2, 3.45)); bw = hm.clone().lerp(over, u1); if (t > 3.45) bw = over.clone().lerp(BAG.clone().add(new THREE.Vector3(0, 0.3, 0)), ease(seg(t, 3.45, 3.75))); }
+  const inBowl = t < 3.8; X.bowl.visible = X.kosh2.visible = X.lid.visible = inBowl; X.lid.visible = inBowl && t > 0.3;
+  X.bowl.position.copy(bw); X.kosh2.position.set(bw.x, bw.y + topOff - 0.75, bw.z); X.clip.constant = 99;
+  const lf = seg(t, 0.3, 0.75); const bounce = t > 0.75 ? Math.abs(Math.sin((t - 0.75) * 14)) * 0.35 * Math.max(0, 1 - (t - 0.75) * 2.5) : 0;
+  X.lid.position.set(bw.x, t < 1.2 ? lerp(bp.y + topOff + 4, bp.y + topOff + 0.02, lf * lf) + bounce : bw.y + topOff + 0.02, bw.z); X.lid.rotation.set(0, t * 2 * (1 - seg(t, 0.3, 0.9)), 0);
+  // helper rabbit walks in carrying the empty bag, sets it on the counter, waves, walks back
+  const hr = X.rab[0]; hr.visible = t < 4.6; const inU = seg(t, 0, 1.5), outU = seg(t, 2.9, 4.6);
+  hr.position.set(t < 2.9 ? lerp(-11, -3.4, inU) : lerp(-3.4, -12, outU), 0, 3.7); hr.rotation.y = t < 2.6 ? Math.PI / 2 : t < 2.9 ? lerp(Math.PI / 2, -Math.PI / 2, ease(seg(t, 2.6, 2.9))) : -Math.PI / 2;
+  rtrack(0, [['Walk_Holding', -1], ['Idle_Holding', 1.5], ['Wave', 2.1], ['Walk', 2.8]], t);
+  // courier waits at the end of the counter, takes the bag, swings it onto his back, runs
+  const rb = X.rab[3]; rb.visible = true; const runU = seg(t, 5.4, 7.0); rb.position.set(lerp(4.4, 15, runU * runU), 0, 3.7);
+  rb.rotation.y = t < 4.95 ? -Math.PI / 2 : lerp(-Math.PI / 2, Math.PI / 2, ease(seg(t, 4.95, 5.45)));
+  rtrack(3, [['Idle', -1], ['Idle_Holding', 4.25], ['Run', 5.35]], t);
+  // bag path
+  X.bag.visible = true; let bagP, bagS = 1, bagRy = 0, bagRx = 0;
+  if (t < 1.5) { bagP = toWorld(hr, 0, 1.6, 0.95); bagS = 0.7; bagRy = hr.rotation.y; }
+  else if (t < 2.1) { const u = ease(seg(t, 1.5, 2.1)); bagP = arc(toWorld(hr, 0, 1.6, 0.95), BAG, u, 1.0); bagS = lerp(0.7, 1, u); bagRy = lerp(hr.rotation.y, 0, u); }
+  else if (t < 3.85) bagP = BAG.clone();
+  else if (t < 4.3) { const u = ease(seg(t, 3.85, 4.3)); bagP = arc(BAG, hand().add(lhand()).multiplyScalar(0.5).add(new THREE.Vector3(0, -1.6, 0.4)), u, 0.4); }
+  else if (t < 4.8) { const u = ease(seg(t, 4.3, 4.8)); const from = hand().add(lhand()).multiplyScalar(0.5).add(new THREE.Vector3(0, -1.6, 0.4)); bagP = arc(from, toWorld(rb, 0, 1.6, 0.95), u, 1.2); bagS = lerp(1, 0.6, u); bagRy = lerp(0, rb.rotation.y, u); }
+  else { const u = ease(seg(t, 4.8, 5.4)); const lx = 0, ly = u < 0.5 ? lerp(1.6, 4.9, ease(u * 2)) : lerp(4.9, 2.7, ease(u * 2 - 1)), lz = lerp(0.95, -0.85, u); bagP = toWorld(rb, lx, ly, lz); bagS = 0.6; bagRy = rb.rotation.y; bagRx = -Math.sin(u * Math.PI) * 0.6; if (t > 5.4) bagP.y += Math.abs(Math.sin((t - 5.4) * 11)) * 0.15; }
+  X.bag.position.copy(bagP); X.bag.scale.setScalar(bagS); X.bag.rotation.set(bagRx, bagRy, 0);
+  FX.parts.count = 0; if (t > 3.45 && t < 4.1) emitter(t, { t0: 3.5, t1: 3.85, rate: 50, life: 0.45, seed: 31, src: () => BAG.clone().add(new THREE.Vector3(0, 2.5, 0)), vel: (R) => new THREE.Vector3((R() - 0.5) * 2, 1 + R() * 1.5, (R() - 0.5) * 2), col: 0xffe9b0, size: 0.55 }); partsDone();
+  // camera: start on the helper arriving, center on the bowl-to-bag, then follow the courier
+  const lookX = t < 1.6 ? lerp(-4, -1.5, ease(seg(t, 0, 1.6))) : t < 3.9 ? -1.2 : lerp(-1.2, 6, ease(seg(t, 3.9, 6.6)));
+  cam.position.set(lookX + 0.5, lerp(7.2, 6.4, ease(t / 7)), lerp(12.5, 13.5, ease(t / 7))); cam.lookAt(lookX, 3.4, 2);
 } });
 // 9) rabbits cheer for the panda
 scenes.push({ name: 'الأرانب', dur: 3.2, update(t) {
