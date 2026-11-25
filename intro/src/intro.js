@@ -36,13 +36,16 @@ async function buildStage() {
   for (let i = -1; i <= 1; i++) { const c = await obj('sushi/Environment_Counter_Straight_2.gltf', { h: COUNTER_Y }); c.position.set(i * 4.2, 0, 1.2); stage.add(c); }
 }
 // ---------- actors ----------
-let panda, pmix, pAct = {}, knife, pan, board, flyKnife;
+let panda, pmix, pAct = {}, knife, pan, board, flyKnife; const veg = {};
 async function buildActors() {
   panda = await obj('panda_tools.gltf', { h: 7.6 }); stage.add(panda);
   panda.traverse((m) => { if (m.isMesh) m.frustumCulled = false; if (m.name === 'Knife') knife = m; if (m.name === 'Pan') pan = m; });
   pmix = new THREE.AnimationMixer(panda.children[0]); for (const c of panda.userData.anims) pAct[c.name] = pmix.clipAction(c);
   flyKnife = await obj('kr/knife.gltf', { w: 1.2 }); flyKnife.visible = false; stage.add(flyKnife);
-  board = await obj('kr/cuttingboard.gltf', { w: 3.2 }); board.position.set(0, COUNTER_Y, 1.6); stage.add(board);
+  const P = 'kr/food_ingredient_'; veg.plate = await obj('kr/plate.gltf', { w: 3.4 }); stage.add(veg.plate); veg.plate.visible = false;
+  for (const [k, f, w] of [['tomato', 'tomato', 1.4], ['onion', 'onion', 1.3], ['carrot', 'carrot', 1.8]]) { veg[k] = await obj(P + f + '.gltf', { w }); stage.add(veg[k]); veg[k].visible = false; }
+  for (const [k, f, w, n] of [['tS', 'tomato_slice', 0.95, 8], ['oS', 'onion_rings', 0.8, 6], ['cS', 'carrot_pieces', 0.8, 3]]) { veg[k] = []; const base = await obj(P + f + '.gltf', { w }); for (let i = 0; i < n; i++) { const c = base.clone(); c.visible = false; stage.add(c); veg[k].push(c); } }
+  board = await obj('kr/cuttingboard.gltf', { w: 4.0 }); board.position.set(0, COUNTER_Y, 1.6); stage.add(board);
 }
 // play a clip at an absolute time (deterministic)
 function pose(name, time, weight = 1) { for (const k in pAct) { pAct[k].stop(); } const a = pAct[name]; if (!a) return; a.play(); a.setEffectiveWeight(weight); pmix.setTime(0); a.time = time % a.getClip().duration; pmix.update(0); }
@@ -73,6 +76,25 @@ scenes.push({ name: 'السكينة', dur: 3.4, update(t) {
   const h0 = hand(); knife.visible = !(t > 0.55 && t < 2.0);
   if (t > 0.55 && t < 2.0) { const u = seg(t, 0.55, 2.0); flyKnife.visible = true; flyKnife.position.set(h0.x + Math.sin(u * Math.PI) * 0.3, h0.y + Math.sin(u * Math.PI) * 3.6, h0.z + 0.4); flyKnife.rotation.set(0, 0, u * Math.PI * 6); }
   const up = Math.sin(seg(t, 0.4, 2.1) * Math.PI); cam.position.set(lerp(3.5, 2, t / 3.4), 6.4 + up * 1.4, 13 + up * 1.5); cam.lookAt(0, 5.4 + up * 2.2, 0);
+} });
+// 3) vegetables fall from above, get sliced mid-air, slices land arranged on a plate
+scenes.push({ name: 'الخضار', dur: 4.6, update(t) {
+  lit(); pan.visible = false; flyKnife.visible = false; knife.visible = true; panda.position.set(0, 0, -1.4); panda.rotation.y = 0;
+  pose('Chop_Loop', t * 1.6);
+  const plateP = new THREE.Vector3(0, COUNTER_Y + 0.08, 1.9); veg.plate.visible = true; veg.plate.position.copy(plateP); veg.plate.updateMatrixWorld(true); const pTop = new THREE.Box3().setFromObject(veg.plate).max.y;
+  const items = [['tomato', 'tS', 0.7, 1.25, 0], ['onion', 'oS', 1.6, 0.72, 0.4], ['carrot', 'cS', 2.5, 0.25, 0.8]];
+  for (const [w, sk, tc, ringR, phase] of items) {
+    const v = veg[w], hitY = 4.6, fallT = 0.8;
+    const fall = seg(t, tc - fallT, tc);
+    v.visible = t > tc - fallT && t < tc; v.position.set(0.25, lerp(11, hitY, fall * fall), 0.6); v.rotation.set(t * 4, t * 3, 0);
+    veg[sk].forEach((p, i) => { const n = veg[sk].length; const u = ease(seg(t, tc, tc + 0.9)); p.visible = t >= tc;
+      const a = phase + (i / n) * Math.PI * 2; const tgt = new THREE.Vector3(plateP.x + Math.cos(a) * ringR, pTop - 0.12 + (w === 'carrot' ? 0.16 : w === 'onion' ? 0.08 : 0), plateP.z + Math.sin(a) * ringR * 0.9);
+      const start = new THREE.Vector3(0.25 + Math.cos(a) * 0.15, hitY, 0.6 + Math.sin(a) * 0.15);
+      p.position.lerpVectors(start, tgt, u); p.position.y += Math.sin(u * Math.PI) * 1.6;
+      p.rotation.set((1 - u) * (i + 1) * 5, a, (1 - u) * 3); });
+  }
+  // slash flash when each one is hit
+  const k = ease(t / 4.6); cam.position.set(lerp(-3, 2.5, k), lerp(8.5, 7.2, k), lerp(12, 9.5, k)); cam.lookAt(0, lerp(5, 3.4, k), 1.2);
 } });
 // ---------- runner ----------
 const total = () => scenes.reduce((a, s) => a + s.dur, 0);
