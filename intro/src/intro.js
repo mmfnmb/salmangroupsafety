@@ -59,6 +59,12 @@ async function buildActors() {
 }
 // play a clip at an absolute time (deterministic)
 function pose(name, time, weight = 1) { for (const k in pAct) { pAct[k].stop(); } const a = pAct[name]; if (!a) return; a.play(); a.setEffectiveWeight(weight); pmix.setTime(0); a.time = time % a.getClip().duration; pmix.update(0); }
+// smooth timeline: each entry [clip, startTime, speed]; consecutive clips cross-fade over BL seconds, so hands move into the next pose instead of jumping
+const BL = 0.4;
+function track(list, t) { for (const k in pAct) pAct[k].stop(); let i = 0; for (let j = 0; j < list.length; j++) if (t >= list[j][1]) i = j; const cur = list[i], prev = list[i - 1]; const w = prev ? ease((t - cur[1]) / BL) : 1;
+  const set = (e, wt) => { const a = pAct[e[0]]; if (!a || wt <= 0) return; a.play(); a.setEffectiveWeight(wt); const d = a.getClip().duration; a.time = Math.max(0, (t - e[1]) * (e[2] || 1)) % d; };
+  set(cur, w); if (prev && w < 1) { const a = pAct[prev[0]]; a.play(); a.setEffectiveWeight(1 - w); a.time = Math.max(0, (t - prev[1]) * (prev[2] || 1)) % a.getClip().duration; }
+  pmix.update(0); }
 function pose2(n1, t1, n2, t2, w) { for (const k in pAct) pAct[k].stop(); const a = pAct[n1], b = pAct[n2]; a.play(); b.play(); a.setEffectiveWeight(1 - w); b.setEffectiveWeight(w); a.time = t1 % a.getClip().duration; b.time = t2 % b.getClip().duration; pmix.update(0); }
 
 // ---------- scenes ----------
@@ -70,7 +76,7 @@ scenes.push({ name: 'المطبخ الضلمة', dur: 4, update(t) { hide();
   spot.intensity = 260 * light; spot.target.position.set(0, COUNTER_Y, 1.6); hemi.intensity = 0.12 + 1.6 * ease(seg(t, 2.6, 3.6)); fill.intensity = 1.6 * ease(seg(t, 2.6, 3.6));
   panda.position.set(0, 0, -1.4);
   const turn = ease(seg(t, 1.8, 2.8)); panda.rotation.y = lerp(Math.PI, 0, turn);
-  if (t < 2.9) pose('Idle', t); else pose2('Idle', t, 'Wave', (t - 2.9), ease(seg(t, 2.9, 3.2)));
+  track([['Idle', 0], ['Wave', 2.9]], t);
   // slow dolly in
   const k = ease(t / 4); cam.position.set(lerp(-2, 0, k), lerp(5.2, 4.6, k), lerp(22, 15, k)); cam.lookAt(0, lerp(3.4, 4.2, k), 0);
 } });
@@ -80,9 +86,7 @@ let handBone = null; const hand = () => { if (!handBone) panda.traverse((b) => {
 // 2) knife toss: throws the knife up, it spins and comes back to his hand
 scenes.push({ name: 'السكينة', dur: 3.4, update(t) { hide();
   lit(); pan.visible = false; flyKnife.visible = false; panda.position.set(0, 0, -1.4); panda.rotation.y = 0;
-  if (t < 0.55) pose('Idle_Holding', t);
-  else if (t < 2.2) pose2('Idle_Holding', t, 'Jump_Idle', t, 0.0);
-  else pose2('Sword', (t - 2.2) * 1.1, 'Idle_Holding', t, ease(seg(t, 3.0, 3.4)));
+  track([['Idle_Holding', -1], ['Sword', 2.1, 1.1], ['Idle_Holding', 2.95]], t);
   const h0 = hand(); knife.visible = !(t > 0.55 && t < 2.0);
   if (t > 0.55 && t < 2.0) { const u = seg(t, 0.55, 2.0); flyKnife.visible = true; flyKnife.position.set(h0.x + Math.sin(u * Math.PI) * 0.3, h0.y + Math.sin(u * Math.PI) * 3.6, h0.z + 0.4); flyKnife.rotation.set(0, 0, u * Math.PI * 6); }
   const up = Math.sin(seg(t, 0.4, 2.1) * Math.PI); cam.position.set(lerp(3.5, 2, t / 3.4), 6.4 + up * 1.4, 13 + up * 1.5); cam.lookAt(0, 5.4 + up * 2.2, 0);
@@ -90,7 +94,7 @@ scenes.push({ name: 'السكينة', dur: 3.4, update(t) { hide();
 // 3) vegetables fall from above, get sliced mid-air, slices land arranged on a plate
 scenes.push({ name: 'الخضار', dur: 4.6, update(t) { hide();
   lit(); pan.visible = false; flyKnife.visible = false; knife.visible = true; panda.position.set(0, 0, -1.4); panda.rotation.y = 0;
-  pose('Chop_Loop', t * 1.6);
+  track([['Idle_Holding', -1], ['Chop_Loop', 0.3, 1.6], ['Idle_Holding', 4.1]], t);
   const plateP = new THREE.Vector3(0, COUNTER_Y + 0.08, 1.9); veg.plate.visible = true; veg.plate.position.copy(plateP); veg.plate.updateMatrixWorld(true); const pTop = new THREE.Box3().setFromObject(veg.plate).max.y;
   const items = [['tomato', 'tS', 0.7, 1.25, 0], ['onion', 'oS', 1.6, 0.72, 0.4], ['carrot', 'cS', 2.5, 0.25, 0.8]];
   for (const [w, sk, tc, ringR, phase] of items) {
@@ -109,10 +113,11 @@ scenes.push({ name: 'الخضار', dur: 4.6, update(t) { hide();
 function hide() { veg.plate.visible = false; X.plate2.visible = false; for (const k of ['tomato', 'onion', 'carrot']) veg[k].visible = false; for (const k of ['tS', 'oS', 'cS']) veg[k].forEach((p) => (p.visible = false)); X.fal.forEach((p) => (p.visible = false)); X.rolls.forEach((p) => (p.visible = false)); X.kun.visible = X.kosh.visible = X.duck.visible = X.title.visible = false; X.rab.forEach((r2) => (r2.visible = false)); flyKnife.visible = false; board.visible = true; panda.position.set(0, 0, -1.4); panda.rotation.y = 0; }
 let lhBone = null; const lhand = () => { if (!lhBone) panda.traverse((b) => { if (b.isBone && b.name === 'Middle1L') lhBone = b; }); const v = new THREE.Vector3(); panda.updateMatrixWorld(true); (lhBone || handBone).getWorldPosition(v); return v; };
 const plateAt = (pl, x, z) => { pl.visible = true; pl.position.set(x, COUNTER_Y + 0.08, z); pl.updateMatrixWorld(true); return new THREE.Box3().setFromObject(pl).max.y; };
+const rblend = (i, n, t, t0) => { const { mx, acts } = X.rmix[i]; for (const k in acts) acts[k].stop(); const w = ease((t - t0) / BL); const a = acts.Idle, b = acts[n]; a.play(); a.setEffectiveWeight(1 - w); a.time = t % a.getClip().duration; b.play(); b.setEffectiveWeight(w); b.time = Math.max(0, t - t0) % b.getClip().duration; mx.update(0); };
 const rpose = (i, n, t) => { const { mx, acts } = X.rmix[i]; for (const k in acts) acts[k].stop(); const a = acts[n]; a.play(); a.time = t % a.getClip().duration; mx.update(0); };
 // 4) pan flip: falafel balls fly up spinning and land as a flower on the plate
 scenes.push({ name: 'الطاسة والطعمية', dur: 3.8, update(t) {
-  hide(); lit(); knife.visible = false; pan.visible = true; pose('Pan_Loop', t * 1.3);
+  hide(); lit(); knife.visible = false; pan.visible = true; track([['Idle_Holding', -1], ['Pan_Loop', 0.15, 1.3], ['Idle_Holding', 3.3]], t);
   const top = plateAt(veg.plate, -1.8, 2.0); const h0 = lhand(); const n = X.fal.length;
   X.fal.forEach((f, i) => { const t0 = 0.4 + i * 0.22, u = ease(seg(t, t0, t0 + 1.3)); f.visible = t > t0 - 0.3;
     const a = (i / (n - 1)) * Math.PI * 2; const tgt = i === n - 1 ? new THREE.Vector3(-1.8, top + 0.15, 2.0) : new THREE.Vector3(-1.8 + Math.cos(a) * 0.95, top + 0.12, 2.0 + Math.sin(a) * 0.85);
@@ -121,7 +126,7 @@ scenes.push({ name: 'الطاسة والطعمية', dur: 3.8, update(t) {
 } });
 // 5) kunafa: dough thrown up, spins and lands as a perfect disc
 scenes.push({ name: 'الكنافة', dur: 3.4, update(t) {
-  hide(); lit(); knife.visible = false; pan.visible = false; pose(t < 0.7 ? 'Assembly_Loop' : 'Yes', t < 0.7 ? t : t - 0.7);
+  hide(); lit(); knife.visible = false; pan.visible = false; track([['Idle', -1], ['Assembly_Loop', 0.05], ['Yes', 0.75], ['Idle', 2.9]], t);
   const top = plateAt(veg.plate, 0, 1.9); X.kun.visible = t > 0.35; const u = seg(t, 0.5, 2.4);
   X.kun.position.set(Math.sin(u * Math.PI * 2) * 0.4, lerp(4.8, top + 0.05, ease(u)) + Math.sin(u * Math.PI) * 4.0, lerp(0.5, 1.9, ease(u)));
   X.kun.rotation.set((1 - ease(u)) * 1.2, u * Math.PI * 10, (1 - ease(u)) * 0.6); X.kun.scale.setScalar(lerp(0.5, 1, ease(u)));
@@ -135,12 +140,12 @@ scenes.push({ name: 'الكشري الهربان', dur: 4.2, update(t) {
   const hopX = lerp(-0.5, 4.2, run), hopY = top + 0.02 + Math.abs(Math.sin(run * Math.PI * 5)) * 0.9 * (run > 0 && run < 1);
   X.kosh.position.set(lerp(hopX, -0.5, back), lerp(hopY, top + 0.02, back) + Math.sin(back * Math.PI) * 1.5, 1.9); X.kosh.rotation.set(0, Math.sin(t * 9) * 0.3 * (1 - back), Math.sin(t * 12) * 0.15 * run * (1 - back));
   panda.rotation.y = lerp(0, -0.25, ease(seg(t, 0.2, 0.6)));
-  if (t < 2.1) pose('Idle_Holding', t); else if (t < 3.0) pose('Punch', (t - 2.1) * 1.2); else pose('Idle_Holding', t);
+  track([['Idle_Holding', -1], ['Punch', 2.0, 1.2], ['Idle_Holding', 2.9]], t);
   const k = ease(t / 4.2); cam.position.set(lerp(1, 2, k), 6.2, lerp(12, 11, k)); cam.lookAt(lerp(0.5, 1.5, ease(run)) * (1 - back) + 0.3, 3.4, 1);
 } });
 // 7) sushi: rolls pop onto the board one after another
 scenes.push({ name: 'السوشي', dur: 3.2, update(t) {
-  hide(); lit(); knife.visible = true; pan.visible = false; pose('Chop_Loop', t * 2);
+  hide(); lit(); knife.visible = true; pan.visible = false; track([['Idle_Holding', -1], ['Chop_Loop', 0.2, 2], ['Idle_Holding', 2.75]], t);
   X.rolls.forEach((r2, i) => { const t0 = 0.4 + i * 0.32; const u = seg(t, t0, t0 + 0.35); r2.visible = t > t0; const b = u < 1 ? Math.sin(u * Math.PI) * 0.5 : 0; r2.position.set(-1.6 + i * 0.64, COUNTER_Y + 0.25 + b, 1.75); r2.scale.setScalar(u < 1 ? 0.4 + 0.8 * u : 1); r2.rotation.set(Math.PI / 2, 0, 0); });
   const k = ease(t / 3.2); cam.position.set(lerp(-3, 3, k), 6.6, 11.5); cam.lookAt(0, 4.2, 1.2);
 } });
@@ -149,20 +154,20 @@ scenes.push({ name: 'البطة', dur: 3.6, update(t) {
   hide(); lit(); knife.visible = false; pan.visible = false; board.visible = false;
   const u = seg(t, 0.3, 3.3); X.duck.visible = true; const dx = lerp(-7, 7, u); const jump = Math.max(0, Math.sin(seg(t, 1.5, 2.2) * Math.PI)) * 2.0;
   X.duck.position.set(dx, COUNTER_Y + Math.abs(Math.sin(t * 18)) * 0.15 + jump, 1.6); X.duck.rotation.set(0, Math.PI / 2, Math.sin(t * 18) * 0.12);
-  if (t < 1.4) pose('Idle', t); else if (t < 2.2) pose('Punch', (t - 1.4) * 1.3); else pose('No', t - 2.2);
+  track([['Idle', -1], ['Punch', 1.3, 1.3], ['No', 2.15], ['Idle', 3.2]], t);
   panda.rotation.y = lerp(-0.6, 0.6, ease(seg(t, 0.4, 3.0)));
   cam.position.set(0, 5.8, 13); cam.lookAt(dx * 0.35, 3.4, 1);
 } });
 // 9) rabbits cheer for the panda
 scenes.push({ name: 'الأرانب', dur: 3.2, update(t) {
-  hide(); lit(); knife.visible = true; pan.visible = false; pose('Yes', t);
+  hide(); lit(); knife.visible = true; pan.visible = false; track([['Idle_Holding', -1], ['Yes', 0.2], ['Idle_Holding', 2.75]], t);
   const spots = [[-4.5, 5.2, 2.6], [-1.6, 5.8, 2.9], [1.6, 5.8, -2.9], [4.5, 5.2, -2.6]];
-  X.rab.forEach((r2, i) => { r2.visible = true; r2.position.set(spots[i][0], 0, spots[i][1]); r2.rotation.y = Math.PI + spots[i][2] * 0.12; rpose(i, i % 2 ? 'Wave' : 'Yes', t + i * 0.3); });
+  X.rab.forEach((r2, i) => { r2.visible = true; r2.position.set(spots[i][0], 0, spots[i][1]); r2.rotation.y = Math.PI + spots[i][2] * 0.12; rblend(i, i % 2 ? 'Wave' : 'Yes', t, 0.2 + i * 0.15); });
   const k = ease(t / 3.2); cam.position.set(0, lerp(4.5, 6.5, k), lerp(16, 19, k)); cam.lookAt(0, 3.4, 1.5);
 } });
 // 10) logo: all the food rises and the title appears, the duck runs in the back
 scenes.push({ name: 'الشعار', dur: 4.6, update(t) {
-  hide(); lit(); knife.visible = false; pan.visible = false; pose(t < 2.6 ? 'Yes' : 'Wave', t);
+  hide(); lit(); knife.visible = false; pan.visible = false; track([['Idle', -1], ['Yes', 0.2], ['Wave', 2.5]], t);
   const items = [...X.fal.slice(0, 4), X.kun, X.kosh, ...X.rolls.slice(0, 3)];
   items.forEach((o, i) => { o.visible = true; o.scale.setScalar(o === X.kun ? 0.5 : o === X.kosh ? 0.55 : 1); const a = (i / items.length) * Math.PI * 2 + t * 1.2; const up = ease(seg(t, 0.1, 1.4)); const R = lerp(1.2, 5.2, up);
     o.position.set(Math.cos(a) * R, lerp(COUNTER_Y + 0.4, 8.6 + Math.sin(a * 2) * 0.4, up), 1.5 + Math.sin(a) * R * 0.35); o.rotation.set(t * 2 + i, t * 3, 0); });
