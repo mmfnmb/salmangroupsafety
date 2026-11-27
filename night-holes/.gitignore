@@ -1,0 +1,4 @@
+test/*.png
+test/*.jpg
+assets/*.json
+test/*.log

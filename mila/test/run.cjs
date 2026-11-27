@@ -1,0 +1,14 @@
+const { chromium } = require('playwright'); const http = require('http'), fs = require('fs'), path = require('path'); const root = path.join(__dirname, '..');
+const types = { '.js': 'text/javascript', '.html': 'text/html', '.glb': 'model/gltf-binary' };
+const srv = http.createServer((q, r) => { const u = decodeURIComponent(q.url.split('?')[0]); const f = path.join(root, u === '/' ? 'index.html' : u); fs.readFile(f, (e, d) => { if (e) { r.writeHead(404); return r.end(); } r.setHeader('Content-Type', types[path.extname(f)] || 'application/octet-stream'); r.end(d); }); }).listen(8095);
+(async () => { const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] }); const p = await b.newPage({ viewport: { width: 900, height: 520 }, hasTouch: false });
+  p.on('pageerror', (e) => console.log('ERR', e.message)); p.on('console', (m) => { if (m.type() === 'error') console.log('CERR', m.text().slice(0, 300)); });
+  const shot = (n) => p.screenshot({ path: path.join(root, 'shots', n + '.png'), timeout: 200000 });
+  await p.goto('http://localhost:8095/'); await p.click('#btnStart'); await p.waitForFunction(() => document.getElementById('load').style.display === 'none', null, { timeout: 240000 });
+  await p.waitForTimeout(3000); await shot('1-start');
+  await p.evaluate(() => { __mila.mila.goTo(-5, -2); }); await p.waitForTimeout(5000); await shot('2-kitchen');
+  await p.evaluate(() => __mila.newRequest()); await p.waitForTimeout(3000); await shot('3-request');
+  await p.evaluate(() => { __mila.mila.pos.set(0, 0, 9.5); }); await p.waitForTimeout(3000); await shot('4-outside');
+  await p.evaluate(() => { __mila.mila.pos.set(2, 0, 2); __mila.goEvil(); }); await p.waitForTimeout(3000); await shot('5-evil');
+  console.log(JSON.stringify(await p.evaluate(() => ({ hearts: __mila.st.hearts, evil: __mila.st.evil }))));
+  await b.close(); srv.close(); })();

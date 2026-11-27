@@ -1,0 +1,1 @@
+module.exports = async ({ p, ev, shot, wait }) => { await wait(1500); ev(`__nh().testDrive()`); await p.waitForFunction(() => window.__drv, null, { timeout: 200000 }); for (let i = 0; i < 4; i++) { await wait(5000); await shot('h' + i); } };

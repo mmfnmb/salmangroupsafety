@@ -1,0 +1,528 @@
+<title>Gearhollow</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen&family=VT323&display=swap">
+<style>
+/* layout: one full-screen first-person view; HUD in the corners, prompts at the bottom centre, a title card over it at the start */
+:root{
+  --void:#07080a; --rust:#b5562b; --sodium:#ffb347; --mag-red:#ff4a3d; --mag-blue:#3da2ff; --ink:#e8e1d2; --dim:#8c8676;
+  --hud:"VT323",ui-monospace,monospace; --title:"Silkscreen",ui-monospace,monospace;
+  color-scheme:dark;
+}
+html,body{height:100%;background:var(--void);color:var(--ink);overflow:hidden}
+body{font:20px/1.2 var(--hud);user-select:none;-webkit-user-select:none;touch-action:none}
+#game{position:fixed;inset:0}
+#game canvas{display:block;width:100%;height:100%}
+.hud{position:fixed;pointer-events:none;text-shadow:0 2px 0 #000}
+#obj{top:calc(12px + env(safe-area-inset-top,0px));left:max(16px,env(safe-area-inset-left,0px));max-width:min(60vw,520px);font-size:22px;color:var(--sodium)}
+#obj small{display:block;color:var(--dim);font-size:16px;letter-spacing:.06em}
+#inv{top:calc(12px + env(safe-area-inset-top,0px));right:max(16px,env(safe-area-inset-right,0px));text-align:right;font-size:18px;color:var(--dim)}
+#inv b{color:var(--ink);font-weight:400}
+#cross{left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;background:var(--ink);opacity:.7;box-shadow:0 0 0 1px #000}
+#prompt{left:50%;bottom:calc(120px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);font-size:24px;padding:4px 12px;background:#000a;border:1px solid #fff2;white-space:nowrap}
+#toast{left:50%;top:22%;transform:translateX(-50%);font-size:26px;color:var(--ink);text-align:center;max-width:90vw;transition:opacity .4s}
+#battery{bottom:calc(16px + env(safe-area-inset-bottom,0px));left:max(16px,env(safe-area-inset-left,0px));font-size:16px;color:var(--dim)}
+#battery i{display:inline-block;width:90px;height:8px;border:1px solid var(--dim);vertical-align:middle;margin-left:6px;position:relative}
+#battery i::after{content:"";position:absolute;inset:1px;width:var(--b,100%);background:var(--sodium)}
+#card{position:fixed;inset:0;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 40%,#1a1410 0%,#07080a 70%);z-index:5;padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px))}
+#card .in{max-width:560px;text-align:center;display:grid;gap:18px}
+#card h1{font:400 clamp(40px,9vw,78px)/1 var(--title);margin:0;color:var(--sodium);letter-spacing:.04em;text-shadow:0 0 18px #ff8a2a55,0 4px 0 #3a1a08}
+#card p{margin:0;color:var(--dim);font-size:22px}
+#card .keys{font-size:18px;color:var(--ink);opacity:.85;display:grid;gap:4px}
+#card button,.mb{font:400 22px var(--title);background:var(--rust);color:#140a04;border:0;padding:12px 26px;cursor:pointer;box-shadow:0 4px 0 #5a2410}
+#card button:focus-visible,.mb:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+.sign{font-size:14px;color:var(--dim);letter-spacing:.2em}
+/* phone controls */
+#touch{position:fixed;inset:0;pointer-events:none;display:none}
+.touch #touch{display:block}
+#joy{position:absolute;left:calc(24px + env(safe-area-inset-left,0px));bottom:calc(24px + env(safe-area-inset-bottom,0px));width:130px;height:130px;border-radius:50%;border:2px solid #fff3;background:#0005;pointer-events:auto}
+#joy i{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px;border-radius:50%;background:#fff3}
+.tb{position:absolute;pointer-events:auto;width:62px;height:62px;border-radius:50%;border:2px solid #fff4;background:#000a;color:var(--ink);font:400 14px var(--title)}
+#bJump{right:calc(24px + env(safe-area-inset-right,0px));bottom:calc(30px + env(safe-area-inset-bottom,0px))}
+#bUse{right:calc(100px + env(safe-area-inset-right,0px));bottom:calc(30px + env(safe-area-inset-bottom,0px))}
+#bRed{right:calc(24px + env(safe-area-inset-right,0px));bottom:calc(106px + env(safe-area-inset-bottom,0px));border-color:var(--mag-red);color:var(--mag-red)}
+#bBlue{right:calc(100px + env(safe-area-inset-right,0px));bottom:calc(106px + env(safe-area-inset-bottom,0px));border-color:var(--mag-blue);color:var(--mag-blue)}
+#bLight{right:calc(176px + env(safe-area-inset-right,0px));bottom:calc(30px + env(safe-area-inset-bottom,0px))}
+#bHint{position:fixed;pointer-events:auto;right:max(16px,env(safe-area-inset-right,0px));top:calc(64px + env(safe-area-inset-top,0px));font:400 13px var(--title);background:#000a;color:var(--dim);border:1px solid #fff3;padding:6px 10px;cursor:pointer;z-index:3}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){#toast{transition:none}}
+</style>
+
+<div id="game" aria-label="Gearhollow, a first-person game"></div>
+<div class="hud" id="obj"></div>
+<div class="hud" id="inv"></div>
+<div class="hud" id="cross"></div>
+<div class="hud" id="prompt" hidden></div>
+<div class="hud" id="toast"></div>
+<div class="hud" id="battery">HEADLAMP <i></i></div>
+<button id="bHint" hidden>HINT</button>
+<div id="touch">
+  <div id="joy"><i id="joyK"></i></div>
+  <button class="tb" id="bJump">JUMP</button>
+  <button class="tb" id="bUse">USE</button>
+  <button class="tb" id="bRed">GRAB</button>
+  <button class="tb" id="bBlue">SHOVE</button>
+  <button class="tb" id="bLight">LIGHT</button>
+</div>
+<div id="card"><div class="in">
+  <div class="sign">GEARHOLLOW TOY CO. · EST. 1961 · CLOSED</div>
+  <h1>GEARHOLLOW</h1>
+  <p>The toy factory shut down overnight and nobody came back. The lights are dead. Something still walks the halls.</p>
+  <div class="keys" id="keys">
+    <div>WASD move · MOUSE look · SPACE jump · SHIFT run</div>
+    <div>E pick up, use, put down · F headlamp</div><div>HOLD LEFT CLICK fire the red hand: it grabs and drags · HOLD RIGHT CLICK fire the blue hand: it shoves</div>
+  </div>
+  <div><button id="go">ENTER THE FACTORY</button></div>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+'use strict';
+const $ = (id) => document.getElementById(id);
+const touch = matchMedia('(pointer:coarse)').matches; if (touch) document.body.classList.add('touch');
+if (touch) $('keys').innerHTML = '<div>Left circle moves · drag the screen to look</div><div>USE picks up, uses and puts down · JUMP · LIGHT · hold GRAB (red hand) · hold SHOVE (blue hand)</div>';
+let seed = 11; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+const V3 = THREE.Vector3;
+
+// ---------------------------------------------------------------- voxel models: lots of small cubes, with corner shading, merged into one mesh each
+const VMAT = new THREE.MeshLambertMaterial({ vertexColors: true });
+const DIRS = [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]];
+const FACE_SHADE = [0.86, 0.8, 1, 0.55, 0.92, 0.74];
+function vox(nx, ny, nz, vs, fill, opt = {}) {
+  const N = nx * ny * nz, data = new Int32Array(N), id = (x, y, z) => x + nx * (y + ny * z);
+  for (let z = 0; z < nz; z++) for (let y = 0; y < ny; y++) for (let x = 0; x < nx; x++) { const c = fill(x, y, z); if (c) data[id(x, y, z)] = c; }
+  const get = (x, y, z) => (x < 0 || y < 0 || z < 0 || x >= nx || y >= ny || z >= nz ? 0 : data[id(x, y, z)]);
+  const pos = [], nor = [], col = [], idx = []; const ox = opt.center === false ? 0 : nx / 2, oz = opt.center === false ? 0 : nz / 2, c = new THREE.Color();
+  for (let z = 0; z < nz; z++) for (let y = 0; y < ny; y++) for (let x = 0; x < nx; x++) { const v = data[id(x, y, z)]; if (!v) continue;
+    const jit = 1 + (((x * 73856093) ^ (y * 19349663) ^ (z * 83492791)) % 100) / 100 * 0.1 - 0.05;
+    for (let f = 0; f < 6; f++) { const [dx, dy, dz] = DIRS[f]; if (get(x + dx, y + dy, z + dz)) continue;
+      // the four corners of this face, and the two in-plane axes
+      const ax = f < 2 ? [1, 2] : f < 4 ? [0, 2] : [0, 1], base = [x + (dx > 0 ? 1 : 0), y + (dy > 0 ? 1 : 0), z + (dz > 0 ? 1 : 0)];
+      const corners = [[0, 0], [1, 0], [1, 1], [0, 1]], b0 = pos.length / 3;
+      for (const [u, w] of corners) { const p = base.slice(); p[ax[0]] += u; p[ax[1]] += w;
+        // ambient occlusion: look at the three voxels touching this corner outside the face
+        const s1 = [x + dx, y + dy, z + dz], s2 = [x + dx, y + dy, z + dz], cc = [x + dx, y + dy, z + dz]; s1[ax[0]] += u ? 1 : -1; s2[ax[1]] += w ? 1 : -1; cc[ax[0]] += u ? 1 : -1; cc[ax[1]] += w ? 1 : -1;
+        const a1 = get(...s1) ? 1 : 0, a2 = get(...s2) ? 1 : 0, a3 = get(...cc) ? 1 : 0, ao = a1 && a2 ? 0 : 3 - (a1 + a2 + a3);
+        pos.push((p[0] - ox) * vs, p[1] * vs, (p[2] - oz) * vs); nor.push(dx, dy, dz); c.setHex(v); const k = FACE_SHADE[f] * [0.45, 0.66, 0.84, 1][ao] * jit; col.push(c.r * k, c.g * k, c.b * k); }
+      // flip the quad so it faces out
+      const flip = (f === 0 || f === 3 || f === 4); if (flip) idx.push(b0, b0 + 1, b0 + 2, b0, b0 + 2, b0 + 3); else idx.push(b0, b0 + 2, b0 + 1, b0, b0 + 3, b0 + 2); } }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setIndex(idx); g.computeBoundingSphere(); g.computeBoundingBox();
+  return g;
+}
+const vmesh = (g, mat = VMAT) => { const m = new THREE.Mesh(g, mat); m.castShadow = m.receiveShadow = true; return m; };
+const H = (s) => parseInt(s.slice(1), 16);
+const pick = (l, x, y, z) => l[Math.abs((x * 7 + y * 13 + z * 29) ^ (x * y)) % l.length];
+
+// ---------------------------------------------------------------- the props, designed voxel by voxel
+const MODELS = {};
+function model(name, make) { return MODELS[name] ||= make(); }
+const steel = [H('#5d666e'), H('#58616a'), H('#636c74')], rust = [H('#8a4a26'), H('#7a3f1f'), H('#965433')];
+const G = {
+  crate: () => model('crate', () => vox(10, 10, 10, 0.12, (x, y, z) => { const e = (a) => a === 0 || a === 9, edges = (e(x) + e(y) + e(z)) >= 2;
+    if (edges) return H('#2f363c'); const face = e(x) || e(y) || e(z); if (!face) return H('#2f363c');
+    const u = e(x) ? z : x, v = e(y) ? z : y; if (u === v || u === 9 - v) return H('#434c54');
+    if (!e(y) && u >= 3 && u <= 6 && v >= 3 && v <= 6) { if (v === 6 && u >= 3 && u <= 6) return H('#ff4a3d'); if ((u === 3 || u === 6) && v >= 4) return v === 3 ? H('#d9d9d9') : H('#ff4a3d'); if ((u === 3 || u === 6) && v === 3) return H('#d9d9d9'); }
+    return pick(steel, x, y, z); })),
+  woodbox: () => model('woodbox', () => vox(8, 8, 8, 0.13, (x, y, z) => { const e = (a) => a === 0 || a === 7; if (!(e(x) || e(y) || e(z))) return H('#4d3220'); const plank = (e(y) ? x : y) % 3 === 0; return (e(x) + e(y) + e(z)) >= 2 ? H('#4d3220') : plank ? H('#5e3e26') : pick([H('#7a5230'), H('#835a36'), H('#71492a')], x, y, z); })),
+  barrel: () => model('barrel', () => vox(9, 12, 9, 0.1, (x, y, z) => { const d = Math.hypot(x - 4, z - 4); if (d > 4.3) return 0; if (y === 2 || y === 9) return H('#2a2e31'); return y === 11 && d < 3.4 ? H('#3a3f45') : (x + z) % 5 === 0 && y > 3 && y < 8 ? H('#b5562b') : H('#c24e24'); })),
+  fuse: () => model('fuse', () => vox(4, 10, 4, 0.04, (x, y, z) => { if (y < 2 || y > 7) return (x === 0 || x === 3) && (z === 0 || z === 3) ? 0 : H('#a8adb2'); return (x === 0 || x === 3 || z === 0 || z === 3) ? (y === 4 ? H('#151412') : H('#ffd34d')) : H('#fff2a8'); })),
+  lampshade: () => model('lamp', () => vox(10, 5, 10, 0.1, (x, y, z) => { const d = Math.hypot(x - 4.5, z - 4.5); if (y === 4) return d < 1.2 ? H('#2a2e31') : 0; const r = 2 + (4 - y) * 0.8; if (d > r || d < r - 1.2) return y === 0 && d < r - 1.2 ? H('#fff1c0') : 0; return H('#2f5a46'); })),
+  convLeg: () => model('convleg', () => vox(14, 6, 2, 0.1, (x, y) => ((x < 2 || x > 11) ? H('#3a3f45') : y === 5 ? H('#7d858c') : 0))),
+  conveyor: () => model('conv', () => vox(14, 9, 20, 0.1, (x, y, z) => { if (y < 6 && (x === 1 || x === 12) && z % 6 < 2) return H('#3a3f45'); if (y === 6 && x > 0 && x < 13) return z % 2 ? H('#1e1f21') : H('#26272a'); if (y === 7 && (x === 0 || x === 13)) return (z >> 1) % 2 ? H('#d9a21b') : H('#151412'); if (y === 5 && x > 1 && x < 12) return z % 3 === 0 ? H('#7d858c') : 0; return 0; })),
+  pillar: () => model('pillar', () => vox(8, 80, 8, 0.2, (x, y, z) => { const e = x === 0 || x === 7 || z === 0 || z === 7; if (!e) return H('#3a3f45'); if (y < 6) return (y + x + z) % 4 < 2 ? H('#d9a21b') : H('#151412'); return y % 10 === 0 ? H('#434c54') : pick(steel, x, y, z); })),
+  toy: () => model('toy', () => vox(10, 10, 10, 0.07, (x, y, z) => { const head = Math.hypot(x - 4.5, y - 5.5, z - 4.5); if (head < 4.2) { if (z > 7 && (x === 3 || x === 6) && y === 6) return H('#151412'); if (z > 7 && y === 3 && x > 2 && x < 7) return H('#151412'); return H('#c4475a'); } if ((Math.hypot(x - 1.5, y - 8.5, z - 4.5) < 1.6) || (Math.hypot(x - 7.5, y - 8.5, z - 4.5) < 1.6)) return H('#a83a4c'); return 0; })),
+  toybox: () => model('toybox', () => vox(10, 7, 8, 0.11, (x, y, z) => { const e = (a, n) => a === 0 || a === n; if (!(e(x, 9) || e(y, 6) || e(z, 7))) return H('#7a5a20'); if (y === 6 && x > 0 && x < 9 && z > 0 && z < 7) return [H('#3f8fd0'), H('#e2b043'), H('#46c96b'), H('#c4475a')][(x + z) % 4]; return (x + y) % 4 < 2 ? H('#e2b043') : H('#d9d2c0'); })),
+  press: () => model('press', () => vox(24, 40, 20, 0.15, (x, y, z) => { // a huge stamping press
+    const legs = (x < 4 || x > 19) && (z < 4 || z > 15); if (legs && y < 36) return y < 3 ? H('#151412') : pick(steel, x, y, z);
+    if (y >= 32 && y < 40) { if (y === 39 && (x === 0 || x === 23)) return 0; return y % 4 === 0 ? H('#2f363c') : (x + z) % 9 === 0 ? H('#b5562b') : H('#4a545c'); }
+    if (y >= 18 && y < 32 && x > 8 && x < 15 && z > 6 && z < 13) return y % 3 === 0 ? H('#9aa0a6') : H('#7d858c'); // piston
+    if (y >= 14 && y < 18 && x > 3 && x < 20 && z > 3 && z < 16) return (x + z) % 2 ? H('#d9a21b') : H('#151412'); // the head with hazard stripes
+    if (y < 4 && x > 2 && x < 21 && z > 2 && z < 17) return y === 3 ? ((x + z) % 2 ? H('#3a3f45') : H('#2f363c')) : H('#2a2e31'); // base plate
+    return 0; })),
+  rackPost: () => model('rackpost', () => vox(2, 60, 2, 0.1, (x, y) => (y % 10 === 0 ? H('#2f363c') : H('#d0661f')))),
+  generator: () => model('gen', () => vox(30, 22, 14, 0.1, (x, y, z) => { const e = x === 0 || x === 29 || y === 21 || z === 0 || z === 13; if (y < 2) return H('#2a2e31'); if (!e) return H('#2a2e31');
+    if (z === 13 && y > 6 && y < 16) { if ((x > 4 && x < 10) || (x > 19 && x < 25)) return (y === 7 || y === 15 || x === 5 || x === 9 || x === 20 || x === 24) ? H('#151412') : H('#0d0e0f'); if (x > 12 && x < 17 && y > 9 && y < 13) return H('#ff4a3d'); }
+    if (y === 21 && (x % 4 === 0)) return H('#2f363c'); return y > 17 ? H('#d9a21b') : pick([H('#4a5a52'), H('#46564e'), H('#4f5f57')], x, y, z); })),
+  shutter: () => model('shutter', () => vox(30, 30, 2, 0.2, (x, y) => (y % 3 === 0 ? H('#2f363c') : y < 4 ? (((x + y) >> 1) % 2 ? H('#d9a21b') : H('#151412')) : pick([H('#6d7378'), H('#666c71'), H('#727879')], x, y, 0)))),
+  magdoorBlue: () => model('magdoorB', () => vox(20, 30, 2, 0.15, (x, y) => { const cx = x - 9.5, cy = y - 18; const ring = Math.hypot(cx, cy); if (y > 12 && y < 24 && ((Math.abs(cx) > 3 && Math.abs(cx) < 6) || (cy > 3 && cy < 6 && Math.abs(cx) < 6))) return y < 15 ? H('#e8e1d2') : H('#3da2ff'); void ring; if (x === 0 || x === 19 || y === 29) return H('#2f363c'); return pick(steel, x, y, 0); })),
+  catwalk: () => model('catwalk', () => vox(30, 11, 20, 0.1, (x, y, z) => { if (y === 0) return (x + z) % 2 === 0 || x === 0 || x === 29 ? H('#3a3f45') : 0; return 0; })),
+  rail: () => model('rail', () => vox(2, 11, 20, 0.1, (x, y, z) => (y === 10 || y === 5 ? H('#d9a21b') : z % 10 === 0 && x === 0 ? H('#d9a21b') : 0))),
+};
+
+// ---------------------------------------------------------------- textures for the big surfaces: 32 px, sharp
+function tex(draw, w = 32, h = 32) { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestMipmapLinearFilter; t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; }
+const px = (g, x, y, c) => { g.fillStyle = c; g.fillRect(x, y, 1, 1); };
+const sh = (hex, k) => { const c = new THREE.Color(hex); c.multiplyScalar(k); return '#' + c.getHexString(); };
+const noise = (g, w, h, base, amt) => { for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) px(g, x, y, sh(base, 1 + (rnd() - 0.5) * amt)); };
+const TX = {
+  concrete: tex((g, w, h) => { noise(g, w, h, '#57534c', 0.18); for (let i = 0; i < 40; i++) px(g, (rnd() * w) | 0, (rnd() * h) | 0, '#3f3b35'); g.fillStyle = '#46423c'; g.fillRect(0, 0, w, 1); g.fillRect(0, 0, 1, h); for (let i = 0; i < 3; i++) { const x = (rnd() * w) | 0, y = (rnd() * h) | 0; for (let k = 0; k < 6; k++) px(g, x + k, y + ((k * 7) % 3) - 1, '#3a3631'); } for (let i = 0; i < 2; i++) { const x = (rnd() * 24) | 0, y = (rnd() * 24) | 0; g.fillStyle = '#4a3a2a55'; g.fillRect(x, y, 6, 4); } }),
+  brick: tex((g, w, h) => { for (let r = 0; r < 8; r++) for (let b = 0; b < 4; b++) { const ox = (r % 2) * 4, base = pick(['#6b3a2c', '#74402f', '#633526', '#7b4636'], r, b, 0); for (let y = 0; y < 3; y++) for (let x = 0; x < 7; x++) px(g, (b * 8 + x + ox) % w, r * 4 + y, sh(base, 1 + (rnd() - 0.5) * 0.15)); } g.fillStyle = '#2a2420'; for (let r = 0; r < 8; r++) g.fillRect(0, r * 4 + 3, w, 1); for (let r = 0; r < 8; r++) for (let b = 0; b < 4; b++) g.fillRect((b * 8 + 7 + (r % 2) * 4) % w, r * 4, 1, 3); for (let i = 0; i < 30; i++) px(g, (rnd() * w) | 0, (rnd() * h) | 0, '#4a3a30'); }),
+  metal: tex((g, w, h) => { for (let x = 0; x < w; x++) for (let y = 0; y < h; y++) px(g, x, y, sh(x % 4 < 2 ? '#4f5a5c' : '#434d4f', 1 + (rnd() - 0.5) * 0.12)); for (let i = 0; i < 26; i++) { const x = (rnd() * w) | 0, y = (rnd() * h) | 0; for (let k = 0; k < 3 + rnd() * 6; k++) px(g, x, (y + k) % h, rnd() < 0.5 ? '#7a3c1c' : '#8f4a22'); } g.fillStyle = '#2b3234'; g.fillRect(0, 0, w, 1); }),
+  ceiling: tex((g, w, h) => { noise(g, w, h, '#1c1b1a', 0.25); g.fillStyle = '#2a2826'; g.fillRect(0, 12, w, 6); g.fillStyle = '#34312e'; g.fillRect(0, 12, w, 1); g.fillRect(12, 0, 6, h); }),
+  hazardFloor: tex((g, w, h) => { for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) px(g, x, y, ((x + y) >> 3) % 2 ? sh('#c9921b', 1 + (rnd() - 0.5) * 0.2) : sh('#1b1a18', 1 + (rnd() - 0.5) * 0.3)); }),
+  grate: tex((g, w, h) => { for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) px(g, x, y, (x % 4 === 0 || y % 4 === 0) ? sh('#4a5257', 1 + (rnd() - 0.5) * 0.2) : '#0c0d0e'); for (let i = 0; i < 12; i++) px(g, (rnd() * w) | 0, (rnd() * h) | 0, '#7a3c1c'); g.fillStyle = '#2a2e31'; g.fillRect(0, 0, w, 1); }),
+  belt: tex((g, w, h) => { for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) px(g, x, y, sh(y % 8 < 1 ? '#34363a' : '#1e1f21', 1 + (rnd() - 0.5) * 0.25)); }),
+  stripe: tex((g, w, h) => { noise(g, w, h, '#c9a227', 0.25); for (let i = 0; i < 25; i++) px(g, (rnd() * w) | 0, (rnd() * h) | 0, '#57534c'); }),
+  sign: tex((g, w, h) => { noise(g, w, h, '#c9b88f', 0.12); g.fillStyle = '#b5562b'; g.fillRect(1, 1, 30, 6); g.fillStyle = '#e8e1d2'; for (let x = 3; x < 29; x += 3) g.fillRect(x, 3, 2, 2); g.fillStyle = '#c4475a'; g.fillRect(9, 11, 14, 12); g.fillStyle = '#151412'; g.fillRect(12, 15, 2, 2); g.fillRect(18, 15, 2, 2); g.fillRect(12, 20, 8, 1); g.fillStyle = '#7a6a4a'; g.fillRect(4, 26, 24, 1); g.fillRect(4, 28, 16, 1); }, 32, 32),
+};
+const TM = (t, rep = 2) => new THREE.MeshLambertMaterial({ map: t });
+const POST = new THREE.MeshLambertMaterial({ color: 0xd0661f }), RAIL = new THREE.MeshLambertMaterial({ color: 0xd9a21b });
+const MAT = { grate: TM(TX.grate), belt: TM(TX.belt), concrete: TM(TX.concrete), brick: TM(TX.brick), metal: TM(TX.metal), ceiling: TM(TX.ceiling), hazard: TM(TX.hazardFloor), stripe: TM(TX.stripe) };
+// a box whose texture repeats by its real size (tile = metres per texture)
+function slab(w, h, d, mat, tile = 2) { const g = new THREE.BoxGeometry(w, h, d), uv = g.attributes.uv, dims = [[d, h], [d, h], [w, d], [w, d], [w, h], [w, h]];
+  for (let f = 0; f < 6; f++) for (let i = 0; i < 4; i++) { const k = f * 4 + i; uv.setXY(k, uv.getX(k) * dims[f][0] / tile, uv.getY(k) * dims[f][1] / tile); } const m = new THREE.Mesh(g, mat); m.receiveShadow = true; m.castShadow = true; return m; }
+
+// ---------------------------------------------------------------- renderer and scene
+const R = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' }); R.setPixelRatio(Math.min(1.5, devicePixelRatio)); R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFShadowMap;
+$('game').appendChild(R.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x040405); scene.fog = new THREE.FogExp2(0x0b0b0d, 0.018); scene.background.set(0x0b0b0d);
+const cam = new THREE.PerspectiveCamera(72, 1, 0.03, 160); scene.add(cam);
+const amb = new THREE.HemisphereLight(0xa8b0c0, 0x2a2018, 0.42); scene.add(amb);
+const resize = () => { R.setSize(innerWidth, innerHeight, false); cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); }; addEventListener('resize', resize); resize();
+
+// ---------------------------------------------------------------- collision world: axis-aligned boxes. You can stand on top of any of them.
+const solids = [];   // {min: V3, max: V3, o?}
+function solid(x0, y0, z0, x1, y1, z1, o) { const s = { min: new V3(Math.min(x0, x1), Math.min(y0, y1), Math.min(z0, z1)), max: new V3(Math.max(x0, x1), Math.max(y0, y1), Math.max(z0, z1)), o }; solids.push(s); return s; }
+function block(x, y, z, w, h, d, mat, tile) { const m = slab(w, h, d, mat, tile); m.position.set(x, y + h / 2, z); scene.add(m); solid(x - w / 2, y, z - d / 2, x + w / 2, y + h, z + d / 2, m); return m; }
+function place(g, x, y, z, ry = 0, coll = true) { const m = vmesh(g); m.position.set(x, y, z); m.rotation.y = ry; scene.add(m); if (coll) { m.updateMatrixWorld(); const b = new THREE.Box3().setFromObject(m); solid(b.min.x, b.min.y, b.min.z, b.max.x, b.max.y, b.max.z, m); } return m; }
+// a wall from (x0,z0) to (x1,z1) with optional openings [from, to, height] measured along it
+function wall(x0, z0, x1, z1, h, mat, gaps = [], th = 0.6) {
+  const len = Math.hypot(x1 - x0, z1 - z0), dx = (x1 - x0) / len, dz = (z1 - z0) / len, along = Math.abs(dx) > 0.5;
+  const pieces = []; let cur = 0; for (const [a, b, gh] of [...gaps].sort((p, q) => p[0] - q[0])) { if (a > cur) pieces.push([cur, a, 0, h]); pieces.push([a, b, gh, h]); cur = b; } if (cur < len) pieces.push([cur, len, 0, h]);
+  for (const [a, b, y0, y1] of pieces) { if (y1 - y0 < 0.01 || b - a < 0.01) continue; const mx = x0 + dx * (a + b) / 2, mz = z0 + dz * (a + b) / 2; block(mx, y0, mz, along ? b - a : th, y1 - y0, along ? th : b - a, mat, 3); }
+}
+
+// ---------------------------------------------------------------- the factory (metres). Lobby → main hall (huge) → warehouse; catwalks at 6 m; generator room up top
+const LOBBY = { x0: 0, x1: 16, z0: 0, z1: 14, h: 6 }, HALL = { x0: -16, x1: 32, z0: 14, z1: 74, h: 16 }, WARE = { x0: 32, x1: 56, z0: 20, z1: 50, h: 12 }, SIDE = { x0: 16, x1: 24, z0: 2, z1: 11, h: 5 };
+function floorCeil(r, ceilMat = MAT.ceiling) { const f = slab(r.x1 - r.x0, 0.2, r.z1 - r.z0, MAT.concrete, 2); f.position.set((r.x0 + r.x1) / 2, -0.1, (r.z0 + r.z1) / 2); f.castShadow = false; scene.add(f); const c = slab(r.x1 - r.x0, 0.3, r.z1 - r.z0, ceilMat, 4); c.position.set((r.x0 + r.x1) / 2, r.h + 0.15, (r.z0 + r.z1) / 2); c.castShadow = false; scene.add(c); }
+[LOBBY, HALL, WARE, SIDE].forEach((r) => floorCeil(r));
+solid(-40, -1, -20, 80, 0, 100); // the ground
+// lobby
+wall(0, 0, 16, 0, 6, MAT.brick); wall(0, 0, 0, 14, 6, MAT.brick); wall(16, 0, 16, 14, 6, MAT.brick, [[4, 7, 4]]);
+// the hall's front wall, with the doorway from the lobby (x 5..11, 5 m tall)
+wall(-16, 14, 32, 14, 16, MAT.brick, [[21, 27, 5]]);
+wall(-16, 14, -16, 74, 16, MAT.metal); wall(-16, 74, 32, 74, 16, MAT.metal, [[36, 42, 6]]); wall(32, 14, 32, 74, 16, MAT.metal, [[16, 22, 6]]);
+// warehouse
+wall(32, 20, 56, 20, 12, MAT.metal); wall(56, 20, 56, 50, 12, MAT.metal); wall(32, 50, 56, 50, 12, MAT.metal);
+// side room (behind the blue magnet door)
+wall(16, 2, 24, 2, 5, MAT.brick); wall(24, 2, 24, 11, 5, MAT.brick); wall(16, 11, 24, 11, 5, MAT.brick);
+// lane stripes painted on the hall floor
+for (const x of [-9.5, 0.5, 10.5, 20.5]) { const s = slab(0.25, 0.02, 56, MAT.stripe, 1); s.position.set(x, 0.01, 44); s.castShadow = false; scene.add(s); }
+{ const s = slab(8, 0.02, 3, MAT.hazard, 1); s.position.set(23, 0.012, 72); s.castShadow = false; scene.add(s); }
+
+// pillars every 12 m, with lamps hanging between them
+for (let x = -4; x <= 20; x += 12) for (let z = 26; z <= 66; z += 20) { block(x, 0, z, 1.4, 1.2, 1.4, MAT.hazard, 1); block(x, 1.2, z, 1.4, 14.8, 1.4, MAT.metal, 2); }
+// conveyor lines running the length of the hall
+for (const x of [-6, 5, 15]) { const belt = slab(1.2, 0.1, 40, MAT.belt, 1); belt.position.set(x, 0.65, 42); scene.add(belt); for (const dx of [-0.68, 0.68]) { const r = slab(0.16, 0.14, 40, MAT.hazard, 0.5); r.position.set(x + dx, 0.72, 42); scene.add(r); } solid(x - 0.76, 0, 22, x + 0.76, 0.79, 62); for (let z = 23; z < 62; z += 3) place(G.convLeg(), x, 0, z, 0, false); }
+// two huge presses on the lines
+place(G.press(), -6, 0, 40); place(G.press(), 15, 0, 52);
+// junk, toys and barrels everywhere
+const scatter = [[-12, 20], [-11, 30], [-13, 52], [25, 24], [27, 40], [24, 60], [-2, 70], [9, 18], [28, 66], [-10, 66]];
+scatter.forEach(([x, z], i) => { if (i % 3 === 0) place(G.barrel(), x, 0, z); else if (i % 3 === 1) place(G.toybox(), x, 0, z, rnd() * 3); else { place(G.barrel(), x, 0, z); place(G.barrel(), x + 1, 0, z + 0.3); } });
+for (let i = 0; i < 14; i++) { const t = place(G.toy(), -12 + rnd() * 40, 0, 20 + rnd() * 50, rnd() * 6, false); t.rotation.z = (rnd() - 0.5) * 1.2; t.position.y = 0.1; }
+place(G.toy(), 6.5, 1.0, 30, 2.5, false); place(G.toy(), 15.3, 1.0, 34, 0.5, false); place(G.toy(), -5.5, 1.0, 26, 1.0, false);
+// a sign on the lobby wall
+{ const p = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 2.2), new THREE.MeshLambertMaterial({ map: TX.sign })); p.position.set(8, 3, 0.31); scene.add(p); }
+
+// catwalk ring at 6 m along the back and the left wall, stairs on the left side, generator room at the back middle
+const CW = 6;
+function catwalk(x0, z0, x1, z1) { const m = slab(x1 - x0, 0.12, z1 - z0, MAT.grate, 1); m.position.set((x0 + x1) / 2, CW - 0.06, (z0 + z1) / 2); scene.add(m); solid(x0, CW - 0.12, z0, x1, CW, z1); }
+catwalk(-16, 14, -12, 74); catwalk(-12, 70, 32, 74);
+// railings along the open side
+function railRun(x0, z0, x1, z1) { const len = Math.hypot(x1 - x0, z1 - z0), alongX = Math.abs(x1 - x0) > 0.1; for (const y of [0.5, 1.05]) { const b = new THREE.Mesh(new THREE.BoxGeometry(alongX ? len : 0.06, 0.06, alongX ? 0.06 : len), RAIL); b.position.set((x0 + x1) / 2, CW + y, (z0 + z1) / 2); scene.add(b); } for (let t = 0; t <= len; t += 2) { const q = new THREE.Mesh(new THREE.BoxGeometry(0.07, 1.1, 0.07), RAIL); q.position.set(x0 + (x1 - x0) * t / len, CW + 0.55, z0 + (z1 - z0) * t / len); scene.add(q); } }
+railRun(-12, 14, -12, 48); railRun(-12, 52, -12, 70); solid(-12.1, CW, 14, -11.9, CW + 1.1, 48); solid(-12.1, CW, 52, -11.9, CW + 1.1, 70);
+railRun(-12, 70, 8, 70); railRun(16, 70, 32, 70); solid(-12, CW, 69.9, 8, CW + 1.1, 70.1); solid(16, CW, 69.9, 32, CW + 1.1, 70.1);
+// stairs up the left wall (z 30 → 48), 20 steps of 0.3 m
+for (let i = 0; i < 20; i++) { const y = (i + 1) * 0.3; block(-10, 0, 30 + i * 0.9 + 0.45, 3, y, 0.9, MAT.metal, 1); } block(-10, 0, 49.5, 3, CW, 2.2, MAT.metal, 1);
+solid(-11.6, CW - 0.12, 48, -8.4, CW, 51); // landing joins the catwalk
+{ const r = slab(3, 0.12, 4, MAT.metal); r.position.set(-10, CW - 0.06, 50); scene.add(r); } catwalk(-12, 48, -8, 52);
+// the generator room: a platform out from the back catwalk
+catwalk(6, 62, 18, 70); wall(6, 62, 18, 62, 4, MAT.metal, [], 0.4); solids[solids.length - 1].min.y += CW; solids[solids.length - 1].max.y += CW; scene.children[scene.children.length - 1].position.y += CW;
+// (the room walls sit on the platform)
+const genWalls = [[6, 62, 6, 70], [18, 62, 18, 70]]; for (const [a, b, c, d] of genWalls) { const n = solids.length; wall(a, b, c, d, 4, MAT.metal, [[2, 4, 3]], 0.4); for (let i = n; i < solids.length; i++) { solids[i].min.y += CW; solids[i].max.y += CW; solids[i].o.position.y += CW; } }
+solid(6, -1, 62, 18, CW - 0.12, 70).o = null; // the space under the platform is a solid office block
+block(12, 0, 66, 12, CW - 0.12, 8, MAT.brick, 3); solids.pop();
+const gen = place(G.generator(), 12, CW, 64.5, 0);
+// big shutter in the back wall (the way out), rolls up when the power comes back
+const shutter = place(G.shutter(), 23, 0, 74.2, 0); const shutterSolid = solids[solids.length - 1];
+// warehouse racks: rows of tall shelving with boxes; one low rack holds the first fuse on top
+const RACKS = [];
+function rack(x, z, len, levels, top) { for (let i = 0; i <= len; i += 3) for (const dz of [-1, 1]) { const p = new THREE.Mesh(new THREE.BoxGeometry(0.2, top, 0.2), POST); p.position.set(x + i, top / 2, z + dz); p.castShadow = true; scene.add(p); solid(x + i - 0.1, 0, z + dz - 0.1, x + i + 0.1, top, z + dz + 0.1); }
+  for (const y of levels) { const s = slab(len, 0.12, 2.2, MAT.metal, 2); s.position.set(x + len / 2, y, z); scene.add(s); solid(x, y - 0.06, z - 1.1, x + len, y + 0.06, z + 1.1); for (let i = 0.8; i < len; i += 1.6) if (rnd() < 0.65) { const m = vmesh(rnd() < 0.5 ? G.woodbox() : G.toybox()); m.position.set(x + i, y + 0.06, z + (rnd() - 0.5) * 0.6); m.rotation.y = rnd() * 0.4; scene.add(m); } }
+  RACKS.push({ x, z, len }); }
+rack(35, 26, 18, [2.6, 5.2, 7.8], 9); rack(35, 32, 18, [2.6, 5.2, 7.8], 9); rack(35, 38, 9, [2.0], 2.1); rack(47, 38, 6, [2.6, 5.2], 6); rack(35, 44, 18, [2.6, 5.2, 7.8], 9);
+
+// ---------------------------------------------------------------- lights
+const lamps = [];
+function hangLamp(x, z, y, color = 0xffc070, power = 2.4, dist = 26, shadow = false) { const shade = vmesh(G.lampshade()); shade.position.set(x, y, z); scene.add(shade); const cable = new THREE.Mesh(new THREE.BoxGeometry(0.04, 3, 0.04), new THREE.MeshBasicMaterial({ color: 0x111111 })); cable.position.set(x, y + 2, z); scene.add(cable);
+  const l = new THREE.PointLight(color, 0, dist, 1.4); l.position.set(x, y - 0.2, z); l.castShadow = shadow; if (shadow) { l.shadow.mapSize.set(512, 512); l.shadow.camera.far = dist; } scene.add(l); const L = { l, power, on: false, ph: rnd() * 9, flick: false, shade }; lamps.push(L); return L; }
+hangLamp(8, 7, 5.2, 0xffb060, 1.6, 14).on = true; lamps[0].flick = true;
+for (const [x, z] of [[2, 22], [16, 22], [2, 44], [16, 44], [2, 64], [24, 64], [-10, 36]]) hangLamp(x, z, 12.5, 0xffc070, 2.6, 30);
+for (const [x, z] of [[40, 29], [50, 41]]) hangLamp(x, z, 10, 0xffc070, 2.0, 22);
+const emergency = []; for (const [x, z] of [[-15, 40], [31, 30], [12, 73.5]]) { const l = new THREE.PointLight(0xff2a1a, 0.9, 12, 1.5); l.position.set(x, 4, z); scene.add(l); const b = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.25, 0.4), new THREE.MeshBasicMaterial({ color: 0xff3a2a })); b.position.copy(l.position); scene.add(b); emergency.push(l); }
+
+// ---------------------------------------------------------------- things you can pick up, push and use
+const items = [];   // carriable: {o, kind, name}
+const metalBoxes = []; // magnetic crates: {o, s: solid}
+function addItem(kind, x, y, z) { const o = vmesh(G[kind]()); o.position.set(x, y, z); scene.add(o); const it = { o, kind, name: kind === 'fuse' ? 'fuse' : kind }; items.push(it); return it; }
+function addCrate(x, z) { const o = place(G.crate(), x, 0, z); const s = solids[solids.length - 1]; const c = { o, s, size: 1.2 }; metalBoxes.push(c); return c; }
+addItem('fuse', 41, 2.0 + 0.06, 38);     // on top of the low rack, hard to reach
+addItem('fuse', 20, 1.04, 8);            // in the side room, on a crate
+place(G.woodbox(), 20, 0, 8);
+addCrate(44, 47.5); addCrate(28, 46); addCrate(-8, 58);
+// the blue magnet door to the side room
+const blueDoor = place(G.magdoorBlue(), 16.15, 0, 5.5, Math.PI / 2); const blueSolid = solids[solids.length - 1]; blueDoor.userData.color = 'blue';
+// generator sockets (two)
+const sockets = [{ p: new V3(11.2, CW + 1.1, 65.22), filled: false }, { p: new V3(12.7, CW + 1.1, 65.22), filled: false }];
+const socketMarks = sockets.map((s) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.72, 0.02), new THREE.MeshBasicMaterial({ color: 0x220a08 })); m.position.copy(s.p); scene.add(m); return m; });
+
+// ---------------------------------------------------------------- the launcher hands: each glove flies out on a thick cable.
+// RED (left) grabs: pulls crates and things to you, or pulls YOU up to a yellow grab handle. BLUE (right) shoves: knocks crates away, presses buttons, opens blue locks.
+const hands = new THREE.Group(); cam.add(hands);
+const sleeve = H('#2a3a5a'), sleeveD = H('#22304a'), metalD = H('#2f363c'), metalM = H('#4a545c'), metalL = H('#7d858c');
+// a big glove, palm facing +z, fingers up (+y). open or closed into a fist
+function gloveVox(col, colD, open) { return vox(12, open ? 18 : 12, 6, 0.02, (x, y, z) => {
+  if (y < 3) return (x > 1 && x < 10 && z > 0 && z < 5) ? (y === 0 ? metalD : metalM) : 0;                 // cuff where the cable plugs in
+  if (y < 10) { if (x < 1 || x > 10) return 0; if (z === 5 && y > 4 && y < 9 && x > 3 && x < 8) return colD; return z < 5 ? col : 0; } // palm and back
+  if (x === 0 && y < 13 && z > 1 && z < 4) return colD;                                                      // thumb
+  if (open) { const f = x - 1; if (f < 0 || x > 10) return 0; if (f % 3 === 2) return 0; if (z < 1 || z > 3) return 0; const len = [6, 8, 8, 6][Math.floor(f / 3)] ?? 0; return y < 10 + len ? (y === 9 + len ? colD : col) : 0; }
+  if (x < 1 || x > 10) return 0; if (y > 11) return 0; return z > 3 ? ((x % 3 === 0) ? colD : col) : z < 5 ? col : 0; }); }
+const GLOVE = { red: { open: gloveVox(H('#d23a2e'), H('#8a2018'), true), fist: gloveVox(H('#d23a2e'), H('#8a2018'), false), c: 0xd23a2e },
+  blue: { open: gloveVox(H('#2f86d6'), H('#1b4f82'), true), fist: gloveVox(H('#2f86d6'), H('#1b4f82'), false), c: 0x2f86d6 } };
+// the launcher on each forearm
+const launcherG = vox(12, 11, 30, 0.014, (x, y, z) => { const r = Math.hypot(x - 5.5, y - 5.5);
+  if (z >= 18) return r < 5.5 ? (z % 5 === 0 ? sleeveD : sleeve) : 0;
+  if (r < 5.4) { if (y > 8 && z % 4 === 1) return H('#d9a21b'); if (z < 2) return r < 2.6 ? H('#0d0e0f') : metalD; return (z + y) % 7 === 0 ? metalL : metalM; } return 0; });
+function makeHand(color, side) {
+  const arm = vmesh(launcherG); arm.position.set(side * 0.24, -0.3, -0.42); arm.scale.setScalar(0.85); hands.add(arm);
+  const glove = new THREE.Group(), open = vmesh(GLOVE[color].open), fist = vmesh(GLOVE[color].fist); glove.add(open, fist); fist.visible = false;
+  const homeSlot = new THREE.Object3D(); homeSlot.position.set(side * 0.24, -0.25, -0.66); hands.add(homeSlot);
+  const N = 22, rope = { pts: Array.from({ length: N }, () => new V3()), prev: Array.from({ length: N }, () => new V3()), mesh: null, len: 1 };
+  const ropeMat = new THREE.MeshLambertMaterial({ color: 0x1b1c1e });
+  const h = { color, side, arm, glove, open, fist, homeSlot, state: 'home', pos: new V3(), target: null, held: false, rope, ropeMat, charge: 0, offset: new V3() };
+  dock(h); return h;
+}
+function dock(h) { h.state = 'home'; h.homeSlot.add(h.glove); h.glove.position.set(0, -0.06, 0); h.glove.rotation.set(-0.25, 0, 0); h.glove.scale.setScalar(0.9); h.open.visible = true; h.fist.visible = false; if (h.rope.mesh) h.rope.mesh.visible = false; }
+const HANDS = { red: makeHand('red', -1), blue: makeHand('blue', 1) };
+// a headlamp, so both hands are free
+const flash = new THREE.SpotLight(0xfff1d8, 3.2, 45, 0.55, 0.45, 1); flash.castShadow = true; flash.shadow.mapSize.set(1024, 1024); flash.shadow.camera.near = 0.3; flash.shadow.camera.far = 45; flash.position.set(0, 0.08, 0); cam.add(flash); flash.target.position.set(0, -0.2, -6); cam.add(flash.target);
+const carryPivot = new THREE.Group(); carryPivot.position.set(0.05, -0.36, -0.75); cam.add(carryPivot);
+const MAX_REACH = 18, SPEED = 34;
+const slotWorld = (h) => h.homeSlot.getWorldPosition(new V3());
+
+function launch(color) {
+  const h = HANDS[color]; h.held = true; if (h.state !== 'home') return;
+  cam.updateMatrixWorld(); let a = aimed(MAX_REACH); const from = slotWorld(h); const dir = new V3(0, 0, -1).applyQuaternion(cam.quaternion);
+  // aim help: small things (handles, fuses) close to where you point count as hit, if nothing nearer is in the way
+  let best = null; for (const o of [...handleList, ...items.filter((i) => i !== P.carry).map((i) => i.o)]) { const c = o.getWorldPosition(new V3()), v = c.clone().sub(cam.position), d = v.length(); if (d > MAX_REACH) continue; const ang = v.normalize().angleTo(dir); if (ang < 0.09 && (!best || ang < best.ang) && (!a || d < a.d + 0.6)) best = { o, p: c, d, ang }; }
+  if (best) a = best;
+  h.target = a ? { p: a.p.clone(), o: a.o, d: a.d } : { p: cam.position.clone().addScaledVector(dir, MAX_REACH), o: null };
+  scene.attach(h.glove); h.pos.copy(from); h.glove.position.copy(from); h.glove.scale.setScalar(1); h.state = 'out';
+  // the cable starts coiled at the launcher
+  for (let i = 0; i < h.rope.pts.length; i++) { h.rope.pts[i].copy(from); h.rope.prev[i].copy(from); }
+  sfx.launch(); }
+function release(color) { const h = HANDS[color]; h.held = false; if (h.state === 'out' || h.state === 'stuck') { if (h.target?.item && h.state === 'stuck') { /* let go of the thing */ } h.state = 'back'; h.charge = 0; } }
+
+const handleList = []; // yellow grab handles: the red hand can pull you up to them
+function grabHandle(x, y, z, ry = 0) { const g = vmesh(vox(10, 4, 4, 0.06, (vx, vy, vz) => ((vx < 2 || vx > 7) ? (vz < 2 ? H('#2f363c') : 0) : vy === 3 || vy === 0 ? (vz === 3 ? H('#ffd34d') : 0) : vz === 3 && (vx === 2 || vx === 7) ? H('#ffd34d') : 0))); g.position.set(x, y, z); g.rotation.y = ry; scene.add(g); handleList.push(g); return g; }
+
+function handsStep(dt) {
+  for (const h of Object.values(HANDS)) {
+    const slot = slotWorld(h);
+    if (h.state === 'out') { const to = h.target.p.clone().sub(h.pos), d = to.length(), stepL = SPEED * dt;
+      if (d <= stepL) { h.pos.copy(h.target.p); arrive(h); } else h.pos.addScaledVector(to.normalize(), stepL);
+      h.glove.position.copy(h.pos); h.glove.lookAt(h.pos.clone().add(h.pos.clone().sub(slot))); }
+    else if (h.state === 'stuck') stuck(h, dt, slot);
+    else if (h.state === 'back') { const to = slot.clone().sub(h.pos), d = to.length(), stepL = SPEED * 1.2 * dt; h.fist.visible = false; h.open.visible = true;
+      if (d <= stepL + 0.05) { dock(h); sfx.dock(); continue; } h.pos.addScaledVector(to.normalize(), stepL); h.glove.position.copy(h.pos); h.glove.lookAt(slot.clone().add(to)); }
+    if (h.state !== 'home') { if (h.pos.distanceTo(slot) > MAX_REACH + 2 && h.state !== 'back') h.state = 'back'; ropeStep(h, slot, dt); }
+    // the launcher kicks a little when the hand is away
+    h.arm.position.z += ((h.state === 'home' ? -0.42 : -0.46) - h.arm.position.z) * Math.min(1, dt * 12);
+  }
+}
+function arrive(h) {
+  const o = h.target.o, color = h.color; sfx.thunk();
+  const crate = metalBoxes.find((c) => c.o === o), item = items.find((i) => i.o === o && i !== P.carry), handle = handleList.includes(o);
+  if (color === 'red') {
+    h.fist.visible = true; h.open.visible = false;
+    if (crate) { h.state = 'stuck'; h.target.crate = crate; h.offset.copy(h.pos).sub(crate.o.position); return; }
+    if (item) { h.state = 'stuck'; h.target.item = item; return; }
+    if (handle) { h.state = 'stuck'; h.target.handle = o; return; }
+    h.state = 'back'; return;                              // nothing to hold on to: it bounces back
+  }
+  // blue: shove
+  if (crate) { const dir = crate.o.position.clone().sub(P.pos).setY(0).normalize(); crate.push = dir.multiplyScalar(5); }
+  if (o === blueDoor && !blueDoor.userData.open) { h.state = 'stuck'; h.target.door = true; return; }
+  if (item) { const dir = item.o.position.clone().sub(P.pos).setY(0).normalize(); item.o.position.addScaledVector(dir, 0.6); }
+  h.state = 'stuck'; h.target.bump = 0.25;              // stays a moment, then comes back
+}
+function stuck(h, dt, slot) {
+  const t = h.target;
+  if (t.bump !== undefined) { t.bump -= dt; if (t.bump <= 0) h.state = 'back'; return; }
+  if (!h.held) { h.state = 'back'; return; }
+  if (t.crate) { // drag the crate toward you
+    const cr = t.crate, to = new V3(P.pos.x - cr.o.position.x, 0, P.pos.z - cr.o.position.z), d = to.length();
+    if (d > 1.9) slideCrate(cr, to.normalize().multiplyScalar(3.4 * dt));
+    h.pos.copy(cr.o.position).add(h.offset); h.glove.position.copy(h.pos); return; }
+  if (t.item) { // reel the thing in; when it reaches you it goes into your hands
+    const it = t.item, to = cam.position.clone().add(new V3(0, -0.3, 0)).sub(it.o.position), d = to.length();
+    it.o.position.addScaledVector(to.normalize(), Math.min(d, 9 * dt)); h.pos.copy(it.o.position); h.glove.position.copy(h.pos);
+    if (d < 1.1 && !P.carry) { take(it); h.state = 'back'; } return; }
+  if (t.handle) { // pull yourself to the handle and hang there
+    const anchor = t.handle.position.clone().add(new V3(0, -1.0, 0)), to = anchor.clone().sub(P.pos), d = to.length();
+    P.hanging = true; if (d > 0.3) { P.pullV = to.normalize().multiplyScalar(Math.min(10, d * 6)); } else P.pullV = new V3(); return; }
+  if (t.door) { h.charge += dt; if (h.charge > 1.2 && !blueDoor.userData.open) { blueDoor.userData.open = true; solids.splice(solids.indexOf(blueSolid), 1); sfx.gate(); toast('The blue lock lets go.'); h.state = 'back'; } }
+}
+function slideCrate(cr, mv) { const old = cr.o.position.clone(); cr.o.position.add(mv); cr.o.updateMatrixWorld(); const b = new THREE.Box3().setFromObject(cr.o), test = { min: b.min.clone().add(new V3(0.02, 0.05, 0.02)), max: b.max.clone().sub(new V3(0.02, 0, 0.02)) };
+  const blocked = solids.some((o) => o !== cr.s && o.max.y > 0.05 && test.min.x < o.max.x && test.max.x > o.min.x && test.min.z < o.max.z && test.max.z > o.min.z && test.min.y < o.max.y && test.max.y > o.min.y) || overlaps(P.pos, { min: test.min, max: test.max }, P.w, P.h);
+  if (blocked) { cr.o.position.copy(old); return false; } cr.s.min.copy(b.min); cr.s.max.copy(b.max);
+  for (const it of items) if (it !== P.carry && Math.abs(it.o.position.x - old.x) < 0.6 && Math.abs(it.o.position.z - old.z) < 0.6 && Math.abs(it.o.position.y - 1.2) < 0.15) it.o.position.add(cr.o.position.clone().sub(old)); return true; }
+
+// the cable: a chain of points with gravity (it sags when slack, goes straight when pulled tight) that bumps around pillars and crates
+const TUBE_R = 0.038;
+function ropeStep(h, slot, dt) {
+  const R_ = h.rope, n = R_.pts.length, end = h.pos, dist = slot.distanceTo(end);
+  const taut = h.state === 'stuck' && (h.target.crate || h.target.handle || h.target.item);
+  const total = Math.max(0.05, dist * (taut ? 1.0 : h.state === 'out' ? 1.04 : 1.12)), seg = total / (n - 1);
+  const g = new V3(0, -9.8 * dt * dt, 0);
+  for (let i = 1; i < n - 1; i++) { const p = R_.pts[i], v = p.clone().sub(R_.prev[i]).multiplyScalar(0.94); R_.prev[i].copy(p); p.add(v).add(g); }
+  R_.pts[0].copy(slot); R_.pts[n - 1].copy(end);
+  for (let k = 0; k < 14; k++) { for (let i = 0; i < n - 1; i++) { const a = R_.pts[i], b = R_.pts[i + 1], d = b.clone().sub(a), l = d.length() || 1e-6, diff = (l - seg) / l;
+      if (i === 0) b.addScaledVector(d, -diff); else if (i === n - 2) a.addScaledVector(d, diff); else { a.addScaledVector(d, diff * 0.5); b.addScaledVector(d, -diff * 0.5); } }
+    R_.pts[0].copy(slot); R_.pts[n - 1].copy(end); }
+  // keep the cable out of solid things (pillars, crates, the floor)
+  for (let i = 1; i < n - 1; i++) { const p = R_.pts[i]; if (p.y < 0.04) p.y = 0.04;
+    for (const s of solids) { if (s.max.y - s.min.y > 40) continue; if (p.x > s.min.x - TUBE_R && p.x < s.max.x + TUBE_R && p.y > s.min.y - TUBE_R && p.y < s.max.y + TUBE_R && p.z > s.min.z - TUBE_R && p.z < s.max.z + TUBE_R) {
+        const pen = [[p.x - (s.min.x - TUBE_R), 'x', s.min.x - TUBE_R], [(s.max.x + TUBE_R) - p.x, 'x', s.max.x + TUBE_R], [p.y - (s.min.y - TUBE_R), 'y', s.min.y - TUBE_R], [(s.max.y + TUBE_R) - p.y, 'y', s.max.y + TUBE_R], [p.z - (s.min.z - TUBE_R), 'z', s.min.z - TUBE_R], [(s.max.z + TUBE_R) - p.z, 'z', s.max.z + TUBE_R]].sort((u, w) => u[0] - w[0])[0];
+        p[pen[1]] = pen[2]; } } }
+  // draw it as a thick tube
+  const curve = new THREE.CatmullRomCurve3(R_.pts), geo = new THREE.TubeGeometry(curve, 44, TUBE_R, 6, false);
+  if (!R_.mesh) { R_.mesh = new THREE.Mesh(geo, h.ropeMat); R_.mesh.castShadow = true; R_.mesh.frustumCulled = false; scene.add(R_.mesh); } else { R_.mesh.geometry.dispose(); R_.mesh.geometry = geo; }
+  R_.mesh.visible = true;
+}
+function take(it) { P.carry = it; scene.remove(it.o); carryPivot.add(it.o); it.o.position.set(0, 0, 0); it.o.rotation.set(0.3, 0.6, 0); it.o.scale.setScalar(0.8); sfx.pick(); toast('Got the ' + it.name); if (it.kind === 'fuse' && !power) objective('Carry the fuse to the generator up on the catwalk.'); }
+
+grabHandle(-12.7, 8.4, 36, Math.PI / 2); grabHandle(-6, 8.2, 40, 0);
+// ---------------------------------------------------------------- player physics: a box 0.6 wide, 1.75 tall; steps up to 0.45 m without jumping
+const P = { pos: new V3(8, 0, 3), vy: 0, yaw: Math.PI, pitch: 0, onGround: true, carry: null, w: 0.3, h: 1.75 };
+const keys = {}; let started = false, ended = false, flashOn = true, battery = 1, magMode = null, magT = 0, power = false;
+const overlaps = (p, s, w, h) => p.x + w > s.min.x && p.x - w < s.max.x && p.z + w > s.min.z && p.z - w < s.max.z && p.y + h > s.min.y && p.y < s.max.y;
+function moveAxis(p, axis, d) { p[axis] += d; for (const s of solids) { if (!overlaps(p, s, P.w, P.h)) continue;
+    // a low edge: climb onto it
+    if (s.max.y - p.y <= 0.45 && P.onGround) { const old = p.y; p.y = s.max.y; if (!solids.some((o) => o !== s && overlaps(p, o, P.w, P.h))) continue; p.y = old; }
+    p[axis] = d > 0 ? s.min[axis] - P.w - 1e-4 : s.max[axis] + P.w + 1e-4; } }
+function moveY(p, d) { p.y += d; let landed = false; for (const s of solids) { if (!overlaps(p, s, P.w, P.h)) continue; if (d < 0) { p.y = s.max.y; landed = true; } else { p.y = s.min.y - P.h - 1e-4; P.vy = 0; } } return landed; }
+
+// ---------------------------------------------------------------- input
+addEventListener('keydown', (e) => { keys[e.code] = true; if (!started || ended) return; if (e.code === 'Space') { e.preventDefault(); jump(); } if (e.code === 'KeyE') use(); if (e.code === 'KeyF') toggleFlash(); });
+addEventListener('keyup', (e) => { keys[e.code] = false; });
+const cv = R.domElement; let locked = false;
+cv.addEventListener('contextmenu', (e) => e.preventDefault());
+cv.addEventListener('mousedown', (e) => { if (!started || touch) return; if (!locked) cv.requestPointerLock?.()?.catch?.(() => {}); launch(e.button === 2 ? 'blue' : 'red'); });
+addEventListener('mouseup', (e) => { if (!touch) release(e.button === 2 ? 'blue' : 'red'); });
+document.addEventListener('pointerlockchange', () => { locked = document.pointerLockElement === cv; });
+addEventListener('mousemove', (e) => { if (started && !touch && locked) look(e.movementX, e.movementY); });
+function look(dx, dy) { P.yaw -= dx * 0.0024; P.pitch = Math.max(-1.45, Math.min(1.45, P.pitch - dy * 0.0024)); }
+const joy = { x: 0, y: 0, id: null }, lookT = { id: null, x: 0, y: 0 };
+$('joy').addEventListener('pointerdown', (e) => { joy.id = e.pointerId; $('joy').setPointerCapture(e.pointerId); moveJoy(e); });
+$('joy').addEventListener('pointermove', (e) => { if (e.pointerId === joy.id) moveJoy(e); });
+const endJoy = () => { joy.id = null; joy.x = joy.y = 0; $('joyK').style.transform = ''; }; $('joy').addEventListener('pointerup', endJoy); $('joy').addEventListener('pointercancel', endJoy);
+function moveJoy(e) { const r = $('joy').getBoundingClientRect(); let x = (e.clientX - r.left - r.width / 2) / (r.width / 2), y = (e.clientY - r.top - r.height / 2) / (r.height / 2); const l = Math.hypot(x, y); if (l > 1) { x /= l; y /= l; } joy.x = x; joy.y = y; $('joyK').style.transform = `translate(${x * 38}px,${y * 38}px)`; }
+cv.addEventListener('pointerdown', (e) => { if (!touch || lookT.id !== null) return; lookT.id = e.pointerId; lookT.x = e.clientX; lookT.y = e.clientY; });
+cv.addEventListener('pointermove', (e) => { if (e.pointerId !== lookT.id) return; look((e.clientX - lookT.x) * 1.6, (e.clientY - lookT.y) * 1.6); lookT.x = e.clientX; lookT.y = e.clientY; });
+const endLook = (e) => { if (e.pointerId === lookT.id) lookT.id = null; }; cv.addEventListener('pointerup', endLook); cv.addEventListener('pointercancel', endLook);
+const hold = (id, on, off) => { const b = $(id); b.addEventListener('pointerdown', (e) => { e.preventDefault(); on(); }); if (off) { b.addEventListener('pointerup', off); b.addEventListener('pointercancel', off); b.addEventListener('pointerleave', off); } };
+hold('bJump', () => jump()); hold('bUse', () => use()); hold('bLight', () => toggleFlash()); hold('bRed', () => launch('red'), () => release('red')); hold('bBlue', () => launch('blue'), () => release('blue'));
+function jump() { if (P.onGround) { P.vy = 7; P.onGround = false; sfx.step(0.7); } }
+function toggleFlash() { flashOn = !flashOn; sfx.click(); }
+
+// ---------------------------------------------------------------- what you look at
+const ray = new THREE.Raycaster(); ray.far = 12;
+const hitList = () => [...handleList, ...items.filter((i) => i !== P.carry).map((i) => i.o), ...metalBoxes.map((c) => c.o), blueDoor, gen, shutter, ...scene.children.filter((o) => o.isMesh && o.geometry.type === 'BoxGeometry' && o.material !== VMAT && o.geometry.parameters.width > 2.5)];
+function aimed(far = 12) { ray.far = far; ray.setFromCamera({ x: 0, y: 0 }, cam); const h = ray.intersectObjects(hitList(), false)[0]; return h ? { o: h.object, d: h.distance, p: h.point } : null; }
+function use() {
+  const a = aimed();
+  if (P.carry) { // hands full: put it in the generator if you're looking at a socket, otherwise put it down in front of you
+    if (a && a.o === gen && a.d < 3 && P.carry.kind === 'fuse') { const s = sockets.filter((x) => !x.filled).sort((p, q) => p.p.distanceTo(a.p) - q.p.distanceTo(a.p))[0]; if (s) { s.filled = true; carryPivot.remove(P.carry.o); scene.add(P.carry.o); P.carry.o.position.copy(s.p).add(new V3(0, -0.2, 0.05)); P.carry.o.scale.setScalar(1); items.splice(items.indexOf(P.carry), 1); P.carry = null; sfx.pick(); socketMarks[sockets.indexOf(s)].material.color.set(0x3a2a00);
+      if (sockets.every((x) => x.filled)) powerOn(); else { toast('One fuse in. The generator needs another.'); objective('The generator needs one more fuse.'); } return; } }
+    drop(); return; }
+  if (!a || a.d > 3.2) return;
+  const it = items.find((i) => i.o === a.o); if (it) { P.carry = it; scene.remove(it.o); carryPivot.add(it.o); it.o.position.set(0, 0, 0); it.o.rotation.set(0.3, 0.6, 0); it.o.scale.setScalar(0.8); sfx.pick(); toast('Picked up a ' + it.name); if (it.kind === 'fuse') objective(power ? '' : 'Carry the fuse to the generator up on the catwalk.'); return; }
+  if (a.o === gen) { sfx.deny(); toast(sockets.some((s) => s.filled) ? 'One more fuse.' : 'Two empty fuse sockets.'); if (!power) objective('The generator needs two fuses. Find them in the factory.'); hintStep = Math.max(hintStep, 2); return; }
+  if (a.o === shutter && !power) { sfx.deny(); toast('A rolling shutter. It needs power.'); return; }
+  if (a.o === blueDoor) { toast('A magnet lock with a blue sign.'); }
+}
+function drop() { const it = P.carry; if (!it) return; carryPivot.remove(it.o); scene.add(it.o); const f = new V3(-Math.sin(P.yaw), 0, -Math.cos(P.yaw)); const p = P.pos.clone().addScaledVector(f, 0.9); let y = 0; for (const s of solids) if (p.x > s.min.x && p.x < s.max.x && p.z > s.min.z && p.z < s.max.z && s.max.y <= P.pos.y + 0.5) y = Math.max(y, s.max.y); it.o.position.set(p.x, y, p.z); it.o.rotation.set(0, P.yaw, 0); it.o.scale.setScalar(1); P.carry = null; sfx.step(1.4); }
+
+// ---------------------------------------------------------------- story
+function objective(t) { $('obj').innerHTML = t ? `<small>OBJECTIVE</small>${t}` : ''; }
+let toastT = 0; function toast(t) { const el = $('toast'); el.textContent = t; el.style.opacity = 1; clearTimeout(toastT); toastT = setTimeout(() => { el.style.opacity = 0; }, 2800); }
+let hintStep = 0;
+const HINTS = ['The factory has no power. Find what makes it.', 'The generator is up on the catwalk at the back of the big hall. Take the stairs on the left wall, or find a yellow handle and let the red hand pull you up.', 'It needs two fuses. One is in the warehouse, the other is behind a door with a blue sign.', 'A low rack in the warehouse holds a fuse. Drag a metal crate there with the red hand and climb it.', 'The blue sign answers to the blue hand: hit the door with it and hold.'];
+$('bHint').onclick = () => { toast(HINTS[Math.min(HINTS.length - 1, hintStep)]); hintStep = Math.min(HINTS.length - 1, hintStep + 1); };
+function powerOn() { power = true; sfx.power(); toast('The generator coughs, then roars.'); objective('');
+  lamps.forEach((L, i) => setTimeout(() => { L.on = true; sfx.clunk(); }, 900 + i * 450)); emergency.forEach((l) => { l.intensity = 0; });
+  setTimeout(() => { amb.intensity = 0.62; objective('The big shutter at the back of the hall is opening.'); shutterOpen = true; sfx.gate(); }, 900 + lamps.length * 450 + 600); }
+let shutterOpen = false;
+
+// ---------------------------------------------------------------- sound, made here
+const sfx = (() => { let ac = null, master; const on = () => { if (ac) return; try { ac = new (window.AudioContext || window.webkitAudioContext)(); master = ac.createGain(); master.gain.value = 0.5; master.connect(ac.destination); hum(); } catch { ac = null; } };
+  const env = (node, t, a, d, v) => { const g = ac.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + d); node.connect(g); g.connect(master); return g; };
+  function tone(f, d, v = 0.2, type = 'square', f2) { if (!ac) return; const t = ac.currentTime, o = ac.createOscillator(); o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d); env(o, t, 0.005, d, v); o.start(t); o.stop(t + d + 0.05); }
+  function noiseHit(d, v, fq, q = 1.2) { if (!ac) return; const t = ac.currentTime, b = ac.createBuffer(1, Math.max(1, ac.sampleRate * d) | 0, ac.sampleRate), ch = b.getChannelData(0); for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1; const s = ac.createBufferSource(); s.buffer = b; const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = fq; f.Q.value = q; s.connect(f); env(f, t, 0.002, d, v); s.start(t); }
+  function hum() { const o1 = ac.createOscillator(), o2 = ac.createOscillator(), f = ac.createBiquadFilter(), g = ac.createGain(); o1.type = o2.type = 'sawtooth'; o1.frequency.value = 41; o2.frequency.value = 41.7; f.type = 'lowpass'; f.frequency.value = 120; g.gain.value = 0.07; o1.connect(f); o2.connect(f); f.connect(g); g.connect(master); o1.start(); o2.start();
+    const creak = () => { if (!ac) return; const r = Math.random(); if (r < 0.4) tone(60 + Math.random() * 50, 1.6, 0.05, 'sawtooth', 35); else if (r < 0.8) noiseHit(0.5, 0.14, 200 + Math.random() * 800); else { for (let i = 0; i < 3; i++) setTimeout(() => noiseHit(0.08, 0.1, 900), i * 380); } setTimeout(creak, 5000 + Math.random() * 9000); }; setTimeout(creak, 3500); }
+  return { on, step: (k = 1) => noiseHit(0.07, 0.07 * k, 160 + Math.random() * 60), metalStep: () => noiseHit(0.09, 0.08, 1400, 3), click: () => tone(1400, 0.04, 0.08), pick: () => { tone(660, 0.08, 0.12); setTimeout(() => tone(990, 0.12, 0.12), 80); }, deny: () => tone(140, 0.25, 0.15, 'square', 90),
+    gate: () => { noiseHit(2.5, 0.25, 120); tone(55, 2.2, 0.12, 'sawtooth', 35); }, power: () => { tone(40, 2.5, 0.25, 'sawtooth', 120); }, clunk: () => { noiseHit(0.25, 0.25, 300, 0.8); tone(90, 0.3, 0.12, 'square', 60); }, mag: (f) => tone(f, 0.12, 0.03, 'sine'), launch: () => { noiseHit(0.18, 0.18, 1800, 2); tone(300, 0.15, 0.06, 'sawtooth', 900); }, dock: () => { tone(500, 0.05, 0.08); noiseHit(0.05, 0.12, 2500, 3); }, thunk: () => { noiseHit(0.12, 0.25, 600, 1.5); tone(120, 0.12, 0.1, 'square', 70); } }; })();
+
+// ---------------------------------------------------------------- the loop
+let last = performance.now(), stepT = 0, bobT = 0;
+function frame(now) { requestAnimationFrame(frame); const dt = Math.min(0.05, (now - last) / 1000); last = now; if (started && !ended) step(dt, now); render(dt); }
+function step(dt, now) {
+  P.hanging = false; handsStep(dt);
+  let mx = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0) + joy.x, mz = (keys.KeyS || keys.ArrowDown ? 1 : 0) - (keys.KeyW || keys.ArrowUp ? 1 : 0) + joy.y;
+  const l = Math.hypot(mx, mz); if (l > 1) { mx /= l; mz /= l; }
+  const run = keys.ShiftLeft || keys.ShiftRight ? 1.75 : 1, sp = 3.6 * run, s = Math.sin(P.yaw), c = Math.cos(P.yaw);
+  const vx = (mx * c + mz * s) * sp * dt, vz = (-mx * s + mz * c) * sp * dt;
+  moveAxis(P.pos, 'x', vx); moveAxis(P.pos, 'z', vz);
+  if (P.hanging && P.pullV) { moveAxis(P.pos, 'x', P.pullV.x * dt); moveAxis(P.pos, 'z', P.pullV.z * dt); P.vy = 0; moveY(P.pos, P.pullV.y * dt); }
+  P.vy -= (P.hanging ? 0 : 18) * dt; const landed = moveY(P.pos, P.vy * dt); if (landed) { if (!P.onGround && P.vy < -5) sfx.step(1.4); P.vy = 0; P.onGround = true; } else P.onGround = false;
+  if (P.pos.y < -5) P.pos.set(8, 0, 3);
+  if (l > 0.1 && P.onGround) { bobT += dt * 9 * run; stepT -= dt * run; if (stepT <= 0) { stepT = 0.42; if (P.pos.y > 1) sfx.metalStep(); else sfx.step(); } }
+  // flashlight battery
+  battery = Math.max(0, Math.min(1, battery + (flashOn ? -dt / 300 : dt / 50))); if (battery <= 0) flashOn = false;
+  flash.intensity = flashOn ? 3.2 * (battery < 0.15 ? 0.6 + Math.random() * 0.4 : 1) : 0; document.documentElement.style.setProperty('--b', (battery * 100).toFixed(0) + '%');
+  // crates shoved by the blue hand slide and slow down
+  for (const cr of metalBoxes) if (cr.push) { if (!slideCrate(cr, cr.push.clone().multiplyScalar(dt))) cr.push = null; else { cr.push.multiplyScalar(Math.pow(0.12, dt)); if (cr.push.length() < 0.3) cr.push = null; } }
+  if (blueDoor.userData.open && blueDoor.position.y < 4.6) blueDoor.position.y += dt * 2;
+  if (shutterOpen && shutter.position.y < 6) { shutter.position.y += dt * 0.9; if (shutter.position.y > 2.2 && solids.includes(shutterSolid)) solids.splice(solids.indexOf(shutterSolid), 1); }
+  // lamps: off until the power is back; the lobby one flickers
+  for (const L of lamps) L.l.intensity = L.on ? L.power * (L.flick && (Math.sin(now / 90 + L.ph) > 0.86 || Math.random() < 0.02) ? 0.15 : 1) : 0;
+  for (const l of emergency) if (!power) l.intensity = 0.7 + Math.sin(now / 400) * 0.3;
+  // prompts
+  const a = aimed(); let pr = '';
+  if (P.carry) pr = a && a.o === gen && a.d < 3 && P.carry.kind === 'fuse' ? (touch ? 'USE · put the fuse in' : '[E] Put the fuse in') : (touch ? 'USE · put it down' : '[E] Put it down');
+  else if (a && a.d < 3.2 && items.some((i) => i.o === a.o)) pr = (touch ? 'USE · ' : '[E] ') + 'Pick up';
+  else if (a && a.o === gen && a.d < 3) pr = 'Generator';
+  else if (a && metalBoxes.some((c) => c.o === a.o) && a.d < MAX_REACH) pr = touch ? 'Metal crate · hold GRAB to drag it, SHOVE to knock it away' : 'Metal crate · hold LEFT to drag it, RIGHT to shove it';
+  else if (a && handleList.includes(a.o) && a.d < MAX_REACH) pr = touch ? 'Grab handle · hold GRAB' : 'Grab handle · hold LEFT to pull yourself up';
+  else if (a && a.o === blueDoor && !blueDoor.userData.open && a.d < MAX_REACH) pr = touch ? 'Blue lock · hold SHOVE on it' : 'Blue lock · hold RIGHT CLICK on it';
+  $('prompt').hidden = !pr; $('prompt').textContent = pr;
+  $('inv').innerHTML = P.carry ? 'CARRYING <b>' + P.carry.name.toUpperCase() + '</b>' : '';
+  if (!power && hintStep < 1 && P.pos.z > 16) hintStep = 1;
+  if (shutterOpen && P.pos.z > 75) finish();
+}
+function render(dt) {
+  const moving = started && P.onGround && (Math.hypot(joy.x, joy.y) > 0.1 || keys.KeyW || keys.KeyA || keys.KeyS || keys.KeyD); const bob = moving ? Math.sin(bobT) * 0.035 : 0;
+  cam.position.set(P.pos.x, P.pos.y + 1.62 + bob, P.pos.z); cam.rotation.set(0, 0, 0); cam.rotateY(P.yaw); cam.rotateX(P.pitch);
+  hands.position.set(moving ? Math.cos(bobT / 2) * 0.012 : 0, moving ? Math.abs(Math.sin(bobT / 2)) * -0.01 : 0, 0);
+  R.render(scene, cam);
+}
+function finish() { ended = true; document.exitPointerLock?.(); $('card').hidden = false; $('card').querySelector('.in').innerHTML = '<div class="sign">PART 1 OF THE FACTORY</div><h1>THE ASSEMBLY LINE</h1><p>The shutter grinds open onto the assembly line. The machines down there are still switched on, and something heard the generator start.</p><p style="color:var(--sodium)">The next part of Gearhollow is coming.</p><div><button id="again">PLAY AGAIN</button></div>'; $('again').onclick = () => location.reload(); }
+
+$('go').onclick = () => { $('card').hidden = true; started = true; sfx.on(); objective('Find a way to bring the power back.'); $('bHint').hidden = false; if (!touch) cv.requestPointerLock?.()?.catch?.(() => {}); toast(touch ? 'Drag to look around' : 'Click to look around'); };
+requestAnimationFrame(frame);
+window.__G = { step, jump, MODELS, R, scene, cam, flash, lamps, P, items, metalBoxes, sockets, use, aimed, keys, HANDS, launch, release, handleList, handsStep, blueDoor, gen, power: () => power, shutter, solids };
+})();
+</script>
